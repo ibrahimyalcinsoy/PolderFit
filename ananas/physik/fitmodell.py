@@ -153,7 +153,7 @@ def schaetze_startwerte(
 
     amplitude = float(betrag_rein.max() - betrag_rein.min())
     if amplitude <= 0:
-        amplitude = float(betrag.ptp()) or 1.0
+        amplitude = float(np.ptp(betrag)) or 1.0
 
     # Phase aus dem komplexen Signal am Resonanzpunkt; chi'' ist dort ~ -i,
     # (Phasen-/Amplituden-Skalierung weiter unten, nach alpha-Schaetzung).

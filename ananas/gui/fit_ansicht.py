@@ -8,6 +8,7 @@ den Datensatz mit den neuen Grenzen neu fitten kann ("rumfitten").
 
 from __future__ import annotations
 
+import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
@@ -85,7 +86,7 @@ class FitAnsicht(FigureCanvasQTAgg):
             return
         d_unten = abs(event.xdata - self._grenze_unten)
         d_oben = abs(event.xdata - self._grenze_oben)
-        toleranz = 0.02 * (self._linescan.feld.ptp() or 1.0)
+        toleranz = 0.02 * (np.ptp(self._linescan.feld) or 1.0)
         if min(d_unten, d_oben) > toleranz:
             return
         self._gezogen = "unten" if d_unten < d_oben else "oben"

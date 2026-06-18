@@ -63,6 +63,21 @@ def test_startwert_alpha_aus_magnituden_fwhm(alpha_true):
     assert np.isclose(sw.alpha, alpha_true, rtol=0.25)
 
 
+def test_auto_fenster_liefert_gueltiges_band():
+    """AutoWindows muss ein gueltiges (unten, oben)-Band liefern.
+
+    Trifft ananas.fit.autowindows.auto_fenster (nutzt np.ptp) – haette den
+    NumPy-2.0-Regress 'ndarray has no attribute ptp' erwischt.
+    """
+    from ananas.fit.autowindows import auto_fenster
+
+    ls = _synthetischer_linescan(20e9, B_res=3.0, alpha=5e-3, A=0.01, phi=0.3)
+    unten, oben = auto_fenster(ls)
+    assert unten < oben
+    assert ls.feld.min() <= unten and oben <= ls.feld.max()
+    assert unten <= 3.0 <= oben  # Resonanz liegt im vorgeschlagenen Band
+
+
 def test_dH_konsistenz():
     ls = _synthetischer_linescan(20e9, 3.0, 5e-3, 0.01, 0.0)
     erg = fitte_linescan(ls)

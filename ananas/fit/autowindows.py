@@ -29,7 +29,7 @@ def auto_fenster(
     sw = schaetze_startwerte(linescan.feld, linescan.s21, omega, gamma)
     # Linienbreite (Tesla) aus alpha: mu0*DeltaH = 2*omega*alpha/gamma.
     dB = 2.0 * omega * sw.alpha / gamma
-    halb = max(breite_faktor * dB / 2.0, 3.0 * (linescan.feld.ptp() / linescan.feld.size))
+    halb = max(breite_faktor * dB / 2.0, 3.0 * (np.ptp(linescan.feld) / linescan.feld.size))
     unten = max(sw.B_res - halb, float(linescan.feld.min()))
     oben = min(sw.B_res + halb, float(linescan.feld.max()))
     if oben <= unten:  # Rueckfall: ganzer Bereich
