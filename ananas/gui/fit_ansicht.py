@@ -48,6 +48,7 @@ class FitAnsicht(FigureCanvasQTAgg):
         self._grenze_oben: float | None = None
         self._gezogen: str | None = None   # 'unten' | 'oben' | None
         self._hover: str | None = None      # 'unten' | 'oben' | None
+        self._vollbereich: bool = False     # True -> ganzer Feldsweep statt Zoom aufs Band
         # Grafik-Objekte je Achse (zum Live-Aktualisieren beim Ziehen).
         self._linien_unten = []
         self._linien_oben = []
@@ -121,11 +122,34 @@ class FitAnsicht(FigureCanvasQTAgg):
         self.ax_im.set_xlabel(r"Feld $\mu_0 H$ (T)")
         self.ax_re.legend(fontsize=8, loc="best")
         self.ax_im.legend(fontsize=8, loc="best")
+        # Standardmaessig auf das Resonanzband zoomen, damit die beiden Grenzlinien
+        # nicht – wie ueber dem vollen Feldsweep – fast aufeinanderliegen.
+        self.ax_re.set_xlim(*self._berechne_xlim(b))
         self.figur.tight_layout()
         # Dezenter Bedienhinweis (nach tight_layout, damit er nicht verschoben wird).
         self.figur.text(0.995, 0.004, "grüne Linien ziehen, um das Band zu ändern",
                         ha="right", va="bottom", fontsize=7.5, color=GRENZ_FARBE, alpha=0.85)
         self.draw_idle()
+
+    def _berechne_xlim(self, b) -> tuple[float, float]:
+        """x-Grenzen der Anzeige: Zoom aufs Band (Standard) oder ganzer Sweep."""
+        bmin, bmax = float(np.min(b)), float(np.max(b))
+        if self._vollbereich or self._grenze_unten is None or self._grenze_oben is None:
+            return bmin, bmax
+        bw = abs(self._grenze_oben - self._grenze_unten)
+        zentrum = 0.5 * (self._grenze_oben + self._grenze_unten)
+        # Rand je Seite: mind. 40 mT (absolut), damit auch ein schmales Band Luft zum
+        # Greifen hat und etwas Untergrund sichtbar bleibt.
+        rand = max(1.3 * bw, 0.04)
+        links = max(zentrum - bw / 2.0 - rand, bmin)
+        rechts = min(zentrum + bw / 2.0 + rand, bmax)
+        if rechts - links < 1e-9:
+            return bmin, bmax
+        return links, rechts
+
+    def setze_vollbereich(self, an: bool) -> None:
+        """Schaltet zwischen Zoom aufs Band und ganzem Feldsweep um (Neuanzeige durch Aufrufer)."""
+        self._vollbereich = bool(an)
 
     # --- Grenzen live aktualisieren ---------------------------------------
     def _aktualisiere_grenzen_grafik(self) -> None:

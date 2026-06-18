@@ -130,6 +130,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_csv = leiste.addAction("Export CSV")
         self.akt_csv.triggered.connect(self._export_csv)
 
+        # Ansicht-Umschalter: ganzer Feldsweep statt Zoom aufs Resonanzband.
+        leiste.addSeparator()
+        self.akt_vollbereich = leiste.addAction("Vollbereich")
+        self.akt_vollbereich.setCheckable(True)
+        self.akt_vollbereich.setToolTip(
+            "Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
+        self.akt_vollbereich.toggled.connect(self._vollbereich_umschalten)
+
         # Sichtbarkeits-Umschalter fuer das Aktivitaets-Panel (rechts).
         leiste.addSeparator()
         self.akt_aktivitaet = leiste.addAction("Aktivität")
@@ -478,6 +486,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
             return False
         return True
+
+    def _vollbereich_umschalten(self, an: bool):
+        """Ganzen Feldsweep statt Zoom aufs Band zeigen (und aktuelle Anzeige erneuern)."""
+        self.fitansicht.setze_vollbereich(an)
+        self._zeige_aktuellen()
 
     def _frequenz_gewaehlt(self, index: int):
         if not self.stapel or not self.stapel.ergebnisse:
