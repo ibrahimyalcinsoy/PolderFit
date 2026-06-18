@@ -129,6 +129,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_laden.triggered.connect(self._laden)
         self.akt_fit = leiste.addAction("Auto-Fit (alle)")
         self.akt_fit.triggered.connect(self._auto_fit)
+        self.akt_seed = leiste.addAction("Resonanz vorgeben")
+        self.akt_seed.setToolTip(
+            "Zwei Punkte auf die Resonanz in der Übersicht klicken → die Fit-Fenster "
+            "folgen dieser Dispersion (hilft, wenn der Auto-Fit an einem Störfeature hängt).")
+        self.akt_seed.triggered.connect(self._resonanz_vorgeben)
         leiste.addSeparator()
         self.akt_kittel = leiste.addAction("Kittel/LLG-Auswertung")
         self.akt_kittel.triggered.connect(self._kittel_llg)
@@ -245,7 +250,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _setze_bedienelemente(self, an: bool) -> None:
         """Sperrt/entsperrt Aktionen und Navigation waehrend eines Hintergrund-Jobs."""
-        for aktion in (self.akt_laden, self.akt_fit, self.akt_kittel,
+        for aktion in (self.akt_laden, self.akt_fit, self.akt_seed, self.akt_kittel,
                        self.akt_tdms, self.akt_xlsx, self.akt_csv):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
@@ -389,6 +394,63 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 f"Auto-Fit fertig. {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.")
 
         self._starte_job(aufgabe, bei_fertig, "Auto-Fit läuft …")
+
+    def _resonanz_vorgeben(self):
+        """Startet den Dispersions-Seed: zwei Klicks auf die Resonanz in der Übersicht."""
+        if self.stapel is None:
+            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            return
+        if self._job_laeuft:
+            return
+        self._log("Resonanz vorgeben: zwei Punkte auf die Resonanz in der Übersicht klicken "
+                  "(tiefe und hohe Frequenz).", "info")
+        self.statusBar().showMessage("Resonanz vorgeben: zwei Punkte auf die Resonanz klicken …")
+        self.matrix.starte_dispersion_seed(self._seed_fertig)
+
+    def _seed_fertig(self, punkte):
+        """Callback nach zwei Klicks: Kittel-Gerade legen und mit Vorgabe neu fitten."""
+        (b1, f1_ghz), (b2, f2_ghz) = punkte
+        f1, f2 = f1_ghz * 1e9, f2_ghz * 1e9
+        if abs(f2 - f1) < 1e6:
+            QtWidgets.QMessageBox.warning(
+                self, "Hinweis", "Bitte zwei Punkte bei DEUTLICH verschiedenen Frequenzen wählen.")
+            self._log("Resonanz vorgeben abgebrochen (Punkte zu nah beieinander).", "warn")
+            return
+        steigung = (b2 - b1) / (f2 - f1)
+        datensatz = self.stapel.datensatz
+        zentren = b1 + steigung * (datensatz.frequenzen - f1)  # Kittel-Gerade B_res(f)
+        self._log(f"Dispersion gesetzt: {b1:.3f} T @ {f1/1e9:.1f} GHz – "
+                  f"{b2:.3f} T @ {f2/1e9:.1f} GHz → Auto-Fit mit Vorgabe …", "ok")
+
+        def aufgabe(melde):
+            n = len(datensatz.linescans)
+            schritt = max(1, n // 50)
+
+            def fortschritt(i, total, erg):
+                zeige = (i == 0) or (i + 1 == total) or ((i + 1) % schritt == 0) or erg.problematisch
+                if zeige and erg.problematisch:
+                    text = f"  {i+1}/{total}  f={erg.frequenz/1e9:6.2f} GHz  ⚠ {erg.problem_text}"
+                elif zeige:
+                    text = (f"  {i+1}/{total}  f={erg.frequenz/1e9:6.2f} GHz  "
+                            f"✓ B_res={erg.B_res:.3f} T, α={erg.alpha:.1e}")
+                else:
+                    text = ""
+                melde(i + 1, total, text)
+
+            return fitte_alle(datensatz, fortschritt=fortschritt, zentren=zentren)
+
+        def bei_fertig(stapel):
+            self.stapel = stapel
+            self._aktualisiere_overlay()
+            self.aktueller_index = 0
+            self._zeige_aktuellen()
+            n_prob = len(stapel.index_problematisch())
+            self._log(f"Auto-Fit (mit Vorgabe) fertig: {len(stapel.ergebnisse)} Fits, "
+                      f"{n_prob} problematisch.", "ok" if n_prob <= len(stapel.ergebnisse) // 3 else "warn")
+            self.statusBar().showMessage(
+                f"Auto-Fit (mit vorgegebener Dispersion) fertig. {n_prob} problematisch.")
+
+        self._starte_job(aufgabe, bei_fertig, "Auto-Fit mit vorgegebener Dispersion …")
 
     def _aktualisiere_overlay(self):
         bres = np.array([e.B_res for e in self.stapel.ergebnisse])

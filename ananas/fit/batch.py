@@ -15,7 +15,7 @@ import numpy as np
 from ..io.datensatz import Linescan, Messdatensatz
 from ..physik.konstanten import GAMMA_STANDARD
 from ..physik.fitmodell import Startwerte
-from .autowindows import auto_fenster_alle, schneide_band
+from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
 from .linescan_fit import FitErgebnis, fitte_linescan
 
 
@@ -56,12 +56,18 @@ def fitte_alle(
     breite_faktor: float = 8.0,
     r2_schwelle: float = 0.9,
     fortschritt=None,
+    zentren=None,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
     ``fortschritt`` ist ein optionaler Callback ``f(i, n, ergebnis)`` fuer die GUI.
+    ``zentren`` (optional): vorgegebene Fenstermitten ``B_res(f)`` je Frequenz (z. B.
+    aus einem manuellen Dispersions-Seed); dann wird die Auto-Detektion uebersprungen.
     """
-    fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)
+    if zentren is not None:
+        fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor)
+    else:
+        fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=fenster,
     )

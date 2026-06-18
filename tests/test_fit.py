@@ -110,6 +110,26 @@ def test_auto_fenster_alle_folgt_dispersion_auf_gekruemmtem_untergrund():
     assert mitten[-1] - mitten[0] > 1.0
 
 
+def test_fenster_aus_trasse_zentriert_auf_vorgabe():
+    """Dispersions-Seed: bei vorgegebenen Zentren liegen die Fenster eng um die Vorgabe."""
+    from ananas.io.datensatz import Messdatensatz
+    from ananas.fit.autowindows import fenster_aus_trasse
+
+    gamma = GAMMA_STANDARD
+    B = np.linspace(1.0, 3.65, 500)
+    freqs = np.linspace(6e9, 48e9, 20)
+    mu0Meff = 1.35
+    linescans = [Linescan(frequenz=float(f), feld=B.copy(),
+                          re=np.zeros_like(B), im=np.zeros_like(B)) for f in freqs]
+    ds = Messdatensatz(quelle="synth", format_typ="unsortiert", linescans=linescans)
+    zentren = np.array([mu0Meff + 2 * np.pi * f / gamma for f in freqs])
+
+    fenster = fenster_aus_trasse(ds, zentren, gamma)
+    for (u, o), z in zip(fenster, zentren):
+        assert u < z < o                 # Fenster enthält die vorgegebene Resonanz
+        assert 0.05 <= (o - u) <= 0.30    # eng, aber sinnvoll
+
+
 def test_dH_konsistenz():
     ls = _synthetischer_linescan(20e9, 3.0, 5e-3, 0.01, 0.0)
     erg = fitte_linescan(ls)

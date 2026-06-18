@@ -168,6 +168,21 @@ def test_logo_hilfe_und_navigator_sichtbarkeit(app):
     assert w.navigator_dock.isHidden() is True
 
 
+def test_matrix_dispersion_seed(app):
+    """Dispersions-Seed: zwei Klicks in der Übersicht liefern die zwei Resonanzpunkte."""
+    from ananas.gui.matrix_ansicht import MatrixAnsicht
+    got = {}
+    m = MatrixAnsicht()
+    m.zeige(_mini_datensatz(10))
+    m.starte_dispersion_seed(lambda p: got.__setitem__("p", p))
+    m._on_press(_ev(m.ax, xdata=2.0, ydata=10.0))   # erster Punkt
+    assert "p" not in got                            # noch nicht fertig
+    m._on_press(_ev(m.ax, xdata=3.0, ydata=40.0))   # zweiter Punkt -> Callback
+    assert "p" in got and len(got["p"]) == 2
+    assert got["p"][0] == (2.0, 10.0) and got["p"][1] == (3.0, 40.0)
+    assert m._seed_fertig is None                    # Seed-Modus wieder aus
+
+
 def test_grenzlinien_interaktion(app):
     from ananas.gui.fit_ansicht import FitAnsicht
     gerufen = {}

@@ -166,6 +166,35 @@ def auto_fenster_alle(
     return fenster
 
 
+def fenster_aus_trasse(
+    datensatz: Messdatensatz,
+    zentren,
+    gamma: float = GAMMA_STANDARD,
+    breite_faktor: float = 8.0,
+) -> list[tuple[float, float]]:
+    """Feldfenster um VORGEGEBENE Zentren ``B_res(f)`` (manueller Dispersions-Seed).
+
+    Wird genutzt, wenn die Automatik an einem festen Stoerfeature haengenbleibt: der
+    Nutzer gibt die Resonanz-Dispersion vor (z. B. zwei Klicks in der Uebersicht ->
+    Kittel-Gerade), und die Fenster folgen ihr. Die Breite ist eng an die erwartete
+    Linienbreite gekoppelt – ein schmales Band um die vorgegebene Resonanz liefert
+    auch bei schwacher Resonanz neben Stoerfeatures die robustesten Fits.
+    """
+    z = np.asarray(zentren, dtype=float)
+    fenster: list[tuple[float, float]] = []
+    for k, ls in enumerate(datensatz.linescans):
+        B = ls.feld
+        c = float(np.clip(z[k], float(B.min()), float(B.max())))
+        # erwartete Linienbreite mu0*DeltaH = 2*omega*alpha/gamma (alpha ~ 0.01),
+        # eng gedeckelt:
+        dB = 2.0 * (2.0 * np.pi * ls.frequenz) * 0.01 / gamma
+        halb = float(np.clip(breite_faktor * dB / 2.0, 0.04, 0.08))
+        unten = max(c - halb, float(B.min()))
+        oben = min(c + halb, float(B.max()))
+        fenster.append((unten, oben) if oben > unten else (float(B.min()), float(B.max())))
+    return fenster
+
+
 def schneide_band(linescan: Linescan, feld_unten: float, feld_oben: float) -> Linescan:
     """Liefert einen neuen Linescan, der auf [feld_unten, feld_oben] beschnitten ist."""
     maske = (linescan.feld >= feld_unten) & (linescan.feld <= feld_oben)

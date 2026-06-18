@@ -64,6 +64,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_aktiv = False
         self._box_corner = None
         self._box_patch = None
+        # Dispersions-Seed: zwei Klicks auf die Resonanz vorgeben.
+        self._seed_fertig = None
+        self._seed_punkte: list[tuple[float, float]] = []
+        self._seed_marker: list = []
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.mpl_connect("button_press_event", self._on_press)
@@ -278,11 +282,49 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.draw_idle()
         self._melde_zoom()
 
+    # --- Dispersions-Seed (zwei Klicks auf die Resonanz) -------------------
+    def starte_dispersion_seed(self, fertig) -> None:
+        """Aktiviert den Seed-Modus: die naechsten zwei Klicks markieren die Resonanz.
+
+        ``fertig(punkte)`` wird mit ``[(B1, f1_GHz), (B2, f2_GHz)]`` aufgerufen.
+        """
+        self._seed_fertig = fertig
+        self._seed_punkte = []
+        for m in self._seed_marker:
+            m.remove()
+        self._seed_marker = []
+        self.setCursor(QtCore.Qt.CrossCursor)
+        self.draw_idle()
+
+    def _seed_klick(self, event) -> None:
+        if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
+            return
+        self._seed_punkte.append((float(event.xdata), float(event.ydata)))  # (B [T], f [GHz])
+        mk = self.ax.plot([event.xdata], [event.ydata], "P", color="#E8A317",
+                          mec="white", mew=1.2, ms=12, zorder=9)[0]
+        self._seed_marker.append(mk)
+        self.draw_idle()
+        if len(self._seed_punkte) >= 2:
+            fertig = self._seed_fertig
+            punkte = list(self._seed_punkte)
+            self._seed_fertig = None
+            self._seed_punkte = []
+            self.unsetCursor()
+            for m in self._seed_marker:
+                m.remove()
+            self._seed_marker = []
+            self.draw_idle()
+            if fertig is not None:
+                fertig(punkte)
+
     # --- Maus / Tastatur ---------------------------------------------------
     def _on_press(self, event):
         if event.inaxes != self.ax or self._freq_achse is None:
             return
         self.setFocus()
+        if self._seed_fertig is not None:   # Seed-Modus: Klick als Resonanzpunkt
+            self._seed_klick(event)
+            return
         if getattr(event, "dblclick", False):
             self._press_xy = None
             self._zoom_zuruecksetzen()
