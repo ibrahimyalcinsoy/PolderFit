@@ -26,11 +26,15 @@ from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
+from .navigator_ansicht import NavigatorAnsicht
 from .arbeiter import Arbeiter
 from .stil import ANANAS_QSS
 
 #: Pfad zum Ananas-App-Icon (SVG, skaliert verlustfrei).
 ICON_PFAD = str(Path(__file__).resolve().parent / "assets" / "ananas.svg")
+
+#: Quellcode-Repository (im Hilfe-Dialog verlinkt).
+REPO_URL = "https://github.com/ibrahimyalcinsoy/Ananas"
 
 #: Farben fuer das Aktivitaetsprotokoll je Meldungsart.
 _LOG_FARBEN = {
@@ -63,12 +67,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._job_titel: str = ""
         self._bei_fertig = None
 
-        self.matrix = MatrixAnsicht(frequenz_gewaehlt=self._frequenz_gewaehlt)
+        self.matrix = MatrixAnsicht(frequenz_gewaehlt=self._frequenz_gewaehlt,
+                                    zoom_geaendert=self._auf_zoom)
         self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert)
+        self.navigator = NavigatorAnsicht(bereich_gewaehlt=self._navigator_bereich)
 
         self._baue_oberflaeche()
         self._baue_werkzeugleiste()
         self._baue_aktivitaet_dock()
+        self._baue_navigator_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
         self._log("Ananas bereit. Bitte eine TDMS-Datei laden.", "info")
 
@@ -105,14 +112,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         leiste = self.addToolBar("Hauptaktionen")
         leiste.setMovable(False)
 
-        # Ananas-Logo + Wortmarke ganz links -> App-Charakter.
-        logo = QtWidgets.QLabel()
-        logo.setPixmap(app_icon().pixmap(28, 28))
-        logo.setContentsMargins(6, 0, 4, 0)
-        leiste.addWidget(logo)
-        wortmarke = QtWidgets.QLabel("Ananas")
-        wortmarke.setStyleSheet("font-weight: 600; font-size: 14px; padding-right: 10px;")
-        leiste.addWidget(wortmarke)
+        # Klickbares Ananas×WMI-Logo + Wortmarke ganz links -> oeffnet die Hilfe.
+        self.btn_logo = QtWidgets.QToolButton()
+        self.btn_logo.setIcon(app_icon())
+        self.btn_logo.setIconSize(QtCore.QSize(26, 26))
+        self.btn_logo.setText(" Ananas")
+        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.btn_logo.setAutoRaise(True)
+        self.btn_logo.setToolTip("Hilfe & Infos (Bedienung, Walther-Meißner-Institut, Repository)")
+        self.btn_logo.setStyleSheet("font-weight: 600; font-size: 14px; padding: 2px 8px;")
+        self.btn_logo.clicked.connect(self._zeige_hilfe)
+        leiste.addWidget(self.btn_logo)
         leiste.addSeparator()
 
         self.akt_laden = leiste.addAction("TDMS laden")
@@ -137,6 +147,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_vollbereich.setToolTip(
             "Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
         self.akt_vollbereich.toggled.connect(self._vollbereich_umschalten)
+
+        # Problematische Fits im Resonanz-Overlay der Übersicht ausblenden.
+        self.akt_problemfits = leiste.addAction("Problemfits ausblenden")
+        self.akt_problemfits.setCheckable(True)
+        self.akt_problemfits.setToolTip(
+            "Problematische Fits im Resonanz-Overlay der Übersicht ausblenden.")
+        self.akt_problemfits.toggled.connect(self._problemfits_umschalten)
 
         # Sichtbarkeits-Umschalter fuer das Aktivitaets-Panel (rechts).
         leiste.addSeparator()
@@ -192,6 +209,25 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_aktivitaet.setChecked(True)
         self.akt_aktivitaet.toggled.connect(dock.setVisible)
         dock.visibilityChanged.connect(self.akt_aktivitaet.setChecked)
+
+    def _baue_navigator_dock(self):
+        """Navigator-Minimap (links); erscheint automatisch beim Zoomen der Übersicht."""
+        dock = QtWidgets.QDockWidget("Navigator", self)
+        dock.setObjectName("navigator_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
+            | QtCore.Qt.BottomDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+        dock.setWidget(self.navigator)
+        dock.setMinimumWidth(220)
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+        dock.setVisible(False)  # erscheint erst, sobald gezoomt wird
+        self.navigator_dock = dock
 
     # --- Aktivitaet / Protokoll -------------------------------------------
     def _log(self, text: str, art: str = "info") -> None:
@@ -303,6 +339,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         def bei_fertig(res):
             pfad_, datensatz = res
             self.matrix.zeige(datensatz)
+            mat, ext = self.matrix.thumbnail()
+            self.navigator.zeige(mat, ext)
+            self.navigator_dock.setVisible(False)  # erst beim Zoomen einblenden
             self.stapel = StapelErgebnis(datensatz=datensatz)
             self._log(
                 f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
@@ -353,7 +392,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _aktualisiere_overlay(self):
         bres = np.array([e.B_res for e in self.stapel.ergebnisse])
-        self.matrix.aktualisiere_resonanz(self.stapel.datensatz.frequenzen, bres)
+        problem = np.array([e.problematisch for e in self.stapel.ergebnisse], dtype=bool)
+        self.matrix.aktualisiere_resonanz(self.stapel.datensatz.frequenzen, bres, problem)
 
     def _zeige_aktuellen(self):
         if not self.stapel or not self.stapel.ergebnisse:
@@ -491,6 +531,107 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Ganzen Feldsweep statt Zoom aufs Band zeigen (und aktuelle Anzeige erneuern)."""
         self.fitansicht.setze_vollbereich(an)
         self._zeige_aktuellen()
+
+    def _problemfits_umschalten(self, an: bool):
+        """Problematische Fits im Resonanz-Overlay der Übersicht aus-/einblenden."""
+        self.matrix.setze_problemfits_ausblenden(an)
+
+    def _auf_zoom(self, xlim, ylim, ist_gezoomt: bool):
+        """Vom Matrix-Zoom aufgerufen: Navigator zeigen/aktualisieren bzw. ausblenden."""
+        if ist_gezoomt:
+            self.navigator.setze_ausschnitt(xlim, ylim)
+            if not self.navigator_dock.isVisible():
+                self.navigator_dock.setVisible(True)
+        else:
+            self.navigator_dock.setVisible(False)
+
+    def _navigator_bereich(self, xlim, ylim):
+        """Klick/Ziehen im Navigator -> sichtbaren Ausschnitt der Übersicht verschieben."""
+        self.matrix.setze_ansicht(xlim, ylim)
+
+    def _zeige_hilfe(self):
+        """Oeffnet den Hilfe-Dialog (modal)."""
+        self._baue_hilfe_dialog().exec()
+
+    def _baue_hilfe_dialog(self) -> QtWidgets.QDialog:
+        """Hilfe-Dialog: Bedienung, Physik-Kurzfassung, WMI-Bezug und Repository-Link."""
+        dlg = QtWidgets.QDialog(self)
+        dlg.setWindowTitle("Ananas – Hilfe & Infos")
+        dlg.setWindowIcon(app_icon())
+        dlg.resize(660, 580)
+        lay = QtWidgets.QVBoxLayout(dlg)
+
+        kopf = QtWidgets.QHBoxLayout()
+        logo = QtWidgets.QLabel()
+        logo.setPixmap(app_icon().pixmap(56, 56))
+        kopf.addWidget(logo)
+        titel = QtWidgets.QLabel(
+            "<b style='font-size:16px'>Ananas</b><br>"
+            "Breitband-FMR-Auswertung · Walther-Meißner-Institut")
+        titel.setTextFormat(QtCore.Qt.RichText)
+        kopf.addWidget(titel, 1)
+        lay.addLayout(kopf)
+
+        browser = QtWidgets.QTextBrowser()
+        browser.setOpenExternalLinks(True)
+        browser.setHtml(self._hilfe_html())
+        lay.addWidget(browser, 1)
+
+        knoepfe = QtWidgets.QDialogButtonBox()
+        b_repo = knoepfe.addButton("Repository öffnen", QtWidgets.QDialogButtonBox.ActionRole)
+        b_repo.clicked.connect(
+            lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(REPO_URL)))
+        b_zu = knoepfe.addButton("Schließen", QtWidgets.QDialogButtonBox.AcceptRole)
+        b_zu.clicked.connect(dlg.accept)
+        lay.addWidget(knoepfe)
+        return dlg
+
+    @staticmethod
+    def _hilfe_html() -> str:
+        return f"""
+        <html><body style="font-size:12px; line-height:1.45">
+        <p><b>Ananas</b> wertet Breitband-Ferromagnetische-Resonanz-Messungen (bbFMR) aus:
+        TDMS einlesen, je Frequenz an die <b>Polder-Suszeptibilität</b> fitten und
+        übergreifend Kittel-/LLG-Parameter (µ₀M<sub>eff</sub>, g, α, µ₀H<sub>inh</sub>) bestimmen.</p>
+
+        <h3>Arbeitsablauf</h3>
+        <ol>
+          <li><b>TDMS laden</b> – sortiertes oder unsortiertes Format wird erkannt.</li>
+          <li><b>Auto-Fit (alle)</b> – sucht je Frequenz die Resonanz, schneidet ein Band
+              und fittet Re &amp; Im gleichzeitig. Läuft im Hintergrund; Fortschritt und
+              Live-Protokoll im <b>Aktivitäts-Panel</b> (rechts).</li>
+          <li><b>Nachfitten</b> – im rechten Panel die <b>grünen Grenzlinien</b> ziehen
+              (Band wird automatisch herangezoomt; „Vollbereich" zeigt den ganzen Sweep).
+              <i>Zurück/Weiter/Nochmal fitten/Nächster Problemfit</i> steuern den Korrekturlauf.</li>
+          <li><b>Kittel/LLG-Auswertung</b> – Resonanz vs. f (+Kittel), Linienbreite vs. f
+              (LLG → α, H<sub>inh</sub>) und Resonanz vs. T.</li>
+          <li><b>Export</b> – zugeschnittene Rohdaten + Fitkurven als TDMS, Parameter als Excel/CSV.</li>
+        </ol>
+
+        <h3>Übersicht (links) – Navigation &amp; Zoom</h3>
+        <ul>
+          <li><b>Klicken</b>: Frequenz wählen → der zugehörige Fit wird sofort geladen.</li>
+          <li><b>Kästchen ziehen</b>: auf den markierten Bereich zoomen.</li>
+          <li><b>Mausrad</b>: rein/raus zoomen · <b>Doppelklick</b>: Zoom zurücksetzen.</li>
+          <li><b>Umschalt+Mausrad</b> oder <b>↑/↓</b> (Pos1/Ende, Bild↑/↓): Frequenz wechseln.</li>
+          <li>Beim Zoomen erscheint links der <b>Navigator</b> – er zeigt, wo man sich in der
+              Gesamtmessung befindet (Klick im Navigator verschiebt den Ausschnitt).</li>
+          <li><b>„Problemfits ausblenden"</b>: blendet als problematisch markierte Fits im
+              Resonanz-Overlay aus.</li>
+        </ul>
+
+        <h3>Physik (Kurzfassung)</h3>
+        <p>Gefittet wird das komplexe S21 mit der Polder-Suszeptibilität (oop). Aus B<sub>res</sub>(f)
+        folgt über die Kittel-Gleichung µ₀M<sub>eff</sub> und der g-Faktor, aus der Linienbreite
+        µ₀ΔH(f) über das LLG-Modell die Gilbert-Dämpfung α und die inhomogene Verbreiterung
+        µ₀H<sub>inh</sub>.</p>
+
+        <hr>
+        <p>Entstanden am <b>Walther-Meißner-Institut</b> (das Logo verbindet die Ananas mit dem
+        WMI-Signet). Quellcode, Doku und Details:<br>
+        <a href="{REPO_URL}">{REPO_URL}</a></p>
+        </body></html>
+        """
 
     def _frequenz_gewaehlt(self, index: int):
         if not self.stapel or not self.stapel.ergebnisse:
