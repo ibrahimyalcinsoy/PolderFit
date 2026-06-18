@@ -30,12 +30,21 @@ Ablauf in der GUI:
 2. **Auto-Fit (alle)** – AutoWindows sucht je Frequenz die Resonanz, schneidet ein Band
    und fittet Real- und Imaginärteil simultan.
 3. Je Frequenz die **zwei grünen Grenzlinien** verschieben → der Datensatz wird sofort
-   neu gefittet („rumfitten"). `Zurück` / `Weiter` / `Nochmal fitten` /
-   `Nächster Problemfit` steuern den iterativen Korrekturlauf.
+   neu gefittet („rumfitten"). Das Fit-Panel zoomt dafür automatisch auf das
+   Resonanzband (Schalter **„Vollbereich"** zeigt wieder den ganzen Feldsweep); die
+   Grenzlinien sind deutlich hervorgehoben (weißer Halo, schattiertes Band, Greifpunkte
+   am oberen Rand, Hover-Highlight + Resize-Cursor). `Zurück` / `Weiter` /
+   `Nochmal fitten` / `Nächster Problemfit` steuern den iterativen Korrekturlauf.
 4. **Kittel/LLG-Auswertung** – Resonanz vs. Frequenz (+ Kittel-Fit, oop/ip wählbar),
    Linienbreite vs. Frequenz (LLG → α, Hinh) und Resonanz vs. Temperatur.
 5. **Export** – zugeschnittene Rohdaten + Fitkurven als TDMS, Parameter + Kennzahlen
    als Excel/CSV.
+
+Lang laufende Schritte (Laden großer Dateien, Auto-Fit über alle Frequenzen) laufen in
+einem Hintergrund-Thread, sodass die Oberfläche bedienbar bleibt. Ein andockbares,
+abtrennbares **Aktivitäts-Panel** zeigt einen Fortschrittsbalken und ein farbiges
+Live-Protokoll (jeder Fit mit B_res/α, Problemfits markiert) – die App wirkt nie
+„eingefroren", auch wenn sie länger rechnet.
 
 ## Architektur
 
@@ -46,7 +55,8 @@ ananas/
   fit/         AutoWindows, Einzelfit (lmfit), Stapel + Korrekturlauf
   persistenz/  Excel/CSV-Export, Sitzungszustand (JSON)
   auswertung/  Resonanz vs. f/T, Kittel-/LLG-Fit, Publikationsplots
-  gui/         PySide6-Oberfläche mit eingebettetem Matplotlib
+  gui/         PySide6-Oberfläche mit eingebettetem Matplotlib (Hintergrund-Worker,
+               Aktivitäts-Panel, helles Stylesheet, App-Icon)
   app.py       Einstiegspunkt
 ```
 
@@ -258,13 +268,3 @@ inkl. Export. Die Integrationstests verwenden die Beispieldateien in `TDMS files
 
 Sortiertes und unsortiertes File liefern konsistent **µ0Meff ≈ 2.382 T, g ≈ 2.08,
 α ≈ 2·10⁻³** (oop, −5 K) – die Kittel-Dispersion ist über 5–50 GHz exakt linear.
-
-## Offene Punkte (mit J. Weber abzustimmen)
-
-1. Bedeutung der Fehlercodes „15" / „15/1/2".
-2. Sortierkriterium Rohfile → sorted (Resonanzband-Auswahl).
-3. Genaue LabVIEW-Solver-Variante.
-4. g-Faktor/γ fest vorgeben oder mitfitten.
-5. Umfang Messrechner-Zugriff (nur Lesen vs. Steuerung).
-6. Umfang funktionaler Erweiterungen über die Portierung hinaus.
-7. A-Startwert-Strategie bestätigen.
