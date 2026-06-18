@@ -627,8 +627,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         µ₀H<sub>inh</sub>.</p>
 
         <hr>
-        <p>Entstanden am <b>Walther-Meißner-Institut</b> (das Logo verbindet die Ananas mit dem
-        WMI-Signet). Quellcode, Doku und Details:<br>
+        <p>Entstanden am <b>Walther-Meißner-Institut</b>. Das Logo verbindet die Ananas mit dem
+        WMI-Signet: Magnetfeldlinien, die den <b>Supraleiter</b> (Kreis) umfließen, ohne
+        einzudringen – der <i>Meißner-Effekt</i>. Quellcode, Doku und Details:<br>
         <a href="{REPO_URL}">{REPO_URL}</a></p>
         </body></html>
         """
@@ -643,6 +644,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
 def starte_gui(argv=None):
     """Startet die Qt-Anwendung."""
     import sys
+
+    # Harmlose, sehr gespraechige Wayland-Textinput-Warnung leise stellen
+    # ("zwp_text_input_v3_leave: Got leave event for surface 0x0 ..."). Rein
+    # kosmetisch; nur ergaenzen, falls der Nutzer QT_LOGGING_RULES nicht selbst setzt.
+    regel = "qt.qpa.wayland.textinput=false"
+    bestehend = os.environ.get("QT_LOGGING_RULES", "")
+    if regel not in bestehend:
+        os.environ["QT_LOGGING_RULES"] = f"{bestehend};{regel}".strip(";")
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv or sys.argv)
     app.setApplicationName("Ananas")
