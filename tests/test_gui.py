@@ -68,6 +68,37 @@ def test_hintergrund_job_laeuft_durch(app):
     assert w.akt_fit.isEnabled() is True  # wieder freigegeben
 
 
+def test_matrix_navigation(app):
+    """Die horizontale Frequenz-Linie laesst sich per Klick, Ziehen, Mausrad und
+    Tastatur bewegen; jede Aenderung meldet den Index zurueck."""
+    from ananas.gui.matrix_ansicht import MatrixAnsicht
+    from ananas.io.datensatz import Messdatensatz
+    gew = {}
+    m = MatrixAnsicht(frequenz_gewaehlt=lambda i: gew.__setitem__("i", i))
+    B = np.linspace(2.5, 3.5, 40)
+    freqs = np.linspace(5e9, 50e9, 10)
+    ls = [Linescan(frequenz=float(f), feld=B, re=np.cos(20 * B), im=np.sin(20 * B)) for f in freqs]
+    ds = Messdatensatz(quelle="t", format_typ="sortiert", linescans=ls)
+    m.zeige(ds)
+    m.markiere_frequenz(0)
+
+    # Mausrad hoch -> naechste Frequenz.
+    m._on_scroll(SimpleNamespace(step=1))
+    assert m._aktueller_index == 1 and gew["i"] == 1
+    # Pfeiltaste hoch -> +1, Bild hoch -> +10 (geklemmt), Ende -> letzte.
+    m._on_key(SimpleNamespace(key="up"))
+    assert m._aktueller_index == 2
+    m._on_key(SimpleNamespace(key="end"))
+    assert m._aktueller_index == len(ls) - 1 and gew["i"] == len(ls) - 1
+    # Ziehen (press + move) scrubbt die Linie zur Maus-Frequenz.
+    m._on_press(SimpleNamespace(inaxes=m.ax, ydata=freqs[3] / 1e9))
+    assert m._aktueller_index == 3
+    m._on_move(SimpleNamespace(inaxes=m.ax, ydata=freqs[6] / 1e9))
+    assert m._aktueller_index == 6
+    m._on_release(SimpleNamespace(inaxes=m.ax, ydata=0.0))
+    assert m._ziehen is False
+
+
 def test_grenzlinien_interaktion(app):
     from ananas.gui.fit_ansicht import FitAnsicht
     gerufen = {}
