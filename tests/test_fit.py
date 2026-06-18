@@ -78,6 +78,38 @@ def test_auto_fenster_liefert_gueltiges_band():
     assert unten <= 3.0 <= oben  # Resonanz liegt im vorgeschlagenen Band
 
 
+def test_auto_fenster_alle_folgt_dispersion_auf_gekruemmtem_untergrund():
+    """AutoWindows muss die mit f wandernde Resonanz auch auf einem stark
+    gekrümmten Untergrund finden – nicht an einer festen Feldstelle hängenbleiben
+    (Regression: unsortiertes File mit breitem Sweep, fast alle Fits problematisch)."""
+    from ananas.io.datensatz import Messdatensatz
+    from ananas.fit.autowindows import auto_fenster_alle
+
+    gamma = GAMMA_STANDARD
+    B = np.linspace(1.0, 3.65, 400)
+    B_ref = float(B.mean())
+    freqs = np.linspace(6e9, 48e9, 25)
+    mu0Meff = 1.37
+    linescans, wahr = [], []
+    for f in freqs:
+        omega = 2 * np.pi * f
+        B_res = mu0Meff + omega / gamma   # oop-Kittel: Resonanz wandert mit f
+        wahr.append(B_res)
+        sig = s21_modell(B, B_res, 5e-3, 0.02, 0.5, 0.0, 0.0, 0.0, 0.0, omega, gamma, B_ref)
+        d = B - B.mean()                  # starker, gekrümmter (quadratischer) Untergrund
+        bg = (0.25 - 0.04 * d + 0.05 * d**2) + 1j * (0.10 + 0.03 * d - 0.04 * d**2)
+        s = sig + bg
+        linescans.append(Linescan(frequenz=float(f), feld=B.copy(), re=s.real, im=s.imag))
+    ds = Messdatensatz(quelle="synth", format_typ="unsortiert", linescans=linescans)
+
+    fenster = auto_fenster_alle(ds)
+    treffer = sum(u <= w <= o for (u, o), w in zip(fenster, wahr))
+    assert treffer >= len(wahr) - 2  # praktisch alle Fenster enthalten die Resonanz
+    # Die Fenstermitten müssen mit der Frequenz steigen (Dispersion folgen).
+    mitten = np.array([0.5 * (u + o) for u, o in fenster])
+    assert mitten[-1] - mitten[0] > 1.0
+
+
 def test_dH_konsistenz():
     ls = _synthetischer_linescan(20e9, 3.0, 5e-3, 0.01, 0.0)
     erg = fitte_linescan(ls)
