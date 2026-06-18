@@ -30,5 +30,8 @@ ananas = "ananas.app:main"
 [tool.setuptools.packages.find]
 include = ["ananas*"]
 
+[tool.setuptools.package-data]
+"ananas.gui" = ["assets/*.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

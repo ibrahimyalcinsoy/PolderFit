@@ -10,9 +10,10 @@ ist ueber die Navigations- und "Neu fitten"-Schaltflaechen abgebildet.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import numpy as np
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 
 from ..io import lade_tdms, schreibe_ergebnis_tdms
 from ..fit.batch import StapelErgebnis, fitte_alle, fitte_neu
@@ -21,6 +22,14 @@ from ..auswertung.uebersicht import auswertung_kittel_llg
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
 
+#: Pfad zum Ananas-App-Icon (SVG, skaliert verlustfrei).
+ICON_PFAD = str(Path(__file__).resolve().parent / "assets" / "ananas.svg")
+
+
+def app_icon() -> QtGui.QIcon:
+    """Liefert das Ananas-App-Icon (leeres QIcon, falls die Datei fehlt)."""
+    return QtGui.QIcon(ICON_PFAD)
+
 
 class Hauptfenster(QtWidgets.QMainWindow):
     """Zentrales Anwendungsfenster."""
@@ -28,6 +37,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Ananas – Breitband-FMR-Auswertung")
+        self.setWindowIcon(app_icon())
         self.resize(1300, 800)
 
         self.stapel: StapelErgebnis | None = None
@@ -71,6 +81,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_werkzeugleiste(self):
         leiste = self.addToolBar("Hauptaktionen")
+
+        # Ananas-Logo + Wortmarke ganz links -> App-Charakter.
+        logo = QtWidgets.QLabel()
+        logo.setPixmap(app_icon().pixmap(28, 28))
+        logo.setContentsMargins(6, 0, 4, 0)
+        leiste.addWidget(logo)
+        wortmarke = QtWidgets.QLabel("Ananas")
+        wortmarke.setStyleSheet("font-weight: 600; font-size: 14px; padding-right: 10px;")
+        leiste.addWidget(wortmarke)
+        leiste.addSeparator()
+
         akt_laden = leiste.addAction("TDMS laden")
         akt_laden.triggered.connect(self._laden)
         akt_fit = leiste.addAction("Auto-Fit (alle)")
@@ -257,6 +278,8 @@ def starte_gui(argv=None):
     import sys
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv or sys.argv)
+    app.setApplicationName("Ananas")
+    app.setWindowIcon(app_icon())
     fenster = Hauptfenster()
     fenster.show()
     return app.exec()
