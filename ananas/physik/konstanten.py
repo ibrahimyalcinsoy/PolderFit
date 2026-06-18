@@ -30,7 +30,8 @@ G_FAKTOR_STANDARD: float = 2.0
 def gamma_aus_g(g: float = G_FAKTOR_STANDARD) -> float:
     """Gyromagnetisches Verhaeltnis ``gamma = g*mu_B/hbar`` in rad/(s*T).
 
-    Fuer ``g = 2`` ergibt sich ``gamma ~ 1.7608e11 rad/(s*T)``.
+    Fuer ``g = 2`` ergibt sich ``gamma ~ 1.7588e11 rad/(s*T)``. (Der oft zitierte
+    Wert ``1.7609e11`` gehoert zum freien Elektron mit ``g_e ~ 2.0023``.)
     """
     return g * MU_B / HBAR
 

@@ -94,8 +94,19 @@ def chi_ip_komponenten(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Real-/Imaginaerteil der in-plane-Suszeptibilitaet (chi/Ms).
 
-    Ebenfalls 1:1 aus dem Notebook (Variante ohne ``ratio``). Wird fuer
-    in-plane-Messungen bereitgehalten; die Beispielmessung ist oop.
+    1:1 aus dem Notebook, Abschnitt "In-plane (H orthogonal to CPW, H || y)",
+    Variante OHNE ``ratio`` (die Standard-ip-bbFMR-Konfiguration: Feld in der
+    Ebene, senkrecht zum CPW-Innenleiter).
+
+    HINWEIS – noch nicht im Linescan-Fit verdrahtet: Der Einzelfit
+    (:func:`ananas.physik.fitmodell.s21_modell`) verwendet derzeit
+    ausschliesslich :func:`chi_oop`; das ``oop``/``ip``-Umschalten greift nur in
+    der uebergreifenden Kittel-/LLG-Auswertung (auf bereits extrahierte ``B_res``).
+    Fuer einen echten ip-Linienform-Fit braucht es zusaetzlich einen
+    ``B_res``-parametrisierten Wrapper (die ip-Resonanz liegt NICHT einfach bei
+    ``mu0H0-mu0Meff=omega/gamma``, sondern bei der ip-Kittel-Bedingung, vgl.
+    :func:`ananas.physik.kittel_llg.kittel_ip`) und einen ``geometrie``-Parameter
+    durch Startwertschaetzung/Modell/Fit. Beispielmessung ist oop.
     """
     mu0H0 = np.asarray(mu0H0, dtype=float)
     g2 = gamma * gamma
