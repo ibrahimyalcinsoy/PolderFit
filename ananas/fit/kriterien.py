@@ -16,10 +16,13 @@ from __future__ import annotations
 import numpy as np
 
 # --- Parameter-Schranken (physikalisch sinnvoll) ---------------------------
-#: Untere/obere Schranke der Gilbert-Daempfung alpha im Fit.
+#: Untere/obere harte Fit-Schranke der Gilbert-Daempfung alpha (Spielraum fuer
+#: den Optimierer; bewusst weiter gefasst als die Plausibilitaetsgrenze unten).
 ALPHA_MIN: float = 1e-5
 ALPHA_MAX: float = 0.1
 #: alpha-Werte oberhalb dieses Wertes gelten als unphysikalisch (Kriterium d).
+#: Liegt UNTER ALPHA_MAX: Werte in (0.05, 0.1) sind als Fitwert erlaubt, werden
+#: aber als problematisch markiert (statt hart an die Schranke geklemmt zu werden).
 ALPHA_PLAUSIBEL_MAX: float = 0.05
 
 #: Schranken des Phasenwinkels phi.

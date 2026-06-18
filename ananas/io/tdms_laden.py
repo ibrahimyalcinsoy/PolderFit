@@ -58,6 +58,17 @@ def _lade_unsortiert(tdms, pfad: str) -> Messdatensatz:
     im_m = im.reshape(n_feld, n_freq)
     freq_achse = freq_m[0]  # Sweep ist je Zeile identisch.
 
+    # Dokumentierte Annahme (Protokoll 3.1): je Feldwert ein IDENTISCHER
+    # Frequenzsweep. n_feld*n_freq teilt sich i. d. R. in beiden Orientierungen
+    # (z. B. 725725 = 725*1001); ein abweichend "feld-schnell" gespeichertes File
+    # wuerde sonst still zu vertauschten Linescans fuehren. Daher absichern:
+    if not np.allclose(freq_m, freq_achse, rtol=0.0, atol=1.0):
+        raise ValueError(
+            "Unsortiertes TDMS: Frequenzsweep ist nicht je Feldwert identisch – "
+            "vermutlich abweichendes Speicher-Layout (Feld als schnelle Achse?). "
+            "Reshape (n_feld x n_freq) ist hier nicht zulaessig."
+        )
+
     # Temperatur (je Feldwert) optional.
     temperatur = None
     try:
