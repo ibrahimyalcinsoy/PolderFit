@@ -1,10 +1,11 @@
 """Tests des Linescan-Fits anhand synthetischer Daten (bekannte Wahrheit)."""
 
 import numpy as np
+import pytest
 
 from ananas.io.datensatz import Linescan
 from ananas.physik.konstanten import GAMMA_STANDARD
-from ananas.physik.fitmodell import s21_modell
+from ananas.physik.fitmodell import s21_modell, schaetze_startwerte
 from ananas.fit.linescan_fit import fitte_linescan
 
 
@@ -41,6 +42,25 @@ def test_fit_robust_mit_rauschen():
     assert erg.erfolg
     assert np.isclose(erg.B_res, wahr["B_res"], atol=2e-3)
     assert erg.R2 > 0.95
+
+
+@pytest.mark.parametrize("alpha_true", [3e-3, 6e-3, 1e-2])
+def test_startwert_alpha_aus_magnituden_fwhm(alpha_true):
+    """Der alpha-Startwert muss aus der MAGNITUDEN-FWHM korrekt zurueckgerechnet
+    werden: |chi| faellt erst bei x=+-sqrt(3) auf die Haelfte, die Absorption
+    (Definition von mu0*DeltaH, Gl. 2.27) schon bei x=+-1. Ohne den sqrt(3)-Faktor
+    waere der Startwert um ~73 % zu gross (Faktor 1.732)."""
+    gamma = GAMMA_STANDARD
+    f = 25e9
+    omega = 2 * np.pi * f
+    B_res = 3.0
+    B = np.linspace(B_res - 0.12, B_res + 0.12, 300)
+    B_ref = float(B.mean())
+    s = s21_modell(B, B_res, alpha_true, 0.01, 0.6, 0.02, -0.01, 0.05, 0.03,
+                   omega, gamma, B_ref)
+    sw = schaetze_startwerte(B, s.real + 1j * s.imag, omega, gamma)
+    # Mit korrektem sqrt(3): Faktor ~0.9-1.0; ohne ihn waere er ~1.73 (Test faellt).
+    assert np.isclose(sw.alpha, alpha_true, rtol=0.25)
 
 
 def test_dH_konsistenz():

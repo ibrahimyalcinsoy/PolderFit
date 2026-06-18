@@ -151,7 +151,12 @@ def _guetemasse(B, s21, kurve, p, B_ref, n_param):
     rmse_norm = (rmse / signalhub) if signalhub > 0 else np.inf
 
     # Reduziertes Chi²: Rauschen fit-unabhaengig aus den Rohdaten schaetzen.
-    sigma = _rausch_sigma(np.concatenate([s21.real, s21.imag]))
+    # Re und Im GETRENNT schaetzen und quadratisch mitteln – ein gemeinsamer
+    # concatenate-Block wuerde an der Re/Im-Naht zwei kuenstliche zweite
+    # Differenzen erzeugen (verschiedene Offsets/Steigungen von Re und Im).
+    sigma_re = _rausch_sigma(s21.real)
+    sigma_im = _rausch_sigma(s21.imag)
+    sigma = float(np.sqrt(0.5 * (sigma_re ** 2 + sigma_im ** 2)))
     dof = max(res.size - n_param, 1)
     chi2_red = float(np.sum(res ** 2) / (sigma ** 2) / dof)
 

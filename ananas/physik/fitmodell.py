@@ -168,8 +168,13 @@ def schaetze_startwerte(
     else:
         fwhm = float(abs(B[-1] - B[0]) / 10.0)
     fwhm = max(fwhm, 1e-4)
-    # oop: mu0*DeltaH = 2*omega*alpha/gamma  ->  alpha = gamma*fwhm/(2*omega).
-    alpha = float(gamma * fwhm / (2.0 * omega))
+    # mu0*DeltaH (Gl. 2.27) ist die FWHM der ABSORPTION (Imaginaerteil chi''),
+    # nicht der Magnitude. Fuer die oop-Lorentzform gilt |chi| ~ 1/sqrt(1+x^2),
+    # chi'' ~ 1/(1+x^2): die Magnitude faellt erst bei x=+-sqrt(3) auf die Haelfte,
+    # die Absorption schon bei x=+-1. Die hier gemessene Magnituden-FWHM ist daher
+    # um den Faktor sqrt(3) groesser als mu0*DeltaH. Mit mu0*DeltaH = 2*omega*alpha/gamma
+    # folgt fuer den Startwert:  alpha = gamma*fwhm / (2*sqrt(3)*omega).
+    alpha = float(gamma * fwhm / (2.0 * np.sqrt(3.0) * omega))
     # Auf den physikalisch plausiblen Bereich begrenzen (vgl. ananas.fit.kriterien).
     alpha = float(np.clip(alpha, 1e-5, 0.1))
 
