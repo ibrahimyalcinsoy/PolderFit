@@ -5,10 +5,15 @@ gesamten Arbeitsablauf bereit: TDMS laden -> AutoWindows + Auto-Fit -> je
 Frequenz Grenzen verschieben und neu fitten -> uebergreifende Auswertung ->
 Export (TDMS, Excel/CSV). Der Korrekturlauf (continue / zurueck / nochmal fitten)
 ist ueber die Navigations- und "Neu fitten"-Schaltflaechen abgebildet.
+
+Lang laufende Schritte (Laden grosser Dateien, Auto-Fit ueber alle Frequenzen)
+laufen in einem Hintergrund-Thread; ein andockbares Aktivitaets-Panel zeigt
+Fortschrittsbalken und ein Live-Protokoll, damit die App nie "eingefroren" wirkt.
 """
 
 from __future__ import annotations
 
+import html
 import os
 from pathlib import Path
 
@@ -21,9 +26,17 @@ from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
+from .arbeiter import Arbeiter
+from .stil import ANANAS_QSS
 
 #: Pfad zum Ananas-App-Icon (SVG, skaliert verlustfrei).
 ICON_PFAD = str(Path(__file__).resolve().parent / "assets" / "ananas.svg")
+
+#: Farben fuer das Aktivitaetsprotokoll je Meldungsart.
+_LOG_FARBEN = {
+    "info": "#5A5648", "ok": "#2E7D38", "warn": "#B8860B",
+    "problem": "#C0392B", "auto": "#6B6657",
+}
 
 
 def app_icon() -> QtGui.QIcon:
@@ -38,17 +51,26 @@ class Hauptfenster(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("Ananas – Breitband-FMR-Auswertung")
         self.setWindowIcon(app_icon())
-        self.resize(1300, 800)
+        self.resize(1400, 860)
 
         self.stapel: StapelErgebnis | None = None
         self.aktueller_index: int = 0
+
+        # Hintergrund-Job-Zustand.
+        self._thread: QtCore.QThread | None = None
+        self._arbeiter: Arbeiter | None = None
+        self._job_laeuft: bool = False
+        self._job_titel: str = ""
+        self._bei_fertig = None
 
         self.matrix = MatrixAnsicht(frequenz_gewaehlt=self._frequenz_gewaehlt)
         self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert)
 
         self._baue_oberflaeche()
         self._baue_werkzeugleiste()
+        self._baue_aktivitaet_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
+        self._log("Ananas bereit. Bitte eine TDMS-Datei laden.", "info")
 
     # --- Aufbau ------------------------------------------------------------
     def _baue_oberflaeche(self):
@@ -76,11 +98,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         layout.addWidget(self.label_info)
 
         zentral.addWidget(rechts)
-        zentral.setSizes([550, 750])
+        zentral.setSizes([560, 760])
         self.setCentralWidget(zentral)
 
     def _baue_werkzeugleiste(self):
         leiste = self.addToolBar("Hauptaktionen")
+        leiste.setMovable(False)
 
         # Ananas-Logo + Wortmarke ganz links -> App-Charakter.
         logo = QtWidgets.QLabel()
@@ -92,55 +115,233 @@ class Hauptfenster(QtWidgets.QMainWindow):
         leiste.addWidget(wortmarke)
         leiste.addSeparator()
 
-        akt_laden = leiste.addAction("TDMS laden")
-        akt_laden.triggered.connect(self._laden)
-        akt_fit = leiste.addAction("Auto-Fit (alle)")
-        akt_fit.triggered.connect(self._auto_fit)
+        self.akt_laden = leiste.addAction("TDMS laden")
+        self.akt_laden.triggered.connect(self._laden)
+        self.akt_fit = leiste.addAction("Auto-Fit (alle)")
+        self.akt_fit.triggered.connect(self._auto_fit)
         leiste.addSeparator()
-        akt_kittel = leiste.addAction("Kittel/LLG-Auswertung")
-        akt_kittel.triggered.connect(self._kittel_llg)
+        self.akt_kittel = leiste.addAction("Kittel/LLG-Auswertung")
+        self.akt_kittel.triggered.connect(self._kittel_llg)
         leiste.addSeparator()
-        akt_tdms = leiste.addAction("Export TDMS")
-        akt_tdms.triggered.connect(self._export_tdms)
-        akt_xlsx = leiste.addAction("Export Excel")
-        akt_xlsx.triggered.connect(self._export_excel)
-        akt_csv = leiste.addAction("Export CSV")
-        akt_csv.triggered.connect(self._export_csv)
+        self.akt_tdms = leiste.addAction("Export TDMS")
+        self.akt_tdms.triggered.connect(self._export_tdms)
+        self.akt_xlsx = leiste.addAction("Export Excel")
+        self.akt_xlsx.triggered.connect(self._export_excel)
+        self.akt_csv = leiste.addAction("Export CSV")
+        self.akt_csv.triggered.connect(self._export_csv)
+
+        # Sichtbarkeits-Umschalter fuer das Aktivitaets-Panel (rechts).
+        leiste.addSeparator()
+        self.akt_aktivitaet = leiste.addAction("Aktivität")
+
+    def _baue_aktivitaet_dock(self):
+        """Andockbares (abtrennbares) Panel mit Fortschritt und Live-Protokoll."""
+        dock = QtWidgets.QDockWidget("Aktivität / Hintergrund", self)
+        dock.setObjectName("aktivitaet_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
+            | QtCore.Qt.BottomDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+
+        inhalt = QtWidgets.QWidget()
+        lay = QtWidgets.QVBoxLayout(inhalt)
+        lay.setContentsMargins(10, 8, 10, 10)
+
+        self.aktivitaet_label = QtWidgets.QLabel("Bereit.")
+        self.aktivitaet_label.setObjectName("aktivitaet")
+        self.aktivitaet_label.setWordWrap(True)
+        lay.addWidget(self.aktivitaet_label)
+
+        self.fortschritt_balken = QtWidgets.QProgressBar()
+        self.fortschritt_balken.setRange(0, 1)
+        self.fortschritt_balken.setValue(0)
+        lay.addWidget(self.fortschritt_balken)
+
+        self.protokoll_ansicht = QtWidgets.QPlainTextEdit()
+        self.protokoll_ansicht.setReadOnly(True)
+        self.protokoll_ansicht.setMaximumBlockCount(5000)
+        mono = QtGui.QFont("monospace")
+        mono.setStyleHint(QtGui.QFont.Monospace)
+        mono.setPointSize(9)
+        self.protokoll_ansicht.setFont(mono)
+        lay.addWidget(self.protokoll_ansicht, 1)
+
+        leeren = QtWidgets.QPushButton("Protokoll leeren")
+        leeren.clicked.connect(self.protokoll_ansicht.clear)
+        lay.addWidget(leeren, 0, QtCore.Qt.AlignRight)
+
+        dock.setWidget(inhalt)
+        dock.setMinimumWidth(300)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        self.aktivitaet_dock = dock
+        # Toolbar-Umschalter mit der Sichtbarkeit des Docks verbinden.
+        self.akt_aktivitaet.setCheckable(True)
+        self.akt_aktivitaet.setChecked(True)
+        self.akt_aktivitaet.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_aktivitaet.setChecked)
+
+    # --- Aktivitaet / Protokoll -------------------------------------------
+    def _log(self, text: str, art: str = "info") -> None:
+        """Schreibt eine farbige, zeitgestempelte Protokollzeile (Auto-Scroll)."""
+        farbe = _LOG_FARBEN.get(art, "#5A5648")
+        stempel = QtCore.QTime.currentTime().toString("HH:mm:ss")
+        zeile = (f'<span style="color:#B0A99A">{stempel}</span> '
+                 f'<span style="color:{farbe}">{html.escape(text)}</span>')
+        self.protokoll_ansicht.appendHtml(zeile)
+        leiste = self.protokoll_ansicht.verticalScrollBar()
+        leiste.setValue(leiste.maximum())
+
+    def _setze_aktivitaet(self, text: str) -> None:
+        self.aktivitaet_label.setText(text)
+
+    def _setze_bedienelemente(self, an: bool) -> None:
+        """Sperrt/entsperrt Aktionen und Navigation waehrend eines Hintergrund-Jobs."""
+        for aktion in (self.akt_laden, self.akt_fit, self.akt_kittel,
+                       self.akt_tdms, self.akt_xlsx, self.akt_csv):
+            aktion.setEnabled(an)
+        for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
+                      self.btn_naechstes_problem):
+            knopf.setEnabled(an)
+
+    # --- Job-Steuerung (Hintergrund-Thread) -------------------------------
+    def _starte_job(self, funktion, bei_fertig, titel: str) -> None:
+        """Fuehrt ``funktion(melde)`` im Hintergrund aus; ``bei_fertig(ergebnis)`` danach."""
+        if self._job_laeuft:
+            self._log("Es laeuft bereits ein Hintergrundprozess – bitte warten.", "warn")
+            return
+        self._job_laeuft = True
+        self._job_titel = titel
+        self._bei_fertig = bei_fertig
+        self._setze_bedienelemente(False)
+        self._setze_aktivitaet(titel)
+        self._log(titel, "info")
+        self.fortschritt_balken.setRange(0, 0)  # "busy", bis erster Fortschritt kommt
+
+        self._thread = QtCore.QThread(self)
+        self._arbeiter = Arbeiter(funktion)
+        self._arbeiter.moveToThread(self._thread)
+        self._thread.started.connect(self._arbeiter.ausfuehren)
+        # WICHTIG: an gebundene Methoden des (Haupt-Thread-)Fensters binden, NICHT an
+        # Lambdas – nur so erkennt Qt die Thread-Zugehoerigkeit und stellt die Slots
+        # via QueuedConnection im GUI-Thread zu (sonst liefe der Aufraeum-Code im
+        # Worker-Thread: "QThread tried to wait on itself").
+        self._arbeiter.fortschritt.connect(self._auf_fortschritt)
+        self._arbeiter.protokoll.connect(self._auf_protokoll)
+        self._arbeiter.fehler.connect(self._auf_fehler)
+        self._arbeiter.fertig.connect(self._auf_fertig)
+        self._thread.start()
+
+    def _auf_fortschritt(self, i: int, n: int) -> None:
+        if n <= 0:
+            self.fortschritt_balken.setRange(0, 0)
+            return
+        self.fortschritt_balken.setRange(0, n)
+        self.fortschritt_balken.setValue(i)
+        self._setze_aktivitaet(f"{self._job_titel}   {i}/{n}")
+
+    def _auf_protokoll(self, text: str) -> None:
+        art = "problem" if "⚠" in text else ("ok" if "✓" in text else "auto")
+        self._log(text, art)
+
+    def _auf_fertig(self, ergebnis) -> None:
+        bei_fertig = self._bei_fertig
+        try:
+            if bei_fertig is not None:
+                bei_fertig(ergebnis)
+        finally:
+            self._bei_fertig = None
+            self._job_aufraeumen()
+
+    def _auf_fehler(self, text: str) -> None:
+        erste = text.splitlines()[0] if text else "Unbekannter Fehler"
+        self._log("FEHLER: " + erste, "problem")
+        QtWidgets.QMessageBox.critical(self, "Fehler", text)
+        self._job_aufraeumen()
+
+    def _job_aufraeumen(self) -> None:
+        if self._thread is not None:
+            self._thread.quit()
+            self._thread.wait()
+            self._arbeiter.deleteLater()
+            self._thread.deleteLater()
+        self._thread = None
+        self._arbeiter = None
+        self._job_laeuft = False
+        self.fortschritt_balken.setRange(0, 1)
+        self.fortschritt_balken.setValue(0)
+        self._setze_aktivitaet("Bereit.")
+        self._setze_bedienelemente(True)
 
     # --- Aktionen ----------------------------------------------------------
     def _laden(self):
+        if self._job_laeuft:
+            return
         pfad, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "TDMS-Datei laden", "", "TDMS (*.tdms)")
         if not pfad:
             return
-        try:
+
+        def aufgabe(melde):
+            melde(0, 0, f"Lade {os.path.basename(pfad)} …")
             datensatz = lade_tdms(pfad)
-        except Exception as exc:
-            QtWidgets.QMessageBox.critical(self, "Fehler", f"Laden fehlgeschlagen:\n{exc}")
-            return
-        self.matrix.zeige(datensatz)
-        # Vorlaeufiger Stapel ohne Fit (nur Anzeige).
-        self.stapel = StapelErgebnis(datensatz=datensatz)
-        self.statusBar().showMessage(
-            f"Geladen: {os.path.basename(pfad)} ({datensatz.format_typ}, "
-            f"{len(datensatz)} Frequenzen). Jetzt 'Auto-Fit' starten.")
+            melde(0, 0, f"Baue Übersicht auf ({len(datensatz)} Frequenzen) …")
+            return (pfad, datensatz)
+
+        def bei_fertig(res):
+            pfad_, datensatz = res
+            self.matrix.zeige(datensatz)
+            self.stapel = StapelErgebnis(datensatz=datensatz)
+            self._log(
+                f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
+                f"{len(datensatz)} Frequenzen.", "ok")
+            self.statusBar().showMessage(
+                f"Geladen: {os.path.basename(pfad_)} ({datensatz.format_typ}, "
+                f"{len(datensatz)} Frequenzen). Jetzt 'Auto-Fit' starten.")
+
+        self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …")
 
     def _auto_fit(self):
         if self.stapel is None:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
             return
-        self.statusBar().showMessage("Auto-Fit laeuft …")
-        QtWidgets.QApplication.processEvents()
-        self.stapel = fitte_alle(self.stapel.datensatz)
-        self._aktualisiere_overlay()
-        self.aktueller_index = 0
-        self._zeige_aktuellen()
-        n_prob = len(self.stapel.index_problematisch())
-        statistik = self.stapel.problem_statistik()
-        aufschluesselung = ", ".join(f"{g}: {n}" for g, n in statistik.items())
-        self.statusBar().showMessage(
-            f"Auto-Fit fertig. {len(self.stapel.ergebnisse)} Fits, "
-            f"{n_prob} problematisch. {aufschluesselung}")
+        datensatz = self.stapel.datensatz
+
+        def aufgabe(melde):
+            n = len(datensatz.linescans)
+            schritt = max(1, n // 50)  # ~50 Protokollzeilen + alle Problemfits
+
+            def fortschritt(i, total, erg):
+                zeige = (i == 0) or (i + 1 == total) or ((i + 1) % schritt == 0) or erg.problematisch
+                if zeige and erg.problematisch:
+                    text = f"  {i+1}/{total}  f={erg.frequenz/1e9:6.2f} GHz  ⚠ {erg.problem_text}"
+                elif zeige:
+                    text = (f"  {i+1}/{total}  f={erg.frequenz/1e9:6.2f} GHz  "
+                            f"✓ B_res={erg.B_res:.3f} T, α={erg.alpha:.1e}")
+                else:
+                    text = ""
+                melde(i + 1, total, text)
+
+            return fitte_alle(datensatz, fortschritt=fortschritt)
+
+        def bei_fertig(stapel):
+            self.stapel = stapel
+            self._aktualisiere_overlay()
+            self.aktueller_index = 0
+            self._zeige_aktuellen()
+            n_prob = len(stapel.index_problematisch())
+            art = "ok" if n_prob == 0 else "warn"
+            self._log(f"Auto-Fit fertig: {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.", art)
+            for grund, anzahl in stapel.problem_statistik().items():
+                self._log(f"   • {grund}: {anzahl}", "warn")
+            self.statusBar().showMessage(
+                f"Auto-Fit fertig. {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.")
+
+        self._starte_job(aufgabe, bei_fertig, "Auto-Fit läuft …")
 
     def _aktualisiere_overlay(self):
         bres = np.array([e.B_res for e in self.stapel.ergebnisse])
@@ -150,7 +351,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not self.stapel or not self.stapel.ergebnisse:
             return
         i = self.aktueller_index
-        ls = self.stapel.zugeschnitten[i] if self.stapel.zugeschnitten else self.stapel.datensatz.linescans[i]
         # Volldaten fuer die Anzeige (nicht beschnitten), Grenzen separat.
         voll = self.stapel.datensatz.linescans[i]
         unten, oben = self.stapel.fenster[i]
@@ -182,6 +382,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         ziel = spaeter[0] if spaeter else (probleme[0] if probleme else None)
         if ziel is None:
             QtWidgets.QMessageBox.information(self, "Fertig", "Keine problematischen Fits mehr.")
+            self._log("Keine problematischen Fits mehr.", "ok")
             return
         self.aktueller_index = ziel
         self._zeige_aktuellen()
@@ -191,9 +392,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not self.stapel or not self.stapel.ergebnisse:
             return
         i = self.aktueller_index
-        fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
+        erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
         self._zeige_aktuellen()
         self._aktualisiere_overlay()
+        art = "problem" if erg.problematisch else "ok"
+        self._log(f"Neu gefittet f={erg.frequenz/1e9:.2f} GHz "
+                  f"[{unten:.3f}–{oben:.3f} T] → {'⚠ ' + erg.problem_text if erg.problematisch else '✓ OK'}",
+                  art)
 
     def _neu_fitten(self):
         if not self.stapel or not self.stapel.ergebnisse:
@@ -216,7 +421,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             info = auswertung_kittel_llg(self.stapel.ergebnisse, geometrie=geo)
         except Exception as exc:
             QtWidgets.QMessageBox.warning(self, "Auswertung", str(exc))
+            self._log(f"Kittel/LLG fehlgeschlagen: {exc}", "problem")
             return
+        kit, llg = info["kittel"], info["llg"]
+        self._log(
+            f"Kittel {geo}: µ0Meff={kit['mu0Meff']:.4f} T, g={kit['g_faktor']:.3f}; "
+            f"LLG: α={llg['alpha']:.3e}, µ0Hinh={llg['mu0Hinh']*1e3:.2f} mT.", "ok")
         from ..auswertung.uebersicht import (
             plot_resonanz_vs_frequenz, plot_linienbreite, plot_resonanz_vs_temperatur)
         plot_resonanz_vs_frequenz(self.stapel.ergebnisse, geometrie=geo)
@@ -234,6 +444,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         schreibe_ergebnis_tdms(pfad, self.stapel.zugeschnitten, self.stapel.fitkurven())
         self.statusBar().showMessage(f"TDMS gespeichert: {pfad}")
+        self._log(f"TDMS gespeichert: {os.path.basename(pfad)}", "ok")
 
     def _export_excel(self):
         if not self._fits_vorhanden():
@@ -250,6 +461,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             pass
         exportiere_excel(self.stapel.ergebnisse, pfad, global_param)
         self.statusBar().showMessage(f"Excel gespeichert: {pfad}")
+        self._log(f"Excel gespeichert: {os.path.basename(pfad)}", "ok")
 
     def _export_csv(self):
         if not self._fits_vorhanden():
@@ -259,6 +471,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         exportiere_csv(self.stapel.ergebnisse, pfad)
         self.statusBar().showMessage(f"CSV gespeichert: {pfad}")
+        self._log(f"CSV gespeichert: {os.path.basename(pfad)}", "ok")
 
     def _fits_vorhanden(self) -> bool:
         if not self.stapel or not self.stapel.ergebnisse:
@@ -280,6 +493,7 @@ def starte_gui(argv=None):
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv or sys.argv)
     app.setApplicationName("Ananas")
     app.setWindowIcon(app_icon())
+    app.setStyleSheet(ANANAS_QSS)
     fenster = Hauptfenster()
     fenster.show()
     return app.exec()
