@@ -125,11 +125,27 @@ class FitAnsicht(FigureCanvasQTAgg):
         # Standardmaessig auf das Resonanzband zoomen, damit die beiden Grenzlinien
         # nicht – wie ueber dem vollen Feldsweep – fast aufeinanderliegen.
         self.ax_re.set_xlim(*self._berechne_xlim(b))
-        self.figur.tight_layout()
+        self._tight_layout_sicher()
         # Dezenter Bedienhinweis (nach tight_layout, damit er nicht verschoben wird).
         self.figur.text(0.995, 0.004, "grüne Linien ziehen, um das Band zu ändern",
                         ha="right", va="bottom", fontsize=7.5, color=GRENZ_FARBE, alpha=0.85)
         self.draw_idle()
+
+    def _tight_layout_sicher(self) -> None:
+        """tight_layout, das ein noch nicht ausgemessenes Canvas (0x0 Pixel) toleriert.
+
+        Solange das Qt-Widget noch keine Groesse hat, ist die Figur-Transformation
+        nicht invertierbar und Matplotlib wirft ``LinAlgError: Singular matrix``.
+        Das ist rein ein Layout-Timing-Problem; beim naechsten echten Zeichnen mit
+        gueltiger Groesse greift das Layout ohnehin. Wir ueberspringen es daher hier.
+        """
+        w, h = self.figur.get_size_inches() * self.figur.dpi
+        if w < 1 or h < 1:
+            return
+        try:
+            self.figur.tight_layout()
+        except (np.linalg.LinAlgError, ValueError):
+            pass
 
     def _berechne_xlim(self, b) -> tuple[float, float]:
         """x-Grenzen der Anzeige: Zoom aufs Band (Standard) oder ganzer Sweep."""
