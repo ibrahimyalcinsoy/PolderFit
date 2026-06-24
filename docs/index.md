@@ -1,6 +1,6 @@
-# Ananas – Auswertung breitbandiger FMR-Messungen
+# bbFMR – Auswertung breitbandiger FMR-Messungen
 
-Ananas dient der quantitativen Auswertung breitbandiger ferromagnetischer
+bbFMR dient der quantitativen Auswertung breitbandiger ferromagnetischer
 Resonanzmessungen (bbFMR). Die vorliegende Dokumentation beschreibt den Aufbau des
 Programms, die zugrunde liegenden physikalischen Modelle, die Bedeutung der
 einstellbaren Parameter sowie das Vorgehen zur Fehlersuche. Sie richtet sich an
@@ -17,7 +17,7 @@ Probe resonant Energie. Aus der Lage des Resonanzfeldes als Funktion der Frequen
 Magnetisierung `μ0Meff`, der Landé-Faktor `g` und die Gilbert-Dämpfung `α`
 bestimmen.
 
-Die Eingangsdaten liegen als TDMS-Dateien des Messprogramms vor; Ananas überführt
+Die Eingangsdaten liegen als TDMS-Dateien des Messprogramms vor; bbFMR überführt
 sie in physikalische Kenngrößen, Diagramme und tabellarische Exporte.
 
 !!! note "Begriffe"
@@ -35,24 +35,24 @@ Schritt ist einem Modul zugeordnet:
 
 ```
    TDMS-Datei
-       │   ananas/io/tdms_laden.py
+       │   bbfmr/io/tdms_laden.py
        ▼
   [1] Laden und Formaterkennung
        │   Ergebnis: Liste von Linescans (ein Feld-Sweep je Frequenz)
        ▼
-  [2] AutoWindow                  ananas/fit/autowindows.py
+  [2] AutoWindow                  bbfmr/fit/autowindows.py
        │   Bestimmung des Resonanzfeldes und des Fitfensters je Frequenz
        ▼
   [3] Beschneiden
        │   Reduktion des Linescans auf das Fenster
        ▼
-  [4] Einzel-Fit                  ananas/fit/linescan_fit.py
+  [4] Einzel-Fit                  bbfmr/fit/linescan_fit.py
        │   Anpassung der Suszeptibilitäts-Modellfunktion → B_res, α, …
        ▼
-  [5] Bewertung                   ananas/fit/kriterien.py
+  [5] Bewertung                   bbfmr/fit/kriterien.py
        │   Einstufung des Fits als vertrauenswürdig oder problematisch
        ▼
-  [6] Kittel- / LLG-Auswertung    ananas/physik/kittel_llg.py
+  [6] Kittel- / LLG-Auswertung    bbfmr/physik/kittel_llg.py
        │   aus B_res(f) und Linienbreite(f): μ0Meff, g, α
        ▼
    Ergebnisse, Diagramme, Excel-Export
@@ -67,17 +67,17 @@ Zuverlässigkeit der Auswertung am kritischsten und wird in einem
 
 | Aufgabe | Modul |
 |---|---|
-| Laden der TDMS-Daten, Formaterkennung | `ananas/io/tdms_laden.py` |
-| interne Datenstruktur | `ananas/io/datensatz.py` |
-| Bestimmung der Resonanzfenster (AutoWindow) | `ananas/fit/autowindows.py` |
-| Einzel-Fit eines Linescans | `ananas/fit/linescan_fit.py` |
-| Bewertungskriterien und Schwellwerte | `ananas/fit/kriterien.py` |
-| Stapelverarbeitung aller Linescans | `ananas/fit/batch.py` |
-| Suszeptibilität und S21-Modell | `ananas/physik/suszeptibilitaet.py`, `ananas/physik/fitmodell.py` |
-| Kittel- und Linienbreiten-Auswertung | `ananas/physik/kittel_llg.py` |
-| physikalische Konstanten | `ananas/physik/konstanten.py` |
-| grafische Oberfläche | `ananas/gui/` |
-| Export (Excel, Projektdateien) | `ananas/persistenz/` |
+| Laden der TDMS-Daten, Formaterkennung | `bbfmr/io/tdms_laden.py` |
+| interne Datenstruktur | `bbfmr/io/datensatz.py` |
+| Bestimmung der Resonanzfenster (AutoWindow) | `bbfmr/fit/autowindows.py` |
+| Einzel-Fit eines Linescans | `bbfmr/fit/linescan_fit.py` |
+| Bewertungskriterien und Schwellwerte | `bbfmr/fit/kriterien.py` |
+| Stapelverarbeitung aller Linescans | `bbfmr/fit/batch.py` |
+| Suszeptibilität und S21-Modell | `bbfmr/physik/suszeptibilitaet.py`, `bbfmr/physik/fitmodell.py` |
+| Kittel- und Linienbreiten-Auswertung | `bbfmr/physik/kittel_llg.py` |
+| physikalische Konstanten | `bbfmr/physik/konstanten.py` |
+| grafische Oberfläche | `bbfmr/gui/` |
+| Export (Excel, Projektdateien) | `bbfmr/persistenz/` |
 | Robustheitsprüfung über reale Daten | `tests/autowindow_runner.py` |
 
 ## Leitfaden

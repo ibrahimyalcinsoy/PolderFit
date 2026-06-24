@@ -183,7 +183,7 @@ def fitte_linescan(
 
     ``startwerte`` koennen vorgegeben werden (manuelles Nachfitten); sonst werden
     sie aus den Daten geschaetzt. ``B_res_vorgabe`` setzt nur das Resonanzfeld.
-    Schranken sind physikalisch begrenzt (siehe :mod:`ananas.fit.kriterien`);
+    Schranken sind physikalisch begrenzt (siehe :mod:`bbfmr.fit.kriterien`);
     insbesondere MUSS ``B_res`` innerhalb des ausgeschnittenen Feldfensters liegen.
     """
     omega = 2.0 * np.pi * linescan.frequenz

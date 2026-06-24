@@ -1,5 +1,5 @@
-site_name: Ananas – Breitband-FMR-Auswertung
-site_description: Wie der Ananas-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung
+site_name: bbFMR – Breitband-FMR-Auswertung
+site_description: Wie der bbFMR-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung
 docs_dir: docs
 theme:
   name: readthedocs

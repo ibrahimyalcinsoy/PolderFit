@@ -522,17 +522,17 @@
  "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden."
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden."
  },
  "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB' gefun"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB' gefun"
  },
  "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB' gefund"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB' gefund"
  },
  "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg.tdms",
@@ -767,12 +767,12 @@
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms': weder 'Read.PNAX' noch 'ZVB' "
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms': weder 'Read.PNAX' noch 'ZVB' "
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms': weder 'Read.PNAX' noch "
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms': weder 'Read.PNAX' noch "
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg_flush.tdms",
@@ -795,12 +795,12 @@
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms': weder 'Read.PNAX' noch 'ZVB' gefu"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms': weder 'Read.PNAX' noch 'ZVB' gefu"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms': weder 'Read.PNAX' noch 'ZVB"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms': weder 'Read.PNAX' noch 'ZVB"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg.tdms",
@@ -821,12 +821,12 @@
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms': weder 'Read.PNAX' noch 'ZVB' ge"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms': weder 'Read.PNAX' noch 'ZVB' ge"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms': weder 'Read.PNAX' noch 'Z"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms': weder 'Read.PNAX' noch 'Z"
  },
  "CoFe-Quarz-Konschtanz/0001-Quarz/2nd-piece/2024-NOV-20-Linescan-2D-map-oop--5K_-39.6deg-sorted-for-FTF.tdms": {
   "datei": "CoFe-Quarz-Konschtanz/0001-Quarz/2nd-piece/2024-NOV-20-Linescan-2D-map-oop--5K_-39.6deg-sorted-for-FTF.tdms",
@@ -1326,7 +1326,7 @@
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms': weder 'Read.PNAX' noch 'ZVB' ge"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms': weder 'Read.PNAX' noch 'ZVB' ge"
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--290K-64.875deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--290K-64.875deg.tdms",
@@ -1350,12 +1350,12 @@
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms': weder 'Read.PNAX' noch 'Z"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms': weder 'Read.PNAX' noch 'Z"
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorh"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorh"
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--5K-64.875deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--5K-64.875deg.tdms",
@@ -1394,7 +1394,7 @@
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--290K-33.35deg-GGG-mode-ip-2.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--290K-33.35deg-GGG-mode-ip-2.tdms",
@@ -1450,22 +1450,22 @@
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms': weder 'Read.PNAX' noch 'ZVB' "
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms': weder 'Read.PNAX' noch 'ZVB' "
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms': weder 'Read.PNAX' noc"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms': weder 'Read.PNAX' noc"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' g"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' g"
  },
  "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg_flush.tdms",
@@ -1543,7 +1543,7 @@
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch '"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch '"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--5K-33.35deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--5K-33.35deg.tdms",
@@ -1658,12 +1658,12 @@
  "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene G"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene G"
  },
  "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhan"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhan"
  },
  "CoFe-Sapphire(500um)/r-plane/2023-APR-03-Linescan-2D-map-oop--5K_6.357deg_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/r-plane/2023-APR-03-Linescan-2D-map-oop--5K_6.357deg_flush.tdms",
@@ -3839,7 +3839,7 @@
  "CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms": {
   "datei": "CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Set.P"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Set.P"
  },
  "CoFeSiB(20nm)-Si(675µm)/2025-JUN-11-Linescan-2D-map-oop-rotated-5K_1.65deg.tdms": {
   "datei": "CoFeSiB(20nm)-Si(675µm)/2025-JUN-11-Linescan-2D-map-oop-rotated-5K_1.65deg.tdms",
@@ -10690,7 +10690,7 @@
  "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms": {
   "datei": "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. "
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. "
  },
  "CrSBr/smaller-piece/2024-NOV-26-Linescan-2D-map-parallel-to-CPW-5K_-1.5-3T.tdms": {
   "datei": "CrSBr/smaller-piece/2024-NOV-26-Linescan-2D-map-parallel-to-CPW-5K_-1.5-3T.tdms",
@@ -36253,17 +36253,17 @@
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhand"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhand"
  },
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorha"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorha"
  },
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene"
  },
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-15-Linescan-2D-map-oop--5K_67.03deg.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-15-Linescan-2D-map-oop--5K_67.03deg.tdms",
@@ -55988,7 +55988,7 @@
  "Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Set.Angle"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Set.Angle"
  },
  "MBE-CoFe-Si/Co50Fe50-Si/2024-DEC-04-Linescan-2D-map-oop--5K_-37.4deg.tdms": {
   "datei": "MBE-CoFe-Si/Co50Fe50-Si/2024-DEC-04-Linescan-2D-map-oop--5K_-37.4deg.tdms",
@@ -57409,7 +57409,7 @@
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Re"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Re"
  },
  "MBE-CoFe-Si/Co75Fe25-Si/2024-DEC-03-Linescan-2D-map-oop--5K_-37.4deg.tdms": {
   "datei": "MBE-CoFe-Si/Co75Fe25-Si/2024-DEC-03-Linescan-2D-map-oop--5K_-37.4deg.tdms",
@@ -61821,17 +61821,17 @@
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen"
  },
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Read.ZNA'"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Read.ZNA'"
  },
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/Ananas/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Rea"
+  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Rea"
  },
  "MBE-CoFe-Si/Co75Fe25-Si/90° rotated/2024-DEC-05-Linescan-2D-map-oop-rotated-5K_-0.2deg.tdms": {
   "datei": "MBE-CoFe-Si/Co75Fe25-Si/90° rotated/2024-DEC-05-Linescan-2D-map-oop-rotated-5K_-0.2deg.tdms",

@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ananas"
+name = "bbfmr"
 version = "0.1.0"
 description = "Breitband-FMR-Auswertung (Portierung von LabVIEW nach Python)"
 readme = "README.md"
@@ -25,13 +25,13 @@ gui = ["PySide6>=6.5"]
 test = ["pytest>=7.4"]
 
 [project.scripts]
-ananas = "ananas.app:main"
+bbfmr = "bbfmr.app:main"
 
 [tool.setuptools.packages.find]
-include = ["ananas*"]
+include = ["bbfmr*"]
 
 [tool.setuptools.package-data]
-"ananas.gui" = ["assets/*.svg"]
+"bbfmr.gui" = ["assets/*.svg"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

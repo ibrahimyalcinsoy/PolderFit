@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- bbFMR-Logo: Magnetisierung M praezediert um das statische Feld H,
+       getrieben von einer breitbandigen Mikrowelle (RF). -->
+  <defs>
+    <marker id="bbfmrArrowH" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#1F3A93"/>
+    </marker>
+    <marker id="bbfmrArrowM" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#E8612C"/>
+    </marker>
+  </defs>
+
+  <!-- weicher kreisrunder Hintergrund fuer Lesbarkeit -->
+  <circle cx="32" cy="32" r="30" fill="#EAF0FB"/>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#C7D6F0" stroke-width="1.5"/>
+
+  <!-- breitbandige RF-Anregung (Mikrowelle) von links -->
+  <path d="M5 41 q3 -6 6 0 q3 6 6 0 q3 -6 6 0"
+        fill="none" stroke="#E8612C" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- Praezessionsbahn (Kegel) um H -->
+  <ellipse cx="34" cy="19" rx="15" ry="5.2" fill="none"
+           stroke="#1F3A93" stroke-width="1.6" stroke-dasharray="2.6 2.6" opacity="0.85"/>
+
+  <!-- statisches Feld H (Achse) -->
+  <line x1="34" y1="55" x2="34" y2="11" stroke="#1F3A93" stroke-width="2.6"
+        stroke-linecap="round" marker-end="url(#bbfmrArrowH)"/>
+
+  <!-- Magnetisierung M, geneigt auf die Praezessionsbahn zeigend -->
+  <line x1="34" y1="40" x2="48" y2="17.5" stroke="#E8612C" stroke-width="3"
+        stroke-linecap="round" marker-end="url(#bbfmrArrowM)"/>
+
+  <!-- Spitze von M auf der Bahn -->
+  <circle cx="48.6" cy="17" r="2.1" fill="#E8612C"/>
+</svg>

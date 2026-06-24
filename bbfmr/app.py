@@ -1,7 +1,7 @@
-"""Einstiegspunkt der Ananas-Anwendung.
+"""Einstiegspunkt der bbFMR-Anwendung.
 
-Startet die grafische Oberflaeche. Aufruf ueber das Konsolenskript ``ananas``
-oder ``python -m ananas.app``.
+Startet die grafische Oberflaeche. Aufruf ueber das Konsolenskript ``bbfmr``
+oder ``python -m bbfmr.app``.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError as exc:  # PySide6 nicht installiert
         print(
             "Die grafische Oberflaeche benoetigt PySide6.\n"
-            "Installation:  pip install 'ananas[gui]'  oder  pip install PySide6\n"
+            "Installation:  pip install 'bbfmr[gui]'  oder  pip install PySide6\n"
             f"Importfehler: {exc}",
             file=sys.stderr,
         )

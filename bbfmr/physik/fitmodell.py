@@ -175,7 +175,7 @@ def schaetze_startwerte(
     # um den Faktor sqrt(3) groesser als mu0*DeltaH. Mit mu0*DeltaH = 2*omega*alpha/gamma
     # folgt fuer den Startwert:  alpha = gamma*fwhm / (2*sqrt(3)*omega).
     alpha = float(gamma * fwhm / (2.0 * np.sqrt(3.0) * omega))
-    # Auf den physikalisch plausiblen Bereich begrenzen (vgl. ananas.fit.kriterien).
+    # Auf den physikalisch plausiblen Bereich begrenzen (vgl. bbfmr.fit.kriterien).
     alpha = float(np.clip(alpha, 1e-5, 0.1))
 
     # Amplituden-Startwert auf die tatsaechliche chi-Skala umrechnen, damit

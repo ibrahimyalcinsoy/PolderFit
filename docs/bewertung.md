@@ -1,7 +1,7 @@
 # Bewertung der Fits
 
 Jeder Einzel-Fit wird automatisch als unauffällig oder als problematisch eingestuft.
-Die Einstufung erfolgt in der Funktion `bewerte_fit` in `ananas/fit/kriterien.py`,
+Die Einstufung erfolgt in der Funktion `bewerte_fit` in `bbfmr/fit/kriterien.py`,
 in der sämtliche Schwellwerte als benannte Konstanten an einer Stelle gebündelt
 sind.
 
@@ -32,7 +32,7 @@ grafischen Oberfläche sowie im Export zur Verfügung (`erg.problem_text`).
 
 ## Schwellwerte
 
-Die maßgeblichen Konstanten (`ananas/fit/kriterien.py`):
+Die maßgeblichen Konstanten (`bbfmr/fit/kriterien.py`):
 
 | Konstante | Wert | Bedeutung |
 |---|---|---|

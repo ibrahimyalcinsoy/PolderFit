@@ -10,14 +10,14 @@
 
 ## Installation
 
-Im Projektverzeichnis (`Ananas/`):
+Im Projektverzeichnis (`bbFMR/`):
 
 ```bash
 # virtuelle Umgebung anlegen und aktivieren (empfohlen)
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
-# Ananas im editierbaren Modus installieren
+# bbFMR im editierbaren Modus installieren
 pip install -e .
 
 # zusätzlich die grafische Oberfläche
@@ -37,13 +37,13 @@ pip install -e ".[test]"
 ### Grafische Oberfläche
 
 ```bash
-ananas
+bbfmr
 # gleichbedeutend:
-python -m ananas.app
+python -m bbfmr.app
 ```
 
 Ist `PySide6` nicht installiert, gibt das Programm einen erläuternden Hinweis samt
-Installationsbefehl aus (siehe `ananas/app.py`).
+Installationsbefehl aus (siehe `bbfmr/app.py`).
 
 ### Programmatische Nutzung
 
@@ -51,8 +51,8 @@ Die Auswertung lässt sich auch ohne grafische Oberfläche aus Python heraus
 ansteuern. Dies eignet sich für eigene Auswerteskripte und für Tests:
 
 ```python
-from ananas.io.tdms_laden import lade_tdms
-from ananas.fit.batch import fitte_alle
+from bbfmr.io.tdms_laden import lade_tdms
+from bbfmr.fit.batch import fitte_alle
 
 # 1) Messdatei laden; das Format wird automatisch erkannt
 datensatz = lade_tdms("pfad/zur/Messung.tdms")

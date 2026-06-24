@@ -4,8 +4,8 @@ import os
 
 import numpy as np
 
-from ananas.io import lade_tdms, schreibe_ergebnis_tdms
-from ananas.io.datensatz import Linescan
+from bbfmr.io import lade_tdms, schreibe_ergebnis_tdms
+from bbfmr.io.datensatz import Linescan
 
 
 def test_lade_unsortiert(pfad_unsortiert):

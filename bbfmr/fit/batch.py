@@ -34,7 +34,7 @@ class StapelErgebnis:
         """Indizes der Frequenzen, deren Fit als problematisch eingestuft ist.
 
         Stuetzt sich auf die Mehrkriterien-Einstufung (siehe
-        :func:`ananas.fit.kriterien.bewerte_fit`), nicht auf das wertlose R².
+        :func:`bbfmr.fit.kriterien.bewerte_fit`), nicht auf das wertlose R².
         """
         return [i for i, e in enumerate(self.ergebnisse) if e.problematisch]
 

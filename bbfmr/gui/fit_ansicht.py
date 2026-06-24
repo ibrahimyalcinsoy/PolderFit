@@ -27,7 +27,7 @@ GRENZ_LW = 2.4
 GRENZ_LW_HOVER = 3.6
 GRIFF_MS = 9
 GRIFF_MS_HOVER = 13
-BAND_FARBE = "#E8A317"       # Ananas-Gold
+BAND_FARBE = "#E8A317"       # bbFMR-Gold
 BAND_ALPHA = 0.12
 GREIF_TOLERANZ_REL = 0.03    # Anteil der Feldbreite, in dem eine Linie "gegriffen" wird
 _HALO = [pe.Stroke(linewidth=GRENZ_LW + 2.0, foreground="white"), pe.Normal()]

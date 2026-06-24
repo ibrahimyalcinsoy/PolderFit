@@ -17,7 +17,7 @@ from types import SimpleNamespace
 
 from PySide6 import QtCore, QtWidgets
 
-from ananas.io.datensatz import Linescan, Messdatensatz
+from bbfmr.io.datensatz import Linescan, Messdatensatz
 
 
 @pytest.fixture(scope="module")
@@ -47,7 +47,7 @@ def _mini_datensatz(n=10):
 
 
 def test_hauptfenster_baut_mit_panels(app):
-    from ananas.gui.hauptfenster import Hauptfenster
+    from bbfmr.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     assert w.aktivitaet_dock is not None and w.fortschritt_balken is not None
     assert w.navigator_dock is not None
@@ -59,7 +59,7 @@ def test_hauptfenster_baut_mit_panels(app):
 
 
 def test_hintergrund_job_laeuft_durch(app):
-    from ananas.gui.hauptfenster import Hauptfenster
+    from bbfmr.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     ergebnisse = {}
 
@@ -77,7 +77,7 @@ def test_hintergrund_job_laeuft_durch(app):
 
 def test_matrix_frequenz_navigation(app):
     """Frequenzwahl per Klick, Umschalt+Mausrad und Tastatur; meldet den Index."""
-    from ananas.gui.matrix_ansicht import MatrixAnsicht
+    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
     gew = {}
     m = MatrixAnsicht(frequenz_gewaehlt=lambda i: gew.__setitem__("i", i))
     ds = _mini_datensatz(10)
@@ -99,7 +99,7 @@ def test_matrix_frequenz_navigation(app):
 
 def test_matrix_zoom_wheel_box_doppelklick(app):
     """Mausrad-Zoom, Aufzieh-Kästchen und Doppelklick-Reset; Zoom-Callback feuert."""
-    from ananas.gui.matrix_ansicht import MatrixAnsicht
+    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
     zooms = []
     m = MatrixAnsicht(zoom_geaendert=lambda xl, yl, z: zooms.append(z))
     m.zeige(_mini_datensatz(10))
@@ -128,7 +128,7 @@ def test_matrix_zoom_wheel_box_doppelklick(app):
 
 
 def test_problemfits_ausblenden(app):
-    from ananas.gui.matrix_ansicht import MatrixAnsicht
+    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
     m = MatrixAnsicht()
     ds = _mini_datensatz(10)
     m.zeige(ds)
@@ -145,7 +145,7 @@ def test_problemfits_ausblenden(app):
 
 
 def test_navigator(app):
-    from ananas.gui.navigator_ansicht import NavigatorAnsicht
+    from bbfmr.gui.navigator_ansicht import NavigatorAnsicht
     gerufen = {}
     nav = NavigatorAnsicht(bereich_gewaehlt=lambda xl, yl: gerufen.update(xl=xl, yl=yl))
     nav.zeige(np.zeros((10, 20)), (2.5, 3.5, 5.0, 50.0))
@@ -156,7 +156,7 @@ def test_navigator(app):
 
 
 def test_logo_hilfe_und_navigator_sichtbarkeit(app):
-    from ananas.gui.hauptfenster import Hauptfenster, REPO_URL
+    from bbfmr.gui.hauptfenster import Hauptfenster, REPO_URL
     w = Hauptfenster()
     assert w.btn_logo is not None
     htmltext = w._hilfe_html()
@@ -170,7 +170,7 @@ def test_logo_hilfe_und_navigator_sichtbarkeit(app):
 
 def test_matrix_dispersion_seed(app):
     """Dispersions-Seed: zwei Klicks in der Übersicht liefern die zwei Resonanzpunkte."""
-    from ananas.gui.matrix_ansicht import MatrixAnsicht
+    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
     got = {}
     m = MatrixAnsicht()
     m.zeige(_mini_datensatz(10))
@@ -184,7 +184,7 @@ def test_matrix_dispersion_seed(app):
 
 
 def test_grenzlinien_interaktion(app):
-    from ananas.gui.fit_ansicht import FitAnsicht
+    from bbfmr.gui.fit_ansicht import FitAnsicht
     gerufen = {}
     fa = FitAnsicht(grenzen_geaendert=lambda u, o: gerufen.update(unten=u, oben=o))
     B = np.linspace(2.9, 3.1, 200)

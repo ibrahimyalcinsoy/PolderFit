@@ -1,4 +1,4 @@
-"""Hauptfenster der Ananas-GUI.
+"""Hauptfenster der bbFMR-GUI.
 
 Verbindet die 2D-Uebersicht mit dem interaktiven Linescan-Panel und stellt den
 gesamten Arbeitsablauf bereit: TDMS laden -> AutoWindows + Auto-Fit -> je
@@ -28,13 +28,13 @@ from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
 from .navigator_ansicht import NavigatorAnsicht
 from .arbeiter import Arbeiter
-from .stil import ANANAS_QSS
+from .stil import bbFMR_QSS
 
-#: Pfad zum Ananas-App-Icon (SVG, skaliert verlustfrei).
-ICON_PFAD = str(Path(__file__).resolve().parent / "assets" / "ananas.svg")
+#: Pfad zum bbFMR-App-Icon (SVG, skaliert verlustfrei).
+ICON_PFAD = str(Path(__file__).resolve().parent / "assets" / "bbfmr.svg")
 
 #: Quellcode-Repository (im Hilfe-Dialog verlinkt).
-REPO_URL = "https://github.com/ibrahimyalcinsoy/Ananas"
+REPO_URL = "https://github.com/ibrahimyalcinsoy/bbFMR"
 
 #: Farben fuer das Aktivitaetsprotokoll je Meldungsart.
 _LOG_FARBEN = {
@@ -44,7 +44,7 @@ _LOG_FARBEN = {
 
 
 def app_icon() -> QtGui.QIcon:
-    """Liefert das Ananas-App-Icon (leeres QIcon, falls die Datei fehlt)."""
+    """Liefert das bbFMR-App-Icon (leeres QIcon, falls die Datei fehlt)."""
     return QtGui.QIcon(ICON_PFAD)
 
 
@@ -53,7 +53,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Ananas – Breitband-FMR-Auswertung")
+        self.setWindowTitle("bbFMR – Breitband-FMR-Auswertung")
         self.setWindowIcon(app_icon())
         self.resize(1400, 860)
 
@@ -77,7 +77,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._baue_aktivitaet_dock()
         self._baue_navigator_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
-        self._log("Ananas bereit. Bitte eine TDMS-Datei laden.", "info")
+        self._log("bbFMR bereit. Bitte eine TDMS-Datei laden.", "info")
 
     # --- Aufbau ------------------------------------------------------------
     def _baue_oberflaeche(self):
@@ -112,11 +112,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         leiste = self.addToolBar("Hauptaktionen")
         leiste.setMovable(False)
 
-        # Klickbares Ananas×WMI-Logo + Wortmarke ganz links -> oeffnet die Hilfe.
+        # Klickbares bbFMR×WMI-Logo + Wortmarke ganz links -> oeffnet die Hilfe.
         self.btn_logo = QtWidgets.QToolButton()
         self.btn_logo.setIcon(app_icon())
         self.btn_logo.setIconSize(QtCore.QSize(26, 26))
-        self.btn_logo.setText(" Ananas")
+        self.btn_logo.setText(" bbFMR")
         self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.btn_logo.setAutoRaise(True)
         self.btn_logo.setToolTip("Hilfe & Infos (Bedienung, Walther-Meißner-Institut, Repository)")
@@ -618,7 +618,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _baue_hilfe_dialog(self) -> QtWidgets.QDialog:
         """Hilfe-Dialog: Bedienung, Physik-Kurzfassung, WMI-Bezug und Repository-Link."""
         dlg = QtWidgets.QDialog(self)
-        dlg.setWindowTitle("Ananas – Hilfe & Infos")
+        dlg.setWindowTitle("bbFMR – Hilfe & Infos")
         dlg.setWindowIcon(app_icon())
         dlg.resize(660, 580)
         lay = QtWidgets.QVBoxLayout(dlg)
@@ -628,7 +628,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         logo.setPixmap(app_icon().pixmap(56, 56))
         kopf.addWidget(logo)
         titel = QtWidgets.QLabel(
-            "<b style='font-size:16px'>Ananas</b><br>"
+            "<b style='font-size:16px'>bbFMR</b><br>"
             "Breitband-FMR-Auswertung · Walther-Meißner-Institut")
         titel.setTextFormat(QtCore.Qt.RichText)
         kopf.addWidget(titel, 1)
@@ -652,7 +652,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _hilfe_html() -> str:
         return f"""
         <html><body style="font-size:12px; line-height:1.45">
-        <p><b>Ananas</b> wertet Breitband-Ferromagnetische-Resonanz-Messungen (bbFMR) aus:
+        <p><b>bbFMR</b> wertet Breitband-Ferromagnetische-Resonanz-Messungen (bbFMR) aus:
         TDMS einlesen, je Frequenz an die <b>Polder-Suszeptibilität</b> fitten und
         übergreifend Kittel-/LLG-Parameter (µ₀M<sub>eff</sub>, g, α, µ₀H<sub>inh</sub>) bestimmen.</p>
 
@@ -689,9 +689,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         µ₀H<sub>inh</sub>.</p>
 
         <hr>
-        <p>Entstanden am <b>Walther-Meißner-Institut</b>. Das Logo verbindet die Ananas mit dem
-        WMI-Signet: Magnetfeldlinien, die den <b>Supraleiter</b> (Kreis) umfließen, ohne
-        einzudringen – der <i>Meißner-Effekt</i>. Quellcode, Doku und Details:<br>
+        <p>Entstanden am <b>Walther-Meißner-Institut</b>. Das Logo zeigt das Grundbild der
+        ferromagnetischen Resonanz: die <b>Magnetisierung M</b> (orange) präzediert um das
+        statische <b>Feld H</b> (blau) und wird durch eine breitbandige Mikrowelle (RF)
+        getrieben. Quellcode, Doku und Details:<br>
         <a href="{REPO_URL}">{REPO_URL}</a></p>
         </body></html>
         """
@@ -716,9 +717,9 @@ def starte_gui(argv=None):
         os.environ["QT_LOGGING_RULES"] = f"{bestehend};{regel}".strip(";")
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv or sys.argv)
-    app.setApplicationName("Ananas")
+    app.setApplicationName("bbFMR")
     app.setWindowIcon(app_icon())
-    app.setStyleSheet(ANANAS_QSS)
+    app.setStyleSheet(bbFMR_QSS)
     fenster = Hauptfenster()
     fenster.show()
     return app.exec()

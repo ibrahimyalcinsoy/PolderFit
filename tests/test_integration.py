@@ -5,10 +5,10 @@ import warnings
 
 import numpy as np
 
-from ananas.io import lade_tdms
-from ananas.fit import fitte_alle
-from ananas.auswertung import auswertung_kittel_llg
-from ananas.persistenz.ergebnis_export import exportiere_excel, parameter_tabelle
+from bbfmr.io import lade_tdms
+from bbfmr.fit import fitte_alle
+from bbfmr.auswertung import auswertung_kittel_llg
+from bbfmr.persistenz.ergebnis_export import exportiere_excel, parameter_tabelle
 
 
 def test_pipeline_sortiert(pfad_sortiert, tmp_path):

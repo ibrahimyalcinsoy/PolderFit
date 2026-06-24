@@ -11,7 +11,7 @@ beschriebenen Fälle stammen aus der Robustheitsprüfung über den realen Datenb
 
 **Vorgehen.** Aktuelle Programmstände behandeln diesen Fall automatisch: Die
 Sweep-Länge wird aus der Frequenzachse abgeleitet, auf die vollständigen Sweeps
-gekürzt und regulär ausgewertet (`ananas/io/tdms_laden.py`). Tritt der Fehler
+gekürzt und regulär ausgewertet (`bbfmr/io/tdms_laden.py`). Tritt der Fehler
 dennoch auf, lässt sich die Sweep-Periode nicht bestimmen; in diesem Fall ist die
 Datei vermutlich beschädigt.
 

@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from ananas.physik.konstanten import gamma_aus_g, g_aus_gamma, GAMMA_STANDARD
-from ananas.physik.suszeptibilitaet import chi_oop, chi_oop_komponenten
-from ananas.physik.kittel_llg import kittel_oop, fit_kittel_oop, linienbreite, fit_linienbreite
+from bbfmr.physik.konstanten import gamma_aus_g, g_aus_gamma, GAMMA_STANDARD
+from bbfmr.physik.suszeptibilitaet import chi_oop, chi_oop_komponenten
+from bbfmr.physik.kittel_llg import kittel_oop, fit_kittel_oop, linienbreite, fit_linienbreite
 
 
 def test_gamma_g_umkehrung():

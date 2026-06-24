@@ -2,7 +2,7 @@
 
 Dieses Kapitel beschreibt den Datenfluss von der geladenen Messung bis zum
 bewerteten Fitergebnis. Die zentrale Steuerung übernimmt die Funktion `fitte_alle`
-in `ananas/fit/batch.py`.
+in `bbfmr/fit/batch.py`.
 
 ## Stapelverarbeitung: `fitte_alle`
 
@@ -56,7 +56,7 @@ ausgeschnittenen Fensters liegen muss.
 
 ### Bewertung
 
-Jedes Fitergebnis wird durch `bewerte_fit` (`ananas/fit/kriterien.py`) als
+Jedes Fitergebnis wird durch `bewerte_fit` (`bbfmr/fit/kriterien.py`) als
 unauffällig oder problematisch eingestuft. Die zugrunde liegenden Kriterien und
 Schwellwerte sind im Kapitel [Bewertung der Fits](bewertung.md) dargestellt.
 
@@ -67,7 +67,7 @@ Bandgrenzen, expliziten Startwerten oder vorgegebenem Resonanzfeld erneut
 durchführen, ohne den übrigen Datensatz neu zu berechnen:
 
 ```python
-from ananas.fit.batch import fitte_neu
+from bbfmr.fit.batch import fitte_neu
 
 neues = fitte_neu(stapel, index=42,
                   feld_unten=2.55, feld_oben=2.75,   # engeres Fenster
@@ -87,5 +87,5 @@ stapel.problem_statistik()     # Häufigkeit der einzelnen Problemgründe
 ```
 
 Die Einstufung stützt sich auf die Mehrkriterien-Bewertung aus
-`ananas/fit/kriterien.py` und nicht auf das Bestimmtheitsmaß `R²`, das in diesem
+`bbfmr/fit/kriterien.py` und nicht auf das Bestimmtheitsmaß `R²`, das in diesem
 Anwendungsfall als Gütemaß ungeeignet ist (siehe [Bewertung der Fits](bewertung.md)).

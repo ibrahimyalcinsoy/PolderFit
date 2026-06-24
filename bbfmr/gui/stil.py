@@ -1,15 +1,15 @@
-"""Schlankes, helles Erscheinungsbild (QSS) fuer die Ananas-GUI.
+"""Schlankes, helles Erscheinungsbild (QSS) fuer die bbFMR-GUI.
 
-Akzentfarben aus dem App-Icon: Ananas-Gold (#E8A317) und Blattgruen (#3FA34D).
+Akzentfarben aus dem App-Icon: bbFMR-Gold (#E8A317) und Blattgruen (#3FA34D).
 Bewusst zurueckhaltend – klar und leicht, aber nicht ueberladen.
 """
 
 from __future__ import annotations
 
-ANANAS_GOLD = "#E8A317"
-ANANAS_GRUEN = "#3FA34D"
+bbFMR_GOLD = "#E8A317"
+bbFMR_GRUEN = "#3FA34D"
 
-ANANAS_QSS = f"""
+bbFMR_QSS = f"""
 QMainWindow, QDialog, QWidget {{
     background-color: #FAFAF6;
     color: #2B2B28;
@@ -39,7 +39,7 @@ QPushButton {{
     padding: 6px 14px;
     color: #3A372F;
 }}
-QPushButton:hover {{ border-color: {ANANAS_GOLD}; background-color: #FCF6E8; }}
+QPushButton:hover {{ border-color: {bbFMR_GOLD}; background-color: #FCF6E8; }}
 QPushButton:pressed {{ background-color: #ECDFB8; }}
 QPushButton:disabled {{ color: #AFA99A; background-color: #F2F0EA; border-color: #E6E2D8; }}
 
@@ -58,7 +58,7 @@ QProgressBar {{
     text-align: center;
     color: #3A372F;
 }}
-QProgressBar::chunk {{ background-color: {ANANAS_GOLD}; border-radius: 6px; }}
+QProgressBar::chunk {{ background-color: {bbFMR_GOLD}; border-radius: 6px; }}
 
 QPlainTextEdit {{
     background-color: #FFFFFF;
@@ -69,6 +69,6 @@ QPlainTextEdit {{
 }}
 QStatusBar {{ background-color: #FFFFFF; border-top: 1px solid #E6E2D8; color: #5A5648; }}
 QSplitter::handle {{ background-color: #E6E2D8; }}
-QSplitter::handle:hover {{ background-color: {ANANAS_GOLD}; }}
+QSplitter::handle:hover {{ background-color: {bbFMR_GOLD}; }}
 QLabel#aktivitaet {{ font-weight: 600; color: #3A372F; }}
 """

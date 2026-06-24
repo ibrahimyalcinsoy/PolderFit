@@ -13,7 +13,7 @@ die das Verhalten an eigene Proben oder Messbedingungen anpassen möchten.
 ## Aufrufparameter
 
 Mehrere Größen lassen sich direkt beim Aufruf übergeben, ohne den Quelltext zu
-ändern (`fitte_alle` in `ananas/fit/batch.py`):
+ändern (`fitte_alle` in `bbfmr/fit/batch.py`):
 
 | Parameter | Standard | Wirkung |
 |---|---|---|
@@ -25,13 +25,13 @@ Mehrere Größen lassen sich direkt beim Aufruf übergeben, ohne den Quelltext z
 Beispiel für ein engeres beziehungsweise weiteres Fenster:
 
 ```python
-from ananas.fit.batch import fitte_alle
+from bbfmr.fit.batch import fitte_alle
 stapel = fitte_alle(datensatz, breite_faktor=5.0)   # engere Fenster
 ```
 
 ## Parameter des AutoWindow
 
-Die folgenden Konstanten in `ananas/fit/autowindows.py` steuern die
+Die folgenden Konstanten in `bbfmr/fit/autowindows.py` steuern die
 Fensterbestimmung:
 
 | Konstante | Standard | Wirkung | Anpassung |
@@ -51,17 +51,17 @@ Weitere wirksame Größen sind innerhalb der Funktionen festgelegt:
 
 ## Parameter des Fits
 
-In `ananas/fit/linescan_fit.py` und `ananas/physik/fitmodell.py`:
+In `bbfmr/fit/linescan_fit.py` und `bbfmr/physik/fitmodell.py`:
 
 - Die Parameterschranken (`B_res` im Fenster, `alpha`, `phi`) ergeben sich aus den
-  Konstanten in `ananas/fit/kriterien.py` (siehe unten).
+  Konstanten in `bbfmr/fit/kriterien.py` (siehe unten).
 - Die Startwertschätzung (`schaetze_startwerte`) ist datengetrieben; bei
   systematisch schwieriger Konvergenz können einzelne Linescans mit expliziten
   Startwerten über `fitte_neu` erneut angepasst werden.
 
 ## Bewertungsschwellen
 
-Die Schwellwerte der Einstufung sind in `ananas/fit/kriterien.py` zusammengefasst und
+Die Schwellwerte der Einstufung sind in `bbfmr/fit/kriterien.py` zusammengefasst und
 im Kapitel [Bewertung der Fits](bewertung.md) tabelliert. Die für die Praxis
 relevantesten:
 

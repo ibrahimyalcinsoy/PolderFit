@@ -1,15 +1,15 @@
-# Ananas – Breitband-FMR-Auswertung
+# bbFMR – Breitband-FMR-Auswertung
 
 Python-Portierung der LabVIEW-Auswertung von Breitband-Ferromagnetische-Resonanz-Messungen
-(bbFMR). LabVIEW liefert weiterhin die TDMS-Rohdaten; Ananas übernimmt das Einlesen,
+(bbFMR). LabVIEW liefert weiterhin die TDMS-Rohdaten; bbFMR übernimmt das Einlesen,
 das interaktive Zuschneiden, den Fit an die **Polder-Suszeptibilität** sowie die
 übergreifende Auswertung (Kittel-/LLG-Fit) und den Export.
 
 ## Installation
 
 ```bash
-git clone https://github.com/ibrahimyalcinsoy/Ananas.git
-cd Ananas
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git
+cd bbFMR
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[gui,test]"
 ```
@@ -20,8 +20,8 @@ Kernabhängigkeiten: `numpy`, `scipy`, `lmfit`, `npTDMS`, `matplotlib`, `pandas`
 ## Start
 
 ```bash
-ananas            # GUI (Konsolenskript)
-python -m ananas.app
+bbfmr            # GUI (Konsolenskript)
+python -m bbfmr.app
 ```
 
 Ablauf in der GUI:
@@ -66,7 +66,7 @@ automatische Resonanzbestimmung, `docs/tuning.md` sämtliche Stellschrauben,
 ## Architektur
 
 ```
-ananas/
+bbfmr/
   io/          Einlesen/Schreiben TDMS, interne Datenstruktur (Linescan, Messdatensatz)
   physik/      Konstanten, Polder-Suszeptibilität, Linescan-Fitmodell, Kittel/LLG
   fit/         AutoWindows, Einzelfit (lmfit), Stapel + Korrekturlauf
@@ -94,14 +94,14 @@ Portierung dreier verbindlicher Quellen, die alle in `Dokumente/` liegen. Die
 geschlossenen Ausdrücke der Polder-Suszeptibilität χ′ und χ″ (out-of-plane und
 in-plane) stammen aus dem Mathematica-Notebook
 `Chi_Fit_Functions_and_Inductances_2020-04-06.nb` (exportierte `InputForm`,
-Z. 1306–1530) und stehen in `ananas/physik/suszeptibilitaet.py`. Das Protokoll
+Z. 1306–1530) und stehen in `bbfmr/physik/suszeptibilitaet.py`. Das Protokoll
 `Protokoll_FMR_Python_2026-05-08.docx` legt die Anforderungen, das TDMS-Format und
 mit der inversen Suszeptibilität (Weiler, Gl. 2.7) die *Herkunft* dieser
 Fitfunktionen fest. Die übergreifenden Modelle – Kittel-Dispersion Gl. (2.24)/(2.26),
 Linienbreite Gl. (2.27)/(2.28) und die zugrunde liegende
 Landau-Lifshitz-Gilbert-Gleichung (LLG) – kommen aus Kapitel 2 der Dissertation von
 M. Müller (`Mueller_Kap2_text.txt`, vollständig
-`Mueller_Manuel_Doktorarbeit_2023.pdf`) und sind in `ananas/physik/kittel_llg.py`
+`Mueller_Manuel_Doktorarbeit_2023.pdf`) und sind in `bbfmr/physik/kittel_llg.py`
 umgesetzt. Den physikalischen Hintergrund des Suszeptibilitätstensors χ̂ₚ liefert die
 Originalarbeit von D. Polder, *Phil. Mag.* 40 (1949)
 (`1-s2.0-0031891449900518-main.pdf`).
@@ -113,13 +113,13 @@ gyromagnetische Verhältnis `gamma` in **rad·s⁻¹·T⁻¹**, Frequenzen in Hz
 ω = 2πf in rad·s⁻¹. H (in A/m) wird nie mit µ₀H (in T) gemischt – laut Protokoll die
 wahrscheinlichste Fehlerquelle; die TDMS-Felder (`IPS X-Field` bzw. `Field-before`)
 liegen ohnehin bereits in Tesla vor. γ und g-Faktor hängen über γ = g·µ_B/ℏ zusammen
-(`ananas/physik/konstanten.py`), für g = 2 ist γ ≈ 1.7588·10¹¹ rad·s⁻¹·T⁻¹.
+(`bbfmr/physik/konstanten.py`), für g = 2 ist γ ≈ 1.7588·10¹¹ rad·s⁻¹·T⁻¹.
 
 ### Die gemessene Größe: komplexes S21 pro Frequenz
 
 Die bbFMR-Messung liefert für jede feste Mikrowellenfrequenz f einen Feldsweep, also
 den komplexen Transmissionsparameter S21(B) = Re + i·Im über das äußere Feld
-B = µ₀H. Ein solcher Sweep heißt im Code **Linescan** (`ananas/io/datensatz.py`),
+B = µ₀H. Ein solcher Sweep heißt im Code **Linescan** (`bbfmr/io/datensatz.py`),
 der gesamte Messsatz – im Beispiel 725 Frequenzen × 1001 Feldpunkte – ist ein
 `Messdatensatz`. Das unsortierte Rohformat wird beim Einlesen per Reshape 725×1001
 zerlegt; dass das korrekt ist, bestätigt Protokoll §3.1, und jeder Feldwert ist
@@ -133,7 +133,7 @@ Linearisierung um die Gleichgewichtslage liefert den Polder-Suszeptibilitätsten
 Resonanzfunktion mit dispersivem Realteil χ′ und absorptivem Imaginärteil χ″. Für die
 out-of-plane-Geometrie (oop) lauten die Ausdrücke mit dem gemeinsamen Nenner N und
 dem Feldabstand d = µ₀H₀ − µ₀M_eff (`chi_oop_komponenten` in
-`ananas/physik/suszeptibilitaet.py`):
+`bbfmr/physik/suszeptibilitaet.py`):
 
 ```
 N    = γ⁴·d⁴ + 2·(α²−1)·γ²·d²·ω² + (1+α²)²·ω⁴
@@ -168,7 +168,7 @@ harte Schranke, dass B_res innerhalb des ausgeschnittenen Feldfensters liegen mu
 
 Die rohe Suszeptibilität ist nicht direkt S21 – Messkette und Hintergrund kommen
 hinzu. Das tatsächlich gefittete komplexe Modell (`s21_modell` in
-`ananas/physik/fitmodell.py`) lautet pro Frequenz (ω = 2πf fest):
+`bbfmr/physik/fitmodell.py`) lautet pro Frequenz (ω = 2πf fest):
 
 ```
 S21(B) = A·e^{iφ} · χ_oop(B; B_res, α, ω, γ)
@@ -188,7 +188,7 @@ stecken in χ_oop. Real- und Imaginärteil werden simultan gefittet: Das Residuu
 (`fitmodell.residuum`) stapelt sie zu einem reellen Vektor `[Δ.real, Δ.imag]`, sodass
 ein einziger Least-Squares beide Kanäle gemeinsam minimiert – sie teilen dieselben
 physikalischen Parameter und dürfen nicht getrennt gefittet werden. Als Solver dient
-`lmfit` mit Levenberg-Marquardt (`method="leastsq"`, `ananas/fit/linescan_fit.py`).
+`lmfit` mit Levenberg-Marquardt (`method="leastsq"`, `bbfmr/fit/linescan_fit.py`).
 
 ### Startwerte und AutoWindows
 
@@ -207,7 +207,7 @@ A·|χ| ungefähr der gemessenen Amplitude entspricht (χ trägt große Vorfakto
 sich).
 
 Welcher Feldausschnitt überhaupt in den Fit eingeht, bestimmt **AutoWindows**
-(`ananas/fit/autowindows.py`): Es sucht je Frequenz die Resonanz und legt ein
+(`bbfmr/fit/autowindows.py`): Es sucht je Frequenz die Resonanz und legt ein
 symmetrisches Feldfenster der Breite `breite_faktor`·µ₀ΔH (standardmäßig das Achtfache
 der Linienbreite) um B_res, begrenzt auf den gemessenen Bereich. Dieses Fenster
 schneidet `schneide_band` aus, und nur die Punkte im Band gehen in den Fit ein. In der
@@ -232,7 +232,7 @@ wird α auf den plausiblen Bereich [10⁻⁵, 0.1] begrenzt.
 ### Übergreifende Auswertung: Kittel und LLG
 
 Aus den pro Frequenz extrahierten B_res(f) und µ₀ΔH(f) werden schließlich die
-Materialgrößen gewonnen (`ananas/physik/kittel_llg.py`, mit
+Materialgrößen gewonnen (`bbfmr/physik/kittel_llg.py`, mit
 `scipy.optimize.curve_fit`); alle Formeln stammen aus Müller Kap. 2. Die
 out-of-plane-Kittel-Dispersion, Gl. (2.24), ist eine Gerade in f,
 B_res(f) = µ₀M_eff + 2πf/γ, deren Fit µ₀M_eff sowie – optional festgehalten – γ bzw.
@@ -254,7 +254,7 @@ Linie erreicht so R² ≈ 1). Primäres Maß ist daher das **normierte Residuum*
 (getrennt und kombiniert für Re/Im); zusätzlich wird das reduzierte χ² berechnet. R²
 bleibt nur sekundär (Export zeigt `1−R²` in wissenschaftlicher Notation).
 
-Alle Schranken und Schwellwerte liegen zentral in `ananas/fit/kriterien.py`. Ein Fit
+Alle Schranken und Schwellwerte liegen zentral in `bbfmr/fit/kriterien.py`. Ein Fit
 gilt als **problematisch**, wenn eines zutrifft: (a) normiertes Residuum zu groß,
 (b) ein Parameter an/nahe einer Schranke (alpha ∈ [1e-5, 0.1], B_res im Feldfenster,
 phi), (c) B_res außerhalb des Fensters, (d) alpha > 0.05 (unphysikalisch),

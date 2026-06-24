@@ -11,7 +11,7 @@ Sämtliche Magnetfelder werden konsequent als `μ0·H` in Tesla geführt (`μ0H0
 äußeres Feld, `μ0Meff` als effektive Magnetisierung). Das gyromagnetische Verhältnis
 `γ` ist in rad/(s·T) angegeben. Eine Vermischung von `H` (in A/m) mit `μ0H` (in T)
 ist zu vermeiden. Die physikalischen Konstanten sind in
-`ananas/physik/konstanten.py` definiert:
+`bbfmr/physik/konstanten.py` definiert:
 
 ```
 γ = g · μ_B / ħ            (gamma_aus_g)
@@ -23,7 +23,7 @@ Für `g = 2` ergibt sich `γ ≈ 1,7588·10¹¹ rad/(s·T)`. Der Standardwert
 ## Resonanzbedingung (Kittel)
 
 Das Resonanzfeld hängt über die Kittel-Gleichungen von der Frequenz ab. Die
-Auswertung verwendet je nach Geometrie (`ananas/physik/kittel_llg.py`):
+Auswertung verwendet je nach Geometrie (`bbfmr/physik/kittel_llg.py`):
 
 Senkrechte Anisotropie / Out-of-plane (oop):
 
@@ -56,7 +56,7 @@ Gilbert-Dämpfung. Aus der Steigung der Geraden `μ0ΔH(f)` wird `α` bestimmt
 ## Modellfunktion des Einzel-Fits
 
 Der Einzel-Fit eines Linescans passt das komplexe Transmissionssignal an
-(`ananas/physik/fitmodell.py`):
+(`bbfmr/physik/fitmodell.py`):
 
 ```
 S21(B) = A · exp(i·φ) · χ(B; B_res, α, ω, γ)  +  Untergrund(B)
@@ -67,7 +67,7 @@ feldabhängige Gerade modelliert (Offset und Steigung getrennt für Real- und
 Imaginärteil), um die dominierende Untergrund-Rampe abzubilden. Der Vorfaktor
 `A·exp(i·φ)` erfasst Amplitude und Phasenlage des Resonanzbeitrags.
 
-Die Suszeptibilität `χ` (`ananas/physik/suszeptibilitaet.py`) ist als
+Die Suszeptibilität `χ` (`bbfmr/physik/suszeptibilitaet.py`) ist als
 Polder-Suszeptibilität implementiert. Der Einzel-Fit verwendet die
 Out-of-plane-Komponente `χ_oop`; die Umschaltung zwischen oop und ip greift in der
 übergreifenden Kittel-/LLG-Auswertung.
@@ -76,7 +76,7 @@ Out-of-plane-Komponente `χ_oop`; die Umschaltung zwischen oop und ip greift in 
 
 Der Fit erfolgt mit `lmfit` als nichtlineare Ausgleichsrechnung (Levenberg-Marquardt,
 `method="leastsq"`) und passt Real- und Imaginärteil simultan an
-(`fitte_linescan` in `ananas/fit/linescan_fit.py`). Die freien Parameter sind:
+(`fitte_linescan` in `bbfmr/fit/linescan_fit.py`). Die freien Parameter sind:
 
 | Parameter | Bedeutung | Schranken |
 |---|---|---|

@@ -4,7 +4,7 @@ Das AutoWindow bestimmt für jeden Linescan automatisch das Feldfenster, das in 
 Fit eingeht. Es ist der für die Robustheit der Auswertung kritischste Schritt: Sitzt
 das Fenster falsch, liefert der Fit physikalisch unbrauchbare Werte, ohne dass das
 Programm zwingend einen Fehler meldet. Die Implementierung befindet sich in
-`ananas/fit/autowindows.py`.
+`bbfmr/fit/autowindows.py`.
 
 ## Problemstellung
 

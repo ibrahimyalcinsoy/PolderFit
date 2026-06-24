@@ -1,4 +1,4 @@
-"""Robustheits-Harness fuer das AutoWindow von Ananas.
+"""Robustheits-Harness fuer das AutoWindow von bbFMR.
 
 Testet den GESAMTEN realen Datenbestand (``testdata/*.tdms``) gegen die
 automatische Resonanzfenster-Auswahl. Der Fit selbst funktioniert – geprueft wird,
@@ -7,7 +7,7 @@ ob das *Fenster* sitzt und ob falsch sitzende Fenster vom Programm GEMELDET werd
 
 Status je Resonanz (Linescan):
   OK             Fenster plausibel + Fit nicht problematisch.
-  WINDOW_FLAGGED Fenster-Problem erkannt UND von Ananas selbst gemeldet
+  WINDOW_FLAGGED Fenster-Problem erkannt UND von bbFMR selbst gemeldet
                  (``ergebnis.problematisch``) -> erlaubt.
   WINDOW_FAIL    Fenster-Problem erkannt, aber NICHT gemeldet -> stiller Bug.
 Status je Datei zusaetzlich: CRASH / TIMEOUT / NICHT_FMR.
@@ -297,7 +297,7 @@ def fenster_checks(B, s21, lo, hi, ref_band, fit):
 # ==========================================================================
 def baue_gt_baender(sortiert_pfad):
     """Feldband je Frequenz aus einem sortierten File: ``[(f, lo, hi), ...]``."""
-    from ananas.io.tdms_laden import lade_tdms
+    from bbfmr.io.tdms_laden import lade_tdms
     ds = lade_tdms(str(sortiert_pfad))
     baender = []
     for ls in ds.linescans:
@@ -324,8 +324,8 @@ def gt_band_fuer(f, baender, max_df=0.3e9):
 def verarbeite_datei(pfad_str, schluessel, gt_pfad_str, ergebnis_q):
     """Volle Pipeline einer Datei. Ergebnis in die Queue legen."""
     try:
-        from ananas.io.tdms_laden import lade_tdms
-        from ananas.fit.batch import fitte_alle
+        from bbfmr.io.tdms_laden import lade_tdms
+        from bbfmr.fit.batch import fitte_alle
 
         name = schluessel
 
@@ -508,7 +508,7 @@ def _log_kurz(res):
 # Diagnose-Plots
 # ==========================================================================
 def schreibe_plots(dateien, fertig, gt_zuordnung):
-    from ananas.io.tdms_laden import lade_tdms
+    from bbfmr.io.tdms_laden import lade_tdms
     DIAG.mkdir(exist_ok=True)
     geplottet = {"FAIL": 0, "FLAGGED": 0}
     gedeckelt = 0

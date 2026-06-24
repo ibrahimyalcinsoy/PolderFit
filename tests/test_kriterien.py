@@ -2,11 +2,11 @@
 
 import numpy as np
 
-from ananas.io.datensatz import Linescan
-from ananas.physik.konstanten import GAMMA_STANDARD
-from ananas.physik.fitmodell import s21_modell
-from ananas.fit.linescan_fit import fitte_linescan
-from ananas.fit.kriterien import (
+from bbfmr.io.datensatz import Linescan
+from bbfmr.physik.konstanten import GAMMA_STANDARD
+from bbfmr.physik.fitmodell import s21_modell
+from bbfmr.fit.linescan_fit import fitte_linescan
+from bbfmr.fit.kriterien import (
     ALPHA_MAX,
     ALPHA_MIN,
     an_grenze,

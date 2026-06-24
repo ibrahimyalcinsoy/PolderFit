@@ -3,10 +3,10 @@
 import numpy as np
 import pytest
 
-from ananas.io.datensatz import Linescan
-from ananas.physik.konstanten import GAMMA_STANDARD
-from ananas.physik.fitmodell import s21_modell, schaetze_startwerte
-from ananas.fit.linescan_fit import fitte_linescan
+from bbfmr.io.datensatz import Linescan
+from bbfmr.physik.konstanten import GAMMA_STANDARD
+from bbfmr.physik.fitmodell import s21_modell, schaetze_startwerte
+from bbfmr.fit.linescan_fit import fitte_linescan
 
 
 def _synthetischer_linescan(frequenz, B_res, alpha, A, phi, rausch=0.0, seed=0):
@@ -66,10 +66,10 @@ def test_startwert_alpha_aus_magnituden_fwhm(alpha_true):
 def test_auto_fenster_liefert_gueltiges_band():
     """AutoWindows muss ein gueltiges (unten, oben)-Band liefern.
 
-    Trifft ananas.fit.autowindows.auto_fenster (nutzt np.ptp) – haette den
+    Trifft bbfmr.fit.autowindows.auto_fenster (nutzt np.ptp) – haette den
     NumPy-2.0-Regress 'ndarray has no attribute ptp' erwischt.
     """
-    from ananas.fit.autowindows import auto_fenster
+    from bbfmr.fit.autowindows import auto_fenster
 
     ls = _synthetischer_linescan(20e9, B_res=3.0, alpha=5e-3, A=0.01, phi=0.3)
     unten, oben = auto_fenster(ls)
@@ -82,8 +82,8 @@ def test_auto_fenster_alle_folgt_dispersion_auf_gekruemmtem_untergrund():
     """AutoWindows muss die mit f wandernde Resonanz auch auf einem stark
     gekrümmten Untergrund finden – nicht an einer festen Feldstelle hängenbleiben
     (Regression: unsortiertes File mit breitem Sweep, fast alle Fits problematisch)."""
-    from ananas.io.datensatz import Messdatensatz
-    from ananas.fit.autowindows import auto_fenster_alle
+    from bbfmr.io.datensatz import Messdatensatz
+    from bbfmr.fit.autowindows import auto_fenster_alle
 
     gamma = GAMMA_STANDARD
     B = np.linspace(1.0, 3.65, 400)
@@ -112,8 +112,8 @@ def test_auto_fenster_alle_folgt_dispersion_auf_gekruemmtem_untergrund():
 
 def test_fenster_aus_trasse_zentriert_auf_vorgabe():
     """Dispersions-Seed: bei vorgegebenen Zentren liegen die Fenster eng um die Vorgabe."""
-    from ananas.io.datensatz import Messdatensatz
-    from ananas.fit.autowindows import fenster_aus_trasse
+    from bbfmr.io.datensatz import Messdatensatz
+    from bbfmr.fit.autowindows import fenster_aus_trasse
 
     gamma = GAMMA_STANDARD
     B = np.linspace(1.0, 3.65, 500)

@@ -99,13 +99,13 @@ def chi_ip_komponenten(
     Ebene, senkrecht zum CPW-Innenleiter).
 
     HINWEIS – noch nicht im Linescan-Fit verdrahtet: Der Einzelfit
-    (:func:`ananas.physik.fitmodell.s21_modell`) verwendet derzeit
+    (:func:`bbfmr.physik.fitmodell.s21_modell`) verwendet derzeit
     ausschliesslich :func:`chi_oop`; das ``oop``/``ip``-Umschalten greift nur in
     der uebergreifenden Kittel-/LLG-Auswertung (auf bereits extrahierte ``B_res``).
     Fuer einen echten ip-Linienform-Fit braucht es zusaetzlich einen
     ``B_res``-parametrisierten Wrapper (die ip-Resonanz liegt NICHT einfach bei
     ``mu0H0-mu0Meff=omega/gamma``, sondern bei der ip-Kittel-Bedingung, vgl.
-    :func:`ananas.physik.kittel_llg.kittel_ip`) und einen ``geometrie``-Parameter
+    :func:`bbfmr.physik.kittel_llg.kittel_ip`) und einen ``geometrie``-Parameter
     durch Startwertschaetzung/Modell/Fit. Beispielmessung ist oop.
     """
     mu0H0 = np.asarray(mu0H0, dtype=float)
