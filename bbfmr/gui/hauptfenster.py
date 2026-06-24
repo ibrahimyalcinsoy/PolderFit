@@ -690,9 +690,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         <hr>
         <p>Entstanden am <b>Walther-Meißner-Institut</b>. Das Logo zeigt das Grundbild der
-        ferromagnetischen Resonanz: die <b>Magnetisierung M</b> (orange) präzediert um das
-        statische <b>Feld H</b> (blau) und wird durch eine breitbandige Mikrowelle (RF)
-        getrieben. Quellcode, Doku und Details:<br>
+        ferromagnetischen Resonanz: die <b>Magnetisierung M</b> (rot) präzediert auf einem
+        Kegel um das effektive <b>Feld H</b> (Achse); das transversale HF-Treiberfeld <b>h</b>
+        steht senkrecht auf H. Quellcode, Doku und Details:<br>
         <a href="{REPO_URL}">{REPO_URL}</a></p>
         </body></html>
         """
