@@ -12,6 +12,9 @@ dist/
 *.csv
 /ergebnisse/
 
+# Lokale Werkzeug-/Editor-Konfiguration
+.idea/
+.vscode/
 
 # Lokale Messdaten (TDMS) – nicht versionieren
 /testdata/
