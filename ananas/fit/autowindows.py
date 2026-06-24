@@ -106,6 +106,93 @@ def _robuste_trasse(frequenzen, bres, prominenz):
     return np.polyval(koeff, f)
 
 
+def _stationaeren_untergrund_abziehen(reins: list[np.ndarray]) -> list[np.ndarray]:
+    """Entfernt den FELD-STATIONAEREN Anteil aus den Residuen (nur bei gemeinsamem
+    Feldgitter, d. h. unsortierten Daten).
+
+    Hintergrund: Die echte Resonanz WANDERT mit der Frequenz (Kittel-Dispersion) –
+    bei einem festen Feldwert taucht sie also nur fuer wenige Frequenzen auf. Stoer-
+    features dagegen (periodische Untergrund-Ripples z. B. bei Gitter-Proben, kleine
+    apparative Artefakte) sitzen bei FESTEN Feldwerten ueber (fast) alle Frequenzen.
+    Der Median ueber die Frequenzachse je Feldpunkt schaetzt genau diesen
+    stationaeren Untergrund; nach Abzug bleibt vorwiegend die wandernde Resonanz –
+    die Einzeldetektion verirrt sich dann nicht mehr an einem festen Stoerfeature.
+    """
+    R = np.asarray(reins)
+    stationaer = np.median(R, axis=0)
+    return [np.clip(r - stationaer, 0.0, None) for r in reins]
+
+
+def _glatte_lokale_trasse(frequenzen: np.ndarray, kand_b: np.ndarray,
+                          kand_s: np.ndarray, fenster_punkte: int = 31):
+    """Glatte Resonanztrasse als gleitende ROBUSTE GERADE ueber die prominenten
+    Kandidaten.
+
+    Liefert je Linescan einen robusten Schaetzwert ``B_res(f)`` – oder ``None``,
+    wenn es zu wenige prominente Kandidaten gibt. In einem gleitenden Fenster wird
+    eine Gerade an die prominenten Kandidaten gefittet (eine MAD-Ausreisser-
+    Verwerfung), und der Wert an der Stelle ``k`` vorhergesagt. Die LOKALE Gerade
+    folgt der (glatten, monoton steigenden) Kittel-Dispersion – auch wenn diese
+    schnell mit der Frequenz wandert – und unterdrueckt zugleich einzelne
+    Ausreisser-Kandidaten (Sprung eines Linescans auf ein Stoerfeature). Ein
+    gleitender *Median* wuerde dagegen einer schnell wandernden Resonanz nach-
+    hinken; ein *globales* Polynom verbiegt sich an Hebelpunkten der Frequenzenden.
+    """
+    f = np.asarray(frequenzen, dtype=float)
+    b = np.asarray(kand_b, dtype=float)
+    s = np.asarray(kand_s, dtype=float)
+    n = b.size
+    gut = s >= _PROMINENZ_MIN
+    if gut.sum() < 5:
+        return None
+    half = max(3, fenster_punkte // 2)
+    guide = np.empty(n)
+    for k in range(n):
+        a = max(0, k - half)
+        z = min(n, k + half + 1)
+        maske = gut[a:z]
+        if maske.sum() < 3:
+            # zu wenige verlaessliche Kandidaten im Fenster -> naechste guten nehmen
+            idx = np.where(gut)[0]
+            j = idx[int(np.argmin(np.abs(idx - k)))]
+            guide[k] = b[j]
+            continue
+        ff = f[a:z][maske]
+        bb = b[a:z][maske]
+        if np.ptp(ff) <= 0:
+            guide[k] = float(np.median(bb))
+            continue
+        koeff = np.polyfit(ff, bb, 1)
+        res = bb - np.polyval(koeff, ff)
+        mad = float(np.median(np.abs(res - np.median(res)))) or 1e-12
+        behalten = np.abs(res - np.median(res)) <= 3.0 * 1.4826 * mad
+        if behalten.sum() >= 3 and not behalten.all() and np.ptp(ff[behalten]) > 0:
+            koeff = np.polyfit(ff[behalten], bb[behalten], 1)
+        guide[k] = float(np.polyval(koeff, f[k]))
+    return guide
+
+
+def _verfeinere_zentrum(feld: np.ndarray, rein: np.ndarray, b_pred: float,
+                        such_radius: float) -> float:
+    """Schnappt ``b_pred`` auf den naechsten prominenten Residuum-Peak im Umkreis.
+
+    Korrigiert kleine Trassen-Offsets (eine scharfe Resonanz, die sonst an den
+    Fensterrand oder knapp daneben fiele), springt aber wegen des begrenzten
+    Radius nicht auf weiter entfernte Stoerfeatures.
+    """
+    B = np.asarray(feld, dtype=float)
+    nah = (B >= b_pred - such_radius) & (B <= b_pred + such_radius)
+    if nah.sum() < 3:
+        return b_pred
+    idx = np.where(nah)[0]
+    j = idx[int(np.argmax(rein[idx]))]
+    med = float(np.median(rein))
+    mad = float(np.median(np.abs(rein - med))) or 1e-12
+    if (float(rein[j]) - med) / (1.4826 * mad) >= _PROMINENZ_MIN:
+        return float(B[j])
+    return b_pred
+
+
 def _fenster_um(feld: np.ndarray, rein: np.ndarray, b_res: float,
                 breite_faktor: float) -> tuple[float, float]:
     """Symmetrisches Feldfenster um ``b_res`` (Breite an die lokale FWHM gekoppelt)."""
@@ -143,23 +230,74 @@ def auto_fenster_alle(
     gamma: float = GAMMA_STANDARD,
     breite_faktor: float = 8.0,
 ) -> list[tuple[float, float]]:
-    """AutoWindows fuer alle Linescans – mit globaler, robuster Dispersionstrasse."""
-    reins: list[np.ndarray] = []
-    kand_b: list[float] = []
-    kand_s: list[float] = []
-    for ls in datensatz.linescans:
-        rein = _detrend_residuum(ls.feld, ls.s21)
-        reins.append(rein)
-        b, s = _kandidat(ls.feld, rein)
-        kand_b.append(b)
-        kand_s.append(s)
+    """AutoWindows fuer alle Linescans.
 
-    trasse = _robuste_trasse(datensatz.frequenzen, kand_b, kand_s)
+    Strategie (robust gegen Stoerfeatures und schwache Resonanzen):
+
+    1. Residuum je Linescan ueber den glatten Untergrundabzug; bei gemeinsamem
+       Feldgitter zusaetzlich den feld-stationaeren Untergrund abziehen
+       (:func:`_stationaeren_untergrund_abziehen`) – das entfernt periodische
+       Ripples/Artefakte, die nicht mit der Frequenz wandern.
+    2. Pro Linescan einen lokalen Resonanzkandidaten suchen. Ist er **prominent**,
+       wird IHM vertraut – die einzelne Detektion ist nach dem Stationaer-Abzug
+       sehr zuverlaessig und genauer als jede globale Glaettung.
+    3. Nur fuer **schwache** Linescans (keine verlaessliche Einzeldetektion, z. B.
+       sehr hohe Frequenzen oder Felder ohne Resonanz) dient die glatte
+       Dispersionstrasse als Rueckfall; ihr Zentrum wird noch auf einen nahen
+       Peak verfeinert.
+
+    Frueher legte die Trasse die Fenstermitte fuer ALLE Frequenzen fest und konnte
+    so gute Einzeldetektionen mit einem schlecht gefitteten globalen Polynom
+    ueberschreiben (Hebelpunkt-Ausreisser bei tiefen Frequenzen ohne Resonanz).
+    """
+    linescans = datensatz.linescans
+    n = len(linescans)
+    reins: list[np.ndarray] = [_detrend_residuum(ls.feld, ls.s21) for ls in linescans]
+
+    # Feld-stationaeren Untergrund abziehen, falls gemeinsames Feldgitter vorliegt
+    # (unsortierte Daten: jeder Linescan hat dieselbe Feldachse).
+    groessen = {ls.feld.size for ls in linescans}
+    gemeinsam = len(groessen) == 1 and n >= 8 and linescans[0].feld.size >= 8
+    if gemeinsam:
+        feld0 = linescans[0].feld
+        if not all(np.array_equal(linescans[k].feld, feld0) for k in (0, n // 2, n - 1)):
+            gemeinsam = False
+    if gemeinsam:
+        reins = _stationaeren_untergrund_abziehen(reins)
+
+    kand_b = np.empty(n)
+    kand_s = np.empty(n)
+    for k, ls in enumerate(linescans):
+        b, s = _kandidat(ls.feld, reins[k])
+        kand_b[k] = b
+        kand_s[k] = s
+
+    # Glatte LOKALE Trasse (gleitender Median ueber die prominenten Kandidaten).
+    # Die Linescans sind nach Frequenz sortiert; die echte Resonanz wandert glatt
+    # (Kittel-Dispersion). Ein gleitender Median folgt dieser Kurve, ist aber
+    # immun gegen einzelne Ausreisser-Kandidaten (Sprung auf ein Stoerfeature/
+    # Rauschen in einem Linescan) – anders als ein globales Polynom verbiegt er
+    # sich nicht durch Hebelpunkte und folgt auch gekruemmten Dispersionen.
+    guide = _glatte_lokale_trasse(datensatz.frequenzen, kand_b, kand_s)
+
+    # Rueckfall-Trasse fuer den seltenen Fall, dass es ueberhaupt keine
+    # verlaesslichen Kandidaten fuer einen lokalen Median gibt.
+    trasse = _robuste_trasse(datensatz.frequenzen, kand_b, kand_s) if guide is None else None
 
     fenster: list[tuple[float, float]] = []
-    for k, ls in enumerate(datensatz.linescans):
+    for k, ls in enumerate(linescans):
         try:
-            b_pred = float(trasse[k]) if trasse is not None else kand_b[k]
+            spacing = float(np.ptp(ls.feld)) / ls.feld.size if ls.feld.size else 0.01
+            tol = max(0.08, 12.0 * spacing)
+            fuehrung = guide[k] if guide is not None else (
+                float(trasse[k]) if trasse is not None else kand_b[k])
+            if kand_s[k] >= _PROMINENZ_MIN and abs(kand_b[k] - fuehrung) <= tol:
+                # Verlaessliche Einzeldetektion, konsistent mit der glatten Trasse.
+                b_pred = kand_b[k]
+            else:
+                # Sprung-Kandidat oder schwacher Linescan: an der glatten Trasse
+                # ausrichten und auf einen nahen Peak verfeinern.
+                b_pred = _verfeinere_zentrum(ls.feld, reins[k], fuehrung, tol)
             fenster.append(_fenster_um(ls.feld, reins[k], b_pred, breite_faktor))
         except Exception:
             fenster.append((float(ls.feld.min()), float(ls.feld.max())))

@@ -46,6 +46,23 @@ abtrennbares **Aktivitäts-Panel** zeigt einen Fortschrittsbalken und ein farbig
 Live-Protokoll (jeder Fit mit B_res/α, Problemfits markiert) – die App wirkt nie
 „eingefroren", auch wenn sie länger rechnet.
 
+## Dokumentation
+
+Eine ausführliche Dokumentation des Aufbaus, der physikalischen Modelle, der
+einstellbaren Parameter (Tuning) sowie zur Fehlersuche befindet sich im Verzeichnis
+`docs/` (Format nach Art von ReadTheDocs). Die HTML-Fassung lässt sich mit
+[MkDocs](https://www.mkdocs.org/) erzeugen:
+
+```bash
+pip install mkdocs
+mkdocs serve      # lokale Vorschau unter http://127.0.0.1:8000
+mkdocs build      # statisches HTML nach site/
+```
+
+Einstieg: `docs/index.md`. Das Kapitel `docs/autowindow.md` beschreibt die
+automatische Resonanzbestimmung, `docs/tuning.md` sämtliche Stellschrauben,
+`docs/troubleshooting.md` typische Fehlerbilder.
+
 ## Architektur
 
 ```

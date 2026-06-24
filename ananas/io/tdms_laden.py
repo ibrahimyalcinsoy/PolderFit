@@ -35,6 +35,20 @@ def _kanal(tdms, gruppe: str, kanal: str) -> np.ndarray:
     return np.asarray(tdms[gruppe][kanal][:])
 
 
+def _sweep_periode(frequenz: np.ndarray, atol_hz: float = 1.0) -> int | None:
+    """Sweep-Laenge n_freq aus der Frequenzspur ableiten.
+
+    Liefert den kleinsten Index ``p >= 2``, an dem die Frequenz wieder auf den
+    Startwert ``frequenz[0]`` zurueckkehrt (innerhalb ``atol_hz``) – also den
+    Beginn des naechsten Frequenzsweeps. ``None``, falls keine Periode gefunden.
+    """
+    f0 = frequenz[0]
+    for p in range(2, frequenz.size):
+        if abs(frequenz[p] - f0) <= atol_hz:
+            return p
+    return None
+
+
 def _lade_unsortiert(tdms, pfad: str) -> Messdatensatz:
     """Rohdaten-Messfile: 725 Feldwerte x 1001 Frequenzpunkte (reshape statt Schleife)."""
     frequenz = _kanal(tdms, "Read.PNAX", "Frequency")
@@ -44,6 +58,44 @@ def _lade_unsortiert(tdms, pfad: str) -> Messdatensatz:
     feld_before = _kanal(tdms, "Read.Fieldbefore", "IPS X-Field")
     feld_after = _kanal(tdms, "Read.Fieldafter", "IPS X-Field")
     n_feld = feld_before.size
+
+    # Temperatur (je Feldwert) optional – frueh laden, damit ein evtl. mitten im
+    # Sweep "geflushtes" File (siehe unten) auch die Temperaturspur korrekt kuerzt.
+    temperatur = None
+    try:
+        temperatur = _kanal(tdms, "Read.Temperature", "LakeshoreTemperature")
+    except KeyError:
+        temperatur = None
+
+    if frequenz.size % n_feld != 0:
+        # Mitten im Sweep auf Platte geschriebenes ("_flush") Messfile: der letzte
+        # Feldschritt wurde begonnen, aber nicht zu Ende gesweept. Dadurch hat
+        # Fieldbefore einen Eintrag mehr (N+1) als vollstaendige Sweeps (N), und
+        # frequenz.size (= N*n_freq) ist nicht durch feld_before.size teilbar.
+        # -> n_freq aus der Sweep-Periode ableiten und auf vollstaendige Sweeps kuerzen.
+        n_freq = _sweep_periode(frequenz)
+        if n_freq is None or frequenz.size % n_freq != 0:
+            raise ValueError(
+                f"Punktzahl {frequenz.size} nicht durch Feldanzahl {n_feld} teilbar "
+                "und Sweep-Periode nicht eindeutig bestimmbar – Reshape nicht moeglich."
+            )
+        n_complete = frequenz.size // n_freq
+        if n_complete < 1:
+            raise ValueError(
+                f"Unsortiertes TDMS (flush): kein vollstaendiger Frequenzsweep "
+                f"({frequenz.size} Punkte, Periode {n_freq}) – Reshape nicht moeglich."
+            )
+
+        # Auf die vollstaendig gemessenen Sweeps kuerzen.
+        n_punkte = n_complete * n_freq
+        frequenz = frequenz[:n_punkte]
+        re = re[:n_punkte]
+        im = im[:n_punkte]
+        feld_before = feld_before[:n_complete]
+        feld_after = feld_after[:n_complete]
+        if temperatur is not None:
+            temperatur = temperatur[:n_complete]
+        n_feld = n_complete
 
     if frequenz.size % n_feld != 0:
         raise ValueError(
@@ -69,13 +121,8 @@ def _lade_unsortiert(tdms, pfad: str) -> Messdatensatz:
             "Reshape (n_feld x n_freq) ist hier nicht zulaessig."
         )
 
-    # Temperatur (je Feldwert) optional.
-    temperatur = None
-    try:
-        temperatur = _kanal(tdms, "Read.Temperature", "LakeshoreTemperature")
-        if temperatur.size != n_feld:
-            temperatur = None
-    except KeyError:
+    # Temperatur (je Feldwert) muss zur Feldanzahl passen, sonst verwerfen.
+    if temperatur is not None and temperatur.size != n_feld:
         temperatur = None
 
     # Feld je Feldwert: Mittel aus before/after (robust); Fallback before.

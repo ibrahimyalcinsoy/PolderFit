@@ -1,0 +1,23 @@
+site_name: Ananas – Breitband-FMR-Auswertung
+site_description: Wie der Ananas-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung
+docs_dir: docs
+theme:
+  name: readthedocs
+  highlightjs: true
+nav:
+  - Start: index.md
+  - Installation & Start: installation.md
+  - Die Messdaten (TDMS): datenformate.md
+  - Der Ablauf (Pipeline): pipeline.md
+  - AutoWindow im Detail: autowindow.md
+  - Physik & Fit: physik-und-fit.md
+  - Bewertung der Fits: bewertung.md
+  - Tuning – alle Stellschrauben: tuning.md
+  - Troubleshooting: troubleshooting.md
+  - Robustheits-Harness: test-harness.md
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - tables
+  - fenced_code
