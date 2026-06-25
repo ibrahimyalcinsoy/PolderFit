@@ -1,1 +1,0 @@
-In dem mathematica sind die Fitfunktionen für die Rohdaten beschrieben und ein exemplarisches Datenfile (TDMS, sorted) mit bereits sortierten Daten und das zugrundeliegende Messfile mit allen Daten.
