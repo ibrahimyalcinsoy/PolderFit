@@ -8,6 +8,10 @@ Linienbreite die Materialgrößen (effektive Magnetisierung, g-Faktor, Gilbert-D
 
 ## Installation
 
+> 🪟 **Windows-Nutzer ohne Vorkenntnisse:** Eine idiotensichere Schritt-für-Schritt-
+> Anleitung (Python, Git, Download, Start) steht in
+> **[INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md)**.
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[gui,test]"
