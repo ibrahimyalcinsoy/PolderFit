@@ -13,6 +13,42 @@ Modelle und der Fehlersuche befindet sich im Verzeichnis [`docs/`](docs/).
 
 ---
 
+## Schnellstart
+
+Die folgende Befehlskette beschafft den Quelltext, richtet eine **gekapselte
+Programmumgebung** ein und startet bbFMR. Es genügt, die gesamte Zeile zu kopieren,
+in das Terminal einzufügen und mit Enter zu bestätigen.
+
+> **Warum dies auch auf „unaufgeräumten" Systemen funktioniert.** Die Kette legt mit
+> `python -m venv .venv` eine eigene, abgeschottete Umgebung an. Alle Pakete werden
+> ausschließlich dort installiert. Eine bereits vorhandene Python- oder
+> Anaconda-Installation, mehrere parallele Python-Versionen oder eine aktive
+> Conda-Umgebung werden dadurch weder verändert noch stören sie den Betrieb von
+> bbFMR. Voraussetzung ist allein, dass das aufgerufene Python die Version 3.11 oder
+> neuer besitzt und dass `git` verfügbar ist (zur einmaligen Bereitstellung beider
+> Werkzeuge siehe [Installation](#installation)).
+
+**Windows 11** – in der *Eingabeaufforderung* (Startmenü → `cmd`) bzw. in einer
+*Anaconda Prompt*:
+
+```bat
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR && python -m venv .venv && .venv\Scripts\activate && pip install -e ".[gui]" && bbfmr
+```
+
+**Fedora / Debian** – in einer *bash*- bzw. *zsh*-Shell (auch innerhalb einer
+Anaconda-Shell):
+
+```bash
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[gui]" && bbfmr
+```
+
+Bei der ersten Ausführung werden einige Pakete aus dem Internet geladen; dies dauert
+wenige Minuten. Anschließend öffnet sich die grafische Oberfläche. Die einzelnen
+Schritte sowie die einmalige Bereitstellung von Python und Git sind im folgenden
+Abschnitt ausführlich erläutert.
+
+---
+
 ## Installation
 
 Die Installation gliedert sich in drei Schritte, die auf allen Plattformen identisch
