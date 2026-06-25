@@ -7,20 +7,30 @@ Linienbreite die Materialgrößen (`μ0Meff`, `g`, Gilbert-Dämpfung `α`).
 
 ## Schnellstart
 
-Gesamte Zeile kopieren, ins Terminal einfügen, Enter. Die virtuelle Umgebung (`.venv`)
+Gesamten Block kopieren, ins Terminal einfügen, Enter. Die virtuelle Umgebung (`.venv`)
 kapselt das Programm vollständig ab – vorhandene Python- oder Anaconda-Installationen
 stören nicht. Voraussetzung: Python ≥ 3.11 und `git` (Bereitstellung s. u.).
 
 **Windows 11** (Eingabeaufforderung `cmd`):
 
 ```bat
-git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR && python -m venv .venv && .venv\Scripts\activate && pip install -e ".[gui]" && bbfmr
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git
+cd bbFMR
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[gui]"
+bbfmr
 ```
 
 **Fedora / Debian** (bash):
 
 ```bash
-git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[gui]" && bbfmr
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git
+cd bbFMR
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[gui]"
+bbfmr
 ```
 
 ## Python und Git bereitstellen (einmalig)
@@ -37,7 +47,8 @@ git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR && python3 -
 bbfmr                 # grafische Oberfläche (in aktivierter .venv)
 python -m bbfmr.app   # gleichbedeutend, zur Fehlersuche
 
-git pull && pip install -e ".[gui]"   # auf neueste Version bringen
+git pull                              # auf neueste Version bringen
+pip install -e ".[gui]"               # Abhängigkeiten auffrischen
 ```
 
 Programmatische Nutzung:
