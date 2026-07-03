@@ -32,6 +32,8 @@ from ..io import (
 from ..fit.batch import StapelErgebnis, fitte_alle, fitte_neu
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..auswertung.uebersicht import auswertung_kittel_llg
+from ..fit.auswahl import Auswertungsauswahl
+from .auswahl_dialog import AuswahlDialog
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
 from .mapping_dialog import MappingDialog, VorschauDialog
@@ -69,6 +71,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         self.stapel: StapelErgebnis | None = None
         self.aktueller_index: int = 0
+        # Voller geladener Datensatz. Der Stapel kann (Jumper/Bereich) auf einem
+        # REDUZIERTEN Datensatz arbeiten - neue Auswertungen starten immer hier.
+        self.datensatz_voll = None
+        # Zuletzt benutzte Auswertungsauswahl (Jumper/Bereich) als Vorbelegung.
+        self._letzte_auswahl: Auswertungsauswahl | None = None
 
         # Hintergrund-Job-Zustand.
         self._thread: QtCore.QThread | None = None
@@ -438,6 +445,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             mat, ext = self.matrix.thumbnail()
             self.navigator.zeige(mat, ext)
             self.navigator_dock.setVisible(False)  # erst beim Zoomen einblenden
+            self.datensatz_voll = datensatz
             self.stapel = StapelErgebnis(datensatz=datensatz)
             self._log(
                 f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
@@ -459,13 +467,32 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "'TDMS laden' oeffnen und die Kanaele den Rollen zuordnen.")
         return False
 
+    def _frage_auswahl(self) -> Auswertungsauswahl | None:
+        """Zeigt vor der Auswertung den Jumper-/Bereichs-Dialog (Pflichtschritt).
+
+        Liefert die Auswahl oder ``None`` bei Abbruch. Die zuletzt benutzte
+        Auswahl ist vorbelegt.
+        """
+        dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self)
+        if not dialog.exec():
+            return None
+        auswahl = dialog.auswahl()
+        self._letzte_auswahl = auswahl
+        if not auswahl.ist_neutral:
+            self._log("Auswertungsauswahl: "
+                      + auswahl.beschreibung(self.datensatz_voll), "info")
+        return auswahl
+
     def _auto_fit(self):
-        if self.stapel is None:
+        if self.stapel is None or self.datensatz_voll is None:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
             return
         if not self._mapping_vorhanden():
             return
-        datensatz = self.stapel.datensatz
+        datensatz = self.datensatz_voll
+        auswahl = self._frage_auswahl()
+        if auswahl is None:
+            return
 
         def aufgabe(melde):
             n = len(datensatz.linescans)
@@ -482,7 +509,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     text = ""
                 melde(i + 1, total, text)
 
-            return fitte_alle(datensatz, fortschritt=fortschritt)
+            return fitte_alle(datensatz, fortschritt=fortschritt, auswahl=auswahl)
 
         def bei_fertig(stapel):
             self.stapel = stapel
@@ -523,8 +550,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._log("Resonanz vorgeben abgebrochen (Punkte zu nah beieinander).", "warn")
             return
         steigung = (b2 - b1) / (f2 - f1)
-        datensatz = self.stapel.datensatz
+        datensatz = self.datensatz_voll if self.datensatz_voll is not None else self.stapel.datensatz
         zentren = b1 + steigung * (datensatz.frequenzen - f1)  # Kittel-Gerade B_res(f)
+        auswahl = self._frage_auswahl()
+        if auswahl is None:
+            self._log("Auto-Fit mit Vorgabe abgebrochen (keine Auswertungsauswahl).", "info")
+            return
         self._log(f"Dispersion gesetzt: {b1:.3f} T @ {f1/1e9:.1f} GHz – "
                   f"{b2:.3f} T @ {f2/1e9:.1f} GHz → Auto-Fit mit Vorgabe …", "ok")
 
@@ -543,7 +574,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     text = ""
                 melde(i + 1, total, text)
 
-            return fitte_alle(datensatz, fortschritt=fortschritt, zentren=zentren)
+            return fitte_alle(datensatz, fortschritt=fortschritt, zentren=zentren,
+                              auswahl=auswahl)
 
         def bei_fertig(stapel):
             self.stapel = stapel
@@ -571,7 +603,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         voll = self.stapel.datensatz.linescans[i]
         unten, oben = self.stapel.fenster[i]
         self.fitansicht.zeige(voll, unten, oben, self.stapel.ergebnisse[i])
-        self.matrix.markiere_frequenz(i)
+        # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
+        # enthalten als die angezeigte Matrix.
+        self.matrix.markiere_frequenz_wert(self.stapel.ergebnisse[i].frequenz)
         e = self.stapel.ergebnisse[i]
         status = f"PROBLEM: {e.problem_text}" if e.problematisch else "OK"
         # 1-R² in wissenschaftlicher Notation, damit echte Variation sichtbar wird.
@@ -819,9 +853,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """
 
     def _frequenz_gewaehlt(self, index: int):
+        """Klick in der Uebersicht: Index der VOLLEN Frequenzachse -> Stapel-Index.
+
+        Der Stapel kann durch die Auswertungsauswahl (Jumper) weniger
+        Frequenzen enthalten; gewaehlt wird der wertmaessig naechste Fit.
+        """
         if not self.stapel or not self.stapel.ergebnisse:
             return
-        self.aktueller_index = index
+        _, freq_achse = self.matrix.achsen()
+        if freq_achse is None or index >= len(freq_achse):
+            return
+        f = float(freq_achse[index])
+        self.aktueller_index = int(np.argmin(np.abs(self.stapel.datensatz.frequenzen - f)))
         self._zeige_aktuellen()
 
 

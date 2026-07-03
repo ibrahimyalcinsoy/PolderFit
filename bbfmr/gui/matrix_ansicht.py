@@ -246,6 +246,16 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             path_effects=[pe.Stroke(linewidth=2.2, foreground="#00000099"), pe.Normal()])
         self.draw_idle()
 
+    def markiere_frequenz_wert(self, f_hz: float) -> None:
+        """Markiert die dem Wert naechstgelegene Frequenz (wertbasiert statt Index).
+
+        Noetig, weil der Fit-Stapel durch die Auswertungsauswahl (Jumper)
+        weniger Frequenzen enthalten kann als die angezeigte Matrix.
+        """
+        if self._freq_achse is None or len(self._freq_achse) == 0:
+            return
+        self.markiere_frequenz(int(np.argmin(np.abs(self._freq_achse - f_hz))))
+
     def _waehle_index(self, index: int) -> None:
         """Markiert ``index`` und meldet die Auswahl (laedt damit den Fit)."""
         if self._freq_achse is None or len(self._freq_achse) == 0:

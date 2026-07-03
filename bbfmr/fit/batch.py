@@ -15,6 +15,7 @@ import numpy as np
 from ..io.datensatz import Linescan, Messdatensatz
 from ..physik.konstanten import GAMMA_STANDARD
 from ..physik.fitmodell import Startwerte
+from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
 from .linescan_fit import FitErgebnis, fitte_linescan
 
@@ -57,13 +58,23 @@ def fitte_alle(
     r2_schwelle: float = 0.9,
     fortschritt=None,
     zentren=None,
+    auswahl: Auswertungsauswahl | None = None,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
     ``fortschritt`` ist ein optionaler Callback ``f(i, n, ergebnis)`` fuer die GUI.
     ``zentren`` (optional): vorgegebene Fenstermitten ``B_res(f)`` je Frequenz (z. B.
     aus einem manuellen Dispersions-Seed); dann wird die Auto-Detektion uebersprungen.
+    ``auswahl`` (optional): Unterabtastung/Bereichseinschraenkung
+    (:class:`bbfmr.fit.auswahl.Auswertungsauswahl`) – der Stapel arbeitet dann
+    auf dem reduzierten Datensatz; ``zentren`` (auf den vollen Datensatz
+    bezogen) wird deckungsgleich mit reduziert.
     """
+    if auswahl is not None and not auswahl.ist_neutral:
+        datensatz, indizes = auswahl.reduziere(datensatz)
+        if zentren is not None:
+            zentren = np.asarray(zentren)[indizes]
+
     if zentren is not None:
         fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor)
     else:
