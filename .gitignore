@@ -19,15 +19,18 @@ dist/
 # Lokale Messdaten (TDMS) – nicht versionieren
 /testdata/
 /testdata_old_anglecal/
+/TDMS files/
 /Weitere TDMS files/
 /dritter Datensatz/
+*.tdms
 *.tdms_index
 
 # Abgeleitete Diagnose-Plots des Robustheits-Harness
 /diag/
 
-# Große Dokumente (Dissertation)
-Dokumente/Mueller_Manuel_Doktorarbeit_2023.pdf
+# Referenz-/Quelldokumente – nicht für die Programmfunktion nötig
+/Dokumente/
+/bbFMR_Einfuehrung_Programmierprojekt.pdf
 
 # MkDocs-Build
 /site/

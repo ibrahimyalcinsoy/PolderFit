@@ -203,22 +203,28 @@ def fitte_linescan(
     alpha_start = float(np.clip(sw.alpha, ALPHA_MIN * 1.1, ALPHA_MAX * 0.9))
     phi_start = float(np.clip(sw.phi, PHI_MIN + 1e-6, PHI_MAX - 1e-6))
 
-    params = Parameters()
-    # B_res MUSS im Feldfenster liegen (Defekt 1).
-    params.add("B_res", value=b_res_start, min=B_min, max=B_max)
-    params.add("alpha", value=alpha_start, min=ALPHA_MIN, max=ALPHA_MAX)
-    params.add("A", value=sw.A)
-    params.add("phi", value=phi_start, min=PHI_MIN, max=PHI_MAX)
-    params.add("off_re", value=sw.off_re)
-    params.add("off_im", value=sw.off_im)
-    params.add("slope_re", value=sw.slope_re)
-    params.add("slope_im", value=sw.slope_im)
-
-    try:
-        ergebnis = minimize(
+    def _minimiere(phi_wert: float):
+        params = Parameters()
+        # B_res MUSS im Feldfenster liegen (Defekt 1).
+        params.add("B_res", value=b_res_start, min=B_min, max=B_max)
+        params.add("alpha", value=alpha_start, min=ALPHA_MIN, max=ALPHA_MAX)
+        params.add("A", value=sw.A)
+        params.add("phi", value=phi_wert, min=PHI_MIN, max=PHI_MAX)
+        params.add("off_re", value=sw.off_re)
+        params.add("off_im", value=sw.off_im)
+        params.add("slope_re", value=sw.slope_re)
+        params.add("slope_im", value=sw.slope_im)
+        return minimize(
             residuum, params, method="leastsq",
             args=(B, s21, omega, gamma, B_ref),
         )
+
+    def _hat_unsicherheiten(mini) -> bool:
+        return bool(getattr(mini, "errorbars", False)) and \
+            mini.params["B_res"].stderr is not None
+
+    try:
+        ergebnis = _minimiere(phi_start)
     except Exception as exc:  # numerisch fehlgeschlagen
         erg = FitErgebnis(
             frequenz=linescan.frequenz, erfolg=False, meldung=f"Fit-Fehler: {exc}",
@@ -228,6 +234,23 @@ def fitte_linescan(
         erg.problematisch, erg.problem_gruende = bewerte_fit(erg)
         return erg
 
+    # phi-Nebenminimum-Ausweg: Der phi-Startwert aus der Schaetzung kann um pi
+    # daneben liegen; der Fit landet dann in einem Nebenminimum, dessen
+    # Jacobi-Matrix singulaer wird (lmfit liefert keine Unsicherheiten). In dem
+    # Fall einmal mit um pi verschobenem phi-Start neu starten und das bessere
+    # Ergebnis behalten (Unsicherheiten vorhanden > kleineres Chi-Quadrat).
+    if not _hat_unsicherheiten(ergebnis):
+        phi_alternative = phi_start - np.pi if phi_start > 0 else phi_start + np.pi
+        try:
+            zweite = _minimiere(phi_alternative)
+        except Exception:
+            zweite = None
+        if zweite is not None and (
+            _hat_unsicherheiten(zweite)
+            or getattr(zweite, "chisqr", np.inf) < getattr(ergebnis, "chisqr", np.inf)
+        ):
+            ergebnis = zweite
+
     p = ergebnis.params
     kurve = s21_modell(
         B, p["B_res"].value, p["alpha"].value, p["A"].value, p["phi"].value,
@@ -235,7 +258,7 @@ def fitte_linescan(
         omega, gamma, B_ref,
     )
 
-    masse = _guetemasse(B, s21, kurve, p, B_ref, n_param=len(params))
+    masse = _guetemasse(B, s21, kurve, p, B_ref, n_param=len(p))
 
     def _err(name):
         par = p[name]

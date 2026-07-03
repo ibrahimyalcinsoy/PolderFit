@@ -48,6 +48,14 @@ CHI2_RED_NOTBREMSE: float = 1e6
 #: Maximale relative Unsicherheit des Resonanzfeldes (delta B_res / |B_res|).
 B_RES_REL_UNSICHERHEIT_MAX: float = 0.02
 
+#: Fehlende Kovarianz allein macht einen Fit NICHT mehr problematisch, wenn das
+#: normierte Residuum unter dieser Schwelle liegt (exzellente Anpassung).
+#: Hintergrund: Ein numerisch nahezu perfekter Fit kann in ein phi-Nebenminimum
+#: laufen, dessen Jacobi-Matrix singulaer wird - lmfit liefert dann keine
+#: Unsicherheiten, obwohl die Linienform exakt getroffen ist. Solche Fits als
+#: hart problematisch zu markieren war eine der bekannten "Problemfit"-Ursachen.
+RMSE_NORM_EXZELLENT: float = 0.10
+
 
 def an_grenze(wert: float, unten: float, oben: float, rel: float = GRENZ_NAEHE_REL) -> bool:
     """True, wenn ``wert`` innerhalb ``rel`` des Schrankenabstands an einer Schranke liegt."""
@@ -73,11 +81,16 @@ def bewerte_fit(erg) -> tuple[bool, list[str]]:
     """
     gruende: list[str] = []
 
-    # (e) Konvergenz / Kovarianz
+    # (e) Konvergenz / Kovarianz. Fehlende Kovarianz zaehlt nur dann als
+    # Problem, wenn der Fit nicht ohnehin exzellent passt (phi-Nebenminimum
+    # mit singulaerer Jacobi-Matrix, siehe RMSE_NORM_EXZELLENT).
     if not erg.erfolg:
         gruende.append("keine Konvergenz")
     if not erg.kovarianz_ok:
-        gruende.append("keine Unsicherheiten")
+        exzellent = (erg.erfolg and np.isfinite(erg.rmse_norm)
+                     and erg.rmse_norm <= RMSE_NORM_EXZELLENT)
+        if not exzellent:
+            gruende.append("keine Unsicherheiten")
 
     # (b) Parameter an Schranke
     if an_grenze(erg.alpha, ALPHA_MIN, ALPHA_MAX):
