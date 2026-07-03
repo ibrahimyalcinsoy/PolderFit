@@ -79,6 +79,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._seed_fertig = None
         self._seed_punkte: list[tuple[float, float]] = []
         self._seed_marker: list = []
+        # Bereichs-Fit-Modus: naechstes aufgezogenes Rechteck neu fitten statt zoomen.
+        self._bereich_fertig = None
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.mpl_connect("button_press_event", self._on_press)
@@ -366,6 +368,30 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.draw_idle()
         self._melde_zoom()
 
+    # --- Bereichs-Fit (Rechteck aufziehen -> nur dort neu fitten) -----------
+    def starte_bereichs_fit(self, fertig) -> None:
+        """Aktiviert den Bereichs-Fit-Modus: das naechste aufgezogene Rechteck
+        wird als Fit-Bereich gemeldet statt zu zoomen.
+
+        ``fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)`` wird mit den
+        Rechteck-Grenzen in Plot-Einheiten (Tesla, GHz) aufgerufen.
+        ``Esc`` bricht den Modus ab.
+        """
+        self._bereich_fertig = fertig
+        self._seed_fertig = None  # Modi schliessen sich gegenseitig aus
+        self.setCursor(QtCore.Qt.CrossCursor)
+
+    def bereichs_fit_abbrechen(self) -> None:
+        self._bereich_fertig = None
+        self.unsetCursor()
+
+    def _bereich_abschliessen(self, x0, y0, x1, y1) -> None:
+        fertig = self._bereich_fertig
+        self._bereich_fertig = None
+        self.unsetCursor()
+        if fertig is not None:
+            fertig(min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
+
     # --- Dispersions-Seed (zwei Klicks auf die Resonanz) -------------------
     def starte_dispersion_seed(self, fertig) -> None:
         """Aktiviert den Seed-Modus: die naechsten zwei Klicks markieren die Resonanz.
@@ -446,7 +472,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
         self._entferne_box()
         if war_box and box is not None:
-            self._auf_box_zoom(*box)
+            if self._bereich_fertig is not None:
+                self._bereich_abschliessen(*box)   # Bereichs-Fit statt Zoom
+            else:
+                self._auf_box_zoom(*box)
         elif event.inaxes == self.ax and event.ydata is not None:
             self._waehle_index(self._index_aus_y(event.ydata))
 
@@ -463,6 +492,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zoom(event, _ZOOM_REIN if event.step > 0 else _ZOOM_RAUS)
 
     def _on_key(self, event):
+        if event.key == "escape" and self._bereich_fertig is not None:
+            self.bereichs_fit_abbrechen()
+            return
         if self._freq_achse is None:
             return
         n = len(self._freq_achse)

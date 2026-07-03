@@ -30,6 +30,7 @@ from ..io import (
     schreibe_ergebnis_tdms,
 )
 from ..fit.batch import StapelErgebnis, fitte_alle, fitte_neu
+from ..fit.fenster_steuerung import fitte_bereich
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
@@ -153,6 +154,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Zwei Punkte auf die Resonanz in der Übersicht klicken → die Fit-Fenster "
             "folgen dieser Dispersion (hilft, wenn der Auto-Fit an einem Störfeature hängt).")
         self.akt_seed.triggered.connect(self._resonanz_vorgeben)
+        self.akt_bereich = leiste.addAction("Bereich neu fitten")
+        self.akt_bereich.setToolTip(
+            "Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche und Fit "
+            "wiederholt (löst Mehrdeutigkeiten neben der Mode auf). Esc bricht ab.")
+        self.akt_bereich.triggered.connect(self._bereich_fitten)
         leiste.addSeparator()
         self.akt_kittel = leiste.addAction("Kittel/LLG-Auswertung")
         self.akt_kittel.triggered.connect(self._kittel_llg)
@@ -297,8 +303,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _setze_bedienelemente(self, an: bool) -> None:
         """Sperrt/entsperrt Aktionen und Navigation waehrend eines Hintergrund-Jobs."""
-        for aktion in (self.akt_laden, self.akt_fit, self.akt_seed, self.akt_kittel,
-                       self.akt_tdms, self.akt_xlsx, self.akt_csv):
+        for aktion in (self.akt_laden, self.akt_fit, self.akt_seed, self.akt_bereich,
+                       self.akt_kittel, self.akt_tdms, self.akt_xlsx, self.akt_csv):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
                       self.btn_naechstes_problem):
@@ -589,6 +595,47 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 f"Auto-Fit (mit vorgegebener Dispersion) fertig. {n_prob} problematisch.")
 
         self._starte_job(aufgabe, bei_fertig, "Auto-Fit mit vorgegebener Dispersion …")
+
+    def _bereich_fitten(self):
+        """Startet den Bereichs-Fit: Rechteck im Farbplot aufziehen -> dort neu fitten."""
+        if not self.stapel or not self.stapel.ergebnisse:
+            QtWidgets.QMessageBox.information(
+                self, "Hinweis", "Bitte zuerst einen Auto-Fit ausfuehren - der "
+                "Bereichs-Fit ueberschreibt gezielt bestehende Fits.")
+            return
+        if self._job_laeuft:
+            return
+        self._log("Bereich neu fitten: Rechteck um die Mode aufziehen "
+                  "(Esc bricht ab).", "info")
+        self.statusBar().showMessage("Bereich neu fitten: Rechteck im Farbplot aufziehen …")
+        self.matrix.starte_bereichs_fit(self._bereich_gewaehlt)
+
+    def _bereich_gewaehlt(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
+        """Callback nach dem Aufziehen: nur im Rechteck neu fitten (Hintergrund)."""
+        stapel = self.stapel
+        f_min, f_max = f_min_ghz * 1e9, f_max_ghz * 1e9
+
+        def aufgabe(melde):
+            def fortschritt(k, n, erg):
+                status = "⚠ " + erg.problem_text if erg.problematisch else \
+                    f"✓ B_res={erg.B_res:.3f} T"
+                melde(k, n, f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}")
+            return fitte_bereich(stapel, feld_min, feld_max, f_min, f_max,
+                                 fortschritt=fortschritt)
+
+        def bei_fertig(res):
+            neu, uebersprungen = res
+            self._aktualisiere_overlay()
+            self._zeige_aktuellen()
+            probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
+            text = (f"Bereichs-Fit [{feld_min:.3f}-{feld_max:.3f} T, "
+                    f"{f_min_ghz:.2f}-{f_max_ghz:.2f} GHz]: {len(neu)} neu gefittet, "
+                    f"{len(probleme)} problematisch, {len(uebersprungen)} ohne Daten im Rechteck.")
+            self._log(text, "warn" if probleme else "ok")
+            self.statusBar().showMessage(text)
+
+        self._starte_job(aufgabe, bei_fertig,
+                         f"Bereichs-Fit {f_min_ghz:.1f}-{f_max_ghz:.1f} GHz …")
 
     def _aktualisiere_overlay(self):
         bres = np.array([e.B_res for e in self.stapel.ergebnisse])
