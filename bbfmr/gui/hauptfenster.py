@@ -20,12 +20,21 @@ from pathlib import Path
 import numpy as np
 from PySide6 import QtWidgets, QtCore, QtGui
 
-from ..io import lade_tdms, schreibe_ergebnis_tdms
+from ..io import (
+    EINGEBAUTE_PROFILE,
+    finde_profil,
+    inspiziere_tdms,
+    lade_profile,
+    lade_tdms,
+    pruefe_datensatz,
+    schreibe_ergebnis_tdms,
+)
 from ..fit.batch import StapelErgebnis, fitte_alle, fitte_neu
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
+from .mapping_dialog import MappingDialog, VorschauDialog
 from .navigator_ansicht import NavigatorAnsicht
 from .arbeiter import Arbeiter
 from .stil import bbFMR_QSS
@@ -334,15 +343,62 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self, "TDMS-Datei laden", "", "TDMS (*.tdms)")
         if not pfad:
             return
+        self._lade_mit_mapping(pfad)
 
+    def _lade_mit_mapping(self, pfad: str,
+                          zuordnung_vorgabe: dict | None = None,
+                          layout_vorgabe: str | None = None):
+        """Lade-Ablauf: Struktur inspizieren -> Zuordnungs-Dialog -> Laden im
+        Hintergrund -> Validierungs-Vorschau -> erst dann Uebernahme.
+
+        ``zuordnung_vorgabe`` haelt beim erneuten Oeffnen (Vorschau verworfen)
+        die zuletzt gewaehlte Zuordnung fest.
+        """
+        # 1) Nur Metadaten lesen: schnell, auch bei defekter Index-Datei.
+        try:
+            struktur, warnungen = inspiziere_tdms(pfad)
+        except Exception as fehler:
+            self._log(f"FEHLER beim Inspizieren: {fehler}", "problem")
+            QtWidgets.QMessageBox.critical(self, "TDMS laden", str(fehler))
+            return
+        for warnung in warnungen:
+            self._log("⚠ " + warnung, "warn")
+
+        # 2) Zuordnungs-Dialog (Pflicht vor jedem Laden -> kein Fit auf
+        #    ungemappten Daten). Passendes Profil wird vorausgewaehlt.
+        profile = list(EINGEBAUTE_PROFILE) + lade_profile()
+        vorschlag = finde_profil(struktur, profile)
+        dialog = MappingDialog(pfad, struktur, profile, vorschlag, parent=self)
+        if zuordnung_vorgabe is not None:
+            dialog._setze_zuordnung(zuordnung_vorgabe, layout_vorgabe)
+        if not dialog.exec():
+            self._log("Laden abgebrochen (Zuordnung nicht bestaetigt).", "info")
+            return
+        zuordnung, layout = dialog.ergebnis()
+
+        # 3) Laden + Validierung im Hintergrund.
         def aufgabe(melde):
             melde(0, 0, f"Lade {os.path.basename(pfad)} …")
-            datensatz = lade_tdms(pfad)
-            melde(0, 0, f"Baue Übersicht auf ({len(datensatz)} Frequenzen) …")
-            return (pfad, datensatz)
+            datensatz = lade_tdms(pfad, zuordnung=zuordnung, layout=layout)
+            melde(0, 0, f"Pruefe Datensatz ({len(datensatz)} Frequenzen) …")
+            bericht = pruefe_datensatz(datensatz)
+            return (pfad, datensatz, bericht)
 
         def bei_fertig(res):
-            pfad_, datensatz = res
+            pfad_, datensatz, bericht = res
+            for warnung in datensatz.meta.get("lade_warnungen", []):
+                self._log("⚠ " + warnung, "warn")
+
+            # 4) Import-Validierung vor Uebernahme: Bericht + Vorschau.
+            vorschau = VorschauDialog(datensatz, bericht, parent=self)
+            if not vorschau.exec():
+                self._log("Import verworfen – Zuordnung erneut bearbeiten.", "info")
+                self._lade_mit_mapping(pfad_, zuordnung, datensatz.format_typ)
+                return
+            if bericht.warnungen:
+                for warnung in bericht.warnungen:
+                    self._log("⚠ Validierung: " + warnung, "warn")
+
             self.matrix.zeige(datensatz)
             mat, ext = self.matrix.thumbnail()
             self.navigator.zeige(mat, ext)
@@ -350,16 +406,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.stapel = StapelErgebnis(datensatz=datensatz)
             self._log(
                 f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
-                f"{len(datensatz)} Frequenzen.", "ok")
+                f"{len(datensatz)} Frequenzen (Profil: "
+                f"{datensatz.meta.get('mapping_profil', 'manuell')}).", "ok")
             self.statusBar().showMessage(
                 f"Geladen: {os.path.basename(pfad_)} ({datensatz.format_typ}, "
                 f"{len(datensatz)} Frequenzen). Jetzt 'Auto-Fit' starten.")
 
         self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …")
 
+    def _mapping_vorhanden(self) -> bool:
+        """Kein Fit auf ungemappten Daten: Zuordnung muss in den Metadaten stehen."""
+        if self.stapel is not None and self.stapel.datensatz.meta.get("zuordnung"):
+            return True
+        QtWidgets.QMessageBox.information(
+            self, "Hinweis",
+            "Der Datensatz hat keine Kanal-Zuordnung. Bitte die TDMS-Datei ueber "
+            "'TDMS laden' oeffnen und die Kanaele den Rollen zuordnen.")
+        return False
+
     def _auto_fit(self):
         if self.stapel is None:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            return
+        if not self._mapping_vorhanden():
             return
         datensatz = self.stapel.datensatz
 
@@ -399,6 +468,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Startet den Dispersions-Seed: zwei Klicks auf die Resonanz in der Übersicht."""
         if self.stapel is None:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            return
+        if not self._mapping_vorhanden():
             return
         if self._job_laeuft:
             return

@@ -6,25 +6,32 @@ mehreren Tabellenblättern und Spalten.
 
 Alle Felder kommen bereits in **Tesla**, Frequenzen in **Hertz**.
 
-## Zwei Formate – automatisch erkannt
+## Laden über Kanal-Mapping
 
-bbFMR kennt zwei Sorten von FMR-Messdateien. Welche vorliegt, erkennt
-`lade_tdms()` automatisch an den vorhandenen Gruppen (`bbfmr/io/tdms_laden.py`):
+Seit der Mapping-Erweiterung läuft **jedes** Laden über eine Zuordnung der
+TDMS-Kanäle zu kanonischen Rollen (Frequenz, Re/Im(S21), Feld, Temperatur) –
+ausführlich beschrieben in [Kanal-Mapping & Profile](kanal-mapping.md).
+Für die beiden bekannten WMI-Layouts sind Profile **eingebaut**, sie werden
+automatisch erkannt:
 
-| Format | Erkannt an Gruppe | Bedeutung |
+| Profil (Layout) | Erkannt an Gruppen | Bedeutung |
 |---|---|---|
-| **unsortiert** (Rohdaten) | `Read.PNAX` | komplette Messung, ganzer Feld-Sweep je Frequenz |
-| **sortiert** (vorverarbeitet) | `ZVB` | schon auf das Resonanzband reduziert |
+| **unsortiert** (Rohdaten) | `Read.PNAX`, `Read.Fieldbefore/-after` | komplette Messung, ganzer Feld-Sweep je Frequenz |
+| **sortiert** (vorverarbeitet) | `ZVB`, `Field` | schon auf das Resonanzband reduziert |
 
 ```python
-from bbfmr.io.tdms_laden import lade_tdms
+from bbfmr.io import lade_tdms
 ds = lade_tdms("Messung.tdms")
-print(ds.format_typ)   # "unsortiert" oder "sortiert"
+print(ds.format_typ)          # "unsortiert" oder "sortiert"
+print(ds.meta["zuordnung"])   # verwendetes Kanal-Mapping
 ```
 
-Liegt keine der beiden Gruppen vor, wirft bbFMR einen klaren Fehler
-(`Unbekanntes TDMS-Format …`). Das ist **gewollt**: solche Dateien sind keine
-Feld-FMR-Linescans (siehe [Troubleshooting](troubleshooting.md#nicht_fmr)).
+Passt kein Profil, wirft `lade_tdms` eine `MappingErforderlich`-Ausnahme mit
+der kompletten Gruppen-/Kanalliste; die GUI öffnet dann den
+**Zuordnungs-Dialog** zur manuellen Zuordnung (siehe
+[Kanal-Mapping](kanal-mapping.md)). Winkelkalibrier- und andere
+Nicht-FMR-Dateien haben weiterhin keine passenden Kanäle
+(siehe [Troubleshooting](troubleshooting.md#nicht_fmr)).
 
 ---
 

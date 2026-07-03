@@ -8,6 +8,7 @@ nav:
   - Start: index.md
   - Installation & Start: installation.md
   - Die Messdaten (TDMS): datenformate.md
+  - Kanal-Mapping & Profile: kanal-mapping.md
   - Der Ablauf (Pipeline): pipeline.md
   - AutoWindow im Detail: autowindow.md
   - Physik & Fit: physik-und-fit.md
