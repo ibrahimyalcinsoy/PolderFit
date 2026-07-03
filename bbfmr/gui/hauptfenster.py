@@ -29,12 +29,20 @@ from ..io import (
     pruefe_datensatz,
     schreibe_ergebnis_tdms,
 )
-from ..fit.batch import StapelErgebnis, fitte_alle, fitte_neu
-from ..fit.fenster_steuerung import fitte_bereich
+from ..fit.batch import Ausschlusszone, StapelErgebnis, fitte_alle, fitte_neu
+from ..fit.fenster_steuerung import (
+    dispersions_zentren,
+    entferne_ausschlusszone,
+    fitte_bereich,
+    fuege_ausschlusszone_hinzu,
+    propagiere_grenzen,
+    setze_fensterbreite_punkte,
+)
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
 from .auswahl_dialog import AuswahlDialog
+from .fenster_panel import FensterPanel
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
 from .mapping_dialog import MappingDialog, VorschauDialog
@@ -90,19 +98,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert)
         self.navigator = NavigatorAnsicht(bereich_gewaehlt=self._navigator_bereich)
         self.verarbeitung = VerarbeitungPanel(geaendert=self._verarbeitung_geaendert)
+        self.fensterpanel = FensterPanel(
+            grenzen_umschalten=self._grenzen_umschalten,
+            breite_anwenden=self._breite_anwenden,
+            propagieren=self._propagieren,
+            zone_zeichnen=self._zone_zeichnen,
+            zone_entfernen=self._zone_entfernen,
+        )
 
         self._baue_oberflaeche()
         self._baue_werkzeugleiste()
         self._baue_aktivitaet_dock()
         self._baue_navigator_dock()
         self._baue_verarbeitung_dock()
+        self._baue_fenster_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
         self._log("bbFMR bereit. Bitte eine TDMS-Datei laden.", "info")
 
     # --- Aufbau ------------------------------------------------------------
     def _baue_oberflaeche(self):
-        zentral = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        zentral.addWidget(self.matrix)
+        """Farbplot als Zentrum; das Linescan-Fit-Panel ist ein abdockbares
+        Fenster (Multi-Monitor-Betrieb: Panel einfach auf den zweiten
+        Bildschirm ziehen)."""
+        self.setCentralWidget(self.matrix)
 
         rechts = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(rechts)
@@ -124,9 +142,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.label_info = QtWidgets.QLabel("—")
         layout.addWidget(self.label_info)
 
-        zentral.addWidget(rechts)
-        zentral.setSizes([560, 760])
-        self.setCentralWidget(zentral)
+        dock = QtWidgets.QDockWidget("Linescan-Fit", self)
+        dock.setObjectName("linescan_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
+            | QtCore.Qt.BottomDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+        rechts.setMinimumWidth(480)
+        dock.setWidget(rechts)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        self.linescan_dock = dock
 
     def _baue_werkzeugleiste(self):
         leiste = self.addToolBar("Hauptaktionen")
@@ -185,12 +215,23 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Problematische Fits im Resonanz-Overlay der Übersicht ausblenden.")
         self.akt_problemfits.toggled.connect(self._problemfits_umschalten)
 
-        # Sichtbarkeits-Umschalter fuer Verarbeitung- und Aktivitaets-Panel.
+        # Sichtbarkeits-Umschalter fuer die andockbaren Panels.
         leiste.addSeparator()
         self.akt_verarbeitung = leiste.addAction("Verarbeitung")
         self.akt_verarbeitung.setToolTip(
             "Verarbeitungskette des Farbplots (divide-slice, derivative-divide, "
             "relation-amplitude) ein-/ausblenden.")
+        self.akt_fenster = leiste.addAction("Fenster && Grenzen")
+        self.akt_fenster.setToolTip(
+            "Interaktives In-Plot-Fitting: ziehbare Fenstergrenzen, Propagation, "
+            "Fensterbreite in Punkten, Ausschlusszonen.")
+        self.akt_linescan = leiste.addAction("Linescan-Fit")
+        self.akt_linescan.setToolTip(
+            "Linescan-Fit-Panel ein-/ausblenden (abdockbar fuer den zweiten Monitor).")
+        self.akt_linescan.setCheckable(True)
+        self.akt_linescan.setChecked(True)
+        self.akt_linescan.toggled.connect(self.linescan_dock.setVisible)
+        self.linescan_dock.visibilityChanged.connect(self.akt_linescan.setChecked)
         self.akt_aktivitaet = leiste.addAction("Aktivität")
 
     def _baue_aktivitaet_dock(self):
@@ -286,6 +327,32 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_verarbeitung.setChecked(True)
         self.akt_verarbeitung.toggled.connect(dock.setVisible)
         dock.visibilityChanged.connect(self.akt_verarbeitung.setChecked)
+
+    def _baue_fenster_dock(self):
+        """Fenster & Grenzen (links): interaktives In-Plot-Fitting."""
+        dock = QtWidgets.QDockWidget("Fenster & Grenzen", self)
+        dock.setObjectName("fenster_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+        rollbereich = QtWidgets.QScrollArea()
+        rollbereich.setWidgetResizable(True)
+        rollbereich.setWidget(self.fensterpanel)
+        dock.setWidget(rollbereich)
+        dock.setMinimumWidth(280)
+        # Bewusst NICHT tabifiziert: hinter einem Tab liegende Docks melden
+        # visibilityChanged(False), was die Toolbar-Toggles fehlleiten wuerde.
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+        self.fenster_dock = dock
+        self.akt_fenster.setCheckable(True)
+        self.akt_fenster.setChecked(True)
+        self.akt_fenster.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_fenster.setChecked)
 
     # --- Aktivitaet / Protokoll -------------------------------------------
     def _log(self, text: str, art: str = "info") -> None:
@@ -453,6 +520,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.navigator_dock.setVisible(False)  # erst beim Zoomen einblenden
             self.datensatz_voll = datensatz
             self.stapel = StapelErgebnis(datensatz=datensatz)
+            self.fensterpanel.setze_zonen([])
+            self.fensterpanel.setze_breite_info(None)
+            self.fensterpanel.chk_grenzen.setChecked(False)  # neue Messung, alte Grenzen weg
             self._log(
                 f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
                 f"{len(datensatz)} Frequenzen (Profil: "
@@ -520,6 +590,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         def bei_fertig(stapel):
             self.stapel = stapel
             self._aktualisiere_overlay()
+            # Neuer Stapel: Ausschlusszonen beginnen leer, Grenzen-Overlay neu.
+            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+            self._aktualisiere_grenzen_overlay()
             self.aktueller_index = 0
             self._zeige_aktuellen()
             n_prob = len(stapel.index_problematisch())
@@ -586,6 +660,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         def bei_fertig(stapel):
             self.stapel = stapel
             self._aktualisiere_overlay()
+            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+            self._aktualisiere_grenzen_overlay()
             self.aktueller_index = 0
             self._zeige_aktuellen()
             n_prob = len(stapel.index_problematisch())
@@ -621,16 +698,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     f"✓ B_res={erg.B_res:.3f} T"
                 melde(k, n, f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}")
             return fitte_bereich(stapel, feld_min, feld_max, f_min, f_max,
+                                 modus=self.fensterpanel.modus(),
                                  fortschritt=fortschritt)
 
         def bei_fertig(res):
             neu, uebersprungen = res
             self._aktualisiere_overlay()
+            self._aktualisiere_grenzen_overlay()
             self._zeige_aktuellen()
             probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
             text = (f"Bereichs-Fit [{feld_min:.3f}-{feld_max:.3f} T, "
                     f"{f_min_ghz:.2f}-{f_max_ghz:.2f} GHz]: {len(neu)} neu gefittet, "
-                    f"{len(probleme)} problematisch, {len(uebersprungen)} ohne Daten im Rechteck.")
+                    f"{len(probleme)} problematisch, "
+                    f"{len(uebersprungen)} uebersprungen (ohne Daten/Modus 'ergaenzen').")
             self._log(text, "warn" if probleme else "ok")
             self.statusBar().showMessage(text)
 
@@ -653,6 +733,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
         # enthalten als die angezeigte Matrix.
         self.matrix.markiere_frequenz_wert(self.stapel.ergebnisse[i].frequenz)
+        # Fenster-Panel: tatsaechliche Fensterbreite in Punkten anzeigen.
+        punkte_im_fenster = int(np.count_nonzero((voll.feld >= unten) & (voll.feld <= oben)))
+        self.fensterpanel.setze_breite_info(punkte_im_fenster, unten, oben)
         e = self.stapel.ergebnisse[i]
         status = f"PROBLEM: {e.problem_text}" if e.problematisch else "OK"
         # 1-R² in wissenschaftlicher Notation, damit echte Variation sichtbar wird.
@@ -692,6 +775,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
         self._zeige_aktuellen()
         self._aktualisiere_overlay()
+        self._aktualisiere_grenzen_overlay()
         art = "problem" if erg.problematisch else "ok"
         self._log(f"Neu gefittet f={erg.frequenz/1e9:.2f} GHz "
                   f"[{unten:.3f}–{oben:.3f} T] → {'⚠ ' + erg.problem_text if erg.problematisch else '✓ OK'}",
@@ -775,6 +859,178 @@ class Hauptfenster(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
             return False
         return True
+
+    # --- Interaktives In-Plot-Fitting (Fenster & Grenzen) --------------------
+    def _aktualisiere_grenzen_overlay(self):
+        """Zeichnet die ziehbaren Fenstergrenzen im Farbplot neu (falls aktiv)."""
+        if not self.stapel or not self.stapel.fenster:
+            return
+        if self.fensterpanel.grenzen_aktiv():
+            self.matrix.zeige_fenstergrenzen(
+                self.stapel.datensatz.frequenzen, self.stapel.fenster,
+                grenze_gezogen=self._grenze_im_plot_gezogen)
+
+    def _grenzen_umschalten(self, an: bool):
+        if not an:
+            self.matrix.verstecke_fenstergrenzen()
+            return
+        if not self.stapel or not self.stapel.fenster:
+            self._log("Grenzen anzeigen: erst nach einem Auto-Fit verfuegbar.", "warn")
+            self.fensterpanel.chk_grenzen.setChecked(False)
+            return
+        self._aktualisiere_grenzen_overlay()
+        self._log("Fenstergrenzen eingeblendet - Grenze anfassen und horizontal "
+                  "ziehen; der Linescan fittet sofort neu.", "info")
+
+    def _grenze_im_plot_gezogen(self, index: int, seite: str, wert: float):
+        """Eine Grenze wurde im Farbplot losgelassen: diesen Linescan neu fitten."""
+        if not self.stapel or not self.stapel.ergebnisse or self._job_laeuft:
+            self._aktualisiere_grenzen_overlay()
+            return
+        unten, oben = self.stapel.fenster[index]
+        if seite == "links":
+            unten = wert
+        else:
+            oben = wert
+        if oben <= unten:
+            self._log("Grenze verworfen: linke Grenze muss links der rechten bleiben.", "warn")
+            self._aktualisiere_grenzen_overlay()
+            return
+        ergebnis = fitte_neu(self.stapel, index, feld_unten=unten, feld_oben=oben)
+        self.aktueller_index = index
+        self._zeige_aktuellen()
+        self._aktualisiere_overlay()
+        self._aktualisiere_grenzen_overlay()
+        art = "problem" if ergebnis.problematisch else "ok"
+        self._log(f"Grenze ({seite}) gezogen: f={ergebnis.frequenz/1e9:.2f} GHz → "
+                  f"[{unten:.3f}–{oben:.3f} T] "
+                  f"{'⚠ ' + ergebnis.problem_text if ergebnis.problematisch else '✓'}", art)
+        if self.fensterpanel.auto_propagieren():
+            self._propagieren(self.fensterpanel.modus(), ab_index=index)
+
+    def _propagieren(self, modus: str, ab_index: int | None = None):
+        """Grenzen des aktuellen Linescans (als Trassen-Offsets) auf folgende anwenden."""
+        if not self.stapel or not self.stapel.ergebnisse:
+            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
+            return
+        if self._job_laeuft:
+            return
+        stapel = self.stapel
+        basis = self.aktueller_index if ab_index is None else ab_index
+        try:
+            zentren = dispersions_zentren(stapel)
+        except ValueError as fehler:
+            self._log(f"Propagation nicht moeglich: {fehler}", "warn")
+            return
+        unten, oben = stapel.fenster[basis]
+        offset_links = unten - float(zentren[basis])
+        offset_rechts = oben - float(zentren[basis])
+        if offset_rechts <= offset_links:
+            self._log("Propagation verworfen: ungueltige Fenster-Offsets.", "warn")
+            return
+        f_basis = stapel.datensatz.frequenzen[basis] / 1e9
+
+        def aufgabe(melde):
+            def fortschritt(k, n, erg):
+                melde(k, n, "" if not erg.problematisch else
+                      f"  f={erg.frequenz/1e9:6.2f} GHz  ⚠ {erg.problem_text}")
+            return propagiere_grenzen(stapel, basis + 1, offset_links, offset_rechts,
+                                      zentren=zentren, modus=modus, fortschritt=fortschritt)
+
+        def bei_fertig(neu):
+            self._aktualisiere_overlay()
+            self._aktualisiere_grenzen_overlay()
+            self._zeige_aktuellen()
+            self._log(f"Grenzen ab f={f_basis:.2f} GHz propagiert "
+                      f"(Offsets {offset_links:+.3f}/{offset_rechts:+.3f} T zur Trasse): "
+                      f"{len(neu)} Linescans neu gefittet ({modus}).", "ok")
+
+        self._starte_job(aufgabe, bei_fertig, "Grenzen propagieren …")
+
+    def _breite_anwenden(self, punkte: int, modus: str):
+        """Fensterbreite in Punkten explizit auf alle Linescans anwenden."""
+        if not self.stapel or not self.stapel.ergebnisse:
+            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
+            return
+        if self._job_laeuft:
+            return
+        stapel = self.stapel
+        try:
+            zentren = dispersions_zentren(stapel)
+        except ValueError as fehler:
+            self._log(f"Fensterbreite nicht anwendbar: {fehler}", "warn")
+            return
+
+        def aufgabe(melde):
+            def fortschritt(k, n, erg):
+                melde(k, n, "" if not erg.problematisch else
+                      f"  f={erg.frequenz/1e9:6.2f} GHz  ⚠ {erg.problem_text}")
+            return setze_fensterbreite_punkte(stapel, punkte, zentren=zentren,
+                                              modus=modus, fortschritt=fortschritt)
+
+        def bei_fertig(neu):
+            self._aktualisiere_overlay()
+            self._aktualisiere_grenzen_overlay()
+            self._zeige_aktuellen()
+            self._log(f"Fensterbreite {punkte} Punkte angewandt: "
+                      f"{len(neu)} Linescans neu gefittet ({modus}).", "ok")
+
+        self._starte_job(aufgabe, bei_fertig, f"Fensterbreite {punkte} Punkte …")
+
+    def _zone_zeichnen(self):
+        """Startet das Einzeichnen einer Ausschlusszone im Farbplot."""
+        if not self.stapel or not self.stapel.ergebnisse:
+            QtWidgets.QMessageBox.information(
+                self, "Hinweis", "Bitte zuerst einen Auto-Fit ausfuehren.")
+            return
+        if self._job_laeuft:
+            return
+        self._log("Ausschlusszone: Rechteck um die auszuschliessenden Punkte "
+                  "aufziehen (Esc bricht ab).", "info")
+        self.statusBar().showMessage("Ausschlusszone im Farbplot aufziehen …")
+        self.matrix.starte_ausschluss_zeichnen(self._zone_gezeichnet)
+
+    def _zone_gezeichnet(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
+        stapel = self.stapel
+        zone = Ausschlusszone(feld_min, feld_max, f_min_ghz * 1e9, f_max_ghz * 1e9)
+
+        def aufgabe(melde):
+            def fortschritt(k, n, erg):
+                melde(k, n, "")
+            return fuege_ausschlusszone_hinzu(stapel, zone, fortschritt=fortschritt)
+
+        def bei_fertig(betroffen):
+            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+            self._aktualisiere_overlay()
+            self._aktualisiere_grenzen_overlay()
+            self._zeige_aktuellen()
+            self._log(f"Ausschlusszone [{feld_min:.3f}–{feld_max:.3f} T, "
+                      f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz] aktiv: "
+                      f"{len(betroffen)} Linescans neu gefittet.", "ok")
+
+        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone anwenden …")
+
+    def _zone_entfernen(self, zonen_index: int):
+        if not self.stapel or zonen_index >= len(self.stapel.ausschlusszonen):
+            return
+        if self._job_laeuft:
+            return
+        stapel = self.stapel
+
+        def aufgabe(melde):
+            return entferne_ausschlusszone(stapel, zonen_index,
+                                           fortschritt=lambda k, n, e: melde(k, n, ""))
+
+        def bei_fertig(betroffen):
+            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+            self._aktualisiere_overlay()
+            self._aktualisiere_grenzen_overlay()
+            self._zeige_aktuellen()
+            self._log(f"Ausschlusszone entfernt: {len(betroffen)} Linescans neu gefittet.", "ok")
+
+        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …")
 
     def _verarbeitung_geaendert(self, kette, anzeige_modus: str):
         """Callback des Verarbeitungspanels: Kette neu auf den Farbplot anwenden."""

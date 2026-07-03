@@ -81,6 +81,18 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._seed_marker: list = []
         # Bereichs-Fit-Modus: naechstes aufgezogenes Rechteck neu fitten statt zoomen.
         self._bereich_fertig = None
+        # Fenstergrenzen-Overlay (interaktives In-Plot-Fitting): zwei ziehbare
+        # Polylinien links/rechts der Resonanz; nur der Bereich dazwischen fittet.
+        self._grenzen_freq = None          # Hz-Array der Stapel-Frequenzen
+        self._grenzen_fenster = None       # list[(unten, oben)] je Stapel-Index
+        self._grenzen_sichtbar = False
+        self._grenze_gezogen = None        # Callback(index, seite, neuer_feldwert)
+        self._grenzen_linien: dict = {}    # "links"/"rechts" -> Line2D
+        self._drag_grenze = None           # (seite, index) waehrend des Ziehens
+        # Ausschlusszonen: Anzeige + Zeichenmodus.
+        self._zonen: list = []
+        self._zonen_patches: list = []
+        self._ausschluss_fertig = None
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.mpl_connect("button_press_event", self._on_press)
@@ -102,6 +114,14 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_freq = self._res_bres = self._res_problem = None
         self._press_xy = None
         self._box_aktiv = False
+        # Neuer Datensatz: Overlays des alten (Grenzen, Zonen, Modi) verwerfen.
+        self._grenzen_freq = None
+        self._grenzen_fenster = None
+        self._grenzen_sichtbar = False
+        self._drag_grenze = None
+        self._zonen = []
+        self._bereich_fertig = None
+        self._ausschluss_fertig = None
         self._render()
 
     def setze_verarbeitung(self, kette: Verarbeitungskette | None,
@@ -149,6 +169,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
 
         self._markierung = self._marker_label = None
         self._box_patch = None
+        # ax.clear() entsorgt alle Overlay-Artists - Referenzen VOR dem
+        # Neuzeichnen verwerfen (remove() auf toten Artists wuerde werfen).
+        self._grenzen_linien = {}
+        self._zonen_patches = []
         self.ax.clear()
         # Robuste Farbgrenzen: einzelne Ausreisser (nach dd haeufig) duerfen die
         # Skala nicht dominieren, sonst ist die Mode nicht mit dem Auge erkennbar.
@@ -175,6 +199,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             "Doppelklick = zurück · ↑/↓ · ⇧+Rad",
             transform=self.ax.transAxes, ha="center", va="top",
             fontsize=7.2, color="#6B6657")
+        if self._grenzen_sichtbar:
+            self._zeichne_grenzen()
+        if self._zonen:
+            self._zeichne_zonen()
         self._tight_layout_sicher()
         self.draw_idle()
 
@@ -368,6 +396,113 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.draw_idle()
         self._melde_zoom()
 
+    # --- Fenstergrenzen (ziehbare Polylinien links/rechts der Resonanz) -----
+    def zeige_fenstergrenzen(self, frequenzen, fenster, grenze_gezogen=None) -> None:
+        """Zeichnet die Fenstergrenzen als ziehbare Polylinien uebers Bild.
+
+        ``frequenzen`` (Hz) und ``fenster`` (Liste ``(unten, oben)`` in T)
+        gehoeren zum Fit-Stapel. ``grenze_gezogen(index, seite, feldwert)``
+        wird nach dem Loslassen einer gezogenen Grenze aufgerufen
+        (``seite`` = "links"/"rechts", ``index`` = Stapel-Index).
+        """
+        self._grenzen_freq = np.asarray(frequenzen, dtype=float)
+        self._grenzen_fenster = [tuple(f) for f in fenster]
+        if grenze_gezogen is not None:
+            self._grenze_gezogen = grenze_gezogen
+        self._grenzen_sichtbar = True
+        self._zeichne_grenzen()
+
+    def verstecke_fenstergrenzen(self) -> None:
+        self._grenzen_sichtbar = False
+        self._drag_grenze = None
+        for linie in self._grenzen_linien.values():
+            linie.remove()
+        self._grenzen_linien = {}
+        self.draw_idle()
+
+    def _zeichne_grenzen(self) -> None:
+        for linie in self._grenzen_linien.values():
+            linie.remove()
+        self._grenzen_linien = {}
+        if not self._grenzen_sichtbar or self._grenzen_freq is None:
+            return
+        f_ghz = self._grenzen_freq / 1e9
+        stil = dict(lw=1.8, ls="-", marker="", zorder=7, alpha=0.9,
+                    path_effects=[pe.Stroke(linewidth=3.0, foreground="#00000066"),
+                                  pe.Normal()])
+        self._grenzen_linien["links"] = self.ax.plot(
+            [f[0] for f in self._grenzen_fenster], f_ghz,
+            color="#E8A317", label="_grenze_links", **stil)[0]
+        self._grenzen_linien["rechts"] = self.ax.plot(
+            [f[1] for f in self._grenzen_fenster], f_ghz,
+            color="#4FC3F7", label="_grenze_rechts", **stil)[0]
+        self.draw_idle()
+
+    def _finde_grenze(self, event) -> tuple[str, int] | None:
+        """(seite, index) der Grenze nahe am Mauszeiger, sonst None."""
+        if not self._grenzen_sichtbar or self._grenzen_freq is None:
+            return None
+        if event.xdata is None or event.ydata is None:
+            return None
+        x0, x1 = self.ax.get_xlim()
+        toleranz = 0.015 * abs(x1 - x0)
+        index = int(np.argmin(np.abs(self._grenzen_freq / 1e9 - event.ydata)))
+        unten, oben = self._grenzen_fenster[index]
+        abstaende = {"links": abs(event.xdata - unten), "rechts": abs(event.xdata - oben)}
+        seite = min(abstaende, key=abstaende.get)
+        return (seite, index) if abstaende[seite] <= toleranz else None
+
+    def _grenze_bewegen(self, event) -> None:
+        """Waehrend des Ziehens: den einen Polylinien-Stuetzpunkt live mitfuehren."""
+        seite, index = self._drag_grenze
+        if event.xdata is None:
+            return
+        unten, oben = self._grenzen_fenster[index]
+        if seite == "links":
+            self._grenzen_fenster[index] = (float(event.xdata), oben)
+        else:
+            self._grenzen_fenster[index] = (unten, float(event.xdata))
+        linie = self._grenzen_linien.get(seite)
+        if linie is not None:
+            x = linie.get_xdata()
+            x[index] = event.xdata
+            linie.set_xdata(x)
+            self.draw_idle()
+
+    # --- Ausschlusszonen ----------------------------------------------------
+    def starte_ausschluss_zeichnen(self, fertig) -> None:
+        """Naechstes aufgezogenes Rechteck wird als Ausschlusszone gemeldet.
+
+        ``fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)``; ``Esc`` bricht ab.
+        """
+        self._ausschluss_fertig = fertig
+        self._bereich_fertig = None
+        self._seed_fertig = None
+        self.setCursor(QtCore.Qt.CrossCursor)
+
+    def ausschluss_zeichnen_abbrechen(self) -> None:
+        self._ausschluss_fertig = None
+        self.unsetCursor()
+
+    def zeige_ausschlusszonen(self, zonen) -> None:
+        """Zeichnet die Ausschlusszonen als schraffierte Rechtecke."""
+        self._zonen = list(zonen)
+        self._zeichne_zonen()
+
+    def _zeichne_zonen(self) -> None:
+        for patch in self._zonen_patches:
+            patch.remove()
+        self._zonen_patches = []
+        for zone in self._zonen:
+            patch = self.ax.add_patch(Rectangle(
+                (zone.feld_min, zone.frequenz_min / 1e9),
+                zone.feld_max - zone.feld_min,
+                (zone.frequenz_max - zone.frequenz_min) / 1e9,
+                facecolor="#00000000", edgecolor="#C0392B", hatch="///",
+                lw=1.2, zorder=6, label="_ausschlusszone"))
+            self._zonen_patches.append(patch)
+        self.draw_idle()
+
     # --- Bereichs-Fit (Rechteck aufziehen -> nur dort neu fitten) -----------
     def starte_bereichs_fit(self, fertig) -> None:
         """Aktiviert den Bereichs-Fit-Modus: das naechste aufgezogene Rechteck
@@ -435,6 +570,14 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if self._seed_fertig is not None:   # Seed-Modus: Klick als Resonanzpunkt
             self._seed_klick(event)
             return
+        # Fenstergrenze anfassen (hat Vorrang vor Box/Klick, ausser ein
+        # Zeichenmodus ist aktiv).
+        if self._ausschluss_fertig is None and self._bereich_fertig is None:
+            treffer = self._finde_grenze(event)
+            if treffer is not None:
+                self._drag_grenze = treffer
+                self.setCursor(QtCore.Qt.SizeHorCursor)
+                return
         if getattr(event, "dblclick", False):
             self._press_xy = None
             self._zoom_zuruecksetzen()
@@ -446,10 +589,20 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
 
     def _on_move(self, event):
+        if self._drag_grenze is not None:
+            if event.inaxes == self.ax:
+                self._grenze_bewegen(event)
+            return
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             if not self._box_aktiv:
                 self.unsetCursor()
             return
+        if self._press_xy is None and self._grenzen_sichtbar \
+                and self._ausschluss_fertig is None and self._bereich_fertig is None:
+            # Hinweis-Cursor: Grenze in Reichweite -> horizontal ziehbar.
+            if self._finde_grenze(event) is not None:
+                self.setCursor(QtCore.Qt.SizeHorCursor)
+                return
         if self._press_xy is not None:
             x0, y0 = self._press_xy
             if not self._box_aktiv:
@@ -463,6 +616,17 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.setCursor(QtCore.Qt.CrossCursor)  # Hinweis: Kästchen aufziehbar
 
     def _on_release(self, event):
+        if self._drag_grenze is not None:
+            seite, index = self._drag_grenze
+            self._drag_grenze = None
+            self.unsetCursor()
+            # Endwert aus dem live mitgefuehrten Fenster (robust, falls die
+            # Maus ausserhalb der Achse losgelassen wurde).
+            unten, oben = self._grenzen_fenster[index]
+            wert = unten if seite == "links" else oben
+            if self._grenze_gezogen is not None:
+                self._grenze_gezogen(index, seite, float(wert))
+            return
         if self._press_xy is None:
             return
         war_box = self._box_aktiv
@@ -472,12 +636,21 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
         self._entferne_box()
         if war_box and box is not None:
-            if self._bereich_fertig is not None:
-                self._bereich_abschliessen(*box)   # Bereichs-Fit statt Zoom
+            if self._ausschluss_fertig is not None:
+                self._ausschluss_abschliessen(*box)  # Ausschlusszone einzeichnen
+            elif self._bereich_fertig is not None:
+                self._bereich_abschliessen(*box)     # Bereichs-Fit statt Zoom
             else:
                 self._auf_box_zoom(*box)
         elif event.inaxes == self.ax and event.ydata is not None:
             self._waehle_index(self._index_aus_y(event.ydata))
+
+    def _ausschluss_abschliessen(self, x0, y0, x1, y1) -> None:
+        fertig = self._ausschluss_fertig
+        self._ausschluss_fertig = None
+        self.unsetCursor()
+        if fertig is not None:
+            fertig(min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
 
     def _on_leave(self, event):
         self.unsetCursor()
@@ -492,9 +665,13 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zoom(event, _ZOOM_REIN if event.step > 0 else _ZOOM_RAUS)
 
     def _on_key(self, event):
-        if event.key == "escape" and self._bereich_fertig is not None:
-            self.bereichs_fit_abbrechen()
-            return
+        if event.key == "escape":
+            if self._bereich_fertig is not None:
+                self.bereichs_fit_abbrechen()
+                return
+            if self._ausschluss_fertig is not None:
+                self.ausschluss_zeichnen_abbrechen()
+                return
         if self._freq_achse is None:
             return
         n = len(self._freq_achse)

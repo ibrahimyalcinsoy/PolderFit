@@ -45,10 +45,79 @@ neu, uebersprungen = fitte_bereich(
 )
 ```
 
+## Ziehbare Fenstergrenzen im Farbplot (mitwandernd)
+
+Panel **„Fenster & Grenzen"** (links, Toolbar-Toggle) → Häkchen
+**„Grenzen im Farbplot anzeigen & ziehen"**: Über dem Farbplot erscheinen
+zwei Polylinien — die **linke (orange)** und **rechte (blaue)**
+Fenstergrenze, je Frequenz durch die aktuellen Fit-Fenster gelegt. Nur der
+Bereich dazwischen geht in den Fit.
+
+* **Ziehen:** Grenze mit der Maus anfassen (Cursor wird zum
+  Horizontal-Pfeil) und seitlich verschieben → der betroffene Linescan wird
+  sofort neu gefittet, Overlay und Fit-Panel aktualisieren sich live.
+* **Mitwandern statt kleben:** Grenzen werden intern **nie** als feste
+  Feldwerte oder Punktindizes geführt, sondern als Offsets relativ zur
+  **Dispersions-Trasse** — einer robusten Ausgleichsgeraden B(f) durch die
+  guten Fits (`dispersions_zentren`). Bei der Übernahme auf andere
+  Frequenzen wandert das Fenster also mit der Resonanz-Geraden mit.
+* **Propagation:** „Grenzen des aktuellen Linescans auf folgende übernehmen"
+  wendet die Offsets der gerade gesetzten Grenzen auf alle folgenden
+  Linescans an (Klick) — oder automatisch nach jedem Ziehen (Häkchen
+  „automatisch übernehmen").
+
+## Überschreiben oder Ergänzen (Modus)
+
+Der **Modus** im Panel gilt für Propagation, Fensterbreite-Anwenden und den
+Bereichs-Fit:
+
+* **überschreiben** — alle betroffenen Fits werden ersetzt.
+* **ergänzen** — nur die als *problematisch* markierten Fits werden neu
+  gefittet; bereits gute Ergebnisse anderer Bereiche bleiben unangetastet.
+
+Damit ist das iterative Arbeiten gefahrlos: Bereich vorgeben → neu fitten →
+prüfen → nächster Bereich, ohne Gutes zu zerstören.
+
+## Fensterbreite explizit in Punkten
+
+„Fensterbreite explizit setzen": z. B. von 15 auf **25 Punkte** stellen und
+„Auf alle anwenden" — jedes Fenster wird zu *Trassen-Zentrum ± Breite/2 in
+Feldpunkten des jeweiligen Linescans* gesetzt und neu gefittet. Das ist der
+direkte Hebel gegen die bekannten Fehlerbilder „Grenzen zu eng gesetzt" /
+„Resonanzfenster generell zu eng"; die **Automatik überstimmt diese Wahl nie
+stillschweigend**. Das Panel zeigt zur Kontrolle stets die tatsächliche
+Breite des aktuellen Fensters in Punkten an.
+
+## Ausschlusszonen (Bereich aus der Auswertung nehmen)
+
+„Zone im Farbplot einzeichnen" → Rechteck um die störenden Punkte aufziehen
+(z. B. den zur Feldachse parallelen Abschnitt unten im Plot). Die Punkte in
+der Zone werden aus **allen** (Nach-)Fits ausgenommen; betroffene Linescans
+fitten sofort neu. Zonen werden schraffiert angezeigt, sind in der Liste des
+Panels einsehbar und einzeln **entfernbar** (die betroffenen Linescans
+fitten dann wieder mit allen Punkten). Ein neuer Auto-Fit beginnt bewusst
+mit leerer Zonenliste.
+
+## Multi-Monitor-Betrieb
+
+Das **Linescan-Fit-Panel** und alle weiteren Panels (Fenster & Grenzen,
+Verarbeitung, Aktivität, Navigator) sind **abdockbar**: Titelleiste des
+Panels ziehen und auf den zweiten Monitor legen. Der Farbplot bleibt das
+zentrale Fenster. Toolbar-Knöpfe blenden jedes Panel ein/aus.
+
+## Typische Korrektur-Workflows (bekannte Fehlerbilder)
+
+| Fehlerbild | Werkzeug |
+|---|---|
+| Grenzen zu eng (R²-Kriterium schneidet den halben Dip weg) | Fensterbreite in Punkten erhöhen → „Auf alle anwenden" |
+| Doppel-Dip, Grenzen nur halb gesetzt | Grenzen im Farbplot beidseitig ziehen, dann propagieren |
+| Resonanzfenster generell zu eng | Fensterbreite-Hebel oder Grenzen ziehen + „automatisch übernehmen" |
+| „Problemfit" (Fit ok gemeldet, physikalisch falsch) | Rechteck-Bereichs-Fit im Modus *überschreiben*, Störbereiche als Ausschlusszone |
+
 ## Grenzen im Linescan ziehen (Bestandsfunktion)
 
-Unabhängig vom Rechteck lassen sich im rechten Fit-Panel die **grünen
-Bandgrenzen** einzelner Linescans mit der Maus verschieben — der Fit läuft
-sofort mit den neuen Grenzen. Zusammen mit *Zurück/Weiter/Nächster
-Problemfit* ist das der Korrekturlauf für Einzelfälle; das Rechteck ist das
-Werkzeug für ganze Bereiche.
+Unabhängig davon lassen sich im Linescan-Fit-Panel die **grünen
+Bandgrenzen** des einzelnen Linescans mit der Maus verschieben — der Fit
+läuft sofort mit den neuen Grenzen. Zusammen mit *Zurück/Weiter/Nächster
+Problemfit* ist das der Korrekturlauf für Einzelfälle; Rechteck, Grenzlinien
+und Propagation sind die Werkzeuge für ganze Bereiche.

@@ -21,6 +21,70 @@ from .linescan_fit import FitErgebnis, fitte_linescan
 
 
 @dataclass
+class Ausschlusszone:
+    """Rechteck (Feld x Frequenz), dessen Messpunkte von Fits ausgenommen werden.
+
+    Interaktiv im Farbplot eingezeichnet (z. B. ein stoerender, zur Feldachse
+    paralleler Abschnitt). Wirkt auf alle Nachfit-Wege (``fitte_neu`` und
+    alles, was darauf aufbaut); ein neuer Auto-Fit setzt die Zonenliste des
+    neuen Stapels bewusst leer auf.
+    """
+
+    feld_min: float
+    feld_max: float
+    frequenz_min: float
+    frequenz_max: float
+
+    def __post_init__(self):
+        if self.feld_max < self.feld_min:
+            self.feld_min, self.feld_max = self.feld_max, self.feld_min
+        if self.frequenz_max < self.frequenz_min:
+            self.frequenz_min, self.frequenz_max = self.frequenz_max, self.frequenz_min
+
+    def betrifft(self, frequenz: float) -> bool:
+        return self.frequenz_min <= frequenz <= self.frequenz_max
+
+    def als_dict(self) -> dict:
+        return {"feld_min": self.feld_min, "feld_max": self.feld_max,
+                "frequenz_min": self.frequenz_min, "frequenz_max": self.frequenz_max}
+
+    @classmethod
+    def aus_dict(cls, daten: dict) -> "Ausschlusszone":
+        return cls(**{k: float(daten[k]) for k in
+                      ("feld_min", "feld_max", "frequenz_min", "frequenz_max")})
+
+
+def ohne_ausschlusszonen(linescan: Linescan, zonen: list[Ausschlusszone]) -> Linescan:
+    """Entfernt Messpunkte des Linescans, die in einer Ausschlusszone liegen.
+
+    Blieben dabei weniger als 4 Punkte uebrig, wird der Linescan unveraendert
+    zurueckgegeben (ein Fit auf < 4 Punkten ist sinnlos; die Bewertung meldet
+    solche Faelle ohnehin als problematisch).
+    """
+    relevante = [z for z in zonen if z.betrifft(linescan.frequenz)]
+    if not relevante:
+        return linescan
+    maske = np.ones(linescan.feld.size, dtype=bool)
+    for zone in relevante:
+        maske &= ~((linescan.feld >= zone.feld_min) & (linescan.feld <= zone.feld_max))
+    if maske.sum() < 4 or maske.all():
+        return linescan
+
+    def _teil(arr):
+        return arr[maske] if arr is not None else None
+
+    return Linescan(
+        frequenz=linescan.frequenz,
+        feld=linescan.feld[maske],
+        re=linescan.re[maske],
+        im=linescan.im[maske],
+        feld_before=_teil(linescan.feld_before),
+        feld_after=_teil(linescan.feld_after),
+        temperatur=_teil(linescan.temperatur),
+    )
+
+
+@dataclass
 class StapelErgebnis:
     """Zustand und Ergebnisse der Stapelverarbeitung."""
 
@@ -30,6 +94,8 @@ class StapelErgebnis:
     fenster: list[tuple[float, float]] = field(default_factory=list)
     ergebnisse: list[FitErgebnis] = field(default_factory=list)
     zugeschnitten: list[Linescan] = field(default_factory=list)
+    #: Interaktiv eingezeichnete Ausschlusszonen (wirken auf alle Nachfits).
+    ausschlusszonen: list[Ausschlusszone] = field(default_factory=list)
 
     def index_problematisch(self) -> list[int]:
         """Indizes der Frequenzen, deren Fit als problematisch eingestuft ist.
@@ -117,6 +183,8 @@ def fitte_neu(
     stapel.fenster[index] = (unten, oben)
 
     beschnitten = schneide_band(ls, unten, oben)
+    if stapel.ausschlusszonen:
+        beschnitten = ohne_ausschlusszonen(beschnitten, stapel.ausschlusszonen)
     ergebnis = fitte_linescan(
         beschnitten, stapel.gamma, startwerte=startwerte, B_res_vorgabe=B_res_vorgabe,
     )
