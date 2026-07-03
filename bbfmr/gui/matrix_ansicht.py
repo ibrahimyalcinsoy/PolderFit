@@ -93,6 +93,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._zonen: list = []
         self._zonen_patches: list = []
         self._ausschluss_fertig = None
+        # Ausreisser-Markiermodus: Klick/Kasten waehlt Resonanzpunkte aus.
+        self._res_ausgeschlossen = None
+        self._ausreisser_aktiv = False
+        self._ausreisser_gewaehlt = None   # Callback(liste_von_indizes)
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.mpl_connect("button_press_event", self._on_press)
@@ -224,8 +228,14 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             pass
 
     # --- Resonanz-Overlay --------------------------------------------------
-    def aktualisiere_resonanz(self, frequenzen, B_res, problematisch=None) -> None:
-        """Speichert und zeichnet die Resonanzpunkte (gut rot, problematisch grau ×)."""
+    def aktualisiere_resonanz(self, frequenzen, B_res, problematisch=None,
+                              ausgeschlossen=None) -> None:
+        """Speichert und zeichnet die Resonanzpunkte (gut rot, problematisch grau ×).
+
+        ``ausgeschlossen`` (bool-Array) blendet Ausreisser komplett aus der
+        Darstellung aus - sie sind nur noch ueber die Ausreisser-Liste
+        einsehbar und wieder aufnehmbar.
+        """
         if self._datensatz is None:
             return
         self._res_freq = np.asarray(frequenzen, dtype=float)
@@ -233,6 +243,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_problem = (np.zeros(self._res_freq.shape, dtype=bool)
                              if problematisch is None
                              else np.asarray(problematisch, dtype=bool))
+        self._res_ausgeschlossen = (np.zeros(self._res_freq.shape, dtype=bool)
+                                    if ausgeschlossen is None
+                                    else np.asarray(ausgeschlossen, dtype=bool))
         self._zeichne_resonanz()
 
     def setze_problemfits_ausblenden(self, an: bool) -> None:
@@ -246,10 +259,14 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             if ln.get_label() in ("_resonanz", "_resonanz_problem"):
                 ln.remove()
         f_ghz = self._res_freq / 1e9
-        gut = ~self._res_problem
+        ausgeschlossen = getattr(self, "_res_ausgeschlossen", None)
+        if ausgeschlossen is None:
+            ausgeschlossen = np.zeros(self._res_freq.shape, dtype=bool)
+        gut = ~self._res_problem & ~ausgeschlossen
         self.ax.plot(self._res_bres[gut], f_ghz[gut], ".", color="red", ms=4, label="_resonanz")
-        if not self._problemfits_ausblenden and self._res_problem.any():
-            self.ax.plot(self._res_bres[self._res_problem], f_ghz[self._res_problem],
+        problem = self._res_problem & ~ausgeschlossen
+        if not self._problemfits_ausblenden and problem.any():
+            self.ax.plot(self._res_bres[problem], f_ghz[problem],
                          "x", color="#BBBBBB", ms=4, mew=1.0, label="_resonanz_problem")
         self.draw_idle()
 
@@ -503,6 +520,63 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zonen_patches.append(patch)
         self.draw_idle()
 
+    # --- Ausreisser-Markiermodus ---------------------------------------------
+    def setze_ausreisser_modus(self, an: bool, gewaehlt=None) -> None:
+        """Schaltet den Ausreisser-Modus (Toolbar-Umschalter, bleibt aktiv).
+
+        Aktiv: ein Klick waehlt den naechstgelegenen sichtbaren Resonanzpunkt,
+        ein aufgezogener Kasten alle Punkte darin; ``gewaehlt(indizes)`` wird
+        mit den getroffenen Stapel-Indizes aufgerufen (Echtzeit, mehrfach).
+        Zoom per Kasten ist waehrenddessen ausgesetzt.
+        """
+        self._ausreisser_aktiv = bool(an)
+        if gewaehlt is not None:
+            self._ausreisser_gewaehlt = gewaehlt
+        if an:
+            self.setCursor(QtCore.Qt.PointingHandCursor)
+        else:
+            self.unsetCursor()
+
+    def _sichtbare_resonanzpunkte(self) -> np.ndarray:
+        """Indizes der aktuell im Overlay gezeichneten Resonanzpunkte."""
+        if self._res_freq is None:
+            return np.array([], dtype=int)
+        ausgeschlossen = (self._res_ausgeschlossen
+                          if self._res_ausgeschlossen is not None
+                          else np.zeros(self._res_freq.shape, dtype=bool))
+        sichtbar = ~ausgeschlossen
+        if self._problemfits_ausblenden:
+            sichtbar &= ~self._res_problem
+        return np.flatnonzero(sichtbar)
+
+    def _ausreisser_klick(self, event) -> None:
+        """Klick im Ausreisser-Modus: naechstgelegenen sichtbaren Punkt melden."""
+        kandidaten = self._sichtbare_resonanzpunkte()
+        if kandidaten.size == 0 or event.xdata is None or event.ydata is None:
+            return
+        # Abstand in relativen Achseneinheiten (Feld- und Frequenzspanne
+        # unterscheiden sich um Groessenordnungen).
+        x0, x1 = self.ax.get_xlim()
+        y0, y1 = self.ax.get_ylim()
+        dx = (self._res_bres[kandidaten] - event.xdata) / max(abs(x1 - x0), 1e-12)
+        dy = (self._res_freq[kandidaten] / 1e9 - event.ydata) / max(abs(y1 - y0), 1e-12)
+        abstand = np.hypot(dx, dy)
+        naechster = int(np.argmin(abstand))
+        if abstand[naechster] <= 0.03 and self._ausreisser_gewaehlt is not None:
+            self._ausreisser_gewaehlt([int(kandidaten[naechster])])
+
+    def _ausreisser_kasten(self, x0, y0, x1, y1) -> None:
+        """Kasten im Ausreisser-Modus: alle sichtbaren Punkte darin melden."""
+        kandidaten = self._sichtbare_resonanzpunkte()
+        if kandidaten.size == 0:
+            return
+        b = self._res_bres[kandidaten]
+        f_ghz = self._res_freq[kandidaten] / 1e9
+        drin = ((b >= min(x0, x1)) & (b <= max(x0, x1))
+                & (f_ghz >= min(y0, y1)) & (f_ghz <= max(y0, y1)))
+        if drin.any() and self._ausreisser_gewaehlt is not None:
+            self._ausreisser_gewaehlt([int(i) for i in kandidaten[drin]])
+
     # --- Bereichs-Fit (Rechteck aufziehen -> nur dort neu fitten) -----------
     def starte_bereichs_fit(self, fertig) -> None:
         """Aktiviert den Bereichs-Fit-Modus: das naechste aufgezogene Rechteck
@@ -640,10 +714,15 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 self._ausschluss_abschliessen(*box)  # Ausschlusszone einzeichnen
             elif self._bereich_fertig is not None:
                 self._bereich_abschliessen(*box)     # Bereichs-Fit statt Zoom
+            elif self._ausreisser_aktiv:
+                self._ausreisser_kasten(*box)        # Ausreisser gemeinsam markieren
             else:
                 self._auf_box_zoom(*box)
         elif event.inaxes == self.ax and event.ydata is not None:
-            self._waehle_index(self._index_aus_y(event.ydata))
+            if self._ausreisser_aktiv:
+                self._ausreisser_klick(event)        # Einzelpunkt markieren
+            else:
+                self._waehle_index(self._index_aus_y(event.ydata))
 
     def _ausschluss_abschliessen(self, x0, y0, x1, y1) -> None:
         fertig = self._ausschluss_fertig

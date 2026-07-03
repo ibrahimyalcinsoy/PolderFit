@@ -96,6 +96,37 @@ class StapelErgebnis:
     zugeschnitten: list[Linescan] = field(default_factory=list)
     #: Interaktiv eingezeichnete Ausschlusszonen (wirken auf alle Nachfits).
     ausschlusszonen: list[Ausschlusszone] = field(default_factory=list)
+    #: Als Ausreisser markierte Stapel-Indizes: aus Darstellung UND allen
+    #: uebergreifenden Rechnungen (insb. Kittel-/LLG-Fit) ausgenommen.
+    ausreisser: list[int] = field(default_factory=list)
+
+    def ist_ausreisser(self, index: int) -> bool:
+        return index in self.ausreisser
+
+    def ausreisser_umschalten(self, index: int) -> bool:
+        """Schaltet den Ausreisser-Status eines Punkts um.
+
+        Liefert ``True``, wenn der Punkt jetzt ausgeschlossen ist. Die Liste
+        bleibt sortiert (Anzeige-/Speicherreihenfolge deterministisch).
+        """
+        index = int(index)
+        if index in self.ausreisser:
+            self.ausreisser.remove(index)
+            return False
+        self.ausreisser.append(index)
+        self.ausreisser.sort()
+        return True
+
+    def ergebnisse_aktiv(self) -> list[FitErgebnis]:
+        """Ergebnisse ohne die als Ausreisser markierten Punkte.
+
+        Das ist die Eingabe fuer alle uebergreifenden Auswertungen
+        (Kittel/LLG, Publikationsplots) - einzelne physikalisch sinnlose
+        Ausreisser wuerden den linearen Fit sonst bis hin zu negativer
+        Steigung verfaelschen.
+        """
+        gesperrt = set(self.ausreisser)
+        return [e for i, e in enumerate(self.ergebnisse) if i not in gesperrt]
 
     def index_problematisch(self) -> list[int]:
         """Indizes der Frequenzen, deren Fit als problematisch eingestuft ist.

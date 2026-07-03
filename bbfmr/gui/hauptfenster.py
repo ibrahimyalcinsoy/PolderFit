@@ -39,8 +39,10 @@ from ..fit.fenster_steuerung import (
     setze_fensterbreite_punkte,
 )
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
+from ..persistenz.projekt import lade_sitzung, speichere_sitzung, stelle_stapel_wieder_her
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
+from .ausreisser_panel import AusreisserPanel
 from .auswahl_dialog import AuswahlDialog
 from .fenster_panel import FensterPanel
 from .matrix_ansicht import MatrixAnsicht
@@ -105,6 +107,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             zone_zeichnen=self._zone_zeichnen,
             zone_entfernen=self._zone_entfernen,
         )
+        self.ausreisserpanel = AusreisserPanel(
+            wieder_aufnehmen=self._ausreisser_wieder_aufnehmen,
+            rueckgaengig=self._ausreisser_rueckgaengig,
+        )
+        #: Undo-Stapel der Ausreisser-Listen (Snapshot VOR jeder Aenderung).
+        self._ausreisser_undo: list[list[int]] = []
 
         self._baue_oberflaeche()
         self._baue_werkzeugleiste()
@@ -112,6 +120,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._baue_navigator_dock()
         self._baue_verarbeitung_dock()
         self._baue_fenster_dock()
+        self._baue_ausreisser_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
         self._log("bbFMR bereit. Bitte eine TDMS-Datei laden.", "info")
 
@@ -189,6 +198,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche und Fit "
             "wiederholt (löst Mehrdeutigkeiten neben der Mode auf). Esc bricht ab.")
         self.akt_bereich.triggered.connect(self._bereich_fitten)
+        self.akt_ausreisser = leiste.addAction("Ausreißer markieren")
+        self.akt_ausreisser.setCheckable(True)
+        self.akt_ausreisser.setToolTip(
+            "Modus: Fit-Punkte im Farbplot anklicken oder per Kasten markieren → "
+            "raus aus Darstellung und allen Rechnungen (insb. Kittel-Fit). "
+            "Rückgängig und Liste im Ausreißer-Panel.")
+        self.akt_ausreisser.toggled.connect(self._ausreisser_modus)
         leiste.addSeparator()
         self.akt_kittel = leiste.addAction("Kittel/LLG-Auswertung")
         self.akt_kittel.triggered.connect(self._kittel_llg)
@@ -199,6 +215,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_xlsx.triggered.connect(self._export_excel)
         self.akt_csv = leiste.addAction("Export CSV")
         self.akt_csv.triggered.connect(self._export_csv)
+        leiste.addSeparator()
+        self.akt_projekt_speichern = leiste.addAction("Projekt speichern")
+        self.akt_projekt_speichern.setToolTip(
+            "Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
+            "Ausschlusszonen, Ausreißer und Fitparameter.")
+        self.akt_projekt_speichern.triggered.connect(self._projekt_speichern)
+        self.akt_projekt_laden = leiste.addAction("Projekt laden")
+        self.akt_projekt_laden.setToolTip(
+            "Gespeicherte Sitzung fortsetzen: TDMS wird neu gelesen, die Fits werden "
+            "mit den gespeicherten Fenstern deterministisch wiederhergestellt.")
+        self.akt_projekt_laden.triggered.connect(self._projekt_laden)
 
         # Ansicht-Umschalter: ganzer Feldsweep statt Zoom aufs Resonanzband.
         leiste.addSeparator()
@@ -349,6 +376,25 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # visibilityChanged(False), was die Toolbar-Toggles fehlleiten wuerde.
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
         self.fenster_dock = dock
+
+    def _baue_ausreisser_dock(self):
+        """Ausreisser-Liste (rechts); erscheint mit dem Markier-Modus."""
+        dock = QtWidgets.QDockWidget("Ausreißer", self)
+        dock.setObjectName("ausreisser_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
+            | QtCore.Qt.BottomDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+        dock.setWidget(self.ausreisserpanel)
+        dock.setMinimumWidth(280)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        dock.setVisible(False)  # erscheint mit "Ausreißer markieren"
+        self.ausreisser_dock = dock
         self.akt_fenster.setCheckable(True)
         self.akt_fenster.setChecked(True)
         self.akt_fenster.toggled.connect(dock.setVisible)
@@ -371,7 +417,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _setze_bedienelemente(self, an: bool) -> None:
         """Sperrt/entsperrt Aktionen und Navigation waehrend eines Hintergrund-Jobs."""
         for aktion in (self.akt_laden, self.akt_fit, self.akt_seed, self.akt_bereich,
-                       self.akt_kittel, self.akt_tdms, self.akt_xlsx, self.akt_csv):
+                       self.akt_ausreisser, self.akt_kittel, self.akt_tdms,
+                       self.akt_xlsx, self.akt_csv,
+                       self.akt_projekt_speichern, self.akt_projekt_laden):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
                       self.btn_naechstes_problem):
@@ -589,6 +637,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def bei_fertig(stapel):
             self.stapel = stapel
+            self._ausreisser_undo = []  # Undo-Stapel gehoert zum alten Stapel
             self._aktualisiere_overlay()
             # Neuer Stapel: Ausschlusszonen beginnen leer, Grenzen-Overlay neu.
             self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
@@ -659,6 +708,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def bei_fertig(stapel):
             self.stapel = stapel
+            self._ausreisser_undo = []
             self._aktualisiere_overlay()
             self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
             self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
@@ -720,7 +770,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _aktualisiere_overlay(self):
         bres = np.array([e.B_res for e in self.stapel.ergebnisse])
         problem = np.array([e.problematisch for e in self.stapel.ergebnisse], dtype=bool)
-        self.matrix.aktualisiere_resonanz(self.stapel.datensatz.frequenzen, bres, problem)
+        ausgeschlossen = np.zeros(len(self.stapel.ergebnisse), dtype=bool)
+        gueltige = [i for i in self.stapel.ausreisser if i < ausgeschlossen.size]
+        ausgeschlossen[gueltige] = True
+        self.matrix.aktualisiere_resonanz(self.stapel.datensatz.frequenzen, bres,
+                                          problem, ausgeschlossen)
+        self.ausreisserpanel.zeige_ausreisser(self.stapel)
 
     def _zeige_aktuellen(self):
         if not self.stapel or not self.stapel.ergebnisse:
@@ -798,8 +853,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self, "Geometrie", "Kittel-Geometrie:", ["oop", "ip"], 0, False)
         if not ok:
             return
+        # Ausreisser fliegen aus ALLEN uebergreifenden Rechnungen und Plots.
+        aktive = self.stapel.ergebnisse_aktiv()
+        n_ausreisser = len(self.stapel.ausreisser)
+        if n_ausreisser:
+            self._log(f"Kittel/LLG: {n_ausreisser} Ausreißer ausgeschlossen "
+                      f"({len(aktive)} Punkte verbleiben).", "info")
         try:
-            info = auswertung_kittel_llg(self.stapel.ergebnisse, geometrie=geo)
+            info = auswertung_kittel_llg(aktive, geometrie=geo)
         except Exception as exc:
             QtWidgets.QMessageBox.warning(self, "Auswertung", str(exc))
             self._log(f"Kittel/LLG fehlgeschlagen: {exc}", "problem")
@@ -810,9 +871,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             f"LLG: α={llg['alpha']:.3e}, µ0Hinh={llg['mu0Hinh']*1e3:.2f} mT.", "ok")
         from ..auswertung.uebersicht import (
             plot_resonanz_vs_frequenz, plot_linienbreite, plot_resonanz_vs_temperatur)
-        plot_resonanz_vs_frequenz(self.stapel.ergebnisse, geometrie=geo)
-        plot_linienbreite(self.stapel.ergebnisse, gamma=info["kittel"]["gamma"])
-        plot_resonanz_vs_temperatur(self.stapel.ergebnisse)
+        plot_resonanz_vs_frequenz(aktive, geometrie=geo)
+        plot_linienbreite(aktive, gamma=info["kittel"]["gamma"])
+        plot_resonanz_vs_temperatur(aktive)
         import matplotlib.pyplot as plt
         plt.show()
 
@@ -835,7 +896,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         global_param = None
         try:
-            info = auswertung_kittel_llg(self.stapel.ergebnisse)
+            info = auswertung_kittel_llg(self.stapel.ergebnisse_aktiv())
             global_param = {**{f"kittel_{k}": v for k, v in info["kittel"].items()},
                             **{f"llg_{k}": v for k, v in info["llg"].items()}}
         except Exception:
@@ -1031,6 +1092,155 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._log(f"Ausschlusszone entfernt: {len(betroffen)} Linescans neu gefittet.", "ok")
 
         self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …")
+
+    # --- Ausreisser-Management (Bereich 6) -----------------------------------
+    def _ausreisser_modus(self, an: bool):
+        """Toolbar-Umschalter: Punkte anklicken/einrahmen -> Ausreisser."""
+        if an and (not self.stapel or not self.stapel.ergebnisse):
+            self._log("Ausreißer markieren: erst nach einem Auto-Fit moeglich.", "warn")
+            self.akt_ausreisser.setChecked(False)
+            return
+        self.matrix.setze_ausreisser_modus(an, gewaehlt=self._ausreisser_gewaehlt)
+        if an:
+            self.ausreisser_dock.setVisible(True)
+            self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
+                      "aufziehen. Erneut klicken auf den Toolbar-Knopf beendet.", "info")
+        else:
+            self.statusBar().showMessage("Ausreißer-Modus beendet.")
+
+    def _ausreisser_snapshot(self):
+        """Zustand VOR einer Aenderung fuer Undo sichern (begrenzte Tiefe)."""
+        self._ausreisser_undo.append(list(self.stapel.ausreisser))
+        del self._ausreisser_undo[:-50]
+
+    def _ausreisser_gewaehlt(self, indizes: list[int]):
+        """Callback aus dem Farbplot: markierte Punkte ausschliessen (Echtzeit)."""
+        if not self.stapel or not indizes:
+            return
+        self._ausreisser_snapshot()
+        for i in indizes:
+            if not self.stapel.ist_ausreisser(i):
+                self.stapel.ausreisser_umschalten(i)
+        self._aktualisiere_overlay()
+        frequenzen = [self.stapel.ergebnisse[i].frequenz / 1e9 for i in indizes]
+        self._log(f"Ausreißer markiert: {len(indizes)} Punkt(e) "
+                  f"({', '.join(f'{f:.2f}' for f in frequenzen[:6])}"
+                  f"{' …' if len(frequenzen) > 6 else ''} GHz) – "
+                  f"insgesamt {len(self.stapel.ausreisser)} ausgeschlossen.", "ok")
+
+    def _ausreisser_wieder_aufnehmen(self, indizes: list[int]):
+        """Aus der Liste: Punkte wieder in Darstellung und Rechnungen aufnehmen."""
+        if not self.stapel or not indizes:
+            return
+        self._ausreisser_snapshot()
+        for i in indizes:
+            if self.stapel.ist_ausreisser(i):
+                self.stapel.ausreisser_umschalten(i)
+        self._aktualisiere_overlay()
+        self._log(f"{len(indizes)} Ausreißer wieder aufgenommen – "
+                  f"verbleibend {len(self.stapel.ausreisser)}.", "ok")
+
+    def _ausreisser_rueckgaengig(self):
+        if not self.stapel or not self._ausreisser_undo:
+            self._log("Ausreißer: nichts rueckgaengig zu machen.", "info")
+            return
+        self.stapel.ausreisser = self._ausreisser_undo.pop()
+        self._aktualisiere_overlay()
+        self._log(f"Ausreißer: letzter Schritt rueckgaengig – "
+                  f"aktuell {len(self.stapel.ausreisser)} ausgeschlossen.", "ok")
+
+    # --- Projekt speichern / laden -------------------------------------------
+    def _projekt_speichern(self):
+        if not self.stapel or not self.stapel.ergebnisse:
+            QtWidgets.QMessageBox.information(
+                self, "Hinweis", "Bitte zuerst fitten – gespeichert wird der "
+                "komplette Auswertungszustand.")
+            return
+        pfad, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Projekt speichern", "", "bbFMR-Projekt (*.json)")
+        if not pfad:
+            return
+        speichere_sitzung(self.stapel, pfad)
+        self._log(f"Projekt gespeichert: {os.path.basename(pfad)} "
+                  f"({len(self.stapel.ergebnisse)} Fits, "
+                  f"{len(self.stapel.ausreisser)} Ausreißer, "
+                  f"{len(self.stapel.ausschlusszonen)} Zonen).", "ok")
+
+    def _projekt_laden(self):
+        if self._job_laeuft:
+            return
+        pfad, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Projekt laden", "", "bbFMR-Projekt (*.json)")
+        if not pfad:
+            return
+        try:
+            daten = lade_sitzung(pfad)
+        except Exception as fehler:
+            QtWidgets.QMessageBox.critical(self, "Projekt laden", str(fehler))
+            return
+
+        quelle = daten.get("quelle", "")
+        if not Path(quelle).exists():
+            QtWidgets.QMessageBox.information(
+                self, "Projekt laden",
+                f"Die TDMS-Quelle {quelle!r} wurde nicht gefunden. "
+                "Bitte die Messdatei auswaehlen.")
+            quelle, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self, "TDMS-Quelle des Projekts", "", "TDMS (*.tdms)")
+            if not quelle:
+                return
+
+        zuordnung = daten.get("zuordnung")
+        if zuordnung is not None:
+            zuordnung = {rolle: tuple(paar) for rolle, paar in zuordnung.items()}
+        auswahl_dict = daten.get("auswertungsauswahl")
+
+        def aufgabe(melde):
+            melde(0, 0, f"Lade {os.path.basename(quelle)} …")
+            if zuordnung is not None:
+                voll = lade_tdms(quelle, zuordnung=zuordnung,
+                                 layout=daten.get("format_typ"))
+            else:
+                voll = lade_tdms(quelle)  # Projektdatei Version 1: Auto-Profil
+            reduziert = voll
+            if auswahl_dict:
+                auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
+                reduziert, _indizes = auswahl.reduziere(voll)
+            melde(0, 0, "Stelle Fits mit gespeicherten Fenstern wieder her …")
+            stapel = stelle_stapel_wieder_her(
+                daten, reduziert,
+                fortschritt=lambda k, n, e: melde(k, n, ""))
+            return (voll, stapel)
+
+        def bei_fertig(res):
+            voll, stapel = res
+            self.datensatz_voll = voll
+            self.stapel = stapel
+            self._ausreisser_undo = []
+            if auswahl_dict:
+                self._letzte_auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
+            self.matrix.zeige(voll)
+            feld_achse, freq_achse = self.matrix.achsen()
+            self.verarbeitung.setze_achsen(feld_achse, freq_achse)
+            self.matrix.setze_verarbeitung(self.verarbeitung.kette(),
+                                           self.verarbeitung.anzeige_modus())
+            mat, ext = self.matrix.thumbnail()
+            self.navigator.zeige(mat, ext)
+            self.navigator_dock.setVisible(False)
+            self._aktualisiere_overlay()
+            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+            self._aktualisiere_grenzen_overlay()
+            self.aktueller_index = 0
+            self._zeige_aktuellen()
+            self._log(f"Projekt geladen: {os.path.basename(pfad)} – "
+                      f"{len(stapel.ergebnisse)} Fits wiederhergestellt, "
+                      f"{len(stapel.ausreisser)} Ausreißer, "
+                      f"{len(stapel.ausschlusszonen)} Zonen.", "ok")
+            self.statusBar().showMessage(
+                f"Projekt geladen ({len(stapel.ergebnisse)} Fits).")
+
+        self._starte_job(aufgabe, bei_fertig, f"Lade Projekt {os.path.basename(pfad)} …")
 
     def _verarbeitung_geaendert(self, kette, anzeige_modus: str):
         """Callback des Verarbeitungspanels: Kette neu auf den Farbplot anwenden."""

@@ -12,6 +12,7 @@ nav:
   - Verarbeitung (derivative divide): verarbeitung.md
   - Auswertungsauswahl (Jumper & Bereiche): auswertungsauswahl.md
   - Interaktives Fitten: interaktives-fitten.md
+  - Ausreißer & Projektdateien: ausreisser.md
   - Der Ablauf (Pipeline): pipeline.md
   - AutoWindow im Detail: autowindow.md
   - Physik & Fit: physik-und-fit.md
