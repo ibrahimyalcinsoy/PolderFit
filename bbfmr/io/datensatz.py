@@ -77,16 +77,32 @@ class Messdatensatz:
         (sortierten) Daten wird je Frequenz auf ein gemeinsames Feldgitter
         interpoliert; ausserhalb des gemessenen Bereichs steht NaN.
         """
+        feld_achse, freq_achse, Z = self.komplexe_matrix(n_feld)
+        return feld_achse, freq_achse, np.abs(Z)
+
+    def komplexe_matrix(self, n_feld: int = 400) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Komplexe S21-Matrix auf gemeinsamem Feldgitter (Frequenz vs. Feld).
+
+        Liefert ``(feld_achse, frequenz_achse, Z)`` mit
+        ``Z.shape == (n_frequenzen, n_feld)`` und ``Z = Re + i*Im``. Re und Im
+        werden getrennt linear auf das gemeinsame Gitter interpoliert (eine
+        Interpolation des Betrags wuerde die Phaseninformation zerstoeren, die
+        derivative divide u. a. benoetigen). Ausserhalb des je Frequenz
+        gemessenen Feldbereichs steht NaN – Verarbeitungsoperationen und
+        Farbplot maskieren diese Punkte.
+        """
         b_min, b_max = self.feld_bereich()
         feld_achse = np.linspace(b_min, b_max, n_feld)
         freq_achse = self.frequenzen
-        matrix = np.full((len(self.linescans), n_feld), np.nan)
+        Z = np.full((len(self.linescans), n_feld), np.nan, dtype=complex)
         for i, ls in enumerate(self.linescans):
             if ls.feld.size < 2:
                 continue
             ordnung = np.argsort(ls.feld)
             b = ls.feld[ordnung]
-            mag = ls.magnitude[ordnung]
             innerhalb = (feld_achse >= b[0]) & (feld_achse <= b[-1])
-            matrix[i, innerhalb] = np.interp(feld_achse[innerhalb], b, mag)
-        return feld_achse, freq_achse, matrix
+            Z[i, innerhalb] = (
+                np.interp(feld_achse[innerhalb], b, ls.re[ordnung])
+                + 1j * np.interp(feld_achse[innerhalb], b, ls.im[ordnung])
+            )
+        return feld_achse, freq_achse, Z

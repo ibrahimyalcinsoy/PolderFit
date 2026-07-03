@@ -36,6 +36,7 @@ from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
 from .mapping_dialog import MappingDialog, VorschauDialog
 from .navigator_ansicht import NavigatorAnsicht
+from .verarbeitung_panel import VerarbeitungPanel
 from .arbeiter import Arbeiter
 from .stil import bbFMR_QSS
 
@@ -80,11 +81,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                     zoom_geaendert=self._auf_zoom)
         self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert)
         self.navigator = NavigatorAnsicht(bereich_gewaehlt=self._navigator_bereich)
+        self.verarbeitung = VerarbeitungPanel(geaendert=self._verarbeitung_geaendert)
 
         self._baue_oberflaeche()
         self._baue_werkzeugleiste()
         self._baue_aktivitaet_dock()
         self._baue_navigator_dock()
+        self._baue_verarbeitung_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
         self._log("bbFMR bereit. Bitte eine TDMS-Datei laden.", "info")
 
@@ -169,8 +172,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Problematische Fits im Resonanz-Overlay der Übersicht ausblenden.")
         self.akt_problemfits.toggled.connect(self._problemfits_umschalten)
 
-        # Sichtbarkeits-Umschalter fuer das Aktivitaets-Panel (rechts).
+        # Sichtbarkeits-Umschalter fuer Verarbeitung- und Aktivitaets-Panel.
         leiste.addSeparator()
+        self.akt_verarbeitung = leiste.addAction("Verarbeitung")
+        self.akt_verarbeitung.setToolTip(
+            "Verarbeitungskette des Farbplots (divide-slice, derivative-divide, "
+            "relation-amplitude) ein-/ausblenden.")
         self.akt_aktivitaet = leiste.addAction("Aktivität")
 
     def _baue_aktivitaet_dock(self):
@@ -242,6 +249,30 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
         dock.setVisible(False)  # erscheint erst, sobald gezoomt wird
         self.navigator_dock = dock
+
+    def _baue_verarbeitung_dock(self):
+        """Verarbeitungskette (links): divide-slice, derivative-divide, relation-amplitude."""
+        dock = QtWidgets.QDockWidget("Verarbeitung (Farbplot)", self)
+        dock.setObjectName("verarbeitung_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+        rollbereich = QtWidgets.QScrollArea()
+        rollbereich.setWidgetResizable(True)
+        rollbereich.setWidget(self.verarbeitung)
+        dock.setWidget(rollbereich)
+        dock.setMinimumWidth(280)
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+        self.verarbeitung_dock = dock
+        self.akt_verarbeitung.setCheckable(True)
+        self.akt_verarbeitung.setChecked(True)
+        self.akt_verarbeitung.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_verarbeitung.setChecked)
 
     # --- Aktivitaet / Protokoll -------------------------------------------
     def _log(self, text: str, art: str = "info") -> None:
@@ -400,6 +431,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     self._log("⚠ Validierung: " + warnung, "warn")
 
             self.matrix.zeige(datensatz)
+            feld_achse, freq_achse = self.matrix.achsen()
+            self.verarbeitung.setze_achsen(feld_achse, freq_achse)
+            self.matrix.setze_verarbeitung(self.verarbeitung.kette(),
+                                           self.verarbeitung.anzeige_modus())
             mat, ext = self.matrix.thumbnail()
             self.navigator.zeige(mat, ext)
             self.navigator_dock.setVisible(False)  # erst beim Zoomen einblenden
@@ -659,6 +694,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
             return False
         return True
+
+    def _verarbeitung_geaendert(self, kette, anzeige_modus: str):
+        """Callback des Verarbeitungspanels: Kette neu auf den Farbplot anwenden."""
+        if self.stapel is None:
+            return
+        try:
+            self.matrix.setze_verarbeitung(kette, anzeige_modus)
+        except ValueError as fehler:
+            # Unzulaessige Parameter (z. B. Δn groesser als halbes Gitter) nur
+            # melden – der Plot behaelt den letzten gueltigen Zustand.
+            self._log(f"Verarbeitung nicht anwendbar: {fehler}", "warn")
+            return
+        mat, ext = self.matrix.thumbnail()
+        self.navigator.zeige(mat, ext)
+        self._log(f"Verarbeitung: {kette.beschreibung()} · Anzeige {anzeige_modus}", "auto")
 
     def _vollbereich_umschalten(self, an: bool):
         """Ganzen Feldsweep statt Zoom aufs Band zeigen (und aktuelle Anzeige erneuern)."""

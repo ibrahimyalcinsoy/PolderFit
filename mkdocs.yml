@@ -9,6 +9,7 @@ nav:
   - Installation & Start: installation.md
   - Die Messdaten (TDMS): datenformate.md
   - Kanal-Mapping & Profile: kanal-mapping.md
+  - Verarbeitung (derivative divide): verarbeitung.md
   - Der Ablauf (Pipeline): pipeline.md
   - AutoWindow im Detail: autowindow.md
   - Physik & Fit: physik-und-fit.md

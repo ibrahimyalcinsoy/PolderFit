@@ -29,6 +29,12 @@ from matplotlib.figure import Figure
 from PySide6 import QtCore
 
 from ..io.datensatz import Messdatensatz
+from ..verarbeitung import ANZEIGE_MODI, Verarbeitungskette, anzeige_transform
+
+#: Robuste Farbskala: NaN-feste Perzentile gegen Ausreisser (v. a. nach
+#: derivative divide, wo einzelne Punkte um Groessenordnungen herausragen
+#: koennen und eine lineare Skala die Mode unsichtbar machen wuerden).
+_CLIM_PERZENTILE = (2.0, 98.0)
 
 #: Zoomfaktor pro Mausrad-Schritt (rein = sichtbaren Bereich verkleinern).
 _ZOOM_REIN = 0.8
@@ -51,6 +57,11 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._matrix = None
         self._freq_achse = None
         self._extent = None            # (feld_min, feld_max, f_min_GHz, f_max_GHz)
+        # Verarbeitungskette: gecachte komplexe Rohmatrix + aktueller Zustand.
+        self._Z_komplex = None         # (n_freq, n_feld), komplex, NaN ausserhalb
+        self._feld_achse = None
+        self._kette: Verarbeitungskette | None = None
+        self._anzeige_modus: str = "betrag"
         self._markierung = None
         self._marker_label = None
         self._aktueller_index = 0
@@ -78,25 +89,84 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.mpl_connect("figure_leave_event", self._on_leave)
 
     def zeige(self, datensatz: Messdatensatz) -> None:
-        """Stellt die Magnituden-Matrix des Datensatzes dar."""
+        """Stellt den Datensatz dar (Rohmatrix cachen, aktuelle Kette anwenden)."""
         self._datensatz = datensatz
-        feld, freq, matrix = datensatz.anzeige_matrix()
-        self._matrix = matrix
+        feld, freq, Z = datensatz.komplexe_matrix()
+        self._feld_achse = feld
+        self._Z_komplex = Z
         self._freq_achse = freq
         self._extent = (float(feld.min()), float(feld.max()),
                         float(freq.min() / 1e9), float(freq.max() / 1e9))
-        self._markierung = self._marker_label = None
         self._res_freq = self._res_bres = self._res_problem = None
         self._press_xy = None
         self._box_aktiv = False
+        self._render()
+
+    def setze_verarbeitung(self, kette: Verarbeitungskette | None,
+                           anzeige_modus: str = "betrag") -> None:
+        """Wendet eine (neue) Verarbeitungskette an; Zoom und Overlays bleiben.
+
+        Die Kette rechnet immer auf der gecachten komplexen **Rohmatrix** –
+        Parameteraenderungen spielen also nie auf bereits verarbeiteten Daten auf.
+        """
+        kette_alt, modus_alt = self._kette, self._anzeige_modus
+        self._kette = kette
+        self._anzeige_modus = anzeige_modus
+        if self._Z_komplex is None:
+            return
+        xlim, ylim = self.ax.get_xlim(), self.ax.get_ylim()
+        gezoomt = self._ist_gezoomt()
+        index = self._aktueller_index
+        hatte_marker = self._markierung is not None
+        res = (self._res_freq, self._res_bres, self._res_problem)
+        try:
+            self._render()
+        except ValueError:
+            # Unzulaessige Parameter (z. B. Δn > halbes Gitter): alten Zustand
+            # behalten; die Berechnung laeuft vor ax.clear(), der Plot ist intakt.
+            self._kette, self._anzeige_modus = kette_alt, modus_alt
+            raise
+        if gezoomt:
+            self.ax.set_xlim(xlim)
+            self.ax.set_ylim(ylim)
+        if res[0] is not None:
+            self._res_freq, self._res_bres, self._res_problem = res
+            self._zeichne_resonanz()
+        if hatte_marker and self._freq_achse is not None and len(self._freq_achse):
+            self.markiere_frequenz(index)
+        self.draw_idle()
+
+    def _render(self) -> None:
+        """Zeichnet das Falschfarbenbild aus Rohmatrix + Kette + Anzeige-Modus neu."""
+        feld, freq, Z = self._feld_achse, self._freq_achse, self._Z_komplex
+        if self._kette is not None:
+            feld, freq, Z = self._kette.anwenden(feld, freq, Z)
+        matrix = anzeige_transform(Z, self._anzeige_modus)
+        matrix = np.where(np.isfinite(matrix), matrix, np.nan)
+        self._matrix = matrix
+
+        self._markierung = self._marker_label = None
         self._box_patch = None
         self.ax.clear()
+        # Robuste Farbgrenzen: einzelne Ausreisser (nach dd haeufig) duerfen die
+        # Skala nicht dominieren, sonst ist die Mode nicht mit dem Auge erkennbar.
+        endlich = matrix[np.isfinite(matrix)]
+        vmin = vmax = None
+        if endlich.size:
+            vmin, vmax = np.percentile(endlich, _CLIM_PERZENTILE)
+            if vmin == vmax:
+                vmin = vmax = None
         self.ax.imshow(matrix, aspect="auto", origin="lower", cmap="viridis",
-                       extent=list(self._extent))
+                       extent=list(self._extent), vmin=vmin, vmax=vmax)
         self.ax.set_autoscale_on(False)  # Overlays/Marker veraendern den Zoom nicht
         self.ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
         self.ax.set_ylabel("Frequenz (GHz)")
-        self.ax.set_title("Uebersicht |S21| (Frequenz vs. Feld)")
+        beschreibung = self._kette.beschreibung() if self._kette is not None else "roh"
+        anzeige = ANZEIGE_MODI.get(self._anzeige_modus, self._anzeige_modus)
+        if beschreibung == "roh":
+            self.ax.set_title(f"Uebersicht S21 roh · {anzeige}")
+        else:
+            self.ax.set_title(f"Uebersicht S21: {beschreibung} · {anzeige}", fontsize=10)
         self.ax.text(
             0.5, -0.13,
             "klicken = Frequenz · Kästchen ziehen = Zoom · Mausrad = rein/raus · "
@@ -109,6 +179,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
     def thumbnail(self):
         """Liefert ``(matrix, extent)`` der gesamten Messung (fuer den Navigator)."""
         return self._matrix, self._extent
+
+    def achsen(self):
+        """Liefert ``(feld_achse, frequenz_achse)`` des Rohgitters (oder ``(None, None)``)."""
+        return self._feld_achse, self._freq_achse
 
     def _tight_layout_sicher(self) -> None:
         w, h = self.figur.get_size_inches() * self.figur.dpi
