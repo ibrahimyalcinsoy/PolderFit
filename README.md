@@ -7,17 +7,14 @@ Linienbreite die Materialgrößen (`μ0Meff`, `g`, Gilbert-Dämpfung `α`).
 
 ## Schnellstart
 
-Gesamten Block kopieren, ins Terminal einfügen, Enter. Die virtuelle Umgebung (`.venv`)
-kapselt das Programm vollständig ab – vorhandene Python- oder Anaconda-Installationen
-stören nicht. Voraussetzung: Python ≥ 3.11 und `git` (Bereitstellung s. u.).
+Voraussetzung: Git und Python ≥ 3.11 sind installiert. Block kopieren, ins Terminal
+einfügen, Enter — die virtuelle Umgebung (`.venv`) kapselt alles ab.
 
-**Windows 11** (Eingabeaufforderung `cmd`):
+**Windows** (Eingabeaufforderung `cmd`):
 
 ```bat
-git clone https://github.com/ibrahimyalcinsoy/bbFMR.git
-cd bbFMR
-python -m venv .venv
-.venv\Scripts\activate
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR
+python -m venv .venv && call .venv\Scripts\activate
 pip install -e ".[gui]"
 bbfmr
 ```
@@ -25,21 +22,14 @@ bbfmr
 **Fedora / Debian** (bash):
 
 ```bash
-git clone https://github.com/ibrahimyalcinsoy/bbFMR.git
-cd bbFMR
-python3 -m venv .venv
-source .venv/bin/activate
+git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[gui]"
 bbfmr
 ```
 
-## Python und Git bereitstellen (einmalig)
-
-| Plattform | Befehl bzw. Quelle |
-|---|---|
-| **Windows 11** | Python: <https://www.python.org/downloads/windows/> – Haken **„Add python.exe to PATH"** setzen. Git: <https://git-scm.com/download/win>. Ausführlich: [INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md). |
-| **Fedora** | `sudo dnf install -y python3 python3-pip git` |
-| **Debian** | `sudo apt install -y python3 python3-venv python3-pip git` |
+Schritt-für-Schritt-Anleitung inkl. Git-/Python-Einrichtung:
+[INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md).
 
 ## Start und Aktualisierung
 
