@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Offscreen-Smoke-Tests der Mapping-Dialoge (Zuordnung + Import-Vorschau).
 
 Laeuft headless (QT_QPA_PLATFORM=offscreen); wird ohne PySide6 uebersprungen.
@@ -13,9 +14,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6 import QtWidgets
 
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.io.kanal_mapping import EINGEBAUTE_PROFILE, PROFIL_SORTIERT
-from bbfmr.io.tdms_laden import pruefe_datensatz
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.io.kanal_mapping import EINGEBAUTE_PROFILE, PROFIL_SORTIERT
+from polderfit.io.tdms_laden import pruefe_datensatz
 
 
 @pytest.fixture(scope="module")
@@ -37,7 +38,7 @@ STRUKTUR_FREMD = {
 
 
 def _dialog(struktur, vorschlag=None):
-    from bbfmr.gui.mapping_dialog import MappingDialog
+    from polderfit.gui.mapping_dialog import MappingDialog
     return MappingDialog("test.tdms", struktur, list(EINGEBAUTE_PROFILE),
                          vorschlag=vorschlag)
 
@@ -72,7 +73,7 @@ def test_mapping_dialog_sperrt_ok_bei_fehlender_pflichtrolle(app):
 
 
 def test_vorschau_dialog_zeigt_bericht_und_warnungen(app):
-    from bbfmr.gui.mapping_dialog import VorschauDialog
+    from polderfit.gui.mapping_dialog import VorschauDialog
     b = np.linspace(1.0, 2.0, 30)
     ls = Linescan(frequenz=10e9, feld=b, re=np.cos(b), im=np.sin(b))
     ds = Messdatensatz(

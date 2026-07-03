@@ -3,13 +3,13 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bbfmr"
+name = "polderfit"
 version = "0.1.0"
 description = "Breitband-FMR-Auswertung (Portierung von LabVIEW nach Python)"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Ibrahim Yalcinsoy" }]
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 dependencies = [
     "numpy>=1.24",
     "scipy>=1.10",
@@ -25,13 +25,13 @@ gui = ["PySide6>=6.5"]
 test = ["pytest>=7.4"]
 
 [project.scripts]
-bbfmr = "bbfmr.app:main"
+polderfit = "polderfit.app:main"
 
 [tool.setuptools.packages.find]
-include = ["bbfmr*"]
+include = ["polderfit*"]
 
 [tool.setuptools.package-data]
-"bbfmr.gui" = ["assets/*.svg"]
+"polderfit.gui" = ["assets/*.svg"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

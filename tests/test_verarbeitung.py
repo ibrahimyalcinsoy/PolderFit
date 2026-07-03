@@ -1,8 +1,9 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests der portierten Verarbeitungsoperationen und der Verarbeitungskette.
 
 Referenzen:
 
-* Bit-Treue zu pybbfmr 0.2.1: ``bbfmr/test/test_processing.py`` dort prueft
+* Bit-Treue zu pybbfmr 0.2.1: ``polderfit/test/test_processing.py`` dort prueft
   ``derivative_divide`` fuer modulation_amp 1 und 2 (average=False) gegen den
   von Hand gebildeten Zentral-Differenzenquotienten – diese Tests sind hier
   in der Achsen-Konvention des Projekts (Zeilen = Frequenzen) uebernommen.
@@ -14,10 +15,10 @@ Referenzen:
 import numpy as np
 import pytest
 
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.physik.konstanten import GAMMA_STANDARD
-from bbfmr.physik.suszeptibilitaet import chi_oop
-from bbfmr.verarbeitung import (
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.physik.konstanten import GAMMA_STANDARD
+from polderfit.physik.suszeptibilitaet import chi_oop
+from polderfit.verarbeitung import (
     KettenSchritt,
     Verarbeitungskette,
     anzeige_transform,

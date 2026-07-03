@@ -11,7 +11,7 @@ beschriebenen Fälle stammen aus der Robustheitsprüfung über den realen Datenb
 
 **Vorgehen.** Aktuelle Programmstände behandeln diesen Fall automatisch: Die
 Sweep-Länge wird aus der Frequenzachse abgeleitet, auf die vollständigen Sweeps
-gekürzt und regulär ausgewertet (`bbfmr/io/tdms_laden.py`). Tritt der Fehler
+gekürzt und regulär ausgewertet (`polderfit/io/tdms_laden.py`). Tritt der Fehler
 dennoch auf, lässt sich die Sweep-Periode nicht bestimmen; in diesem Fall ist die
 Datei vermutlich beschädigt.
 
@@ -65,6 +65,20 @@ Ausschnitt ein kleines Residuum, ohne die eigentliche Resonanz zu erfassen.
 **Vorgehen.** Die Problemgründe je Linescan prüfen (`erg.problem_text`,
 `stapel.problem_statistik()`). Treten überwiegend physikalisch erwartbare Gründe auf,
 liegt kein Programmfehler vor.
+
+## Ein Fit sieht gut aus, wird aber als Problemfit gemeldet
+
+**Ursache (historisch).** Ein numerisch nahezu perfekter Fit kann in ein
+`phi`-Nebenminimum mit singulärer Jacobi-Matrix laufen; `lmfit` liefert dann keine
+Unsicherheiten, und der Fit wurde früher allein deswegen als „keine Unsicherheiten"
+gemeldet.
+
+**Stand.** Dieser Fall wird automatisch behandelt: Der Fit wird einmal mit um `π`
+verschobenem `phi`-Startwert wiederholt, und bei exzellentem Residuum
+(`rmse_norm ≤ RMSE_NORM_EXZELLENT`) zählt fehlende Kovarianz nicht mehr als
+Problemgrund (siehe [Bewertung der Fits](bewertung.md)). Tritt die Meldung dennoch
+auf, ist das Residuum tatsächlich erhöht — dann Fenster und Startwerte prüfen oder
+den Linescan [interaktiv nachfitten](interaktives-fitten.md).
 
 ## Die Resonanz wird nur bei hohen Feldern erwartet, das Fenster sucht zu tief
 

@@ -30,7 +30,7 @@ eine reine Auswertungsentscheidung und jederzeit reversibel.
 ## Projekt speichern / laden
 
 Toolbar → **„Projekt speichern"** sichert den kompletten Auswertungszustand
-als JSON (Format-Version 2, `bbfmr/persistenz/projekt.py`):
+als JSON (Format-Version 2, `polderfit/persistenz/projekt.py`):
 
 * TDMS-Quelle, **Kanal-Zuordnung** und Mapping-Profilname,
 * Auswertungsauswahl (Jumper/Bereiche),
@@ -47,8 +47,8 @@ Sitzung endete. Ist die Quelle nicht am gespeicherten Pfad (anderer Rechner),
 fragt das Programm nach dem Speicherort.
 
 ```python
-from bbfmr.persistenz import speichere_sitzung, lade_sitzung, stelle_stapel_wieder_her
-from bbfmr.io import lade_tdms
+from polderfit.persistenz import speichere_sitzung, lade_sitzung, stelle_stapel_wieder_her
+from polderfit.io import lade_tdms
 
 speichere_sitzung(stapel, "sitzung.json")
 

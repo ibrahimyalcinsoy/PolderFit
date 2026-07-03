@@ -1,9 +1,9 @@
 # Auswertungsauswahl: Jumper & Bereiche
 
 Vor **jeder** Stapelauswertung (Auto-Fit sowie Auto-Fit mit vorgegebener
-Resonanz) fragt bbFMR den Auswertungsbereich ab — Dialog
-„Auswertungsbereich & Jumper" (`bbfmr/gui/auswahl_dialog.py`, Kernlogik in
-`bbfmr/fit/auswahl.py`). Die zuletzt benutzte Auswahl ist vorbelegt; mit den
+Resonanz) fragt PolderFit den Auswertungsbereich ab — Dialog
+„Auswertungsbereich & Jumper" (`polderfit/gui/auswahl_dialog.py`, Kernlogik in
+`polderfit/fit/auswahl.py`). Die zuletzt benutzte Auswahl ist vorbelegt; mit den
 Standardwerten wird schlicht **alles** ausgewertet.
 
 ## Nur jeden n-ten Messpunkt („Jumper")
@@ -39,7 +39,7 @@ Kittel/LLG und Export arbeiten unverändert darauf. Nachvollziehbarkeit über
 `meta`:
 
 ```python
-from bbfmr.fit import Auswertungsauswahl, fitte_alle
+from polderfit.fit import Auswertungsauswahl, fitte_alle
 
 auswahl = Auswertungsauswahl(
     n_frequenz=10, n_feld=2,

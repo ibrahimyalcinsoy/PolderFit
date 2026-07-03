@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests des Bereichs-Fits (Rechteck -> nur dort neu fitten).
 
 Kernszenario (Aufgabenbereich 3): Zwei aehnlich starke Signale im Sweep -
@@ -8,10 +9,10 @@ und B_res in den markierten Bereich, Ergebnisse ausserhalb bleiben unberuehrt.
 
 import numpy as np
 
-from bbfmr.fit import fitte_alle, fitte_bereich
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.physik.konstanten import GAMMA_STANDARD
-from bbfmr.physik.suszeptibilitaet import chi_oop
+from polderfit.fit import fitte_alle, fitte_bereich
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.physik.konstanten import GAMMA_STANDARD
+from polderfit.physik.suszeptibilitaet import chi_oop
 
 GAMMA = GAMMA_STANDARD
 MU0MEFF = 0.4

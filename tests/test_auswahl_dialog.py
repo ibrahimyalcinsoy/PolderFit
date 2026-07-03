@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Offscreen-Smoke-Tests des Auswertungsauswahl-Dialogs (Jumper/Bereich)."""
 
 import os
@@ -10,8 +11,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6 import QtWidgets
 
-from bbfmr.fit import Auswertungsauswahl
-from bbfmr.io.datensatz import Linescan, Messdatensatz
+from polderfit.fit import Auswertungsauswahl
+from polderfit.io.datensatz import Linescan, Messdatensatz
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +28,7 @@ def _datensatz(n_freq=20, n_feld=60):
 
 
 def test_dialog_default_ist_neutral(app):
-    from bbfmr.gui.auswahl_dialog import AuswahlDialog
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
     dlg = AuswahlDialog(_datensatz())
     auswahl = dlg.auswahl()
     assert auswahl.ist_neutral
@@ -36,7 +37,7 @@ def test_dialog_default_ist_neutral(app):
 
 
 def test_dialog_jumper_und_ausschluss(app):
-    from bbfmr.gui.auswahl_dialog import AuswahlDialog
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
     dlg = AuswahlDialog(_datensatz())
     dlg.n_frequenz.setValue(5)
     dlg.n_feld.setValue(3)
@@ -48,7 +49,7 @@ def test_dialog_jumper_und_ausschluss(app):
 
 
 def test_dialog_vorbelegung_aus_letzter_auswahl(app):
-    from bbfmr.gui.auswahl_dialog import AuswahlDialog
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
     letzte = Auswertungsauswahl(n_frequenz=7, frequenz_ausschluss=[(10e9, 12e9)])
     dlg = AuswahlDialog(_datensatz(), letzte)
     assert dlg.n_frequenz.value() == 7
@@ -56,7 +57,7 @@ def test_dialog_vorbelegung_aus_letzter_auswahl(app):
 
 
 def test_dialog_sperrt_bei_unlesbarem_ausschluss(app):
-    from bbfmr.gui.auswahl_dialog import AuswahlDialog
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
     dlg = AuswahlDialog(_datensatz())
     dlg.ausschluss.setText("kaputt")
     assert not dlg.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).isEnabled()
@@ -65,7 +66,7 @@ def test_dialog_sperrt_bei_unlesbarem_ausschluss(app):
 
 
 def test_dialog_sperrt_bei_leerer_auswahl(app):
-    from bbfmr.gui.auswahl_dialog import AuswahlDialog
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
     dlg = AuswahlDialog(_datensatz())
     dlg.ausschluss.setText("0-100")  # alles ausgeschlossen -> 0 Linescans
     assert not dlg.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).isEnabled()

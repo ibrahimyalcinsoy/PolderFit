@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
+# Veroeffentlicht die mkdocs-Dokumentation bei jedem Push auf main
+# automatisch als GitHub-Pages-Seite (Branch gh-pages).
+name: Dokumentation veroeffentlichen
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", "mkdocs.yml", ".github/workflows/docs.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install mkdocs
+      - run: mkdocs gh-deploy --force

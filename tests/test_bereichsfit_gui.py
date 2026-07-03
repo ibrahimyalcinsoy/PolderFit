@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Offscreen-Smoke-Tests des Bereichs-Fit-Modus in der Matrix-Ansicht."""
 
 import os
@@ -12,7 +13,7 @@ from types import SimpleNamespace
 
 from PySide6 import QtWidgets
 
-from bbfmr.io.datensatz import Linescan, Messdatensatz
+from polderfit.io.datensatz import Linescan, Messdatensatz
 
 
 @pytest.fixture(scope="module")
@@ -42,7 +43,7 @@ def _ziehe_box(ansicht, x0, y0, x1, y1):
 
 
 def test_bereichs_fit_meldet_rechteck_statt_zoom(app):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ansicht.zeige(_mini_datensatz())
     xlim_vorher = ansicht.ax.get_xlim()
@@ -62,7 +63,7 @@ def test_bereichs_fit_meldet_rechteck_statt_zoom(app):
 
 
 def test_escape_bricht_bereichs_fit_ab(app):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ansicht.zeige(_mini_datensatz())
     aufrufe = []
@@ -74,7 +75,7 @@ def test_escape_bricht_bereichs_fit_ab(app):
 
 
 def test_hauptfenster_bereichsfit_verlangt_fits(app):
-    from bbfmr.gui.hauptfenster import Hauptfenster
+    from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     assert w.akt_bereich is not None
     # Ohne Ergebnisse zeigt _bereich_fitten nur einen Hinweis - kein Modus aktiv.

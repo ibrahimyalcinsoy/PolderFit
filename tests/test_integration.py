@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """End-to-End-Test: Laden -> Stapel-Fit -> Kittel/LLG -> Export."""
 
 import os
@@ -5,10 +6,10 @@ import warnings
 
 import numpy as np
 
-from bbfmr.io import lade_tdms
-from bbfmr.fit import fitte_alle
-from bbfmr.auswertung import auswertung_kittel_llg
-from bbfmr.persistenz.ergebnis_export import exportiere_excel, parameter_tabelle
+from polderfit.io import lade_tdms
+from polderfit.fit import fitte_alle
+from polderfit.auswertung import auswertung_kittel_llg
+from polderfit.persistenz.ergebnis_export import exportiere_excel, parameter_tabelle
 
 
 def test_pipeline_sortiert(pfad_sortiert, tmp_path):

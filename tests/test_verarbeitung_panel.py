@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Offscreen-Smoke-Tests des Verarbeitungspanels und der Farbplot-Anbindung."""
 
 import os
@@ -10,8 +11,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6 import QtWidgets
 
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.verarbeitung import Verarbeitungskette
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.verarbeitung import Verarbeitungskette
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +29,7 @@ def _mini_datensatz(n_freq=8, n_feld=60):
 
 
 def test_panel_standard_und_callback(app):
-    from bbfmr.gui.verarbeitung_panel import VerarbeitungPanel
+    from polderfit.gui.verarbeitung_panel import VerarbeitungPanel
     meldungen = []
     panel = VerarbeitungPanel(geaendert=lambda k, m: meldungen.append((k, m)))
 
@@ -49,7 +50,7 @@ def test_panel_standard_und_callback(app):
 
 
 def test_panel_setze_achsen_grenzen(app):
-    from bbfmr.gui.verarbeitung_panel import VerarbeitungPanel
+    from polderfit.gui.verarbeitung_panel import VerarbeitungPanel
     panel = VerarbeitungPanel()
     feld = np.linspace(0.5, 1.5, 100)
     freq = np.linspace(5e9, 20e9, 40)
@@ -60,7 +61,7 @@ def test_panel_setze_achsen_grenzen(app):
 
 
 def test_matrix_ansicht_wendet_kette_an(app):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ds = _mini_datensatz()
     ansicht.zeige(ds)
@@ -76,8 +77,8 @@ def test_matrix_ansicht_wendet_kette_an(app):
 
 
 def test_matrix_ansicht_haelt_zustand_bei_fehler(app):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
-    from bbfmr.verarbeitung import KettenSchritt
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.verarbeitung import KettenSchritt
     ansicht = MatrixAnsicht()
     ansicht.zeige(_mini_datensatz(n_feld=20))
     gut = Verarbeitungskette.standard()
@@ -93,7 +94,7 @@ def test_matrix_ansicht_haelt_zustand_bei_fehler(app):
 
 
 def test_hauptfenster_mit_verarbeitung_dock(app):
-    from bbfmr.gui.hauptfenster import Hauptfenster
+    from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     assert w.verarbeitung_dock is not None
     assert w.akt_verarbeitung.isCheckable()

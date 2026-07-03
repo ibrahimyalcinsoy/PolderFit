@@ -1,5 +1,7 @@
-site_name: bbFMR – Breitband-FMR-Auswertung
-site_description: Wie der bbFMR-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung
+site_name: PolderFit – Breitband-FMR-Auswertung
+site_description: Wie der PolderFit-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung
+site_author: Ibrahim Yalcinsoy
+copyright: "© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten."
 docs_dir: docs
 theme:
   name: readthedocs

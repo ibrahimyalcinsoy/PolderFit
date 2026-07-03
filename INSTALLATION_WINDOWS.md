@@ -1,4 +1,4 @@
-# bbFMR unter Windows installieren und starten
+# PolderFit unter Windows installieren und starten
 
 Diese Anleitung führt **Schritt für Schritt** durch die komplette Installation –
 ohne Vorkenntnisse. Einfach von oben nach unten abarbeiten. Jeder Schritt ist
@@ -13,7 +13,7 @@ geklappt hat.
 
 ## Schritt 1 – Python installieren
 
-bbFMR ist in Python geschrieben. Python muss zuerst installiert werden.
+PolderFit ist in Python geschrieben. Python muss zuerst installiert werden.
 
 1. Webseite öffnen: <https://www.python.org/downloads/windows/>
 2. Auf den großen gelben Knopf **„Download Python 3.x.x“** klicken
@@ -62,7 +62,7 @@ Erscheint z. B. `git version 2.45.1`, ist Git einsatzbereit.
 
 ## Schritt 3 – Das Programm herunterladen
 
-Jetzt wird bbFMR von GitHub auf den eigenen Rechner geladen.
+Jetzt wird PolderFit von GitHub auf den eigenen Rechner geladen.
 
 1. Eingabeaufforderung öffnen (Startmenü → `cmd` → Enter).
 2. In den eigenen Benutzerordner wechseln (dort landet das Programm):
@@ -74,13 +74,13 @@ Jetzt wird bbFMR von GitHub auf den eigenen Rechner geladen.
 3. Das Programm herunterladen:
 
    ```bat
-   git clone https://github.com/ibrahimyalcinsoy/bbFMR.git
+   git clone https://github.com/ibrahimyalcinsoy/PolderFit.git
    ```
 
 4. In den heruntergeladenen Ordner wechseln:
 
    ```bat
-   cd bbFMR
+   cd PolderFit
    ```
 
 **Erfolgskontrolle:** Der Befehl `dir` zeigt jetzt unter anderem die Dateien
@@ -90,7 +90,7 @@ Jetzt wird bbFMR von GitHub auf den eigenen Rechner geladen.
 
 ## Schritt 4 – Umgebung einrichten (virtuelle Umgebung + Abhängigkeiten)
 
-Damit bbFMR sauber und ohne Konflikte läuft, bekommt es eine eigene, abgekapselte
+Damit PolderFit sauber und ohne Konflikte läuft, bekommt es eine eigene, abgekapselte
 Python-Umgebung.
 
 1. Virtuelle Umgebung anlegen:
@@ -108,14 +108,14 @@ Python-Umgebung.
    Danach steht am Zeilenanfang **`(.venv)`** – das zeigt, dass die Umgebung
    aktiv ist.
 
-3. bbFMR samt grafischer Oberfläche und allen benötigten Paketen installieren
+3. PolderFit samt grafischer Oberfläche und allen benötigten Paketen installieren
    (das dauert ein paar Minuten und lädt einiges aus dem Internet):
 
    ```bat
    pip install -e ".[gui]"
    ```
 
-   Wenn am Ende eine Zeile wie `Successfully installed bbfmr-0.1.0 ...` erscheint,
+   Wenn am Ende eine Zeile wie `Successfully installed polderfit-0.1.0 ...` erscheint,
    ist die Installation fertig.
 
 ---
@@ -123,15 +123,15 @@ Python-Umgebung.
 ## Schritt 5 – Das Programm starten
 
 ```bat
-bbfmr
+polderfit
 ```
 
-Die grafische Oberfläche von bbFMR öffnet sich. **Fertig!** 🎉
+Die grafische Oberfläche von PolderFit öffnet sich. **Fertig!** 🎉
 
-Falls der Befehl `bbfmr` einmal nicht funktioniert, geht alternativ auch:
+Falls der Befehl `polderfit` einmal nicht funktioniert, geht alternativ auch:
 
 ```bat
-python -m bbfmr.app
+python -m polderfit.app
 ```
 
 ---
@@ -142,20 +142,20 @@ Python, Git und die Installation sind dann schon vorhanden. Es genügen **zwei**
 Befehle in der Eingabeaufforderung:
 
 ```bat
-cd %USERPROFILE%\bbFMR
+cd %USERPROFILE%\PolderFit
 .venv\Scripts\activate
-bbfmr
+polderfit
 ```
 
 > **Tipp:** Damit man sich diese Befehle nicht merken muss, kann man sie in eine
-> Startdatei schreiben. Dazu im Ordner `bbFMR` mit dem Editor eine Datei
+> Startdatei schreiben. Dazu im Ordner `PolderFit` mit dem Editor eine Datei
 > `start.bat` mit folgendem Inhalt anlegen und künftig einfach doppelklicken:
 >
 > ```bat
 > @echo off
-> cd /d "%USERPROFILE%\bbFMR"
+> cd /d "%USERPROFILE%\PolderFit"
 > call .venv\Scripts\activate
-> bbfmr
+> polderfit
 > ```
 
 ---
@@ -165,7 +165,7 @@ bbfmr
 Wenn es eine neuere Programmversion gibt:
 
 ```bat
-cd %USERPROFILE%\bbFMR
+cd %USERPROFILE%\PolderFit
 git pull
 .venv\Scripts\activate
 pip install -e ".[gui]"
@@ -179,7 +179,7 @@ pip install -e ".[gui]"
 |---|---|
 | `python` wird nicht erkannt | Haken **„Add python.exe to PATH“** bei der Installation vergessen (Schritt 1, Punkt 4). Python deinstallieren und neu installieren. |
 | `git` wird nicht erkannt | Git neu installieren (Schritt 2) und eine **neue** Eingabeaufforderung öffnen. |
-| `.venv\Scripts\activate` bringt einen Fehler | Sicherstellen, dass man sich im Ordner `bbFMR` befindet (`cd %USERPROFILE%\bbFMR`) und Schritt 4 Punkt 1 ausgeführt wurde. |
+| `.venv\Scripts\activate` bringt einen Fehler | Sicherstellen, dass man sich im Ordner `PolderFit` befindet (`cd %USERPROFILE%\PolderFit`) und Schritt 4 Punkt 1 ausgeführt wurde. |
 | Bei `pip install` bricht der Download ab | Internetverbindung prüfen und den Befehl einfach erneut ausführen. |
 | Fenster der Oberfläche öffnet sich nicht | Prüfen, ob `(.venv)` am Zeilenanfang steht; falls nicht, zuerst `.venv\Scripts\activate` ausführen. |
 

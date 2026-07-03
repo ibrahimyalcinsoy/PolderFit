@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Offscreen-Smoke-Tests des interaktiven In-Plot-Fittings (GUI-Seite):
 
 ziehbare Fenstergrenzen, Ausschlusszonen-Zeichnen, Fenster-Panel und die
@@ -16,8 +17,8 @@ from types import SimpleNamespace
 
 from PySide6 import QtWidgets
 
-from bbfmr.fit.batch import Ausschlusszone
-from bbfmr.io.datensatz import Linescan, Messdatensatz
+from polderfit.fit.batch import Ausschlusszone
+from polderfit.io.datensatz import Linescan, Messdatensatz
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +41,7 @@ def _mini_datensatz(n=10):
 
 
 def _ansicht_mit_grenzen(callback=None):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ds = _mini_datensatz()
     ansicht.zeige(ds)
@@ -76,7 +77,7 @@ def test_grenze_ziehen_meldet_index_seite_wert(app):
 
 def test_klick_fern_der_grenze_bleibt_frequenzwahl(app):
     gewaehlt = []
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht(frequenz_gewaehlt=gewaehlt.append)
     ds = _mini_datensatz()
     ansicht.zeige(ds)
@@ -89,7 +90,7 @@ def test_klick_fern_der_grenze_bleibt_frequenzwahl(app):
 
 
 def test_ausschluss_zeichnen_meldet_rechteck(app):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ansicht.zeige(_mini_datensatz())
     empfangen = {}
@@ -103,7 +104,7 @@ def test_ausschluss_zeichnen_meldet_rechteck(app):
 
 
 def test_zonen_anzeige(app):
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ansicht.zeige(_mini_datensatz())
     zonen = [Ausschlusszone(2.6, 2.8, 10e9, 20e9), Ausschlusszone(3.0, 3.2, 30e9, 40e9)]
@@ -114,7 +115,7 @@ def test_zonen_anzeige(app):
 
 
 def test_fenster_panel_callbacks_und_zustand(app):
-    from bbfmr.gui.fenster_panel import FensterPanel
+    from polderfit.gui.fenster_panel import FensterPanel
     aufrufe = []
     panel = FensterPanel(
         grenzen_umschalten=lambda an: aufrufe.append(("grenzen", an)),
@@ -148,7 +149,7 @@ def test_fenster_panel_callbacks_und_zustand(app):
 
 
 def test_hauptfenster_docks_fuer_multimonitor(app):
-    from bbfmr.gui.hauptfenster import Hauptfenster
+    from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     # Linescan-Fit-Panel und Fenster-Panel sind abdockbare Fenster.
     for dock in (w.linescan_dock, w.fenster_dock):

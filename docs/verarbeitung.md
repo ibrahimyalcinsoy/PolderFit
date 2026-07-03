@@ -1,7 +1,7 @@
 # Verarbeitung des Farbplots (derivative divide & Co.)
 
 Der Farbplot zeigt standardmäßig nicht mehr das rohe |S21|, sondern das
-Ergebnis einer **Verarbeitungskette** (`bbfmr/verarbeitung/`), die aus dem
+Ergebnis einer **Verarbeitungskette** (`polderfit/verarbeitung/`), die aus dem
 historischen Referenzprogramm *pybbfmr* portiert und mit dem zugrunde
 liegenden Paper abgeglichen wurde:
 
@@ -61,7 +61,7 @@ Differenz wirkt wie eine Feldmodulation mit Amplitude ΔH. Parameter:
 
 Für **quantitative Fits** auf dd-verarbeiteten Daten ist bei großem Δn die
 Verzerrung der Linienform über [MF18] Gl. (5) (Differenzenquotient von χ mit
-bekanntem Δω± = ΔH·γ·µ₀) zu berücksichtigen — der Linescan-Fit von bbFMR
+bekanntem Δω± = ΔH·γ·µ₀) zu berücksichtigen — der Linescan-Fit von PolderFit
 läuft derzeit bewusst auf dem **rohen** S21, die Kette dient der
 Visualisierung.
 
@@ -91,8 +91,8 @@ dominieren.
 ## Skript-Nutzung
 
 ```python
-from bbfmr.io import lade_tdms
-from bbfmr.verarbeitung import (
+from polderfit.io import lade_tdms
+from polderfit.verarbeitung import (
     Verarbeitungskette, KettenSchritt, derivative_divide, anzeige_transform)
 
 ds = lade_tdms("Messung.tdms")
@@ -113,7 +113,7 @@ kette_json = kette.als_dict()
 
 ## Abweichungen von pybbfmr (dokumentiert)
 
-* **Orientierung**: bbFMR nutzt `Z (n_freq × n_feld)` (Farbplot-Konvention);
+* **Orientierung**: PolderFit nutzt `Z (n_freq × n_feld)` (Farbplot-Konvention);
   pybbfmr die Transponierte. Die Formeln sind identisch, die Tests
   (`tests/test_verarbeitung.py`) übernehmen die bit-genauen
   pybbfmr-Referenzrechnungen in gespiegelter Konvention.
@@ -121,6 +121,6 @@ kette_json = kette.als_dict()
   (pybbfmr: 0) — NaN wird im Farbplot maskiert, 0 wäre eine stille
   Falschfarbe. `relation_amplitude` behält die Matrixform (NaN-Rand) statt zu
   kürzen.
-* γ-Konvention: bbFMR rechnet durchgängig mit γ in rad·s⁻¹·T⁻¹
+* γ-Konvention: PolderFit rechnet durchgängig mit γ in rad·s⁻¹·T⁻¹
   (pybbfmr: γ/2π in Hz/T) — relevant nur für die Gl.-(5)-Umrechnung
   Δω± = ΔH·γ·µ₀.

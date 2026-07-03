@@ -1,6 +1,6 @@
 # Die Messdaten (TDMS)
 
-bbFMR liest **TDMS-Dateien** (das Dateiformat von LabVIEW). Eine TDMS-Datei ist
+PolderFit liest **TDMS-Dateien** (das Dateiformat von LabVIEW). Eine TDMS-Datei ist
 intern in **Gruppen** und **Kanäle** unterteilt – ähnlich wie eine Excel-Mappe mit
 mehreren Tabellenblättern und Spalten.
 
@@ -20,7 +20,7 @@ automatisch erkannt:
 | **sortiert** (vorverarbeitet) | `ZVB`, `Field` | schon auf das Resonanzband reduziert |
 
 ```python
-from bbfmr.io import lade_tdms
+from polderfit.io import lade_tdms
 ds = lade_tdms("Messung.tdms")
 print(ds.format_typ)          # "unsortiert" oder "sortiert"
 print(ds.meta["zuordnung"])   # verwendetes Kanal-Mapping
@@ -42,16 +42,16 @@ Die wichtigsten Kanäle:
 - `Read.PNAX/Frequency`, `Read.PNAX/REALS21`, `Read.PNAX/IMAGinaryS21` – das Signal,
   hintereinanderweg gespeichert.
 - `Read.Fieldbefore/IPS X-Field` und `Read.Fieldafter/IPS X-Field` – das Magnetfeld
-  **vor** und **nach** jedem Schritt. bbFMR nimmt den Mittelwert als Feldwert.
+  **vor** und **nach** jedem Schritt. PolderFit nimmt den Mittelwert als Feldwert.
 - optional `Read.Temperature/LakeshoreTemperature`.
 
 **Die zentrale Annahme:** Pro Feldwert wird *ein vollständiger Frequenz-Sweep*
 gespeichert. Sind es z. B. 725 Feldwerte × 1001 Frequenzpunkte, liegen 725 725
-Zahlen am Stück vor. bbFMR formt diese in eine Matrix `(n_feld × n_freq)` um
+Zahlen am Stück vor. PolderFit formt diese in eine Matrix `(n_feld × n_freq)` um
 ("reshape") und schneidet daraus pro Frequenz einen **Linescan** heraus.
 
 !!! warning "Sicherung gegen vertauschte Achsen"
-    Nach dem Umformen prüft bbFMR, ob der Frequenz-Sweep je Feldwert wirklich
+    Nach dem Umformen prüft PolderFit, ob der Frequenz-Sweep je Feldwert wirklich
     identisch ist (`np.allclose`). Stimmt das nicht, bricht es mit einer klaren
     Meldung ab, statt still vertauschte Daten auszuwerten.
 
@@ -61,8 +61,8 @@ Dateien mit `_flush` im Namen wurden **mitten in der Messung** auf die Platte
 geschrieben. Der letzte Feldschritt hat dann einen **unvollständigen**
 Frequenz-Sweep: die Punktzahl passt nicht mehr glatt zur Feldanzahl.
 
-bbFMR erkennt das und **rettet** solche Dateien automatisch
-(`bbfmr/io/tdms_laden.py`):
+PolderFit erkennt das und **rettet** solche Dateien automatisch
+(`polderfit/io/tdms_laden.py`):
 
 1. Es leitet die Sweep-Länge `n_freq` aus der Frequenzachse ab (sie wiederholt sich
    periodisch).
@@ -79,7 +79,7 @@ verständliche Fehlermeldung.
 
 Hier sind die Daten bereits aufs Resonanzband reduziert. Kanäle in Gruppe `ZVB`:
 `frequency`, `ReS21`, `ImS21`; Feld in Gruppe `Field` (`Field-before`,
-`Field-after`). Die Punktzahl je Frequenz ist **nicht** konstant – bbFMR gruppiert
+`Field-after`). Die Punktzahl je Frequenz ist **nicht** konstant – PolderFit gruppiert
 die Daten nach Frequenz (auf 1 kHz gerundet, gegen Rundungsrauschen).
 
 Sortierte Dateien sind ideal als **Referenz / Ground Truth**: Wenn zu einer
@@ -96,7 +96,7 @@ das [Robustheits-Harness](test-harness.md).
 ## Die interne Datenstruktur
 
 Egal welches Format – beide werden auf dieselben Python-Objekte abgebildet
-(`bbfmr/io/datensatz.py`):
+(`polderfit/io/datensatz.py`):
 
 ```python
 @dataclass

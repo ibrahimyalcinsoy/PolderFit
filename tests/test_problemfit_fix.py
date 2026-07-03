@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests des Problemfit-Fixes (phi-Nebenminimum / fehlende Kovarianz).
 
 Bekannte Baustelle: Ein numerisch nahezu perfekter Fit konnte in einem
@@ -17,11 +18,11 @@ import dataclasses
 
 import numpy as np
 
-from bbfmr.fit.kriterien import RMSE_NORM_EXZELLENT, bewerte_fit
-from bbfmr.fit.linescan_fit import FitErgebnis, fitte_linescan
-from bbfmr.io.datensatz import Linescan
-from bbfmr.physik.fitmodell import s21_modell, schaetze_startwerte
-from bbfmr.physik.konstanten import GAMMA_STANDARD
+from polderfit.fit.kriterien import RMSE_NORM_EXZELLENT, bewerte_fit
+from polderfit.fit.linescan_fit import FitErgebnis, fitte_linescan
+from polderfit.io.datensatz import Linescan
+from polderfit.physik.fitmodell import s21_modell, schaetze_startwerte
+from polderfit.physik.konstanten import GAMMA_STANDARD
 
 GAMMA = GAMMA_STANDARD
 

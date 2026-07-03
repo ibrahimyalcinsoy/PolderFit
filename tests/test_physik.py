@@ -1,10 +1,11 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests der physikalischen Kernmodelle (Konstanten, Suszeptibilitaet, Kittel/LLG)."""
 
 import numpy as np
 
-from bbfmr.physik.konstanten import gamma_aus_g, g_aus_gamma, GAMMA_STANDARD
-from bbfmr.physik.suszeptibilitaet import chi_oop, chi_oop_komponenten
-from bbfmr.physik.kittel_llg import kittel_oop, fit_kittel_oop, linienbreite, fit_linienbreite
+from polderfit.physik.konstanten import gamma_aus_g, g_aus_gamma, GAMMA_STANDARD
+from polderfit.physik.suszeptibilitaet import chi_oop, chi_oop_komponenten
+from polderfit.physik.kittel_llg import kittel_oop, fit_kittel_oop, linienbreite, fit_linienbreite
 
 
 def test_gamma_g_umkehrung():

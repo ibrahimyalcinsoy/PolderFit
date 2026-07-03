@@ -1,7 +1,11 @@
-# bbFMR – Auswertung breitbandiger FMR-Messungen
+# PolderFit – Auswertung breitbandiger FMR-Messungen
 
-bbFMR dient der quantitativen Auswertung breitbandiger ferromagnetischer
-Resonanzmessungen (bbFMR). Die vorliegende Dokumentation beschreibt den Aufbau des
+![PolderFit-Logo](assets/logo.svg){ width="180" align="right" }
+
+PolderFit dient der quantitativen Auswertung breitbandiger ferromagnetischer
+Resonanzmessungen (bbFMR, *broadband ferromagnetic resonance*). Der Name des
+Programms verweist auf die Polder-Suszeptibilität (D. Polder, 1949), das
+physikalische Kernmodell, an das die Messdaten angepasst werden. Die vorliegende Dokumentation beschreibt den Aufbau des
 Programms, die zugrunde liegenden physikalischen Modelle, die Bedeutung der
 einstellbaren Parameter sowie das Vorgehen zur Fehlersuche. Sie richtet sich an
 Anwenderinnen und Anwender, die den Auswerteweg nachvollziehen, das Programm an
@@ -17,7 +21,7 @@ Probe resonant Energie. Aus der Lage des Resonanzfeldes als Funktion der Frequen
 Magnetisierung `μ0Meff`, der Landé-Faktor `g` und die Gilbert-Dämpfung `α`
 bestimmen.
 
-Die Eingangsdaten liegen als TDMS-Dateien des Messprogramms vor; bbFMR überführt
+Die Eingangsdaten liegen als TDMS-Dateien des Messprogramms vor; PolderFit überführt
 sie in physikalische Kenngrößen, Diagramme und tabellarische Exporte.
 
 !!! note "Begriffe"
@@ -35,24 +39,24 @@ Schritt ist einem Modul zugeordnet:
 
 ```
    TDMS-Datei
-       │   bbfmr/io/tdms_laden.py
+       │   polderfit/io/tdms_laden.py
        ▼
   [1] Laden und Formaterkennung
        │   Ergebnis: Liste von Linescans (ein Feld-Sweep je Frequenz)
        ▼
-  [2] AutoWindow                  bbfmr/fit/autowindows.py
+  [2] AutoWindow                  polderfit/fit/autowindows.py
        │   Bestimmung des Resonanzfeldes und des Fitfensters je Frequenz
        ▼
   [3] Beschneiden
        │   Reduktion des Linescans auf das Fenster
        ▼
-  [4] Einzel-Fit                  bbfmr/fit/linescan_fit.py
+  [4] Einzel-Fit                  polderfit/fit/linescan_fit.py
        │   Anpassung der Suszeptibilitäts-Modellfunktion → B_res, α, …
        ▼
-  [5] Bewertung                   bbfmr/fit/kriterien.py
+  [5] Bewertung                   polderfit/fit/kriterien.py
        │   Einstufung des Fits als vertrauenswürdig oder problematisch
        ▼
-  [6] Kittel- / LLG-Auswertung    bbfmr/physik/kittel_llg.py
+  [6] Kittel- / LLG-Auswertung    polderfit/physik/kittel_llg.py
        │   aus B_res(f) und Linienbreite(f): μ0Meff, g, α
        ▼
    Ergebnisse, Diagramme, Excel-Export
@@ -67,17 +71,19 @@ Zuverlässigkeit der Auswertung am kritischsten und wird in einem
 
 | Aufgabe | Modul |
 |---|---|
-| Laden der TDMS-Daten, Formaterkennung | `bbfmr/io/tdms_laden.py` |
-| interne Datenstruktur | `bbfmr/io/datensatz.py` |
-| Bestimmung der Resonanzfenster (AutoWindow) | `bbfmr/fit/autowindows.py` |
-| Einzel-Fit eines Linescans | `bbfmr/fit/linescan_fit.py` |
-| Bewertungskriterien und Schwellwerte | `bbfmr/fit/kriterien.py` |
-| Stapelverarbeitung aller Linescans | `bbfmr/fit/batch.py` |
-| Suszeptibilität und S21-Modell | `bbfmr/physik/suszeptibilitaet.py`, `bbfmr/physik/fitmodell.py` |
-| Kittel- und Linienbreiten-Auswertung | `bbfmr/physik/kittel_llg.py` |
-| physikalische Konstanten | `bbfmr/physik/konstanten.py` |
-| grafische Oberfläche | `bbfmr/gui/` |
-| Export (Excel, Projektdateien) | `bbfmr/persistenz/` |
+| Laden der TDMS-Daten, Formaterkennung | `polderfit/io/tdms_laden.py` |
+| interne Datenstruktur | `polderfit/io/datensatz.py` |
+| Bestimmung der Resonanzfenster (AutoWindow) | `polderfit/fit/autowindows.py` |
+| Einzel-Fit eines Linescans | `polderfit/fit/linescan_fit.py` |
+| Bewertungskriterien und Schwellwerte | `polderfit/fit/kriterien.py` |
+| Stapelverarbeitung aller Linescans, Ausreißer-Verwaltung | `polderfit/fit/batch.py` |
+| Verarbeitungskette (divide slice, derivative divide, …) | `polderfit/verarbeitung/` |
+| Übergreifende Auswertung und Publikationsplots | `polderfit/auswertung/` |
+| Suszeptibilität und S21-Modell | `polderfit/physik/suszeptibilitaet.py`, `polderfit/physik/fitmodell.py` |
+| Kittel- und Linienbreiten-Auswertung | `polderfit/physik/kittel_llg.py` |
+| physikalische Konstanten | `polderfit/physik/konstanten.py` |
+| grafische Oberfläche | `polderfit/gui/` |
+| Export (Excel, Projektdateien) | `polderfit/persistenz/` |
 | Robustheitsprüfung über reale Daten | `tests/autowindow_runner.py` |
 
 ## Leitfaden

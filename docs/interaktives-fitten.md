@@ -2,7 +2,7 @@
 
 Dieses Kapitel bündelt die Werkzeuge, mit denen man Fits **direkt in der
 2D-Übersicht** korrigiert. Es wächst mit den interaktiven Funktionen des
-Programms; Grundlage ist das Modul `bbfmr/fit/fenster_steuerung.py`.
+Programms; Grundlage ist das Modul `polderfit/fit/fenster_steuerung.py`.
 
 ## Bereich neu fitten (Rechteck)
 
@@ -35,7 +35,7 @@ neben der Geraden liegen.
 **Skript-Nutzung:**
 
 ```python
-from bbfmr.fit import fitte_alle, fitte_bereich
+from polderfit.fit import fitte_alle, fitte_bereich
 
 stapel = fitte_alle(datensatz)
 neu, uebersprungen = fitte_bereich(

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests des Ausreisser-Managements (Kernlogik) und der Projekt-Persistenz.
 
 Kernszenario: Einzelne physikalisch sinnlose Ausreisser (stets in der
@@ -9,20 +10,20 @@ import numpy as np
 import pytest
 from nptdms import ChannelObject, TdmsWriter
 
-from bbfmr.auswertung.uebersicht import auswertung_kittel_llg
-from bbfmr.fit import Ausschlusszone, fitte_alle, fitte_neu
-from bbfmr.fit.batch import StapelErgebnis
-from bbfmr.fit.linescan_fit import FitErgebnis
-from bbfmr.io import lade_tdms
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.persistenz.projekt import (
+from polderfit.auswertung.uebersicht import auswertung_kittel_llg
+from polderfit.fit import Ausschlusszone, fitte_alle, fitte_neu
+from polderfit.fit.batch import StapelErgebnis
+from polderfit.fit.linescan_fit import FitErgebnis
+from polderfit.io import lade_tdms
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.persistenz.projekt import (
     lade_sitzung,
     speichere_sitzung,
     stelle_stapel_wieder_her,
 )
-from bbfmr.physik.konstanten import GAMMA_STANDARD
-from bbfmr.physik.kittel_llg import linienbreite
-from bbfmr.physik.suszeptibilitaet import chi_oop
+from polderfit.physik.konstanten import GAMMA_STANDARD
+from polderfit.physik.kittel_llg import linienbreite
+from polderfit.physik.suszeptibilitaet import chi_oop
 
 GAMMA = GAMMA_STANDARD
 MU0MEFF = 0.4
@@ -130,7 +131,7 @@ def test_projekt_roundtrip_mit_ausreissern_und_zonen(tmp_path):
 
     # Wiederherstellen: TDMS ueber die gespeicherte Zuordnung neu laden.
     daten = lade_sitzung(str(projekt_pfad))
-    assert daten["bbfmr_projekt_version"] == 2
+    assert daten["polderfit_projekt_version"] == 2
     zuordnung = {rolle: tuple(paar) for rolle, paar in daten["zuordnung"].items()}
     ds2 = lade_tdms(daten["quelle"], zuordnung=zuordnung, layout=daten["format_typ"])
     stapel2 = stelle_stapel_wieder_her(daten, ds2)

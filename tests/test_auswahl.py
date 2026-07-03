@@ -1,12 +1,13 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests der Auswertungsauswahl (Frequenz-/Feld-Jumper + Bereichseinschraenkung)."""
 
 import numpy as np
 import pytest
 
-from bbfmr.fit import Auswertungsauswahl, fitte_alle, parse_bereiche
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.physik.konstanten import GAMMA_STANDARD
-from bbfmr.physik.suszeptibilitaet import chi_oop
+from polderfit.fit import Auswertungsauswahl, fitte_alle, parse_bereiche
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.physik.konstanten import GAMMA_STANDARD
+from polderfit.physik.suszeptibilitaet import chi_oop
 
 
 def _datensatz(n_freq=20, n_feld=60, f0=5e9, f1=24e9):

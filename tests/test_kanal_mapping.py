@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests des Kanal-Mappings: Profile, Heuristik, Laden ueber Zuordnung,
 Index-Datei-Fallback (Windows-Bug) und Import-Validierung.
 
@@ -9,7 +10,7 @@ import numpy as np
 import pytest
 from nptdms import ChannelObject, TdmsWriter
 
-from bbfmr.io import (
+from polderfit.io import (
     EINGEBAUTE_PROFILE,
     MappingErforderlich,
     MappingProfil,
@@ -23,8 +24,8 @@ from bbfmr.io import (
     schlage_layout_vor,
     speichere_profil,
 )
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.io.kanal_mapping import PROFIL_SORTIERT, PROFIL_UNSORTIERT
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.io.kanal_mapping import PROFIL_SORTIERT, PROFIL_UNSORTIERT
 
 
 # --- Hilfen: synthetische TDMS-Dateien ----------------------------------------

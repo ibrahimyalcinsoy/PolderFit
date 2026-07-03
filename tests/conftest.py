@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Gemeinsame Test-Fixtures und Pfade zu den Beispiel-TDMS-Dateien."""
 
 import os

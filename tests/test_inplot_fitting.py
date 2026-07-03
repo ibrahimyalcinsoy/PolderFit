@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests des interaktiven In-Plot-Fittings (Kernlogik, Aufgabenbereich 5):
 
 Dispersions-Trasse, mitwandernde Grenzen (Propagation), explizite
@@ -7,7 +8,7 @@ Fensterbreite in Punkten, Ausschlusszonen und der Ergaenzen-Modus.
 import numpy as np
 import pytest
 
-from bbfmr.fit import (
+from polderfit.fit import (
     Ausschlusszone,
     dispersions_zentren,
     entferne_ausschlusszone,
@@ -18,11 +19,11 @@ from bbfmr.fit import (
     propagiere_grenzen,
     setze_fensterbreite_punkte,
 )
-from bbfmr.fit.batch import StapelErgebnis, ohne_ausschlusszonen
-from bbfmr.fit.linescan_fit import FitErgebnis
-from bbfmr.io.datensatz import Linescan, Messdatensatz
-from bbfmr.physik.konstanten import GAMMA_STANDARD
-from bbfmr.physik.suszeptibilitaet import chi_oop
+from polderfit.fit.batch import StapelErgebnis, ohne_ausschlusszonen
+from polderfit.fit.linescan_fit import FitErgebnis
+from polderfit.io.datensatz import Linescan, Messdatensatz
+from polderfit.physik.konstanten import GAMMA_STANDARD
+from polderfit.physik.suszeptibilitaet import chi_oop
 
 GAMMA = GAMMA_STANDARD
 MU0MEFF = 0.4

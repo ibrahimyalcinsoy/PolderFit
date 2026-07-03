@@ -1,9 +1,14 @@
-# bbFMR – Auswertung breitbandiger FMR-Messungen
+# PolderFit – Auswertung breitbandiger FMR-Messungen
 
-bbFMR wertet breitbandige ferromagnetische Resonanzmessungen quantitativ aus: Es liest
+<img src="polderfit/gui/assets/polderfit.svg" alt="PolderFit-Logo" width="170" align="right"/>
+
+PolderFit wertet breitbandige ferromagnetische Resonanzmessungen (bbFMR) quantitativ aus: Es liest
 die TDMS-Rohdaten ein, bestimmt je Frequenz das Resonanzfenster, passt das komplexe
 Transmissionssignal an die Polder-Suszeptibilität an und gewinnt aus `B_res(f)` und der
-Linienbreite die Materialgrößen (`μ0Meff`, `g`, Gilbert-Dämpfung `α`).
+Linienbreite die Materialgrößen (`μ0Meff`, `g`, Gilbert-Dämpfung `α`). Der Name
+verweist auf die Polder-Suszeptibilität (D. Polder, 1949) – das Kernmodell des Fits.
+
+**Dokumentation im Browser:** <https://ibrahimyalcinsoy.github.io/PolderFit/>
 
 ## Schnellstart
 
@@ -13,19 +18,19 @@ einfügen, Enter — die virtuelle Umgebung (`.venv`) kapselt alles ab.
 **Windows** (Eingabeaufforderung `cmd`):
 
 ```bat
-git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR
+git clone https://github.com/ibrahimyalcinsoy/PolderFit.git && cd PolderFit
 python -m venv .venv && call .venv\Scripts\activate
 pip install -e ".[gui]"
-bbfmr
+polderfit
 ```
 
 **Fedora / Debian** (bash):
 
 ```bash
-git clone https://github.com/ibrahimyalcinsoy/bbFMR.git && cd bbFMR
+git clone https://github.com/ibrahimyalcinsoy/PolderFit.git && cd PolderFit
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[gui]"
-bbfmr
+polderfit
 ```
 
 Schritt-für-Schritt-Anleitung inkl. Git-/Python-Einrichtung:
@@ -34,8 +39,8 @@ Schritt-für-Schritt-Anleitung inkl. Git-/Python-Einrichtung:
 ## Start und Aktualisierung
 
 ```bash
-bbfmr                 # grafische Oberfläche (in aktivierter .venv)
-python -m bbfmr.app   # gleichbedeutend, zur Fehlersuche
+polderfit                 # grafische Oberfläche (in aktivierter .venv)
+python -m polderfit.app   # gleichbedeutend, zur Fehlersuche
 
 git pull                              # auf neueste Version bringen
 pip install -e ".[gui]"               # Abhängigkeiten auffrischen
@@ -44,8 +49,8 @@ pip install -e ".[gui]"               # Abhängigkeiten auffrischen
 Programmatische Nutzung:
 
 ```python
-from bbfmr.io.tdms_laden import lade_tdms
-from bbfmr.fit.batch import fitte_alle
+from polderfit.io.tdms_laden import lade_tdms
+from polderfit.fit.batch import fitte_alle
 
 datensatz = lade_tdms("Messung.tdms")   # Format wird automatisch erkannt
 stapel = fitte_alle(datensatz)          # AutoWindow + Fit über alle Frequenzen
@@ -60,14 +65,20 @@ stapel = fitte_alle(datensatz)          # AutoWindow + Fit über alle Frequenzen
 
 ## Dokumentation
 
-Vollständige Beschreibung (Aufbau, physikalische Modelle, Parameter, Fehlersuche) im
-Verzeichnis `docs/` (ReadTheDocs-Format); HTML-Vorschau mit `mkdocs serve`.
+Im Browser unter <https://ibrahimyalcinsoy.github.io/PolderFit/> (automatisch aus dem
+Repository veröffentlicht). Quellen im Verzeichnis `docs/`; lokale HTML-Vorschau mit
+`mkdocs serve`.
 
 | Kapitel | Inhalt |
 |---|---|
 | `docs/index.md` | Überblick und Auswertekette |
 | `docs/installation.md` | Installation, Start, Tests |
 | `docs/datenformate.md` | TDMS-Formate, Datenmodell |
+| `docs/kanal-mapping.md` | Kanal-Zuordnung und Profile |
+| `docs/verarbeitung.md` | Verarbeitungskette (divide slice, derivative divide) |
+| `docs/auswertungsauswahl.md` | Frequenz-/Feld-Jumper, Bereichseinschränkung |
+| `docs/interaktives-fitten.md` | In-Plot-Fitting, Rechteck-Nachfit, Zonen |
+| `docs/ausreisser.md` | Ausreißer-Management, Projekt speichern/laden |
 | `docs/pipeline.md` | Laden → AutoWindow → Fit → Bewertung |
 | `docs/autowindow.md` | automatische Resonanzbestimmung |
 | `docs/physik-und-fit.md` | Suszeptibilität, S21-Modell, Kittel/LLG, Quellen |
@@ -79,7 +90,7 @@ Verzeichnis `docs/` (ReadTheDocs-Format); HTML-Vorschau mit `mkdocs serve`.
 ## Architektur
 
 ```
-bbfmr/
+polderfit/
   io/          Einlesen/Schreiben TDMS, Datenstruktur (Linescan, Messdatensatz)
   physik/      Konstanten, Polder-Suszeptibilität, Fitmodell, Kittel/LLG
   fit/         AutoWindow, Einzelfit (lmfit), Stapelverarbeitung, Bewertung
@@ -92,3 +103,8 @@ bbfmr/
 Die physikalischen Modelle sind zeichengenaue Portierungen verbindlicher Quellen
 (Mathematica-Notebook der Polder-Suszeptibilität, Dissertation M. Müller Kap. 2,
 Messprotokoll); die Quellenzuordnung steht in `docs/physik-und-fit.md`.
+
+## Copyright
+
+© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten. Einzelheiten siehe
+[LICENSE](LICENSE).

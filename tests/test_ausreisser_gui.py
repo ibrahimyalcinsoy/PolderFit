@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Offscreen-Smoke-Tests des Ausreisser-Managements (GUI-Seite)."""
 
 import os
@@ -12,9 +13,9 @@ from types import SimpleNamespace
 
 from PySide6 import QtWidgets
 
-from bbfmr.fit.batch import StapelErgebnis
-from bbfmr.fit.linescan_fit import FitErgebnis
-from bbfmr.io.datensatz import Linescan, Messdatensatz
+from polderfit.fit.batch import StapelErgebnis
+from polderfit.fit.linescan_fit import FitErgebnis
+from polderfit.io.datensatz import Linescan, Messdatensatz
 
 
 @pytest.fixture(scope="module")
@@ -37,7 +38,7 @@ def _mini_datensatz(n=10):
 
 
 def _ansicht_mit_overlay():
-    from bbfmr.gui.matrix_ansicht import MatrixAnsicht
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ds = _mini_datensatz()
     ansicht.zeige(ds)
@@ -112,7 +113,7 @@ def test_ausreisser_kasten_trifft_gruppe_ohne_zoom(app):
 
 
 def test_ausreisser_panel_liste_und_callbacks(app):
-    from bbfmr.gui.ausreisser_panel import AusreisserPanel
+    from polderfit.gui.ausreisser_panel import AusreisserPanel
     ds = _mini_datensatz()
     stapel = StapelErgebnis(datensatz=ds)
     for i, f in enumerate(ds.frequenzen):
@@ -139,7 +140,7 @@ def test_ausreisser_panel_liste_und_callbacks(app):
 
 
 def test_hauptfenster_ausreisser_aktion_und_dock(app):
-    from bbfmr.gui.hauptfenster import Hauptfenster
+    from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     assert w.akt_ausreisser.isCheckable()
     assert w.ausreisser_dock.isHidden()  # erscheint erst mit dem Modus

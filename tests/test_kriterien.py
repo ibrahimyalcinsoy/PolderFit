@@ -1,12 +1,13 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests der Fit-Robustheit: Schranken, Guetemasse und Problem-Erkennung."""
 
 import numpy as np
 
-from bbfmr.io.datensatz import Linescan
-from bbfmr.physik.konstanten import GAMMA_STANDARD
-from bbfmr.physik.fitmodell import s21_modell
-from bbfmr.fit.linescan_fit import fitte_linescan
-from bbfmr.fit.kriterien import (
+from polderfit.io.datensatz import Linescan
+from polderfit.physik.konstanten import GAMMA_STANDARD
+from polderfit.physik.fitmodell import s21_modell
+from polderfit.fit.linescan_fit import fitte_linescan
+from polderfit.fit.kriterien import (
     ALPHA_MAX,
     ALPHA_MIN,
     an_grenze,

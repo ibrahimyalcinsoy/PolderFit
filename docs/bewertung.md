@@ -1,7 +1,7 @@
 # Bewertung der Fits
 
 Jeder Einzel-Fit wird automatisch als unauffällig oder als problematisch eingestuft.
-Die Einstufung erfolgt in der Funktion `bewerte_fit` in `bbfmr/fit/kriterien.py`,
+Die Einstufung erfolgt in der Funktion `bewerte_fit` in `polderfit/fit/kriterien.py`,
 in der sämtliche Schwellwerte als benannte Konstanten an einer Stelle gebündelt
 sind.
 
@@ -30,9 +30,24 @@ Ein Fit gilt als problematisch, sobald **eine** der folgenden Bedingungen zutrif
 Die zutreffenden Gründe werden als Klartext-Liste zurückgegeben und stehen in der
 grafischen Oberfläche sowie im Export zur Verfügung (`erg.problem_text`).
 
+!!! note "Ausnahme bei Kriterium (e): exzellente Fits ohne Kovarianz"
+    Ein numerisch nahezu perfekter Fit kann in ein `phi`-Nebenminimum laufen, dessen
+    Jacobi-Matrix singulär wird — `lmfit` liefert dann keine Unsicherheiten, obwohl
+    die Linienform exakt getroffen ist. Solche Fits wurden früher allein wegen der
+    fehlenden Kovarianz hart als problematisch gemeldet („Programm meldet Problemfit,
+    sieht aber gut aus"). Der Fall wird zweistufig behandelt:
+
+    1. `fitte_linescan` startet den Fit einmal mit um `π` verschobenem
+       `phi`-Startwert neu, wenn der erste Durchlauf keine Unsicherheiten liefert,
+       und behält das bessere Ergebnis.
+    2. Bleibt die Kovarianz trotzdem aus, zählt „keine Unsicherheiten" nur dann als
+       Problemgrund, wenn das normierte Residuum nicht ohnehin exzellent ist
+       (`rmse_norm > RMSE_NORM_EXZELLENT`). Ohne Konvergenz greift die Ausnahme
+       nicht.
+
 ## Schwellwerte
 
-Die maßgeblichen Konstanten (`bbfmr/fit/kriterien.py`):
+Die maßgeblichen Konstanten (`polderfit/fit/kriterien.py`):
 
 | Konstante | Wert | Bedeutung |
 |---|---|---|
@@ -42,6 +57,7 @@ Die maßgeblichen Konstanten (`bbfmr/fit/kriterien.py`):
 | `PHI_MIN`, `PHI_MAX` | `∓2π` | Schranken des Phasenwinkels |
 | `GRENZ_NAEHE_REL` | `0.01` | „an Schranke", wenn innerhalb 1 % des Schrankenabstands |
 | `RMSE_NORM_SCHWELLE` | `0.35` | normiertes Residuum darüber → problematisch |
+| `RMSE_NORM_EXZELLENT` | `0.10` | Residuum darunter → fehlende Kovarianz allein ist kein Problem |
 | `CHI2_RED_NOTBREMSE` | `1e6` | Sicherheitsnetz für Totalausreißer (red. Chi²) |
 | `B_RES_REL_UNSICHERHEIT_MAX` | `0.02` | max. relative Unsicherheit des Resonanzfeldes |
 

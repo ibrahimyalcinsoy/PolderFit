@@ -1,11 +1,12 @@
+# Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Tests des Einlesens beider TDMS-Formate und des Ergebnis-Schreibens."""
 
 import os
 
 import numpy as np
 
-from bbfmr.io import lade_tdms, schreibe_ergebnis_tdms
-from bbfmr.io.datensatz import Linescan
+from polderfit.io import lade_tdms, schreibe_ergebnis_tdms
+from polderfit.io.datensatz import Linescan
 
 
 def test_lade_unsortiert(pfad_unsortiert):

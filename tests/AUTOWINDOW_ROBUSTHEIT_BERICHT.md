@@ -34,12 +34,12 @@ bewertbar), unsortiert 534 Silent-FAIL (125 244 bewertbar).
 **mitten im Sweep auf Platte geschrieben**: der letzte Feldschritt hat einen
 unvollstaendigen Frequenzsweep, `feld_before` hat N+1, `feld_after`/Daten N
 vollstaendige Sweeps → `frequenz.size` nicht durch `feld_before.size` teilbar.
-**Fix** (`bbfmr/io/tdms_laden.py`): bei Nicht-Teilbarkeit die Sweep-Periode
+**Fix** (`polderfit/io/tdms_laden.py`): bei Nicht-Teilbarkeit die Sweep-Periode
 (`n_freq`) aus der Frequenzachse ableiten, auf die abgeschlossenen Sweeps kuerzen,
 dann regulaer reshapen. → **38 → 0 CRASH**, 47 `_flush`-Files laden jetzt.
 
 ### 2. Silent WINDOW_FAIL (2348) — AutoWindow verfehlt die Resonanz
-Zwei Ursachen, beide in `bbfmr/fit/autowindows.py` behoben:
+Zwei Ursachen, beide in `polderfit/fit/autowindows.py` behoben:
 - **Globales Polynom (Trasse) ueberschrieb gute Einzeldetektionen.** Bei Gitter-
   Proben fixe periodische Untergrund-Ripples / feldstationaere Artefakte → das
   Grad-≤2-Polynom verbog sich an Hebelpunkten (tiefe Frequenzen ohne Resonanz) und
@@ -62,7 +62,7 @@ Zwei Ursachen, beide in `bbfmr/fit/autowindows.py` behoben:
 → **Gratings 1372 → 354, MBE 797 → 63, Gesamt 2348 → 534 Silent-FAIL.**
 
 ### NICHT bewertet/geaendert (bewusst)
-- **`bbfmr/fit/kriterien.py` – UNVERAENDERT.** Eine probeweise Lockerung des
+- **`polderfit/fit/kriterien.py` – UNVERAENDERT.** Eine probeweise Lockerung des
   „alpha an Grenze"-Flags wurde **wieder zurueckgenommen**: 316 objektiv schlechte
   Fenster waren NUR ueber dieses Flag gemeldet → die Lockerung haette 316 NEUE
   stille Fehler erzeugt. Stichproben bestaetigten zudem, dass die Flags meist die
@@ -97,11 +97,11 @@ CrSBr 17, YIG/CoFe je wenige.
 ohne `Read`-Daten. Werden korrekt als NICHT_FMR klassifiziert.
 
 ## Geaenderte Dateien (uncommitted)
-- `bbfmr/io/tdms_laden.py` (+54/-7): Reshape-Recovery fuer `_flush`/abgebrochene
+- `polderfit/io/tdms_laden.py` (+54/-7): Reshape-Recovery fuer `_flush`/abgebrochene
   Messungen.
-- `bbfmr/fit/autowindows.py` (+~150): stationaerer Untergrundabzug, lokal-vertrauen-
+- `polderfit/fit/autowindows.py` (+~150): stationaerer Untergrundabzug, lokal-vertrauen-
   statt-global-Trasse, gleitende robuste Gerade, Peak-Verfeinerung.
-- `bbfmr/fit/kriterien.py`: **unveraendert** (Lockerung getestet und verworfen).
+- `polderfit/fit/kriterien.py`: **unveraendert** (Lockerung getestet und verworfen).
 - Neu: `tests/autowindow_runner.py` (rekursiv, Pfad-Schluessel, Per-Probe-Bericht,
   90-s-Timeout, resumebar), `tests/autowindow_results.json`, `diag/*.png`, dieser
   Bericht. Alle 35 bestehenden Tests gruen.
