@@ -33,6 +33,25 @@ QToolBar QToolButton:pressed {{ background-color: #ECDFB8; }}
 QToolBar QToolButton:disabled {{ color: #BBB6A8; }}
 QToolBar::separator {{ background: #E6E2D8; width: 1px; margin: 4px 6px; }}
 
+QMenuBar {{
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E6E2D8;
+    padding: 2px 4px;
+}}
+QMenuBar::item {{ padding: 5px 10px; border-radius: 6px; color: #3A372F; }}
+QMenuBar::item:selected {{ background-color: #F6EDD3; }}
+QMenuBar::item:pressed {{ background-color: #ECDFB8; }}
+QMenu {{
+    background-color: #FFFFFF;
+    border: 1px solid #D9D4C6;
+    border-radius: 7px;
+    padding: 5px;
+}}
+QMenu::item {{ padding: 6px 26px 6px 14px; border-radius: 5px; color: #3A372F; }}
+QMenu::item:selected {{ background-color: #F6EDD3; }}
+QMenu::item:disabled {{ color: #BBB6A8; }}
+QMenu::separator {{ height: 1px; background: #E6E2D8; margin: 4px 8px; }}
+
 QPushButton {{
     background-color: #FFFFFF;
     border: 1px solid #D9D4C6;

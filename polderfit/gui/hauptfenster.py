@@ -176,15 +176,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _baue_aktionen(self):
         """Legt alle Aktionen einmalig an; sie werden in Menue UND Toolbar verwendet.
 
-        Die Sichtbarkeits-Umschalter der Panels (``akt_verarbeitung``, ``akt_fenster``,
-        ``akt_linescan``, ``akt_ausreisser_panel``, ``akt_aktivitaet``) werden hier nur
-        angelegt; ihre Verbindung mit dem jeweiligen Dock erfolgt in den
-        ``_baue_*_dock``-Methoden, sobald das Dock existiert.
+        Die Sichtbarkeits-Umschalter der Panels ohne bereits existierendes Dock
+        (``akt_verarbeitung``, ``akt_fenster``, ``akt_ausreisser_panel``,
+        ``akt_aktivitaet``, ``akt_trace``) werden hier nur angelegt; ihre Verbindung
+        mit dem jeweiligen Dock erfolgt in den ``_baue_*_dock``-Methoden. Nur
+        ``akt_linescan`` wird direkt verbunden, weil das Linescan-Dock schon steht.
         """
         A = QtGui.QAction
 
         # --- Datei ----------------------------------------------------------
         self.akt_laden = A("TDMS laden …", self)
+        self.akt_laden.setShortcut(QtGui.QKeySequence.Open)          # Strg+O
         self.akt_laden.triggered.connect(self._laden)
         self.akt_projekt_laden = A("Projekt laden …", self)
         self.akt_projekt_laden.setToolTip(
@@ -192,6 +194,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "mit den gespeicherten Fenstern deterministisch wiederhergestellt.")
         self.akt_projekt_laden.triggered.connect(self._projekt_laden)
         self.akt_projekt_speichern = A("Projekt speichern …", self)
+        self.akt_projekt_speichern.setShortcut(QtGui.QKeySequence.Save)   # Strg+S
         self.akt_projekt_speichern.setToolTip(
             "Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
             "Ausschlusszonen, Ausreißer und Fitparameter.")
@@ -203,10 +206,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_csv = A("Export CSV …", self)
         self.akt_csv.triggered.connect(self._export_csv)
         self.akt_beenden = A("Beenden", self)
+        self.akt_beenden.setShortcut(QtGui.QKeySequence.Quit)             # Strg+Q
         self.akt_beenden.triggered.connect(self.close)
 
         # --- Fit ------------------------------------------------------------
         self.akt_fit = A("Auto-Fit (alle)", self)
+        self.akt_fit.setShortcut(QtGui.QKeySequence("F5"))
         self.akt_fit.triggered.connect(self._auto_fit)
         self.akt_seed = A("Resonanz vorgeben", self)
         self.akt_seed.setToolTip(
@@ -268,6 +273,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         # --- Hilfe ----------------------------------------------------------
         self.akt_hilfe = A("Bedienung & Infos …", self)
+        self.akt_hilfe.setShortcut(QtGui.QKeySequence.HelpContents)       # F1
         self.akt_hilfe.triggered.connect(self._zeige_hilfe)
         self.akt_repo = A("Repository öffnen", self)
         self.akt_repo.triggered.connect(
@@ -1200,7 +1206,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     # --- Ausreisser-Management (Bereich 6) -----------------------------------
     def _ausreisser_modus(self, an: bool):
-        """Toolbar-Umschalter: Punkte anklicken/einrahmen -> Ausreisser."""
+        """Umschalter (Menue/Werkzeugleiste): Punkte anklicken/einrahmen -> Ausreisser."""
         if an and (not self.stapel or not self.stapel.ergebnisse):
             self._log("Ausreißer markieren: erst nach einem Auto-Fit moeglich.", "warn")
             self.akt_ausreisser.setChecked(False)
@@ -1209,7 +1215,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if an:
             self.ausreisser_dock.setVisible(True)
             self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
-                      "aufziehen. Erneut klicken auf den Toolbar-Knopf beendet.", "info")
+                      "aufziehen. Erneutes Auslösen von „Ausreißer markieren“ beendet.", "info")
         else:
             self.statusBar().showMessage("Ausreißer-Modus beendet.")
 

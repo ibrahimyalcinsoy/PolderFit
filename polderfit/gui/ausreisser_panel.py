@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Ausreisser-Panel: Liste der ausgeschlossenen Punkte, Undo, Wiederaufnahme.
 
-Als Ausreisser markierte Fit-Punkte (Klick/Kasten im Farbplot, Toolbar-Modus
+Als Ausreisser markierte Fit-Punkte (Klick/Kasten im Farbplot, Modus
 "Ausreisser markieren") verschwinden aus der Darstellung und aus allen
 uebergreifenden Rechnungen (insb. Kittel-/LLG-Fit). Dieses Panel macht die
 Ausschluesse einsehbar und editierbar: einzeln oder komplett wieder
@@ -30,9 +30,9 @@ class AusreisserPanel(QtWidgets.QWidget):
         lay.setSpacing(8)
 
         hinweis = QtWidgets.QLabel(
-            "Toolbar → „Ausreisser markieren“: Punkte im Farbplot anklicken oder "
-            "per Kasten markieren. Markierte Punkte fliegen aus Darstellung und "
-            "Kittel-/LLG-Fit.")
+            "Fit → „Ausreisser markieren“: Punkte im Farbplot anklicken oder "
+            "per Kasten markieren. Markierte Punkte werden aus Darstellung und "
+            "Kittel-/LLG-Fit ausgenommen.")
         hinweis.setWordWrap(True)
         lay.addWidget(hinweis)
 
