@@ -7,8 +7,8 @@
   <metadata>PolderFit – Breitband-FMR-Auswertung. Copyright (c) 2026 Ibrahim Yalcinsoy.</metadata>
   <defs>
     <radialGradient id="bg" cx="50%" cy="42%" r="75%">
-      <stop offset="0%" stop-color="#182741"/>
-      <stop offset="100%" stop-color="#0c1524"/>
+      <stop offset="0%" stop-color="#fbfaf6"/>
+      <stop offset="100%" stop-color="#ece7da"/>
     </radialGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#6b520f"/>
@@ -42,7 +42,7 @@
     </linearGradient>
   </defs>
 
-  <rect x="0" y="0" width="512" height="512" rx="64" fill="url(#bg)"/>
+  <rect x="1.5" y="1.5" width="509" height="509" rx="63" fill="url(#bg)" stroke="#d9d3c4" stroke-width="3"/>
 
   <!-- ===== Probenstab ===== -->
   <g>
@@ -101,27 +101,27 @@
   <!-- ===== Messsignal: S21 und dP/dH ueber dem Feld ===== -->
   <g>
     <!-- Feldachse, Marken bei 9, 13, 23 mT (x = 60 + 14*B) -->
-    <line x1="60" y1="416" x2="452" y2="416" stroke="#8fa3c2" stroke-width="2"/>
-    <path d="M452 416 l-9 -4 v8 Z" fill="#8fa3c2"/>
-    <g stroke="#8fa3c2" stroke-width="2">
+    <line x1="60" y1="416" x2="452" y2="416" stroke="#5b6a85" stroke-width="2"/>
+    <path d="M452 416 l-9 -4 v8 Z" fill="#5b6a85"/>
+    <g stroke="#5b6a85" stroke-width="2">
       <line x1="186" y1="416" x2="186" y2="423"/>
       <line x1="242" y1="416" x2="242" y2="423"/>
       <line x1="382" y1="416" x2="382" y2="423"/>
     </g>
-    <g font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#8fa3c2" text-anchor="middle">
+    <g font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5b6a85" text-anchor="middle">
       <text x="186" y="440">9</text>
       <text x="242" y="440">13</text>
       <text x="382" y="440">23</text>
     </g>
     <text x="452" y="440" font-family="Helvetica, Arial, sans-serif" font-size="13"
-          fill="#8fa3c2" text-anchor="end">µ₀H (mT)</text>
+          fill="#5b6a85" text-anchor="end">µ₀H (mT)</text>
 
     <!-- dP/dH (blau, antisymmetrisch um die Resonanz bei 23) -->
     <path d="M64 352 C 200 352, 330 352, 352 352
              C 366 352, 370 318, 382 318
              C 394 318, 398 386, 412 386
              C 426 386, 430 352, 448 352"
-          fill="none" stroke="#4f7fd9" stroke-width="4" stroke-linecap="round"/>
+          fill="none" stroke="#3a63c0" stroke-width="4" stroke-linecap="round"/>
     <!-- S21 (rot, Lorentz-Einbruch bei 23) -->
     <path d="M64 340 C 210 340, 336 341, 356 348
              C 372 354, 370 404, 382 404
@@ -130,11 +130,11 @@
           fill="none" stroke="#d0433f" stroke-width="4.5" stroke-linecap="round"/>
     <g font-family="Helvetica, Arial, sans-serif" font-size="15" font-style="italic">
       <text x="72" y="330" fill="#d0433f">S₂₁</text>
-      <text x="118" y="330" fill="#4f7fd9">dP/dH</text>
+      <text x="118" y="330" fill="#3a63c0">dP/dH</text>
     </g>
   </g>
 
   <!-- ===== Wortmarke ===== -->
   <text x="256" y="492" font-family="Helvetica, Arial, sans-serif" font-size="46"
-        font-weight="600" letter-spacing="1.5" text-anchor="middle" fill="#e9eef7">PolderFit</text>
+        font-weight="600" letter-spacing="1.5" text-anchor="middle" fill="#2b2a24">PolderFit</text>
 </svg>
