@@ -1,7 +1,5 @@
 # PolderFit – Auswertung breitbandiger FMR-Messungen
 
-![PolderFit-Logo](assets/logo.svg){ width="130" align="right" }
-
 PolderFit dient der quantitativen Auswertung breitbandiger ferromagnetischer
 Resonanzmessungen (bbFMR, *broadband ferromagnetic resonance*). Die Dokumentation
 beschreibt den Aufbau des Programms, die zugrunde liegenden physikalischen Modelle,
