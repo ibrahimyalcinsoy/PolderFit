@@ -1,10 +1,9 @@
 # Die Messdaten (TDMS)
 
-PolderFit liest **TDMS-Dateien** (das Dateiformat von LabVIEW). Eine TDMS-Datei ist
-intern in **Gruppen** und **Kanäle** unterteilt – ähnlich wie eine Excel-Mappe mit
-mehreren Tabellenblättern und Spalten.
+PolderFit liest TDMS-Dateien (das Dateiformat von LabVIEW). Eine TDMS-Datei gliedert
+sich intern in Gruppen und darin in Kanäle.
 
-Alle Felder kommen bereits in **Tesla**, Frequenzen in **Hertz**.
+Alle Felder liegen in Tesla vor, Frequenzen in Hertz.
 
 ## Laden über Kanal-Mapping
 
@@ -45,10 +44,10 @@ Die wichtigsten Kanäle:
   **vor** und **nach** jedem Schritt. PolderFit nimmt den Mittelwert als Feldwert.
 - optional `Read.Temperature/LakeshoreTemperature`.
 
-**Die zentrale Annahme:** Pro Feldwert wird *ein vollständiger Frequenz-Sweep*
-gespeichert. Sind es z. B. 725 Feldwerte × 1001 Frequenzpunkte, liegen 725 725
-Zahlen am Stück vor. PolderFit formt diese in eine Matrix `(n_feld × n_freq)` um
-("reshape") und schneidet daraus pro Frequenz einen **Linescan** heraus.
+Zentrale Annahme: Pro Feldwert wird ein vollständiger Frequenz-Sweep gespeichert.
+Bei 725 Feldwerten × 1001 Frequenzpunkten liegen also 725 725 Zahlen am Stück vor.
+PolderFit formt diese in eine Matrix `(n_feld × n_freq)` um (reshape) und schneidet
+daraus pro Frequenz einen Linescan heraus.
 
 !!! warning "Sicherung gegen vertauschte Achsen"
     Nach dem Umformen prüft PolderFit, ob der Frequenz-Sweep je Feldwert wirklich
@@ -57,21 +56,19 @@ Zahlen am Stück vor. PolderFit formt diese in eine Matrix `(n_feld × n_freq)` 
 
 ### `_flush`-Dateien (abgebrochene Messungen)
 
-Dateien mit `_flush` im Namen wurden **mitten in der Messung** auf die Platte
-geschrieben. Der letzte Feldschritt hat dann einen **unvollständigen**
-Frequenz-Sweep: die Punktzahl passt nicht mehr glatt zur Feldanzahl.
+Dateien mit `_flush` im Namen wurden während der laufenden Messung auf die Platte
+geschrieben. Der letzte Feldschritt enthält dann einen unvollständigen
+Frequenz-Sweep, dessen Punktzahl nicht glatt zur Feldanzahl passt.
 
-PolderFit erkennt das und **rettet** solche Dateien automatisch
-(`polderfit/io/tdms_laden.py`):
+PolderFit behandelt solche Dateien automatisch (`polderfit/io/tdms_laden.py`):
 
-1. Es leitet die Sweep-Länge `n_freq` aus der Frequenzachse ab (sie wiederholt sich
-   periodisch).
-2. Es berechnet, wie viele Sweeps **vollständig** sind.
-3. Es kürzt auf diese vollständigen Sweeps und wertet sie normal aus.
+1. Die Sweep-Länge `n_freq` wird aus der periodisch wiederkehrenden Frequenzachse
+   abgeleitet.
+2. Die Zahl der vollständigen Sweeps wird bestimmt.
+3. Die Daten werden auf diese vollständigen Sweeps gekürzt und regulär ausgewertet.
 
-Vorher führte das zu einem Absturz (`Punktzahl … nicht durch Feldanzahl … teilbar`),
-heute laden diese Dateien sauber. Lässt sich die Periode nicht bestimmen, kommt eine
-verständliche Fehlermeldung.
+Lässt sich die Sweep-Periode nicht eindeutig bestimmen, bricht das Laden mit einer
+entsprechenden Fehlermeldung ab.
 
 ---
 

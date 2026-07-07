@@ -1,23 +1,21 @@
-# Ausreißer-Management & Projektdateien
+# Ausreißer-Management und Projektdateien
 
-## Warum?
+## Zweck
 
-Einzelne physikalisch sinnlose Fit-Punkte (stets in der Minderheit — z. B.
-ein Fit, der auf einem Störsignal gelandet ist) verfälschen den linearen
-**Kittel-Fit** massiv, bis hin zu negativer Steigung. Solche Punkte müssen
-sich schnell und reversibel aus der Auswertung nehmen lassen.
+Einzelne physikalisch sinnlose Fit-Punkte (in der Minderheit, etwa ein Fit auf einem
+Störsignal) verfälschen den linearen Kittel-Fit erheblich, bis hin zu negativer
+Steigung. Solche Punkte müssen sich schnell und reversibel aus der Auswertung nehmen
+lassen.
 
 ## Bedienung
 
-1. Toolbar → **„Ausreißer markieren"** (Umschalter; erst nach einem Auto-Fit).
-   Das **Ausreißer-Panel** (rechts) erscheint automatisch.
-2. Im Farbplot: **Punkt anklicken** (nächstgelegener sichtbarer Fit-Punkt)
-   oder **Kasten aufziehen** (alle Punkte darin). Markierte Punkte
-   verschwinden **sofort** aus der Darstellung — und aus allen
-   übergreifenden Rechnungen: Kittel-/LLG-Fit, den Publikationsplots und den
-   Globalparametern des Excel-Exports. Der Modus bleibt aktiv, bis der
-   Toolbar-Knopf erneut geklickt wird; Kasten-Zoom ist währenddessen
-   ausgesetzt.
+1. Menü *Fit → Ausreißer markieren* (Umschalter, auch in der Werkzeugleiste; erst
+   nach einem Auto-Fit). Das Ausreißer-Panel (rechts) erscheint automatisch.
+2. Im Farbplot: Punkt anklicken (nächstgelegener sichtbarer Fit-Punkt) oder Kasten
+   aufziehen (alle Punkte darin). Markierte Punkte werden aus der Darstellung und aus
+   allen übergreifenden Rechnungen entfernt: Kittel-/LLG-Fit, Publikationsplots und
+   Globalparameter des Excel-Exports. Der Modus bleibt aktiv, bis die Aktion erneut
+   ausgelöst wird; der Kasten-Zoom ist währenddessen ausgesetzt.
 3. **Ausreißer-Panel**: Liste aller ausgeschlossenen Punkte (Index, Frequenz,
    B_res) — einsehbar und editierbar:
    * *Wieder aufnehmen* (Auswahl) / *Alle wieder aufnehmen*
@@ -29,8 +27,8 @@ eine reine Auswertungsentscheidung und jederzeit reversibel.
 
 ## Projekt speichern / laden
 
-Toolbar → **„Projekt speichern"** sichert den kompletten Auswertungszustand
-als JSON (Format-Version 2, `polderfit/persistenz/projekt.py`):
+Menü *Datei → Projekt speichern* sichert den kompletten Auswertungszustand als JSON
+(Format-Version 2, `polderfit/persistenz/projekt.py`):
 
 * TDMS-Quelle, **Kanal-Zuordnung** und Mapping-Profilname,
 * Auswertungsauswahl (Jumper/Bereiche),
@@ -38,7 +36,7 @@ als JSON (Format-Version 2, `polderfit/persistenz/projekt.py`):
 * **Ausschlusszonen** und **Ausreißer-Markierungen**,
 * alle Fitparameter (zur Kontrolle/Archivierung).
 
-**„Projekt laden"** stellt die Sitzung wieder her: Die TDMS-Datei wird über
+*Datei → Projekt laden* stellt die Sitzung wieder her: Die TDMS-Datei wird über
 die gespeicherte Zuordnung neu gelesen (Rohdaten werden nie dupliziert),
 gegebenenfalls identisch reduziert, und alle Fits werden mit den
 gespeicherten Fenstern **deterministisch neu gerechnet** — anschließend sind

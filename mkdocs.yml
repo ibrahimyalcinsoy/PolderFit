@@ -8,20 +8,20 @@ theme:
   highlightjs: true
 nav:
   - Start: index.md
-  - Installation & Start: installation.md
+  - Installation und Start: installation.md
   - Die Messdaten (TDMS): datenformate.md
-  - Kanal-Mapping & Profile: kanal-mapping.md
-  - Verarbeitung (derivative divide): verarbeitung.md
-  - Auswertungsauswahl (Jumper & Bereiche): auswertungsauswahl.md
+  - Kanal-Mapping und Profile: kanal-mapping.md
+  - Verarbeitung des Farbplots: verarbeitung.md
+  - Auswertungsauswahl (Bereiche und Frequenzauswahl): auswertungsauswahl.md
   - Interaktives Fitten: interaktives-fitten.md
-  - Ausreißer & Projektdateien: ausreisser.md
-  - Der Ablauf (Pipeline): pipeline.md
+  - Ausreißer und Projektdateien: ausreisser.md
+  - Ablauf der Auswertung: pipeline.md
   - AutoWindow im Detail: autowindow.md
-  - Physik & Fit: physik-und-fit.md
+  - Physikalisches Modell und Fit: physik-und-fit.md
   - Bewertung der Fits: bewertung.md
-  - Tuning – alle Stellschrauben: tuning.md
-  - Troubleshooting: troubleshooting.md
-  - Robustheits-Harness: test-harness.md
+  - Parameter und Feineinstellung: tuning.md
+  - Fehlerdiagnose: troubleshooting.md
+  - Robustheitsprüfung über reale Messdaten: test-harness.md
 markdown_extensions:
   - admonition
   - attr_list

@@ -1,12 +1,12 @@
 # PolderFit – Auswertung breitbandiger FMR-Messungen
 
-<img src="polderfit/gui/assets/polderfit.svg" alt="PolderFit-Logo" width="170" align="right"/>
+<img src="polderfit/gui/assets/polderfit.svg" alt="PolderFit-Logo" width="110" align="right"/>
 
-PolderFit wertet breitbandige ferromagnetische Resonanzmessungen (bbFMR) quantitativ aus: Es liest
-die TDMS-Rohdaten ein, bestimmt je Frequenz das Resonanzfenster, passt das komplexe
-Transmissionssignal an die Polder-Suszeptibilität an und gewinnt aus `B_res(f)` und der
-Linienbreite die Materialgrößen (`μ0Meff`, `g`, Gilbert-Dämpfung `α`). Der Name
-verweist auf die Polder-Suszeptibilität (D. Polder, 1949) – das Kernmodell des Fits.
+PolderFit ist eine grafische Anwendung zur Auswertung breitbandiger ferromagnetischer
+Resonanzmessungen (bbFMR). Sie liest die Messdaten im TDMS-Format ein, bestimmt je Frequenz
+automatisch das Resonanzsignal, fittet es und stellt die gewonnenen Materialparameter zur
+Auswertung und zum Export bereit. Die physikalischen Grundlagen sind in der Dokumentation
+beschrieben.
 
 **Dokumentation im Browser:** <https://ibrahimyalcinsoy.github.io/PolderFit/>
 
@@ -81,7 +81,7 @@ Repository veröffentlicht). Quellen im Verzeichnis `docs/`; lokale HTML-Vorscha
 | `docs/ausreisser.md` | Ausreißer-Management, Projekt speichern/laden |
 | `docs/pipeline.md` | Laden → AutoWindow → Fit → Bewertung |
 | `docs/autowindow.md` | automatische Resonanzbestimmung |
-| `docs/physik-und-fit.md` | Suszeptibilität, S21-Modell, Kittel/LLG, Quellen |
+| `docs/physik-und-fit.md` | Physikalisches Modell, S21-Fit, Kittel/LLG, Quellen |
 | `docs/bewertung.md` | Gütemaße und Problem-Einstufung |
 | `docs/tuning.md` | einstellbare Parameter |
 | `docs/troubleshooting.md` | typische Fehlerbilder |
@@ -92,7 +92,7 @@ Repository veröffentlicht). Quellen im Verzeichnis `docs/`; lokale HTML-Vorscha
 ```
 polderfit/
   io/          Einlesen/Schreiben TDMS, Datenstruktur (Linescan, Messdatensatz)
-  physik/      Konstanten, Polder-Suszeptibilität, Fitmodell, Kittel/LLG
+  physik/      Physikalische Modelle und Konstanten (Fitmodell, Kittel/LLG)
   fit/         AutoWindow, Einzelfit (lmfit), Stapelverarbeitung, Bewertung
   auswertung/  Resonanz vs. f/T, Kittel-/LLG-Fit, Publikationsplots
   persistenz/  Excel/CSV-Export, Sitzungszustand
@@ -100,9 +100,8 @@ polderfit/
   app.py       Einstiegspunkt
 ```
 
-Die physikalischen Modelle sind zeichengenaue Portierungen verbindlicher Quellen
-(Mathematica-Notebook der Polder-Suszeptibilität, Dissertation M. Müller Kap. 2,
-Messprotokoll); die Quellenzuordnung steht in `docs/physik-und-fit.md`.
+Die physikalischen Modelle und ihre Quellen sind im Kapitel „Physikalisches Modell und Fit"
+der Dokumentation beschrieben.
 
 ## Copyright
 

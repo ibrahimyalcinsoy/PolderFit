@@ -1,11 +1,11 @@
-# Kanal-Mapping & Mapping-Profile
+# Kanal-Mapping und Mapping-Profile
 
-Verschiedene Messrechner erzeugen unterschiedlich **benannte** und **sortierte**
-TDMS-Dateien. Damit die restliche Pipeline davon nichts mitbekommt, wird beim
-Laden jede Datei über ein **Mapping** auf kanonische *Rollen* abgebildet
-(`polderfit/io/kanal_mapping.py`). Sämtliche weitere Verarbeitung – AutoWindow,
-Fit, Kittel/LLG, Export – rechnet ausschließlich mit diesen internen Rollen.
-**Ohne Zuordnung läuft kein Autofit** („kein Fit auf ungemappten Daten").
+Verschiedene Messrechner erzeugen unterschiedlich benannte und angeordnete
+TDMS-Dateien. Damit die übrige Verarbeitung unabhängig vom konkreten Dateiaufbau
+bleibt, wird beim Laden jede Datei über ein Mapping auf kanonische Rollen abgebildet
+(`polderfit/io/kanal_mapping.py`). Alle weiteren Schritte – AutoWindow, Fit,
+Kittel/LLG, Export – rechnen ausschließlich mit diesen internen Rollen. Ohne
+Zuordnung startet kein Auto-Fit (kein Fit auf ungemappten Daten).
 
 ## Die kanonischen Rollen
 
@@ -116,14 +116,7 @@ ValueError: Attempted to read data segment at position … but did not find
 segment start header. Check that the tdms_index file matches the tdms data file.
 ```
 
-PolderFit fängt das ab: die Datei wird automatisch **ohne** Index-Datei erneut
+PolderFit fängt das ab: die Datei wird automatisch ohne Index-Datei erneut
 gelesen (etwas langsamer, Daten vollständig) und eine Warnung im Protokoll und
 in `ds.meta["lade_warnungen"]` vermerkt. Empfehlung: die veraltete
 `.tdms_index`-Datei löschen.
-
-!!! warning "pybbfmr nie in dieselbe Umgebung installieren"
-    Das historische Referenzprogramm *pybbfmr* installiert ebenfalls ein Paket
-    namens `polderfit`. Es darf niemals in dieselbe Python-Umgebung wie dieses
-    Programm installiert werden, sonst kollidieren die Importe. PolderFit liest
-    dessen Code nur als Portierungsquelle – zur Laufzeit gibt es keinerlei
-    Verbindung.

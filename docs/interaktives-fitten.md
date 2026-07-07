@@ -6,16 +6,15 @@ Programms; Grundlage ist das Modul `polderfit/fit/fenster_steuerung.py`.
 
 ## Bereich neu fitten (Rechteck)
 
-**Wofür?** Mehrdeutigkeiten auflösen: Liegen zwei ähnlich starke Signale im
-Feldsweep — die echte Mode auf der Kittel-Geraden und eine physikalisch
-uninteressante Zweitmode oder Störung daneben — kann sich der Auto-Fit am
-falschen Signal festhalten. Man sieht das im Resonanz-Overlay als Punkte, die
-neben der Geraden liegen.
+Zweck: Mehrdeutigkeiten auflösen. Liegen zwei ähnlich starke Signale im Feldsweep
+(die echte Mode auf der Kittel-Geraden und eine physikalisch uninteressante
+Zweitmode oder Störung daneben), kann der Auto-Fit auf das falsche Signal treffen.
+Im Resonanz-Overlay erscheint das als Punkte abseits der Geraden.
 
-**Bedienung:**
+Bedienung:
 
-1. Toolbar → **„Bereich neu fitten"** (erst nach einem Auto-Fit sinnvoll —
-   der Bereichs-Fit überschreibt gezielt bestehende Fits).
+1. Menü *Fit → Bereich neu fitten* (auch in der Werkzeugleiste; erst nach einem
+   Auto-Fit sinnvoll, da der Bereichsfit bestehende Fits gezielt überschreibt).
 2. Im Farbplot ein **Rechteck um die Mode aufziehen** (der Mauszeiger wird
    zum Fadenkreuz; `Esc` bricht ab). Das Rechteck zoomt in diesem Modus
    nicht, es definiert den Fit-Bereich.
@@ -47,20 +46,18 @@ neu, uebersprungen = fitte_bereich(
 
 ## Ziehbare Fenstergrenzen im Farbplot (mitwandernd)
 
-Panel **„Fenster & Grenzen"** (links, Toolbar-Toggle) → Häkchen
-**„Grenzen im Farbplot anzeigen & ziehen"**: Über dem Farbplot erscheinen
-zwei Polylinien — die **linke (orange)** und **rechte (blaue)**
-Fenstergrenze, je Frequenz durch die aktuellen Fit-Fenster gelegt. Nur der
-Bereich dazwischen geht in den Fit.
+Panel „Fenster & Grenzen" (Menü *Ansicht → Panel: Fenster & Grenzen*) → Häkchen
+„Grenzen im Farbplot anzeigen & ziehen": Über dem Farbplot erscheinen zwei
+Polylinien, die linke (orange) und rechte (blaue) Fenstergrenze, je Frequenz durch
+die aktuellen Fit-Fenster gelegt. Nur der Bereich dazwischen geht in den Fit ein.
 
-* **Ziehen:** Grenze mit der Maus anfassen (Cursor wird zum
-  Horizontal-Pfeil) und seitlich verschieben → der betroffene Linescan wird
-  sofort neu gefittet, Overlay und Fit-Panel aktualisieren sich live.
-* **Mitwandern statt kleben:** Grenzen werden intern **nie** als feste
-  Feldwerte oder Punktindizes geführt, sondern als Offsets relativ zur
-  **Dispersions-Trasse** — einer robusten Ausgleichsgeraden B(f) durch die
-  guten Fits (`dispersions_zentren`). Bei der Übernahme auf andere
-  Frequenzen wandert das Fenster also mit der Resonanz-Geraden mit.
+* Ziehen: Grenze mit der Maus anfassen (Cursor wird zum Horizontal-Pfeil) und
+  seitlich verschieben; der betroffene Linescan wird neu gefittet, Overlay und
+  Fit-Panel aktualisieren sich unmittelbar.
+* Mitwandern statt feste Lage: Grenzen werden intern nicht als feste Feldwerte oder
+  Punktindizes geführt, sondern als Offsets relativ zur Dispersions-Trasse, einer
+  robusten Ausgleichsgeraden B(f) durch die guten Fits (`dispersions_zentren`). Bei
+  der Übernahme auf andere Frequenzen folgt das Fenster damit der Resonanz-Geraden.
 * **Propagation:** „Grenzen des aktuellen Linescans auf folgende übernehmen"
   wendet die Offsets der gerade gesetzten Grenzen auf alle folgenden
   Linescans an (Klick) — oder automatisch nach jedem Ziehen (Häkchen
@@ -75,18 +72,18 @@ Bereichs-Fit:
 * **ergänzen** — nur die als *problematisch* markierten Fits werden neu
   gefittet; bereits gute Ergebnisse anderer Bereiche bleiben unangetastet.
 
-Damit ist das iterative Arbeiten gefahrlos: Bereich vorgeben → neu fitten →
-prüfen → nächster Bereich, ohne Gutes zu zerstören.
+Der Bereichsfit überschreibt nur den gewählten Ausschnitt: Bereich vorgeben, neu
+fitten, prüfen, nächsten Bereich wählen. Bereits gute Fits außerhalb bleiben erhalten.
 
 ## Fensterbreite explizit in Punkten
 
 „Fensterbreite explizit setzen": z. B. von 15 auf **25 Punkte** stellen und
 „Auf alle anwenden" — jedes Fenster wird zu *Trassen-Zentrum ± Breite/2 in
 Feldpunkten des jeweiligen Linescans* gesetzt und neu gefittet. Das ist der
-direkte Hebel gegen die bekannten Fehlerbilder „Grenzen zu eng gesetzt" /
-„Resonanzfenster generell zu eng"; die **Automatik überstimmt diese Wahl nie
-stillschweigend**. Das Panel zeigt zur Kontrolle stets die tatsächliche
-Breite des aktuellen Fensters in Punkten an.
+direkte Hebel gegen die Fehlerbilder „Grenzen zu eng gesetzt" und
+„Resonanzfenster generell zu eng"; die Automatik ändert diese Vorgabe nicht
+selbsttätig. Das Panel zeigt zur Kontrolle die tatsächliche Breite des aktuellen
+Fensters in Punkten an.
 
 ## Ausschlusszonen (Bereich aus der Auswertung nehmen)
 
@@ -94,16 +91,15 @@ Breite des aktuellen Fensters in Punkten an.
 (z. B. den zur Feldachse parallelen Abschnitt unten im Plot). Die Punkte in
 der Zone werden aus **allen** (Nach-)Fits ausgenommen; betroffene Linescans
 fitten sofort neu. Zonen werden schraffiert angezeigt, sind in der Liste des
-Panels einsehbar und einzeln **entfernbar** (die betroffenen Linescans
-fitten dann wieder mit allen Punkten). Ein neuer Auto-Fit beginnt bewusst
-mit leerer Zonenliste.
+Panels einsehbar und einzeln entfernbar (die betroffenen Linescans fitten dann
+wieder mit allen Punkten). Ein neuer Auto-Fit beginnt mit leerer Zonenliste.
 
 ## Multi-Monitor-Betrieb
 
-Das **Linescan-Fit-Panel** und alle weiteren Panels (Fenster & Grenzen,
-Verarbeitung, Aktivität, Navigator) sind **abdockbar**: Titelleiste des
-Panels ziehen und auf den zweiten Monitor legen. Der Farbplot bleibt das
-zentrale Fenster. Toolbar-Knöpfe blenden jedes Panel ein/aus.
+Das Linescan-Fit-Panel und alle weiteren Panels (Fenster & Grenzen, Verarbeitung,
+Aktivität, Navigator) sind abdockbar: Titelleiste des Panels ziehen und auf den
+zweiten Monitor legen. Der Farbplot bleibt das zentrale Fenster. Über das Menü
+*Ansicht* lässt sich jedes Panel ein- und ausblenden.
 
 ## Typische Korrektur-Workflows (bekannte Fehlerbilder)
 

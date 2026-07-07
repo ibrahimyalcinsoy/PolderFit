@@ -1,15 +1,13 @@
 # PolderFit – Auswertung breitbandiger FMR-Messungen
 
-![PolderFit-Logo](assets/logo.svg){ width="180" align="right" }
+![PolderFit-Logo](assets/logo.svg){ width="130" align="right" }
 
 PolderFit dient der quantitativen Auswertung breitbandiger ferromagnetischer
-Resonanzmessungen (bbFMR, *broadband ferromagnetic resonance*). Der Name des
-Programms verweist auf die Polder-Suszeptibilität (D. Polder, 1949), das
-physikalische Kernmodell, an das die Messdaten angepasst werden. Die vorliegende Dokumentation beschreibt den Aufbau des
-Programms, die zugrunde liegenden physikalischen Modelle, die Bedeutung der
-einstellbaren Parameter sowie das Vorgehen zur Fehlersuche. Sie richtet sich an
-Anwenderinnen und Anwender, die den Auswerteweg nachvollziehen, das Programm an
-eigene Messreihen anpassen oder Auffälligkeiten diagnostizieren möchten.
+Resonanzmessungen (bbFMR, *broadband ferromagnetic resonance*). Die Dokumentation
+beschreibt den Aufbau des Programms, die zugrunde liegenden physikalischen Modelle,
+die Bedeutung der einstellbaren Parameter sowie das Vorgehen zur Fehlersuche. Sie
+richtet sich an Anwenderinnen und Anwender, die den Auswerteweg nachvollziehen, das
+Programm an eigene Messreihen anpassen oder Auffälligkeiten diagnostizieren möchten.
 
 ## Gegenstand der Auswertung
 

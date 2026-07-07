@@ -1,4 +1,4 @@
-# Robustheits-Harness
+# Robustheitsprüfung über reale Messdaten
 
 Das Robustheits-Harness (`tests/autowindow_runner.py`) prüft die automatische
 Fensterbestimmung über einen großen Bestand realer Messdateien. Ziel ist nicht der

@@ -1,4 +1,4 @@
-# Tuning – einstellbare Parameter
+# Parameter und Feineinstellung
 
 Dieses Kapitel führt die einstellbaren Parameter der Auswertung an einer Stelle
 zusammen und beschreibt ihre Wirkung. Es richtet sich an Anwenderinnen und Anwender,
@@ -17,10 +17,17 @@ Mehrere Größen lassen sich direkt beim Aufruf übergeben, ohne den Quelltext z
 
 | Parameter | Standard | Wirkung |
 |---|---|---|
-| `gamma` | `GAMMA_STANDARD` | gyromagnetisches Verhältnis; entspricht `g = 2` |
+| `gamma` | `GAMMA_STANDARD` | gyromagnetisches Verhältnis (`g = 2`), nur Startwert für die Fensterschätzung; siehe Hinweis unten |
 | `breite_faktor` | `8.0` | Skaliert die Fensterbreite relativ zur geschätzten Linienbreite |
 | `r2_schwelle` | `0.9` | Schwelle für nachgelagerte R²-Auswertungen |
 | `zentren` | `None` | vorgegebene Fenstermitten `B_res(f)`; überspringt die Auto-Detektion |
+
+Der Wert `gamma` legt **nicht** das Ergebnis fest: Er dient im Einzelfit nur der
+Startwert- und Fensterschätzung. Das Resonanzfeld `B_res` jeder Frequenz ist ein
+freier Fitparameter und hängt nicht vom vorgegebenen `gamma` ab. Der g-Faktor (und
+damit das tatsächliche gyromagnetische Verhältnis) wird erst in der übergreifenden
+Kittel-Auswertung aus der Dispersion `B_res(f)` bestimmt. Ein anderer `gamma`-Wert
+verschiebt daher weder `B_res` noch die Linienbreite `μ0ΔH`.
 
 Beispiel für ein engeres beziehungsweise weiteres Fenster:
 

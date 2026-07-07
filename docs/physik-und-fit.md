@@ -1,4 +1,4 @@
-# Physik und Fit
+# Physikalisches Modell und Fit
 
 Dieses Kapitel fasst die physikalischen Modelle zusammen, auf denen die Auswertung
 beruht, und beschreibt das Anpassungsverfahren. Die Korrektheit der Modellfunktionen
@@ -19,6 +19,11 @@ ist zu vermeiden. Die physikalischen Konstanten sind in
 
 Für `g = 2` ergibt sich `γ ≈ 1,7588·10¹¹ rad/(s·T)`. Der Standardwert
 `GAMMA_STANDARD` ist hieraus vorberechnet.
+
+Dieses feste `γ` ist ein Startwert für den Einzelfit (Fensterlage und
+Anfangsschätzung der Dämpfung), nicht das Auswertungsergebnis. Das Resonanzfeld
+`B_res` jeder Frequenz wird frei gefittet und ist von `γ` unabhängig; der g-Faktor
+folgt erst aus der Kittel-Anpassung an die Dispersion `B_res(f)` (siehe unten).
 
 ## Resonanzbedingung (Kittel)
 

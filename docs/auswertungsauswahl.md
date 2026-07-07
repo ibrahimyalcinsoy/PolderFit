@@ -1,10 +1,10 @@
-# Auswertungsauswahl: Jumper & Bereiche
+# Auswertungsauswahl: Bereiche und Frequenzauswahl
 
 Vor **jeder** Stapelauswertung (Auto-Fit sowie Auto-Fit mit vorgegebener
 Resonanz) fragt PolderFit den Auswertungsbereich ab — Dialog
 „Auswertungsbereich & Jumper" (`polderfit/gui/auswahl_dialog.py`, Kernlogik in
 `polderfit/fit/auswahl.py`). Die zuletzt benutzte Auswahl ist vorbelegt; mit den
-Standardwerten wird schlicht **alles** ausgewertet.
+Standardwerten wird der gesamte Datensatz ausgewertet.
 
 ## Nur jeden n-ten Messpunkt („Jumper")
 
@@ -24,13 +24,13 @@ Getrennt einstellbar für beide Achsen:
   Feldachse parallele Abschnitt bei 3–5 GHz in Out-of-plane-Dünnschicht-
   Messungen.
 
-Reihenfolge der Anwendung (bewusst): **erst** Bereichsfenster und
-Ausschlüsse, **dann** jeder n-te der verbleibenden Linescans — so bleibt die
-Schrittweite auch neben einem Ausschlussband konstant.
+Reihenfolge der Anwendung: zuerst Bereichsfenster und Ausschlüsse, dann jeder n-te
+der verbleibenden Linescans. So bleibt die Schrittweite auch neben einem
+Ausschlussband konstant.
 
-Die Live-Zusammenfassung im Dialog zeigt sofort, wie viele Linescans und
-Feldpunkte übrig bleiben; bei leerer Auswahl, weniger als 4 Feldpunkten oder
-unlesbaren Ausschluss-Angaben ist „Auswertung starten" gesperrt.
+Die Zusammenfassung im Dialog zeigt fortlaufend, wie viele Linescans und Feldpunkte
+übrig bleiben; bei leerer Auswahl, weniger als 4 Feldpunkten oder unlesbaren
+Ausschluss-Angaben ist „Auswertung starten" gesperrt.
 
 ## Was intern passiert
 

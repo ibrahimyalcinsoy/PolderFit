@@ -1,4 +1,4 @@
-# Verarbeitung des Farbplots (derivative divide & Co.)
+# Verarbeitung des Farbplots
 
 Der Farbplot zeigt standardmäßig nicht mehr das rohe |S21|, sondern das
 Ergebnis einer **Verarbeitungskette** (`polderfit/verarbeitung/`), die aus dem
@@ -11,7 +11,7 @@ liegenden Paper abgeglichen wurde:
 > [doi:10.1063/1.5045135](https://doi.org/10.1063/1.5045135) —
 > im Folgenden **[MF18]**.
 
-## Warum überhaupt verarbeiten?
+## Zweck der Verarbeitung
 
 Das gemessene S21 ist ([MF18] Gl. (3))
 
@@ -19,12 +19,11 @@ Das gemessene S21 ist ([MF18] Gl. (3))
 S21(ω, H₀) = ( −i·ω·A·V₀·χ(ω, H₀) + V₀ᴮᴳ(ω) ) / Vᵢ · e^(iφ)
 ```
 
-Der frequenzabhängige Untergrund `V₀ᴮᴳ(ω)` (Transmission des Aufbaus) und
-die Phase `e^(iφ)` (elektrische Länge) sind meist **um Größenordnungen
-stärker** als das Resonanzsignal `χ` — im rohen Farbplot ist die Mode deshalb
-oft unsichtbar. Die Kette entfernt beides **ohne Mikrowellen-Kalibrierung**;
-danach ist die Mode als Gerade (Kittel-Dispersion, typisch von links unten
-nach rechts oben) mit dem Auge erkennbar.
+Der frequenzabhängige Untergrund `V₀ᴮᴳ(ω)` (Transmission des Aufbaus) und die Phase
+`e^(iφ)` (elektrische Länge) übersteigen das Resonanzsignal `χ` meist um mehrere
+Größenordnungen; im rohen Farbplot bleibt die Mode dadurch oft unsichtbar. Die
+Verarbeitungskette entfernt beides ohne Mikrowellen-Kalibrierung, sodass die Mode als
+Kittel-Dispersion (typisch von links unten nach rechts oben) sichtbar wird.
 
 ## Die drei Operationen (Reihenfolge der Kette)
 
@@ -61,9 +60,8 @@ Differenz wirkt wie eine Feldmodulation mit Amplitude ΔH. Parameter:
 
 Für **quantitative Fits** auf dd-verarbeiteten Daten ist bei großem Δn die
 Verzerrung der Linienform über [MF18] Gl. (5) (Differenzenquotient von χ mit
-bekanntem Δω± = ΔH·γ·µ₀) zu berücksichtigen — der Linescan-Fit von PolderFit
-läuft derzeit bewusst auf dem **rohen** S21, die Kette dient der
-Visualisierung.
+bekanntem Δω± = ΔH·γ·µ₀) zu berücksichtigen. Der Linescan-Fit von PolderFit
+arbeitet auf dem rohen S21; die Verarbeitungskette dient der Visualisierung.
 
 ### 3 · relation-amplitude — Nachbar-Slice-Division
 
@@ -75,18 +73,16 @@ gegen Auflösung.
 
 ## Bedienung (GUI)
 
-Das Dock **„Verarbeitung (Farbplot)"** (links, über den Toolbar-Knopf
-*Verarbeitung* ein-/ausblendbar) zeigt die drei Schritte als abhakbare
-Gruppen plus die **Anzeige**-Wahl (Betrag, dB, Real-, Imaginärteil, Phase).
-Jede Änderung wird sofort angewendet — die Kette rechnet immer auf der
-gecachten komplexen **Rohmatrix**, nie auf bereits verarbeiteten Daten.
-Zoom, Resonanz-Overlay und Frequenzmarkierung bleiben erhalten.
+Das Dock „Verarbeitung (Farbplot)" (Menü *Ansicht → Panel: Verarbeitung*) zeigt die
+drei Schritte als abhakbare Gruppen sowie die Anzeige-Wahl (Betrag, dB, Real-,
+Imaginärteil, Phase). Jede Änderung wird unmittelbar angewendet; die Kette rechnet
+stets auf der zwischengespeicherten komplexen Rohmatrix, nie auf bereits
+verarbeiteten Daten. Zoom, Resonanz-Overlay und Frequenzmarkierung bleiben erhalten.
 „Alles aus (Rohdaten |S21|)" schaltet zurück auf die unverarbeitete Ansicht.
 
-Standard nach dem Laden: **derivative-divide aktiv** (Δn = 4, mitteln), wie
-die pybbfmr-Loader — damit ist die Mode sofort sichtbar. Die Farbskala nutzt
-robuste Perzentile (2 %–98 %), damit einzelne Ausreißer die Skala nicht
-dominieren.
+Standard nach dem Laden: derivative-divide aktiv (Δn = 4, mitteln), entsprechend den
+pybbfmr-Loadern; damit ist die Mode direkt sichtbar. Die Farbskala nutzt robuste
+Perzentile (2 %–98 %), damit einzelne Ausreißer die Skala nicht dominieren.
 
 ## Skript-Nutzung
 
