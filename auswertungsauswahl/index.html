@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Auswertungsauswahl (Bereiche und Frequenzauswahl) - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Auswertungsauswahl (Bereiche und Frequenzauswahl)";
+        var mkdocs_page_input_path = "auswertungsauswahl.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#nur-jeden-n-ten-messpunkt-jumper">Nur jeden n-ten Messpunkt („Jumper")</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#auszuwertender-bereich">Auszuwertender Bereich</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#was-intern-passiert">Was intern passiert</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Auswertungsauswahl (Bereiche und Frequenzauswahl)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="auswertungsauswahl-bereiche-und-frequenzauswahl">Auswertungsauswahl: Bereiche und Frequenzauswahl<a class="headerlink" href="#auswertungsauswahl-bereiche-und-frequenzauswahl" title="Permanent link">&para;</a></h1>
+<p>Vor <strong>jeder</strong> Stapelauswertung (Auto-Fit sowie Auto-Fit mit vorgegebener
+Resonanz) fragt PolderFit den Auswertungsbereich ab — Dialog
+„Auswertungsbereich &amp; Jumper" (<code>polderfit/gui/auswahl_dialog.py</code>, Kernlogik in
+<code>polderfit/fit/auswahl.py</code>). Die zuletzt benutzte Auswahl ist vorbelegt; mit den
+Standardwerten wird der gesamte Datensatz ausgewertet.</p>
+<h2 id="nur-jeden-n-ten-messpunkt-jumper">Nur jeden n-ten Messpunkt („Jumper")<a class="headerlink" href="#nur-jeden-n-ten-messpunkt-jumper" title="Permanent link">&para;</a></h2>
+<p>Getrennt einstellbar für beide Achsen:</p>
+<table>
+<thead>
+<tr>
+<th>Einstellung</th>
+<th>Wirkung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Frequenzachse — jeder n-te Linescan</strong></td>
+<td>Es wird nur jeder n-te Frequenz-Linescan gefittet (z. B. n = 10, 20, 30). Beschleunigt die Auswertung großer Maps entsprechend.</td>
+</tr>
+<tr>
+<td><strong>Feldachse — jeder n-te Punkt</strong></td>
+<td>Innerhalb jedes Linescans geht nur jeder n-te Feldpunkt in Fenstersuche und Fit.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="auszuwertender-bereich">Auszuwertender Bereich<a class="headerlink" href="#auszuwertender-bereich" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Frequenz von/bis</strong> und <strong>Feld von/bis</strong> grenzen die Auswertung ein
+  (volle Spanne = keine Einschränkung).</li>
+<li><strong>Frequenz-Ausschlüsse</strong>: Bänder, die <em>nicht</em> ausgewertet werden — als
+  Text <code>3-5; 10.2-11</code> (GHz, mehrere mit <code>;</code>). Typischer Fall: der zur
+  Feldachse parallele Abschnitt bei 3–5 GHz in Out-of-plane-Dünnschicht-
+  Messungen.</li>
+</ul>
+<p>Reihenfolge der Anwendung: zuerst Bereichsfenster und Ausschlüsse, dann jeder n-te
+der verbleibenden Linescans. So bleibt die Schrittweite auch neben einem
+Ausschlussband konstant.</p>
+<p>Die Zusammenfassung im Dialog zeigt fortlaufend, wie viele Linescans und Feldpunkte
+übrig bleiben; bei leerer Auswahl, weniger als 4 Feldpunkten oder unlesbaren
+Ausschluss-Angaben ist „Auswertung starten" gesperrt.</p>
+<h2 id="was-intern-passiert">Was intern passiert<a class="headerlink" href="#was-intern-passiert" title="Permanent link">&para;</a></h2>
+<p>Die Auswahl erzeugt einen <strong>reduzierten</strong> <code>Messdatensatz</code>; AutoWindows, Fits,
+Kittel/LLG und Export arbeiten unverändert darauf. Nachvollziehbarkeit über
+<code>meta</code>:</p>
+<pre><code class="language-python">from polderfit.fit import Auswertungsauswahl, fitte_alle
+
+auswahl = Auswertungsauswahl(
+    n_frequenz=10, n_feld=2,
+    frequenz_ausschluss=[(3e9, 5e9)],       # Hz
+    feld_min_t=2.0, feld_max_t=4.5,
+)
+stapel = fitte_alle(datensatz, auswahl=auswahl)
+stapel.datensatz.meta[&quot;quell_indizes&quot;]        # welche Original-Linescans
+stapel.datensatz.meta[&quot;auswertungsauswahl&quot;]   # die Auswahl (JSON-faehig)
+</code></pre>
+<p>Ein Dispersions-Seed (<code>zentren</code>) wird deckungsgleich mitreduziert.</p>
+<p>Der <strong>Farbplot zeigt weiterhin die volle Messung</strong>; die Zuordnung zwischen
+Übersicht und (eventuell reduziertem) Fit-Stapel läuft wertbasiert über die
+Frequenz — ein Klick springt zum wertmäßig nächstgelegenen Fit. Ein erneuter
+Auto-Fit startet immer wieder vom vollen Datensatz, die Auswahl ist also
+jederzeit revidierbar.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../verarbeitung/" class="btn btn-neutral float-left" title="Verarbeitung des Farbplots"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../interaktives-fitten/" class="btn btn-neutral float-right" title="Interaktives Fitten">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../verarbeitung/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../interaktives-fitten/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

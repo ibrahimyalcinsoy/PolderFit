@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>AutoWindow im Detail - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "AutoWindow im Detail";
+        var mkdocs_page_input_path = "autowindow.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">AutoWindow im Detail</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#problemstellung">Problemstellung</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#physikalische-grundlage-glatte-wandernde-dispersion">Physikalische Grundlage: glatte, wandernde Dispersion</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#verfahren">Verfahren</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#schritt-1-untergrundabzug-je-linescan">Schritt 1 – Untergrundabzug je Linescan</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#schritt-2-abzug-des-feldstationaren-untergrunds">Schritt 2 – Abzug des feldstationären Untergrunds</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#schritt-3-lokaler-resonanzkandidat">Schritt 3 – Lokaler Resonanzkandidat</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#schritt-4-glatte-lokale-trasse">Schritt 4 – Glatte lokale Trasse</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#schritt-5-fenstermitte-und-fensterbreite">Schritt 5 – Fenstermitte und Fensterbreite</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vorgabe-der-dispersion-durch-die-anwendung">Vorgabe der Dispersion durch die Anwendung</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#einzel-linescan-variante">Einzel-Linescan-Variante</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#grenzen-des-verfahrens">Grenzen des Verfahrens</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">AutoWindow im Detail</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="autowindow-im-detail">AutoWindow im Detail<a class="headerlink" href="#autowindow-im-detail" title="Permanent link">&para;</a></h1>
+<p>Das AutoWindow bestimmt für jeden Linescan automatisch das Feldfenster, das in den
+Fit eingeht. Es ist der für die Robustheit der Auswertung kritischste Schritt: Sitzt
+das Fenster falsch, liefert der Fit physikalisch unbrauchbare Werte, ohne dass das
+Programm zwingend einen Fehler meldet. Die Implementierung befindet sich in
+<code>polderfit/fit/autowindows.py</code>.</p>
+<h2 id="problemstellung">Problemstellung<a class="headerlink" href="#problemstellung" title="Permanent link">&para;</a></h2>
+<p>Die Resonanz ist häufig nur eine schmale, schwache Struktur auf einem starken, über
+den breiten Feld-Sweep gekrümmten Untergrund. Erschwerend kommen drei Effekte hinzu,
+die in realen Messreihen regelmäßig auftreten:</p>
+<ul>
+<li><strong>Resonanz nur bei starken Feldern.</strong> Bei tiefen Frequenzen liegt das Resonanzfeld
+  unter Umständen außerhalb des gemessenen Feldbereichs; in diesen Linescans ist
+  keine Resonanz vorhanden.</li>
+<li><strong>Feldstationäre Störfeatures.</strong> Periodische Untergrund-Ripples (etwa bei
+  Gitter-Proben) sowie apparative Artefakte erscheinen bei festen Feldwerten über
+  nahezu alle Frequenzen hinweg.</li>
+<li><strong>Messrauschen.</strong> Wie bei jeder physikalischen Messung sind die Messwerte mit
+  kleinen Störungen behaftet.</li>
+</ul>
+<p>Eine naive Suche nach dem stärksten Signal je Linescan verirrt sich an diesen
+Störungen. Das AutoWindow nutzt daher mehrere ineinandergreifende Schritte.</p>
+<h2 id="physikalische-grundlage-glatte-wandernde-dispersion">Physikalische Grundlage: glatte, wandernde Dispersion<a class="headerlink" href="#physikalische-grundlage-glatte-wandernde-dispersion" title="Permanent link">&para;</a></h2>
+<p>Die echte Resonanz <strong>wandert</strong> mit der Frequenz gemäß der Kittel-Dispersion (siehe
+<a href="../physik-und-fit/">Physik und Fit</a>). Das Resonanzfeld <code>B_res(f)</code> ist eine glatte,
+monoton steigende Funktion der Frequenz. Feldstationäre Störfeatures hingegen sitzen
+bei <strong>festen</strong> Feldwerten. Diese Unterscheidung – wandernd gegenüber stationär – ist
+das zentrale Kriterium, mit dem das AutoWindow die echte Resonanz von Störungen
+trennt.</p>
+<h2 id="verfahren">Verfahren<a class="headerlink" href="#verfahren" title="Permanent link">&para;</a></h2>
+<p>Die Bestimmung erfolgt in der Funktion <code>auto_fenster_alle</code> in fünf Schritten.</p>
+<h3 id="schritt-1-untergrundabzug-je-linescan">Schritt 1 – Untergrundabzug je Linescan<a class="headerlink" href="#schritt-1-untergrundabzug-je-linescan" title="Permanent link">&para;</a></h3>
+<p>Für jeden Linescan wird ein glattes Polynom an Real- und Imaginärteil von <code>S21</code>
+angepasst und abgezogen (<code>_detrend_residuum</code>). Der Polynomgrad ist an die Feldbreite
+gekoppelt (etwa ein Grad je 0,5 T, begrenzt auf 2 bis 6). Übrig bleibt das Residuum
+<code>|S21 − Untergrund|</code>, in dem die Resonanz als lokale Abweichung hervortritt. Ein rein
+linearer Untergrundabzug genügt nicht, da das größte Residuum dann an der stärksten
+Krümmung des Untergrunds läge, nicht an der Resonanz.</p>
+<h3 id="schritt-2-abzug-des-feldstationaren-untergrunds">Schritt 2 – Abzug des feldstationären Untergrunds<a class="headerlink" href="#schritt-2-abzug-des-feldstationaren-untergrunds" title="Permanent link">&para;</a></h3>
+<p>Liegt ein gemeinsames Feldgitter vor – dies ist bei unsortierten Daten der Fall, da
+jeder Linescan dieselbe Feldachse besitzt –, wird zusätzlich der feldstationäre
+Anteil entfernt (<code>_stationaeren_untergrund_abziehen</code>):</p>
+<pre><code>stationaer[B] = Median über alle Frequenzen des Residuums bei Feld B
+bereinigt[f, B] = max(0,  Residuum[f, B] − stationaer[B])
+</code></pre>
+<p>Da die Resonanz mit der Frequenz wandert, trägt sie bei einem festen Feldwert <code>B</code>
+nur für wenige Frequenzen bei; der Median über die Frequenzachse schätzt somit den
+stationären Untergrund. Nach dessen Abzug verbleibt im Wesentlichen die wandernde
+Resonanz. Auf einem repräsentativen Gitter-Datensatz steigt der Anteil korrekt
+detektierter Einzelresonanzen durch diesen Schritt von etwa 87 % auf 95 %.</p>
+<h3 id="schritt-3-lokaler-resonanzkandidat">Schritt 3 – Lokaler Resonanzkandidat<a class="headerlink" href="#schritt-3-lokaler-resonanzkandidat" title="Permanent link">&para;</a></h3>
+<p>Aus dem bereinigten Residuum wird je Linescan der Ort des Maximums als
+Resonanzkandidat <code>B_res</code> bestimmt, zusammen mit einer robusten Prominenz in
+Einheiten der medianabsoluten Abweichung (<code>_kandidat</code>). Die Prominenz quantifiziert,
+wie deutlich sich der Kandidat vom lokalen Untergrund abhebt; sie dient als Maß für
+die Verlässlichkeit der Einzeldetektion.</p>
+<h3 id="schritt-4-glatte-lokale-trasse">Schritt 4 – Glatte lokale Trasse<a class="headerlink" href="#schritt-4-glatte-lokale-trasse" title="Permanent link">&para;</a></h3>
+<p>Über die <strong>prominenten</strong> Kandidaten wird eine glatte Trasse <code>B_res(f)</code> gelegt
+(<code>_glatte_lokale_trasse</code>). Verwendet wird eine <strong>gleitende robuste Gerade</strong>: in einem
+um jede Frequenz zentrierten Fenster wird eine Gerade an die prominenten Kandidaten
+angepasst (mit einer Ausreißerverwerfung über die medianabsolute Abweichung) und der
+Wert an der betreffenden Frequenz vorhergesagt.</p>
+<p>Die gleitende Gerade folgt der lokalen Steigung der Dispersion und damit auch einer
+rasch mit der Frequenz wandernden Resonanz; zugleich unterdrückt sie einzelne
+Ausreißer-Kandidaten, die in einem Linescan auf ein Störfeature gesprungen sind.</p>
+<div class="admonition note">
+<p class="admonition-title">Warum keine globale Polynomanpassung</p>
+<p>Ein einzelnes Polynom niedrigen Grades über den gesamten Frequenzbereich ist
+anfällig gegen Hebelpunkte: Fehldetektionen bei tiefen Frequenzen ohne Resonanz
+(Feldstationäre Artefakte am Feldrand) verbiegen die Anpassung global und
+verschieben die Fenstermitte auch dort, wo die Einzeldetektion korrekt war. Die
+gleitende Gerade ist gegen diesen Effekt unempfindlich. Eine globale Trasse wird
+nur noch als Rückfallebene verwendet, falls zu wenige prominente Kandidaten für
+eine lokale Anpassung vorliegen.</p>
+</div>
+<h3 id="schritt-5-fenstermitte-und-fensterbreite">Schritt 5 – Fenstermitte und Fensterbreite<a class="headerlink" href="#schritt-5-fenstermitte-und-fensterbreite" title="Permanent link">&para;</a></h3>
+<p>Je Linescan wird die Fenstermitte wie folgt festgelegt:</p>
+<ul>
+<li>Ist der lokale Kandidat <strong>prominent und mit der glatten Trasse konsistent</strong> (sein
+  Abstand zur Trasse unterschreitet eine Toleranz), so wird ihm vertraut. Die
+  Einzeldetektion ist nach dem Stationärabzug genauer als jede Glättung.</li>
+<li>Andernfalls (Ausreißer-Kandidat oder schwacher Linescan) wird die Fenstermitte an
+  der glatten Trasse ausgerichtet und auf einen nahegelegenen Residuum-Peak
+  verfeinert (<code>_verfeinere_zentrum</code>). Der begrenzte Suchradius verhindert ein
+  Abspringen auf weiter entfernte Störfeatures.</li>
+</ul>
+<p>Die Fensterbreite ist an die lokale Halbwertsbreite des Residuum-Peaks gekoppelt
+(<code>_fenster_um</code>), nach unten durch den Punktabstand und nach oben durch <code>_HALB_MAX</code>
+(0,4 T) begrenzt. Letzteres schützt gegen Ausreißer der Linienbreiten-Schätzung bei
+schwachen oder verrauschten Resonanzen.</p>
+<h2 id="vorgabe-der-dispersion-durch-die-anwendung">Vorgabe der Dispersion durch die Anwendung<a class="headerlink" href="#vorgabe-der-dispersion-durch-die-anwendung" title="Permanent link">&para;</a></h2>
+<p>Bleibt die Automatik an einem festen Störfeature hängen, kann die Resonanz-Dispersion
+manuell vorgegeben werden (<code>fenster_aus_trasse</code>). In der grafischen Oberfläche
+geschieht dies über zwei Klicks in der Übersicht, aus denen eine Kittel-Gerade
+abgeleitet wird; die Fenster folgen dann dieser Vorgabe mit eng an die erwartete
+Linienbreite gekoppelter Breite.</p>
+<h2 id="einzel-linescan-variante">Einzel-Linescan-Variante<a class="headerlink" href="#einzel-linescan-variante" title="Permanent link">&para;</a></h2>
+<p>Für die Bestimmung eines Fensters aus einem einzelnen Linescan ohne globale Trasse
+steht <code>auto_fenster</code> bereit. Für ganze Datensätze ist <code>auto_fenster_alle</code> vorzuziehen,
+da nur dort die globale Information über die Dispersion und der Stationärabzug
+genutzt werden.</p>
+<h2 id="grenzen-des-verfahrens">Grenzen des Verfahrens<a class="headerlink" href="#grenzen-des-verfahrens" title="Permanent link">&para;</a></h2>
+<p>In bestimmten Datenklassen ist in den Rohdaten keine Resonanz zuverlässig
+lokalisierbar; das Verfahren kann dann kein korrektes Fenster liefern. Dies betrifft
+insbesondere:</p>
+<ul>
+<li>Messungen nahe der In-plane-Geometrie mit sehr schwachem Signal,</li>
+<li>antiferromagnetische Proben (z. B. CrSBr), deren Resonanz nicht der Kittel-Form
+  folgt,</li>
+<li>Datensätze mit dominanten, stationären Hochfeld-Artefakten.</li>
+</ul>
+<p>Solche Fälle werden in der Robustheitsprüfung offen ausgewiesen (siehe
+<a href="../test-harness/">Robustheits-Harness</a>). Eine Diskussion der einstellbaren Parameter
+des AutoWindow findet sich im Kapitel <a href="../tuning/">Tuning</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../pipeline/" class="btn btn-neutral float-left" title="Ablauf der Auswertung"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../physik-und-fit/" class="btn btn-neutral float-right" title="Physikalisches Modell und Fit">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../pipeline/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../physik-und-fit/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

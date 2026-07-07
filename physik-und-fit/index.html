@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Physikalisches Modell und Fit - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Physikalisches Modell und Fit";
+        var mkdocs_page_input_path = "physik-und-fit.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Physikalisches Modell und Fit</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#einheitenkonvention">Einheitenkonvention</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#resonanzbedingung-kittel">Resonanzbedingung (Kittel)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#linienbreite-und-gilbert-dampfung">Linienbreite und Gilbert-Dämpfung</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modellfunktion-des-einzel-fits">Modellfunktion des Einzel-Fits</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#anpassungsverfahren">Anpassungsverfahren</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#startwerte">Startwerte</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gutemae">Gütemaße</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quellenzuordnung">Quellenzuordnung</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Physikalisches Modell und Fit</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="physikalisches-modell-und-fit">Physikalisches Modell und Fit<a class="headerlink" href="#physikalisches-modell-und-fit" title="Permanent link">&para;</a></h1>
+<p>Dieses Kapitel fasst die physikalischen Modelle zusammen, auf denen die Auswertung
+beruht, und beschreibt das Anpassungsverfahren. Die Korrektheit der Modellfunktionen
+wurde gegen die Quelldokumente verifiziert; die Zuordnung ist am Ende des Kapitels
+angegeben.</p>
+<h2 id="einheitenkonvention">Einheitenkonvention<a class="headerlink" href="#einheitenkonvention" title="Permanent link">&para;</a></h2>
+<p>Sämtliche Magnetfelder werden konsequent als <code>μ0·H</code> in Tesla geführt (<code>μ0H0</code> als
+äußeres Feld, <code>μ0Meff</code> als effektive Magnetisierung). Das gyromagnetische Verhältnis
+<code>γ</code> ist in rad/(s·T) angegeben. Eine Vermischung von <code>H</code> (in A/m) mit <code>μ0H</code> (in T)
+ist zu vermeiden. Die physikalischen Konstanten sind in
+<code>polderfit/physik/konstanten.py</code> definiert:</p>
+<pre><code>γ = g · μ_B / ħ            (gamma_aus_g)
+</code></pre>
+<p>Für <code>g = 2</code> ergibt sich <code>γ ≈ 1,7588·10¹¹ rad/(s·T)</code>. Der Standardwert
+<code>GAMMA_STANDARD</code> ist hieraus vorberechnet.</p>
+<p>Dieses feste <code>γ</code> ist ein Startwert für den Einzelfit (Fensterlage und
+Anfangsschätzung der Dämpfung), nicht das Auswertungsergebnis. Das Resonanzfeld
+<code>B_res</code> jeder Frequenz wird frei gefittet und ist von <code>γ</code> unabhängig; der g-Faktor
+folgt erst aus der Kittel-Anpassung an die Dispersion <code>B_res(f)</code> (siehe unten).</p>
+<h2 id="resonanzbedingung-kittel">Resonanzbedingung (Kittel)<a class="headerlink" href="#resonanzbedingung-kittel" title="Permanent link">&para;</a></h2>
+<p>Das Resonanzfeld hängt über die Kittel-Gleichungen von der Frequenz ab. Die
+Auswertung verwendet je nach Geometrie (<code>polderfit/physik/kittel_llg.py</code>):</p>
+<p>Senkrechte Anisotropie / Out-of-plane (oop):</p>
+<pre><code>f = (γ / 2π) · (μ0H0 − μ0Meff)
+</code></pre>
+<p>In-plane (ip):</p>
+<pre><code>f = (γ / 2π) · √[ (μ0H0 + μ0Hu) · (μ0H0 + μ0Hu + μ0Meff) ]
+</code></pre>
+<p>Hieraus werden durch Anpassung an die gemessenen Wertepaare <code>(f, B_res)</code> die
+effektive Magnetisierung <code>μ0Meff</code> und – bei freigegebenem Parameter – der g-Faktor
+bestimmt (<code>fit_kittel_oop</code>, <code>fit_kittel_ip</code>).</p>
+<h2 id="linienbreite-und-gilbert-dampfung">Linienbreite und Gilbert-Dämpfung<a class="headerlink" href="#linienbreite-und-gilbert-dampfung" title="Permanent link">&para;</a></h2>
+<p>Die frequenzabhängige Linienbreite folgt im LLG-Bild einer Geraden:</p>
+<pre><code>μ0ΔH(f) = μ0ΔH_inh + (4π / γ) · α · f
+</code></pre>
+<p>Dabei ist <code>μ0ΔH_inh</code> die inhomogene (frequenzunabhängige) Verbreiterung und <code>α</code> die
+Gilbert-Dämpfung. Aus der Steigung der Geraden <code>μ0ΔH(f)</code> wird <code>α</code> bestimmt
+(<code>fit_linienbreite</code>).</p>
+<h2 id="modellfunktion-des-einzel-fits">Modellfunktion des Einzel-Fits<a class="headerlink" href="#modellfunktion-des-einzel-fits" title="Permanent link">&para;</a></h2>
+<p>Der Einzel-Fit eines Linescans passt das komplexe Transmissionssignal an
+(<code>polderfit/physik/fitmodell.py</code>):</p>
+<pre><code>S21(B) = A · exp(i·φ) · χ(B; B_res, α, ω, γ)  +  Untergrund(B)
+</code></pre>
+<p>mit der Anregungskreisfrequenz <code>ω = 2π·f</code>. Der Untergrund wird als komplexe,
+feldabhängige Gerade modelliert (Offset und Steigung getrennt für Real- und
+Imaginärteil), um die dominierende Untergrund-Rampe abzubilden. Der Vorfaktor
+<code>A·exp(i·φ)</code> erfasst Amplitude und Phasenlage des Resonanzbeitrags.</p>
+<p>Die Suszeptibilität <code>χ</code> (<code>polderfit/physik/suszeptibilitaet.py</code>) ist als
+Polder-Suszeptibilität implementiert. Der Einzel-Fit verwendet die
+Out-of-plane-Komponente <code>χ_oop</code>; die Umschaltung zwischen oop und ip greift in der
+übergreifenden Kittel-/LLG-Auswertung.</p>
+<h2 id="anpassungsverfahren">Anpassungsverfahren<a class="headerlink" href="#anpassungsverfahren" title="Permanent link">&para;</a></h2>
+<p>Der Fit erfolgt mit <code>lmfit</code> als nichtlineare Ausgleichsrechnung (Levenberg-Marquardt,
+<code>method="leastsq"</code>) und passt Real- und Imaginärteil simultan an
+(<code>fitte_linescan</code> in <code>polderfit/fit/linescan_fit.py</code>). Die freien Parameter sind:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Bedeutung</th>
+<th>Schranken</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>B_res</code></td>
+<td>Resonanzfeld</td>
+<td>innerhalb des Fitfensters (verbindlich)</td>
+</tr>
+<tr>
+<td><code>alpha</code></td>
+<td>Gilbert-Dämpfung</td>
+<td><code>[ALPHA_MIN, ALPHA_MAX]</code></td>
+</tr>
+<tr>
+<td><code>A</code></td>
+<td>Amplitude</td>
+<td>frei</td>
+</tr>
+<tr>
+<td><code>phi</code></td>
+<td>Phasenwinkel</td>
+<td><code>[PHI_MIN, PHI_MAX]</code></td>
+</tr>
+<tr>
+<td><code>off_re</code>, <code>off_im</code></td>
+<td>Untergrund-Offset (Re, Im)</td>
+<td>frei</td>
+</tr>
+<tr>
+<td><code>slope_re</code>, <code>slope_im</code></td>
+<td>Untergrund-Steigung (Re, Im)</td>
+<td>frei</td>
+</tr>
+</tbody>
+</table>
+<p>Die Bedingung, dass <code>B_res</code> im Fitfenster liegen muss, koppelt die Qualität des Fits
+unmittelbar an die korrekte Fensterwahl durch das <a href="../autowindow/">AutoWindow</a>.</p>
+<h3 id="startwerte">Startwerte<a class="headerlink" href="#startwerte" title="Permanent link">&para;</a></h3>
+<p>Werden keine Startwerte vorgegeben, schätzt <code>schaetze_startwerte</code> sie aus den Daten.
+Der Startwert für <code>α</code> wird aus der Halbwertsbreite des Absorptionssignals
+zurückgerechnet:</p>
+<pre><code>α_start = γ · μ0ΔH / (2·√3·ω)
+</code></pre>
+<p>Der Faktor <code>√3</code> ist wesentlich: <code>μ0ΔH</code> ist als Halbwertsbreite der Absorption <code>χ''</code>
+definiert, während der Betrag <code>|χ|</code> erst bei <code>x = ±√3</code> auf die Hälfte abfällt. Ohne
+diesen Faktor wäre der Startwert um etwa 73 % zu groß. Die konvergierten Werte sind
+gegenüber dieser Korrektur robust; betroffen sind Startwert und Fensterbreite.</p>
+<h2 id="gutemae">Gütemaße<a class="headerlink" href="#gutemae" title="Permanent link">&para;</a></h2>
+<p>Das primäre Gütemaß ist das <strong>normierte Residuum</strong> (<code>rmse_norm</code>): der quadratische
+Mittelwert der Anpassungsreste relativ zum Signalhub <strong>nach</strong> Abzug von Offset und
+feldabhängiger Steigung. Diese Normierung ist erforderlich, weil die Gesamtvarianz
+des Signals vom konstanten Offset und vom feldabhängigen Untergrund dominiert wird –
+eine nahezu gerade Linie erreicht andernfalls <code>R² ≈ 1</code>, obwohl sie die Resonanz
+ignoriert. Das Bestimmtheitsmaß <code>R²</code> wird daher nur nachrangig geführt.</p>
+<p>Als zusätzliche Kennzahl wird das reduzierte Chi-Quadrat berechnet. Die hierfür
+benötigte Rauschschätzung erfolgt fit-unabhängig aus den zweiten Differenzen der
+Messwerte (<code>_rausch_sigma</code>), die glatte Anteile (Offset, breite Resonanz)
+unterdrücken und vorwiegend das Messrauschen abbilden.</p>
+<h2 id="quellenzuordnung">Quellenzuordnung<a class="headerlink" href="#quellenzuordnung" title="Permanent link">&para;</a></h2>
+<p>Die Modellfunktionen wurden gegen folgende Quellen verifiziert:</p>
+<ol>
+<li><strong>Müller, M., Dissertation (2023), Kapitel 2</strong> – Kittel-Gleichungen (oop, ip) und
+   Linienbreite im LLG-Bild einschließlich aller Vorfaktoren.</li>
+<li><strong>Mathematica-Notebook</strong> <code>Chi_Fit_Functions_and_Inductances_2020-04-06.nb</code> –
+   Suszeptibilitäts- und S21-Fitfunktionen; das Programm portiert die exportierten
+   Ausdrücke zeichengenau.</li>
+<li><strong>Messprotokoll</strong> <code>Protokoll_FMR_Python_2026-05-08</code> – Anforderungen sowie die
+   inverse Suszeptibilität (Weiler, Gl. 2.7) als Quelle der Fitfunktionen. Die
+   implementierte <code>χ_oop</code> stimmt numerisch mit der Inversion dieser Matrix überein.</li>
+</ol>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../autowindow/" class="btn btn-neutral float-left" title="AutoWindow im Detail"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../bewertung/" class="btn btn-neutral float-right" title="Bewertung der Fits">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../autowindow/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../bewertung/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

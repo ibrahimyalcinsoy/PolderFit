@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="Wie der PolderFit-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Start";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Start</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#gegenstand-der-auswertung">Gegenstand der Auswertung</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#aufbau-der-auswertekette">Aufbau der Auswertekette</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modulubersicht">Modulübersicht</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#leitfaden">Leitfaden</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Start</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="polderfit-auswertung-breitbandiger-fmr-messungen">PolderFit – Auswertung breitbandiger FMR-Messungen<a class="headerlink" href="#polderfit-auswertung-breitbandiger-fmr-messungen" title="Permanent link">&para;</a></h1>
+<p>PolderFit dient der quantitativen Auswertung breitbandiger ferromagnetischer
+Resonanzmessungen (bbFMR, <em>broadband ferromagnetic resonance</em>). Die Dokumentation
+beschreibt den Aufbau des Programms, die zugrunde liegenden physikalischen Modelle,
+die Bedeutung der einstellbaren Parameter sowie das Vorgehen zur Fehlersuche. Sie
+richtet sich an Anwenderinnen und Anwender, die den Auswerteweg nachvollziehen, das
+Programm an eigene Messreihen anpassen oder Auffälligkeiten diagnostizieren möchten.</p>
+<h2 id="gegenstand-der-auswertung">Gegenstand der Auswertung<a class="headerlink" href="#gegenstand-der-auswertung" title="Permanent link">&para;</a></h2>
+<p>Bei einer FMR-Messung wird eine magnetische Probe einem äußeren Magnetfeld
+ausgesetzt und mit Mikrowellen variabler Frequenz durchstrahlt. Bei einer
+materialspezifischen Kombination aus Anregungsfrequenz und Magnetfeld absorbiert die
+Probe resonant Energie. Aus der Lage des Resonanzfeldes als Funktion der Frequenz,
+<code>B_res(f)</code>, sowie aus der frequenzabhängigen Linienbreite lassen sich die effektive
+Magnetisierung <code>μ0Meff</code>, der Landé-Faktor <code>g</code> und die Gilbert-Dämpfung <code>α</code>
+bestimmen.</p>
+<p>Die Eingangsdaten liegen als TDMS-Dateien des Messprogramms vor; PolderFit überführt
+sie in physikalische Kenngrößen, Diagramme und tabellarische Exporte.</p>
+<div class="admonition note">
+<p class="admonition-title">Begriffe</p>
+<ul>
+<li><strong>Linescan</strong>: ein Feld-Sweep bei fester Anregungsfrequenz. Das komplexe
+  Transmissionssignal <code>S21</code> wird als Funktion des Magnetfeldes erfasst.</li>
+<li><strong><code>S21</code></strong>: komplexer Streuparameter (Real- und Imaginärteil) des Durchgangs.</li>
+<li><strong>Resonanzfeld <code>B_res</code></strong>: Magnetfeld, bei dem die Resonanzbedingung erfüllt ist.</li>
+<li><strong>Fenster (window)</strong>: der Feldausschnitt um die Resonanz, der in den Fit eingeht.</li>
+<li><strong>Fit</strong>: nichtlineare Anpassung der Modellfunktion an die Messpunkte.</li>
+</ul>
+</div>
+<h2 id="aufbau-der-auswertekette">Aufbau der Auswertekette<a class="headerlink" href="#aufbau-der-auswertekette" title="Permanent link">&para;</a></h2>
+<p>Die Auswertung erfolgt in einer festen Abfolge von Verarbeitungsschritten. Jeder
+Schritt ist einem Modul zugeordnet:</p>
+<pre><code>   TDMS-Datei
+       │   polderfit/io/tdms_laden.py
+       ▼
+  [1] Laden und Formaterkennung
+       │   Ergebnis: Liste von Linescans (ein Feld-Sweep je Frequenz)
+       ▼
+  [2] AutoWindow                  polderfit/fit/autowindows.py
+       │   Bestimmung des Resonanzfeldes und des Fitfensters je Frequenz
+       ▼
+  [3] Beschneiden
+       │   Reduktion des Linescans auf das Fenster
+       ▼
+  [4] Einzel-Fit                  polderfit/fit/linescan_fit.py
+       │   Anpassung der Suszeptibilitäts-Modellfunktion → B_res, α, …
+       ▼
+  [5] Bewertung                   polderfit/fit/kriterien.py
+       │   Einstufung des Fits als vertrauenswürdig oder problematisch
+       ▼
+  [6] Kittel- / LLG-Auswertung    polderfit/physik/kittel_llg.py
+       │   aus B_res(f) und Linienbreite(f): μ0Meff, g, α
+       ▼
+   Ergebnisse, Diagramme, Excel-Export
+</code></pre>
+<p>Die Schritte 2 bis 5 werden je Linescan, also je Frequenz, ausgeführt; die Schritte
+1 und 6 operieren auf dem gesamten Datensatz. Schritt 2 (AutoWindow) ist für die
+Zuverlässigkeit der Auswertung am kritischsten und wird in einem
+<a href="autowindow/">eigenen Kapitel</a> ausführlich behandelt.</p>
+<h2 id="modulubersicht">Modulübersicht<a class="headerlink" href="#modulubersicht" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Aufgabe</th>
+<th>Modul</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Laden der TDMS-Daten, Formaterkennung</td>
+<td><code>polderfit/io/tdms_laden.py</code></td>
+</tr>
+<tr>
+<td>interne Datenstruktur</td>
+<td><code>polderfit/io/datensatz.py</code></td>
+</tr>
+<tr>
+<td>Bestimmung der Resonanzfenster (AutoWindow)</td>
+<td><code>polderfit/fit/autowindows.py</code></td>
+</tr>
+<tr>
+<td>Einzel-Fit eines Linescans</td>
+<td><code>polderfit/fit/linescan_fit.py</code></td>
+</tr>
+<tr>
+<td>Bewertungskriterien und Schwellwerte</td>
+<td><code>polderfit/fit/kriterien.py</code></td>
+</tr>
+<tr>
+<td>Stapelverarbeitung aller Linescans, Ausreißer-Verwaltung</td>
+<td><code>polderfit/fit/batch.py</code></td>
+</tr>
+<tr>
+<td>Verarbeitungskette (divide slice, derivative divide, …)</td>
+<td><code>polderfit/verarbeitung/</code></td>
+</tr>
+<tr>
+<td>Übergreifende Auswertung und Publikationsplots</td>
+<td><code>polderfit/auswertung/</code></td>
+</tr>
+<tr>
+<td>Suszeptibilität und S21-Modell</td>
+<td><code>polderfit/physik/suszeptibilitaet.py</code>, <code>polderfit/physik/fitmodell.py</code></td>
+</tr>
+<tr>
+<td>Kittel- und Linienbreiten-Auswertung</td>
+<td><code>polderfit/physik/kittel_llg.py</code></td>
+</tr>
+<tr>
+<td>physikalische Konstanten</td>
+<td><code>polderfit/physik/konstanten.py</code></td>
+</tr>
+<tr>
+<td>grafische Oberfläche</td>
+<td><code>polderfit/gui/</code></td>
+</tr>
+<tr>
+<td>Export (Excel, Projektdateien)</td>
+<td><code>polderfit/persistenz/</code></td>
+</tr>
+<tr>
+<td>Robustheitsprüfung über reale Daten</td>
+<td><code>tests/autowindow_runner.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="leitfaden">Leitfaden<a class="headerlink" href="#leitfaden" title="Permanent link">&para;</a></h2>
+<p>Für einen Einstieg empfiehlt sich die Reihenfolge <a href="installation/">Installation und
+Start</a>, <a href="datenformate/">Messdaten</a> und <a href="pipeline/">Ablauf der
+Auswertung</a>. Das Kapitel <a href="autowindow/">AutoWindow im Detail</a>
+erläutert die Resonanzbestimmung; die physikalischen Modelle sind unter <a href="physik-und-fit/">Physik und
+Fit</a> zusammengefasst. Sämtliche einstellbaren Parameter sind im
+Kapitel <a href="tuning/">Tuning</a> gebündelt, typische Fehlerbilder im Kapitel
+<a href="troubleshooting/">Troubleshooting</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="installation/" class="btn btn-neutral float-right" title="Installation und Start">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="installation/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2026-07-07 12:40:24.316134+00:00
+-->

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Ausreißer und Projektdateien - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Ausrei\u00dfer und Projektdateien";
+        var mkdocs_page_input_path = "ausreisser.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Ausreißer und Projektdateien</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#zweck">Zweck</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bedienung">Bedienung</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#projekt-speichern-laden">Projekt speichern / laden</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Ausreißer und Projektdateien</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ausreier-management-und-projektdateien">Ausreißer-Management und Projektdateien<a class="headerlink" href="#ausreier-management-und-projektdateien" title="Permanent link">&para;</a></h1>
+<h2 id="zweck">Zweck<a class="headerlink" href="#zweck" title="Permanent link">&para;</a></h2>
+<p>Einzelne physikalisch sinnlose Fit-Punkte (in der Minderheit, etwa ein Fit auf einem
+Störsignal) verfälschen den linearen Kittel-Fit erheblich, bis hin zu negativer
+Steigung. Solche Punkte müssen sich schnell und reversibel aus der Auswertung nehmen
+lassen.</p>
+<h2 id="bedienung">Bedienung<a class="headerlink" href="#bedienung" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Menü <em>Fit → Ausreißer markieren</em> (Umschalter, auch in der Werkzeugleiste; erst
+   nach einem Auto-Fit). Das Ausreißer-Panel (rechts) erscheint automatisch.</li>
+<li>Im Farbplot: Punkt anklicken (nächstgelegener sichtbarer Fit-Punkt) oder Kasten
+   aufziehen (alle Punkte darin). Markierte Punkte werden aus der Darstellung und aus
+   allen übergreifenden Rechnungen entfernt: Kittel-/LLG-Fit, Publikationsplots und
+   Globalparameter des Excel-Exports. Der Modus bleibt aktiv, bis die Aktion erneut
+   ausgelöst wird; der Kasten-Zoom ist währenddessen ausgesetzt.</li>
+<li><strong>Ausreißer-Panel</strong>: Liste aller ausgeschlossenen Punkte (Index, Frequenz,
+   B_res) — einsehbar und editierbar:</li>
+<li><em>Wieder aufnehmen</em> (Auswahl) / <em>Alle wieder aufnehmen</em></li>
+<li><em>Rückgängig</em> — macht den jeweils letzten Schritt rückgängig
+     (Markieren wie Wiederaufnehmen, bis zu 50 Schritte).</li>
+</ol>
+<p>Die Einzelfits selbst bleiben unangetastet — ein Ausreißer-Ausschluss ist
+eine reine Auswertungsentscheidung und jederzeit reversibel.</p>
+<h2 id="projekt-speichern-laden">Projekt speichern / laden<a class="headerlink" href="#projekt-speichern-laden" title="Permanent link">&para;</a></h2>
+<p>Menü <em>Datei → Projekt speichern</em> sichert den kompletten Auswertungszustand als JSON
+(Format-Version 2, <code>polderfit/persistenz/projekt.py</code>):</p>
+<ul>
+<li>TDMS-Quelle, <strong>Kanal-Zuordnung</strong> und Mapping-Profilname,</li>
+<li>Auswertungsauswahl (Jumper/Bereiche),</li>
+<li>γ, R²-Schwelle, <strong>Fenstergrenzen je Frequenz</strong>,</li>
+<li><strong>Ausschlusszonen</strong> und <strong>Ausreißer-Markierungen</strong>,</li>
+<li>alle Fitparameter (zur Kontrolle/Archivierung).</li>
+</ul>
+<p><em>Datei → Projekt laden</em> stellt die Sitzung wieder her: Die TDMS-Datei wird über
+die gespeicherte Zuordnung neu gelesen (Rohdaten werden nie dupliziert),
+gegebenenfalls identisch reduziert, und alle Fits werden mit den
+gespeicherten Fenstern <strong>deterministisch neu gerechnet</strong> — anschließend sind
+Fenster, Zonen, Ausreißer und Bearbeitungsstand wieder exakt da, wo die
+Sitzung endete. Ist die Quelle nicht am gespeicherten Pfad (anderer Rechner),
+fragt das Programm nach dem Speicherort.</p>
+<pre><code class="language-python">from polderfit.persistenz import speichere_sitzung, lade_sitzung, stelle_stapel_wieder_her
+from polderfit.io import lade_tdms
+
+speichere_sitzung(stapel, &quot;sitzung.json&quot;)
+
+daten = lade_sitzung(&quot;sitzung.json&quot;)
+zuordnung = {rolle: tuple(paar) for rolle, paar in daten[&quot;zuordnung&quot;].items()}
+ds = lade_tdms(daten[&quot;quelle&quot;], zuordnung=zuordnung, layout=daten[&quot;format_typ&quot;])
+stapel = stelle_stapel_wieder_her(daten, ds)
+stapel.ausreisser            # [4, 17, ...]
+stapel.ergebnisse_aktiv()    # Eingabe fuer Kittel/LLG ohne Ausreisser
+</code></pre>
+<p>Projektdateien der Version 1 (vor dem Kanal-Mapping) werden weiterhin
+gelesen; die Zuordnung wird dann automatisch erkannt.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../interaktives-fitten/" class="btn btn-neutral float-left" title="Interaktives Fitten"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../pipeline/" class="btn btn-neutral float-right" title="Ablauf der Auswertung">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../interaktives-fitten/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../pipeline/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

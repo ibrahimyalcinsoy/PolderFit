@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Robustheitsprüfung über reale Messdaten - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Robustheitspr\u00fcfung \u00fcber reale Messdaten";
+        var mkdocs_page_input_path = "test-harness.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Robustheitsprüfung über reale Messdaten</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#statuskategorien">Statuskategorien</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validierungskriterium">Validierungskriterium</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#aufruf">Aufruf</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ausgaben">Ausgaben</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#zusammenfassung-des-letzten-laufs">Zusammenfassung des letzten Laufs</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Robustheitsprüfung über reale Messdaten</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="robustheitsprufung-uber-reale-messdaten">Robustheitsprüfung über reale Messdaten<a class="headerlink" href="#robustheitsprufung-uber-reale-messdaten" title="Permanent link">&para;</a></h1>
+<p>Das Robustheits-Harness (<code>tests/autowindow_runner.py</code>) prüft die automatische
+Fensterbestimmung über einen großen Bestand realer Messdateien. Ziel ist nicht der
+Fit selbst, sondern die Frage, ob das Fenster korrekt sitzt und – falls nicht – ob
+das Programm dies meldet. Ein still falsch gesetztes Fenster ist der eigentliche
+Fehlerfall.</p>
+<h2 id="statuskategorien">Statuskategorien<a class="headerlink" href="#statuskategorien" title="Permanent link">&para;</a></h2>
+<p>Jeder Linescan erhält einen Status:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Bedeutung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OK</code></td>
+<td>Fenster plausibel, Fit unauffällig</td>
+</tr>
+<tr>
+<td><code>WINDOW_FLAGGED</code></td>
+<td>Fensterproblem erkannt <strong>und</strong> vom Programm gemeldet (zulässig)</td>
+</tr>
+<tr>
+<td><code>WINDOW_FAIL</code></td>
+<td>Fensterproblem erkannt, aber <strong>nicht</strong> gemeldet (stiller Fehler)</td>
+</tr>
+<tr>
+<td><code>KEIN_ZIEL</code></td>
+<td>keine Resonanz im Feldbereich (kein Auswerteziel)</td>
+</tr>
+</tbody>
+</table>
+<p>Auf Dateiebene treten zusätzlich <code>CRASH</code>, <code>TIMEOUT</code> und <code>NICHT_FMR</code> auf.</p>
+<h2 id="validierungskriterium">Validierungskriterium<a class="headerlink" href="#validierungskriterium" title="Permanent link">&para;</a></h2>
+<p>Die Bewertung ist an <strong>objektive</strong> Ergebnisse gekoppelt und nicht an fragile
+Einzel-Linescan-Morphologie:</p>
+<ul>
+<li><strong>Ground Truth.</strong> Existiert zu einer Rohdatei eine sortierte Variante, muss die
+  Fenstermitte (mit Toleranz) im Feldband der sortierten Datei liegen. Dies ist das
+  objektivste Kriterium.</li>
+<li><strong>Fit-Qualität.</strong> Ein Fenster gilt nur dann als fehlerhaft, wenn es die Resonanz
+  objektiv verfehlt. Reine Formauffälligkeiten auf gut angepassten Fenstern werden
+  nicht als Fehler gewertet, um Fehlalarme zu vermeiden.</li>
+</ul>
+<p>Die Prüfung ist unabhängig vom AutoWindow-Algorithmus reimplementiert, damit die
+Validierung nicht zirkulär wird. Ein Selbsttest stellt sicher, dass absichtlich
+falsch gesetzte Fenster erkannt werden; das Kriterium besitzt damit nachweislich
+Trennschärfe.</p>
+<h2 id="aufruf">Aufruf<a class="headerlink" href="#aufruf" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">python tests/autowindow_runner.py            # vollständiger Lauf
+python tests/autowindow_runner.py --rerun-failed-only   # nur fehlerhafte erneut
+python tests/autowindow_runner.py --no-plots            # ohne Diagnose-Diagramme
+</code></pre>
+<p>Die Datenmenge wird unter <code>testdata/</code> erwartet (rekursiv, Ordnerstruktur je Probe).
+Der Lauf nutzt mehrere Prozesse parallel und bricht jede Datei nach einer harten
+Zeitgrenze von 90 s ab.</p>
+<h2 id="ausgaben">Ausgaben<a class="headerlink" href="#ausgaben" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>tests/autowindow_results.json</code> – persistente Ergebnisse je Datei (Status,
+  Fehlerklasse, gewähltes Fenster, gegebenenfalls Referenzband, Traceback).
+  Resümierbar über <code>--rerun-failed-only</code>.</li>
+<li><code>diag/</code> – Diagnose-Diagramme zu auffälligen Linescans (Signal, Fenster und, sofern
+  vorhanden, Referenzband).</li>
+<li>Abschlussbericht auf der Konsole mit Aufschlüsselung nach TDMS-Typ
+  (sortiert/unsortiert), nach Fehlerklasse und nach Probentyp.</li>
+</ul>
+<h2 id="zusammenfassung-des-letzten-laufs">Zusammenfassung des letzten Laufs<a class="headerlink" href="#zusammenfassung-des-letzten-laufs" title="Permanent link">&para;</a></h2>
+<p>Eine ausführliche Auswertung des vollständigen Datenbestands ist in
+<code>tests/AUTOWINDOW_ROBUSTHEIT_BERICHT.md</code> dokumentiert. Wesentliche Ergebnisse über
+286 Linescan-FMR-Dateien (rund 131 000 bewertbare Resonanzen):</p>
+<ul>
+<li>keine Abstürze mehr (zuvor 38, sämtlich durch unvollständige <code>_flush</code>-Dateien),</li>
+<li>Anteil unauffälliger oder korrekt gemeldeter Resonanzen 99,6 %,</li>
+<li>verbleibende stille Fehler 0,4 %, konzentriert auf Datenklassen, in denen in den
+  Rohdaten keine Resonanz zuverlässig lokalisierbar ist (nahe In-plane, sehr geringe
+  Signalstärke, antiferromagnetische Proben).</li>
+</ul>
+<p>Die sortierten Dateien weisen keine stillen Fehler auf.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../troubleshooting/" class="btn btn-neutral float-left" title="Fehlerdiagnose"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../troubleshooting/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

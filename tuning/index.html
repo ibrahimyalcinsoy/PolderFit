@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Parameter und Feineinstellung - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Parameter und Feineinstellung";
+        var mkdocs_page_input_path = "tuning.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Parameter und Feineinstellung</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#aufrufparameter">Aufrufparameter</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameter-des-autowindow">Parameter des AutoWindow</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameter-des-fits">Parameter des Fits</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bewertungsschwellen">Bewertungsschwellen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#empfehlungen-nach-probentyp">Empfehlungen nach Probentyp</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Parameter und Feineinstellung</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="parameter-und-feineinstellung">Parameter und Feineinstellung<a class="headerlink" href="#parameter-und-feineinstellung" title="Permanent link">&para;</a></h1>
+<p>Dieses Kapitel führt die einstellbaren Parameter der Auswertung an einer Stelle
+zusammen und beschreibt ihre Wirkung. Es richtet sich an Anwenderinnen und Anwender,
+die das Verhalten an eigene Proben oder Messbedingungen anpassen möchten.</p>
+<div class="admonition warning">
+<p class="admonition-title">Grundsatz</p>
+<p>Die Parameter sind physikalisch begründet voreingestellt. Anpassungen sollten
+gezielt und nachvollziehbar erfolgen. Insbesondere dürfen die Bewertungsschwellen
+(siehe <a href="../bewertung/">Bewertung der Fits</a>) nicht so verändert werden, dass
+schlechte Fenster als unauffällig durchgehen.</p>
+</div>
+<h2 id="aufrufparameter">Aufrufparameter<a class="headerlink" href="#aufrufparameter" title="Permanent link">&para;</a></h2>
+<p>Mehrere Größen lassen sich direkt beim Aufruf übergeben, ohne den Quelltext zu
+ändern (<code>fitte_alle</code> in <code>polderfit/fit/batch.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Standard</th>
+<th>Wirkung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gamma</code></td>
+<td><code>GAMMA_STANDARD</code></td>
+<td>gyromagnetisches Verhältnis (<code>g = 2</code>), nur Startwert für die Fensterschätzung; siehe Hinweis unten</td>
+</tr>
+<tr>
+<td><code>breite_faktor</code></td>
+<td><code>8.0</code></td>
+<td>Skaliert die Fensterbreite relativ zur geschätzten Linienbreite</td>
+</tr>
+<tr>
+<td><code>r2_schwelle</code></td>
+<td><code>0.9</code></td>
+<td>Schwelle für nachgelagerte R²-Auswertungen</td>
+</tr>
+<tr>
+<td><code>zentren</code></td>
+<td><code>None</code></td>
+<td>vorgegebene Fenstermitten <code>B_res(f)</code>; überspringt die Auto-Detektion</td>
+</tr>
+</tbody>
+</table>
+<p>Der Wert <code>gamma</code> legt <strong>nicht</strong> das Ergebnis fest: Er dient im Einzelfit nur der
+Startwert- und Fensterschätzung. Das Resonanzfeld <code>B_res</code> jeder Frequenz ist ein
+freier Fitparameter und hängt nicht vom vorgegebenen <code>gamma</code> ab. Der g-Faktor (und
+damit das tatsächliche gyromagnetische Verhältnis) wird erst in der übergreifenden
+Kittel-Auswertung aus der Dispersion <code>B_res(f)</code> bestimmt. Ein anderer <code>gamma</code>-Wert
+verschiebt daher weder <code>B_res</code> noch die Linienbreite <code>μ0ΔH</code>.</p>
+<p>Beispiel für ein engeres beziehungsweise weiteres Fenster:</p>
+<pre><code class="language-python">from polderfit.fit.batch import fitte_alle
+stapel = fitte_alle(datensatz, breite_faktor=5.0)   # engere Fenster
+</code></pre>
+<h2 id="parameter-des-autowindow">Parameter des AutoWindow<a class="headerlink" href="#parameter-des-autowindow" title="Permanent link">&para;</a></h2>
+<p>Die folgenden Konstanten in <code>polderfit/fit/autowindows.py</code> steuern die
+Fensterbestimmung:</p>
+<table>
+<thead>
+<tr>
+<th>Konstante</th>
+<th>Standard</th>
+<th>Wirkung</th>
+<th>Anpassung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_HALB_MAX</code></td>
+<td><code>0.4</code> T</td>
+<td>obere Grenze der halben Fensterbreite</td>
+<td>verkleinern bei generell schmalen Resonanzen; vergrößern bei sehr breiten</td>
+</tr>
+<tr>
+<td><code>_PROMINENZ_MIN</code></td>
+<td><code>4.0</code></td>
+<td>Mindest-Prominenz, ab der ein Kandidat als verlässlich gilt</td>
+<td>erhöhen bei verrauschten Daten (strengere Auswahl); senken bei sehr schwachen Resonanzen</td>
+</tr>
+</tbody>
+</table>
+<p>Weitere wirksame Größen sind innerhalb der Funktionen festgelegt:</p>
+<ul>
+<li><strong>Fenster der gleitenden Geraden</strong> (<code>_glatte_lokale_trasse</code>, Argument
+  <code>fenster_punkte</code>, Standard 31). Ein größeres Fenster glättet stärker und ist
+  robuster gegen Ausreißer, folgt aber einer rasch wandernden Dispersion träger.</li>
+<li><strong>Konsistenztoleranz und Suchradius</strong> in <code>auto_fenster_alle</code> (<code>tol</code>). Sie
+  bestimmen, ab welchem Abstand ein lokaler Kandidat als mit der Trasse inkonsistent
+  gilt und in welchem Umkreis die Verfeinerung einen Peak sucht. Der Wert ist an den
+  Punktabstand gekoppelt.</li>
+</ul>
+<h2 id="parameter-des-fits">Parameter des Fits<a class="headerlink" href="#parameter-des-fits" title="Permanent link">&para;</a></h2>
+<p>In <code>polderfit/fit/linescan_fit.py</code> und <code>polderfit/physik/fitmodell.py</code>:</p>
+<ul>
+<li>Die Parameterschranken (<code>B_res</code> im Fenster, <code>alpha</code>, <code>phi</code>) ergeben sich aus den
+  Konstanten in <code>polderfit/fit/kriterien.py</code> (siehe unten).</li>
+<li>Die Startwertschätzung (<code>schaetze_startwerte</code>) ist datengetrieben; bei
+  systematisch schwieriger Konvergenz können einzelne Linescans mit expliziten
+  Startwerten über <code>fitte_neu</code> erneut angepasst werden.</li>
+</ul>
+<h2 id="bewertungsschwellen">Bewertungsschwellen<a class="headerlink" href="#bewertungsschwellen" title="Permanent link">&para;</a></h2>
+<p>Die Schwellwerte der Einstufung sind in <code>polderfit/fit/kriterien.py</code> zusammengefasst und
+im Kapitel <a href="../bewertung/">Bewertung der Fits</a> tabelliert. Die für die Praxis
+relevantesten:</p>
+<ul>
+<li><code>RMSE_NORM_SCHWELLE</code> (<code>0.35</code>) – Grenze des normierten Residuums. Senken für eine
+  strengere, Erhöhen für eine nachsichtigere Einstufung.</li>
+<li><code>ALPHA_PLAUSIBEL_MAX</code> (<code>0.05</code>) – obere Plausibilitätsgrenze der Dämpfung.</li>
+<li><code>B_RES_REL_UNSICHERHEIT_MAX</code> (<code>0.02</code>) – maximale relative Unsicherheit des
+  Resonanzfeldes.</li>
+</ul>
+<h2 id="empfehlungen-nach-probentyp">Empfehlungen nach Probentyp<a class="headerlink" href="#empfehlungen-nach-probentyp" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Schmale Resonanzen, geringe Dämpfung</strong> (z. B. YIG): <code>_HALB_MAX</code> gegebenenfalls
+  reduzieren; die Einstufung „alpha an Grenze" ist hier zu erwarten, sofern die
+  Dämpfung an die untere Schranke stößt, und kein Hinweis auf einen Fehler.</li>
+<li><strong>Verrauschte oder schwache Signale</strong> (z. B. nahe In-plane): <code>_PROMINENZ_MIN</code>
+  erhöhen, um Fehldetektionen an Störfeatures zu vermeiden; bei nicht
+  lokalisierbarer Resonanz ist eine manuelle Dispersionsvorgabe (<code>zentren</code> /
+  <code>fenster_aus_trasse</code>) vorzuziehen.</li>
+<li><strong>Periodische Untergrundstruktur</strong> (z. B. Gitter-Proben): der feldstationäre
+  Untergrundabzug greift automatisch bei unsortierten Daten; bei verbleibenden
+  Fehlplatzierungen empfiehlt sich die manuelle Dispersionsvorgabe.</li>
+<li><strong>Sehr hochauflösende Feld-Sweeps</strong>: Die Rechenzeit des Fits steigt mit der
+  Punktzahl je Linescan stark an (siehe <a href="../troubleshooting/#timeout">Troubleshooting</a>).</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../bewertung/" class="btn btn-neutral float-left" title="Bewertung der Fits"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../troubleshooting/" class="btn btn-neutral float-right" title="Fehlerdiagnose">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../bewertung/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../troubleshooting/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

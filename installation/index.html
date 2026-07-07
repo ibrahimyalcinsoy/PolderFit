@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Installation und Start - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Installation und Start";
+        var mkdocs_page_input_path = "installation.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Installation und Start</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#voraussetzungen">Voraussetzungen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#programmaufruf">Programmaufruf</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#grafische-oberflache">Grafische Oberfläche</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#programmatische-nutzung">Programmatische Nutzung</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Installation und Start</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="installation-und-start">Installation und Start<a class="headerlink" href="#installation-und-start" title="Permanent link">&para;</a></h1>
+<h2 id="voraussetzungen">Voraussetzungen<a class="headerlink" href="#voraussetzungen" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Python in Version 3.11 oder neuer.</li>
+<li>Die in <code>pyproject.toml</code> aufgeführten Pakete (<code>numpy</code>, <code>scipy</code>, <code>lmfit</code>, <code>npTDMS</code>,
+  <code>matplotlib</code>, <code>pandas</code>, <code>openpyxl</code>); sie werden bei der Installation automatisch
+  aufgelöst.</li>
+<li>Für die grafische Oberfläche zusätzlich <code>PySide6</code>.</li>
+</ul>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<p>Im Projektverzeichnis (<code>PolderFit/</code>):</p>
+<pre><code class="language-bash"># virtuelle Umgebung anlegen und aktivieren (empfohlen)
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# PolderFit im editierbaren Modus installieren
+pip install -e .
+
+# zusätzlich die grafische Oberfläche
+pip install -e &quot;.[gui]&quot;
+
+# zusätzlich die Testwerkzeuge
+pip install -e &quot;.[test]&quot;
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Editierbarer Modus</p>
+<p>Bei der Installation mit der Option <code>-e</code> verweist die installierte Bibliothek
+direkt auf die Quelldateien des Projekts. Änderungen am Quelltext werden ohne
+erneute Installation wirksam, was die Anpassung der Parameter erleichtert.</p>
+</div>
+<h2 id="programmaufruf">Programmaufruf<a class="headerlink" href="#programmaufruf" title="Permanent link">&para;</a></h2>
+<h3 id="grafische-oberflache">Grafische Oberfläche<a class="headerlink" href="#grafische-oberflache" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">polderfit
+# gleichbedeutend:
+python -m polderfit.app
+</code></pre>
+<p>Ist <code>PySide6</code> nicht installiert, gibt das Programm einen erläuternden Hinweis samt
+Installationsbefehl aus (siehe <code>polderfit/app.py</code>).</p>
+<h3 id="programmatische-nutzung">Programmatische Nutzung<a class="headerlink" href="#programmatische-nutzung" title="Permanent link">&para;</a></h3>
+<p>Die Auswertung lässt sich auch ohne grafische Oberfläche aus Python heraus
+ansteuern. Dies eignet sich für eigene Auswerteskripte und für Tests:</p>
+<pre><code class="language-python">from polderfit.io.tdms_laden import lade_tdms
+from polderfit.fit.batch import fitte_alle
+
+# 1) Messdatei laden; das Format wird automatisch erkannt
+datensatz = lade_tdms(&quot;pfad/zur/Messung.tdms&quot;)
+
+# 2) vollständige Auswertung: AutoWindow und Fit für alle Frequenzen
+stapel = fitte_alle(datensatz)
+
+# 3) Ergebnisse auswerten
+for erg in stapel.ergebnisse[:5]:
+    print(f&quot;f = {erg.frequenz/1e9:.2f} GHz   B_res = {erg.B_res:.4f} T   &quot;
+          f&quot;alpha = {erg.alpha:.2e}   problematisch: {erg.problematisch}&quot;)
+</code></pre>
+<h2 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">python -m pytest -q
+</code></pre>
+<p>Die Testsuite prüft die physikalischen Modelle, das Laden der Daten, den Fit und die
+Bewertung. Vor der Weitergabe eigener Änderungen sollten sämtliche Tests fehlerfrei
+durchlaufen.</p>
+<p>Für die umfassende Robustheitsprüfung über reale Messdateien steht ein gesondertes
+Werkzeug bereit; es ist im Kapitel <a href="../test-harness/">Robustheits-Harness</a>
+beschrieben.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Start"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../datenformate/" class="btn btn-neutral float-right" title="Die Messdaten (TDMS)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../datenformate/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

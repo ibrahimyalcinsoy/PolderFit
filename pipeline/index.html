@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Ablauf der Auswertung - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Ablauf der Auswertung";
+        var mkdocs_page_input_path = "pipeline.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Ablauf der Auswertung</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#stapelverarbeitung-fitte_alle">Stapelverarbeitung: fitte_alle</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#die-einzelnen-schritte">Die einzelnen Schritte</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#beschneiden-des-bandes">Beschneiden des Bandes</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#einzel-fit">Einzel-Fit</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bewertung">Bewertung</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#nachtragliches-anpassen-einzelner-frequenzen">Nachträgliches Anpassen einzelner Frequenzen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#auswahl-problematischer-frequenzen">Auswahl problematischer Frequenzen</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Ablauf der Auswertung</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ablauf-der-auswertung">Ablauf der Auswertung<a class="headerlink" href="#ablauf-der-auswertung" title="Permanent link">&para;</a></h1>
+<p>Dieses Kapitel beschreibt den Datenfluss von der geladenen Messung bis zum
+bewerteten Fitergebnis. Die zentrale Steuerung übernimmt die Funktion <code>fitte_alle</code>
+in <code>polderfit/fit/batch.py</code>.</p>
+<h2 id="stapelverarbeitung-fitte_alle">Stapelverarbeitung: <code>fitte_alle</code><a class="headerlink" href="#stapelverarbeitung-fitte_alle" title="Permanent link">&para;</a></h2>
+<pre><code class="language-python">def fitte_alle(datensatz, gamma=GAMMA_STANDARD, breite_faktor=8.0,
+               r2_schwelle=0.9, fortschritt=None, zentren=None) -&gt; StapelErgebnis:
+</code></pre>
+<p>Der Ablauf gliedert sich in zwei Phasen:</p>
+<ol>
+<li>
+<p><strong>Globale Fensterbestimmung.</strong> Für den gesamten Datensatz werden die
+   Resonanzfenster ermittelt. Standardmäßig geschieht dies durch <code>auto_fenster_alle</code>
+   (siehe <a href="../autowindow/">AutoWindow im Detail</a>). Werden über das Argument <code>zentren</code>
+   vorgegebene Fenstermitten <code>B_res(f)</code> übergeben, so wird stattdessen
+   <code>fenster_aus_trasse</code> verwendet und die automatische Detektion übersprungen.</p>
+</li>
+<li>
+<p><strong>Einzel-Fit je Frequenz.</strong> Für jeden Linescan wird das Signal auf das zugehörige
+   Fenster beschnitten (<code>schneide_band</code>) und anschließend angepasst
+   (<code>fitte_linescan</code>). Jedes Ergebnis wird unmittelbar nach dem Fit bewertet.</p>
+</li>
+</ol>
+<pre><code class="language-python">fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)   # Phase 1
+for i, ls in enumerate(datensatz.linescans):                   # Phase 2
+    unten, oben = fenster[i]
+    beschnitten = schneide_band(ls, unten, oben)
+    ergebnis = fitte_linescan(beschnitten, gamma)
+    # Ergebnis und beschnittener Linescan werden im StapelErgebnis abgelegt
+</code></pre>
+<p>Das Resultat ist ein <code>StapelErgebnis</code> mit den Listen <code>fenster</code> (Bandgrenzen),
+<code>zugeschnitten</code> (beschnittene Linescans) und <code>ergebnisse</code> (Fitergebnisse je
+Frequenz).</p>
+<h2 id="die-einzelnen-schritte">Die einzelnen Schritte<a class="headerlink" href="#die-einzelnen-schritte" title="Permanent link">&para;</a></h2>
+<h3 id="beschneiden-des-bandes">Beschneiden des Bandes<a class="headerlink" href="#beschneiden-des-bandes" title="Permanent link">&para;</a></h3>
+<p><code>schneide_band(linescan, feld_unten, feld_oben)</code> liefert einen neuen Linescan, der
+auf das Intervall <code>[feld_unten, feld_oben]</code> reduziert ist. Enthält das Fenster
+weniger als vier Messpunkte, wird der ungekürzte Linescan beibehalten, um einen
+nicht bestimmbaren Fit zu vermeiden.</p>
+<h3 id="einzel-fit">Einzel-Fit<a class="headerlink" href="#einzel-fit" title="Permanent link">&para;</a></h3>
+<p><code>fitte_linescan</code> passt die Suszeptibilitäts-Modellfunktion simultan an Real- und
+Imaginärteil von <code>S21</code> an. Verfahren und Modell sind unter <a href="../physik-und-fit/">Physik und
+Fit</a> beschrieben. Die Startwerte werden datengetrieben geschätzt
+(<code>schaetze_startwerte</code>), sofern sie nicht explizit vorgegeben werden. Es gilt die
+verbindliche Randbedingung, dass das Resonanzfeld <code>B_res</code> innerhalb des
+ausgeschnittenen Fensters liegen muss.</p>
+<h3 id="bewertung">Bewertung<a class="headerlink" href="#bewertung" title="Permanent link">&para;</a></h3>
+<p>Jedes Fitergebnis wird durch <code>bewerte_fit</code> (<code>polderfit/fit/kriterien.py</code>) als
+unauffällig oder problematisch eingestuft. Die zugrunde liegenden Kriterien und
+Schwellwerte sind im Kapitel <a href="../bewertung/">Bewertung der Fits</a> dargestellt.</p>
+<h2 id="nachtragliches-anpassen-einzelner-frequenzen">Nachträgliches Anpassen einzelner Frequenzen<a class="headerlink" href="#nachtragliches-anpassen-einzelner-frequenzen" title="Permanent link">&para;</a></h2>
+<p>Erweist sich ein einzelner Fit als unbefriedigend, lässt er sich mit veränderten
+Bandgrenzen, expliziten Startwerten oder vorgegebenem Resonanzfeld erneut
+durchführen, ohne den übrigen Datensatz neu zu berechnen:</p>
+<pre><code class="language-python">from polderfit.fit.batch import fitte_neu
+
+neues = fitte_neu(stapel, index=42,
+                  feld_unten=2.55, feld_oben=2.75,   # engeres Fenster
+                  B_res_vorgabe=2.64)                # Resonanzfeld vorgeben
+</code></pre>
+<p>Das Ergebnis ist als nachbearbeitet markiert (<code>nachbearbeitet=True</code>) und ersetzt den
+betreffenden Eintrag im <code>StapelErgebnis</code>.</p>
+<h2 id="auswahl-problematischer-frequenzen">Auswahl problematischer Frequenzen<a class="headerlink" href="#auswahl-problematischer-frequenzen" title="Permanent link">&para;</a></h2>
+<p><code>StapelErgebnis</code> stellt Hilfsfunktionen zur Übersicht bereit:</p>
+<pre><code class="language-python">stapel.index_problematisch()   # Indizes aller als problematisch eingestuften Fits
+stapel.problem_statistik()     # Häufigkeit der einzelnen Problemgründe
+</code></pre>
+<p>Die Einstufung stützt sich auf die Mehrkriterien-Bewertung aus
+<code>polderfit/fit/kriterien.py</code> und nicht auf das Bestimmtheitsmaß <code>R²</code>, das in diesem
+Anwendungsfall als Gütemaß ungeeignet ist (siehe <a href="../bewertung/">Bewertung der Fits</a>).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ausreisser/" class="btn btn-neutral float-left" title="Ausreißer und Projektdateien"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../autowindow/" class="btn btn-neutral float-right" title="AutoWindow im Detail">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ausreisser/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../autowindow/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

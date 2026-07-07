@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Interaktives Fitten - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Interaktives Fitten";
+        var mkdocs_page_input_path = "interaktives-fitten.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Interaktives Fitten</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#bereich-neu-fitten-rechteck">Bereich neu fitten (Rechteck)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ziehbare-fenstergrenzen-im-farbplot-mitwandernd">Ziehbare Fenstergrenzen im Farbplot (mitwandernd)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uberschreiben-oder-erganzen-modus">Überschreiben oder Ergänzen (Modus)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fensterbreite-explizit-in-punkten">Fensterbreite explizit in Punkten</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ausschlusszonen-bereich-aus-der-auswertung-nehmen">Ausschlusszonen (Bereich aus der Auswertung nehmen)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#multi-monitor-betrieb">Multi-Monitor-Betrieb</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#typische-korrektur-workflows-bekannte-fehlerbilder">Typische Korrektur-Workflows (bekannte Fehlerbilder)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#grenzen-im-linescan-ziehen-bestandsfunktion">Grenzen im Linescan ziehen (Bestandsfunktion)</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Interaktives Fitten</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="interaktives-fitten-im-farbplot">Interaktives Fitten im Farbplot<a class="headerlink" href="#interaktives-fitten-im-farbplot" title="Permanent link">&para;</a></h1>
+<p>Dieses Kapitel bündelt die Werkzeuge, mit denen man Fits <strong>direkt in der
+2D-Übersicht</strong> korrigiert. Es wächst mit den interaktiven Funktionen des
+Programms; Grundlage ist das Modul <code>polderfit/fit/fenster_steuerung.py</code>.</p>
+<h2 id="bereich-neu-fitten-rechteck">Bereich neu fitten (Rechteck)<a class="headerlink" href="#bereich-neu-fitten-rechteck" title="Permanent link">&para;</a></h2>
+<p>Zweck: Mehrdeutigkeiten auflösen. Liegen zwei ähnlich starke Signale im Feldsweep
+(die echte Mode auf der Kittel-Geraden und eine physikalisch uninteressante
+Zweitmode oder Störung daneben), kann der Auto-Fit auf das falsche Signal treffen.
+Im Resonanz-Overlay erscheint das als Punkte abseits der Geraden.</p>
+<p>Bedienung:</p>
+<ol>
+<li>Menü <em>Fit → Bereich neu fitten</em> (auch in der Werkzeugleiste; erst nach einem
+   Auto-Fit sinnvoll, da der Bereichsfit bestehende Fits gezielt überschreibt).</li>
+<li>Im Farbplot ein <strong>Rechteck um die Mode aufziehen</strong> (der Mauszeiger wird
+   zum Fadenkreuz; <code>Esc</code> bricht ab). Das Rechteck zoomt in diesem Modus
+   nicht, es definiert den Fit-Bereich.</li>
+<li>Für alle Frequenzen im Rechteck laufen Fenstersuche <strong>und</strong> Fit erneut —
+   beschränkt auf den markierten Feldbereich. <code>B_res</code> kann das Rechteck
+   nicht verlassen (Fit-Schranken = Fenster ⊆ Rechteck).</li>
+</ol>
+<p><strong>Garantien:</strong></p>
+<ul>
+<li>Ergebnisse <strong>außerhalb</strong> des Rechtecks bleiben unangetastet.</li>
+<li>Neu gefittete Ergebnisse sind als <code>nachbearbeitet</code> markiert.</li>
+<li>Frequenzen mit weniger als 4 Messpunkten im Rechteck werden übersprungen
+  (Protokoll zeigt „… ohne Daten im Rechteck").</li>
+<li>Der Vorgang ist beliebig <strong>iterierbar</strong>: anderes Rechteck, anderer
+  Teilbereich, bis alle Punkte auf der Mode liegen.</li>
+</ul>
+<p><strong>Skript-Nutzung:</strong></p>
+<pre><code class="language-python">from polderfit.fit import fitte_alle, fitte_bereich
+
+stapel = fitte_alle(datensatz)
+neu, uebersprungen = fitte_bereich(
+    stapel,
+    feld_min=0.55, feld_max=1.30,       # Tesla
+    frequenz_min=8e9, frequenz_max=18e9,  # Hz
+)
+</code></pre>
+<h2 id="ziehbare-fenstergrenzen-im-farbplot-mitwandernd">Ziehbare Fenstergrenzen im Farbplot (mitwandernd)<a class="headerlink" href="#ziehbare-fenstergrenzen-im-farbplot-mitwandernd" title="Permanent link">&para;</a></h2>
+<p>Panel „Fenster &amp; Grenzen" (Menü <em>Ansicht → Panel: Fenster &amp; Grenzen</em>) → Häkchen
+„Grenzen im Farbplot anzeigen &amp; ziehen": Über dem Farbplot erscheinen zwei
+Polylinien, die linke (orange) und rechte (blaue) Fenstergrenze, je Frequenz durch
+die aktuellen Fit-Fenster gelegt. Nur der Bereich dazwischen geht in den Fit ein.</p>
+<ul>
+<li>Ziehen: Grenze mit der Maus anfassen (Cursor wird zum Horizontal-Pfeil) und
+  seitlich verschieben; der betroffene Linescan wird neu gefittet, Overlay und
+  Fit-Panel aktualisieren sich unmittelbar.</li>
+<li>Mitwandern statt feste Lage: Grenzen werden intern nicht als feste Feldwerte oder
+  Punktindizes geführt, sondern als Offsets relativ zur Dispersions-Trasse, einer
+  robusten Ausgleichsgeraden B(f) durch die guten Fits (<code>dispersions_zentren</code>). Bei
+  der Übernahme auf andere Frequenzen folgt das Fenster damit der Resonanz-Geraden.</li>
+<li><strong>Propagation:</strong> „Grenzen des aktuellen Linescans auf folgende übernehmen"
+  wendet die Offsets der gerade gesetzten Grenzen auf alle folgenden
+  Linescans an (Klick) — oder automatisch nach jedem Ziehen (Häkchen
+  „automatisch übernehmen").</li>
+</ul>
+<h2 id="uberschreiben-oder-erganzen-modus">Überschreiben oder Ergänzen (Modus)<a class="headerlink" href="#uberschreiben-oder-erganzen-modus" title="Permanent link">&para;</a></h2>
+<p>Der <strong>Modus</strong> im Panel gilt für Propagation, Fensterbreite-Anwenden und den
+Bereichs-Fit:</p>
+<ul>
+<li><strong>überschreiben</strong> — alle betroffenen Fits werden ersetzt.</li>
+<li><strong>ergänzen</strong> — nur die als <em>problematisch</em> markierten Fits werden neu
+  gefittet; bereits gute Ergebnisse anderer Bereiche bleiben unangetastet.</li>
+</ul>
+<p>Der Bereichsfit überschreibt nur den gewählten Ausschnitt: Bereich vorgeben, neu
+fitten, prüfen, nächsten Bereich wählen. Bereits gute Fits außerhalb bleiben erhalten.</p>
+<h2 id="fensterbreite-explizit-in-punkten">Fensterbreite explizit in Punkten<a class="headerlink" href="#fensterbreite-explizit-in-punkten" title="Permanent link">&para;</a></h2>
+<p>„Fensterbreite explizit setzen": z. B. von 15 auf <strong>25 Punkte</strong> stellen und
+„Auf alle anwenden" — jedes Fenster wird zu <em>Trassen-Zentrum ± Breite/2 in
+Feldpunkten des jeweiligen Linescans</em> gesetzt und neu gefittet. Das ist der
+direkte Hebel gegen die Fehlerbilder „Grenzen zu eng gesetzt" und
+„Resonanzfenster generell zu eng"; die Automatik ändert diese Vorgabe nicht
+selbsttätig. Das Panel zeigt zur Kontrolle die tatsächliche Breite des aktuellen
+Fensters in Punkten an.</p>
+<h2 id="ausschlusszonen-bereich-aus-der-auswertung-nehmen">Ausschlusszonen (Bereich aus der Auswertung nehmen)<a class="headerlink" href="#ausschlusszonen-bereich-aus-der-auswertung-nehmen" title="Permanent link">&para;</a></h2>
+<p>„Zone im Farbplot einzeichnen" → Rechteck um die störenden Punkte aufziehen
+(z. B. den zur Feldachse parallelen Abschnitt unten im Plot). Die Punkte in
+der Zone werden aus <strong>allen</strong> (Nach-)Fits ausgenommen; betroffene Linescans
+fitten sofort neu. Zonen werden schraffiert angezeigt, sind in der Liste des
+Panels einsehbar und einzeln entfernbar (die betroffenen Linescans fitten dann
+wieder mit allen Punkten). Ein neuer Auto-Fit beginnt mit leerer Zonenliste.</p>
+<h2 id="multi-monitor-betrieb">Multi-Monitor-Betrieb<a class="headerlink" href="#multi-monitor-betrieb" title="Permanent link">&para;</a></h2>
+<p>Das Linescan-Fit-Panel und alle weiteren Panels (Fenster &amp; Grenzen, Verarbeitung,
+Aktivität, Navigator) sind abdockbar: Titelleiste des Panels ziehen und auf den
+zweiten Monitor legen. Der Farbplot bleibt das zentrale Fenster. Über das Menü
+<em>Ansicht</em> lässt sich jedes Panel ein- und ausblenden.</p>
+<h2 id="typische-korrektur-workflows-bekannte-fehlerbilder">Typische Korrektur-Workflows (bekannte Fehlerbilder)<a class="headerlink" href="#typische-korrektur-workflows-bekannte-fehlerbilder" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Fehlerbild</th>
+<th>Werkzeug</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grenzen zu eng (R²-Kriterium schneidet den halben Dip weg)</td>
+<td>Fensterbreite in Punkten erhöhen → „Auf alle anwenden"</td>
+</tr>
+<tr>
+<td>Doppel-Dip, Grenzen nur halb gesetzt</td>
+<td>Grenzen im Farbplot beidseitig ziehen, dann propagieren</td>
+</tr>
+<tr>
+<td>Resonanzfenster generell zu eng</td>
+<td>Fensterbreite-Hebel oder Grenzen ziehen + „automatisch übernehmen"</td>
+</tr>
+<tr>
+<td>„Problemfit" (Fit ok gemeldet, physikalisch falsch)</td>
+<td>Rechteck-Bereichs-Fit im Modus <em>überschreiben</em>, Störbereiche als Ausschlusszone</td>
+</tr>
+</tbody>
+</table>
+<h2 id="grenzen-im-linescan-ziehen-bestandsfunktion">Grenzen im Linescan ziehen (Bestandsfunktion)<a class="headerlink" href="#grenzen-im-linescan-ziehen-bestandsfunktion" title="Permanent link">&para;</a></h2>
+<p>Unabhängig davon lassen sich im Linescan-Fit-Panel die <strong>grünen
+Bandgrenzen</strong> des einzelnen Linescans mit der Maus verschieben — der Fit
+läuft sofort mit den neuen Grenzen. Zusammen mit <em>Zurück/Weiter/Nächster
+Problemfit</em> ist das der Korrekturlauf für Einzelfälle; Rechteck, Grenzlinien
+und Propagation sind die Werkzeuge für ganze Bereiche.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../auswertungsauswahl/" class="btn btn-neutral float-left" title="Auswertungsauswahl (Bereiche und Frequenzauswahl)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ausreisser/" class="btn btn-neutral float-right" title="Ausreißer und Projektdateien">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../auswertungsauswahl/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ausreisser/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

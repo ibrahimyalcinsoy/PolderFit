@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Kanal-Mapping und Profile - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Kanal-Mapping und Profile";
+        var mkdocs_page_input_path = "kanal-mapping.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Kanal-Mapping und Profile</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#die-kanonischen-rollen">Die kanonischen Rollen</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ablauf-beim-laden-gui">Ablauf beim Laden (GUI)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#speicher-layouts">Speicher-Layouts</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#mapping-profile-json">Mapping-Profile (JSON)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#skript-nutzung">Skript-Nutzung</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#defekte-tdms_index-dateien-bekannter-windows-fehler">Defekte .tdms_index-Dateien (bekannter Windows-Fehler)</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Kanal-Mapping und Profile</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="kanal-mapping-und-mapping-profile">Kanal-Mapping und Mapping-Profile<a class="headerlink" href="#kanal-mapping-und-mapping-profile" title="Permanent link">&para;</a></h1>
+<p>Verschiedene Messrechner erzeugen unterschiedlich benannte und angeordnete
+TDMS-Dateien. Damit die übrige Verarbeitung unabhängig vom konkreten Dateiaufbau
+bleibt, wird beim Laden jede Datei über ein Mapping auf kanonische Rollen abgebildet
+(<code>polderfit/io/kanal_mapping.py</code>). Alle weiteren Schritte – AutoWindow, Fit,
+Kittel/LLG, Export – rechnen ausschließlich mit diesen internen Rollen. Ohne
+Zuordnung startet kein Auto-Fit (kein Fit auf ungemappten Daten).</p>
+<h2 id="die-kanonischen-rollen">Die kanonischen Rollen<a class="headerlink" href="#die-kanonischen-rollen" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Rolle</th>
+<th>Bedeutung</th>
+<th>Pflicht</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>frequenz</code></td>
+<td>Frequenzachse (Hz)</td>
+<td>✔</td>
+</tr>
+<tr>
+<td><code>re_s21</code></td>
+<td>Realteil des komplexen S21</td>
+<td>✔</td>
+</tr>
+<tr>
+<td><code>im_s21</code></td>
+<td>Imaginärteil des komplexen S21</td>
+<td>✔</td>
+</tr>
+<tr>
+<td><code>feld_before</code></td>
+<td>externes Feld <strong>vor</strong> dem Sweep (T)</td>
+<td>✔</td>
+</tr>
+<tr>
+<td><code>feld_after</code></td>
+<td>externes Feld <strong>nach</strong> dem Sweep (T)</td>
+<td>– (dann zählt <code>feld_before</code> allein)</td>
+</tr>
+<tr>
+<td><code>temperatur</code></td>
+<td>Temperatur (K)</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<p>Sind beide Feldkanäle zugeordnet, verwendet PolderFit den <strong>Mittelwert</strong> als
+Feldwert des Punktes.</p>
+<h2 id="ablauf-beim-laden-gui">Ablauf beim Laden (GUI)<a class="headerlink" href="#ablauf-beim-laden-gui" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Struktur inspizieren</strong> – nur Metadaten: alle Gruppen und Kanäle der Datei
+   werden aufgelistet (<code>inspiziere_tdms</code>), ohne die Daten zu laden.</li>
+<li><strong>Zuordnungs-Dialog</strong> – pro Rolle wählt man (Gruppe, Kanal) per Dropdown.
+   Passt ein bekanntes Profil auf die Datei, ist es bereits vorausgewählt
+   (mit ✓ markiert); bei fremden Dateien macht eine Namens-Heuristik einen
+   Vorschlag. Der Dialog prüft live: fehlende Pflichtrollen, doppelt vergebene
+   Kanäle, Layout-Plausibilität.</li>
+<li><strong>Import-Validierung vor Übernahme</strong> – nach dem Laden erscheinen Bericht und
+   Daten-Vorschau (<code>pruefe_datensatz</code>): Dimensionen, Monotonie der Achsen,
+   NaN-Anteil, Feld-/Frequenzbereiche und einige Beispiel-Linescans. Erst mit
+   <strong>„Übernehmen"</strong> wird der Datensatz aktiv; „Zuordnung ändern" springt in den
+   Dialog zurück.</li>
+</ol>
+<h2 id="speicher-layouts">Speicher-Layouts<a class="headerlink" href="#speicher-layouts" title="Permanent link">&para;</a></h2>
+<p>Neben den Kanalnamen unterscheidet sich auch die <strong>Struktur</strong> der Dateien:</p>
+<table>
+<thead>
+<tr>
+<th>Layout</th>
+<th>Struktur</th>
+<th>typische Quelle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>unsortiert</code></td>
+<td>pro Feldschritt ein kompletter, identischer Frequenz-Sweep; Feldkanäle kurz (<code>n_feld</code>), Signalkanäle lang (<code>n_feld·n_freq</code>)</td>
+<td>Rohdaten-Messrechner (PNA-X)</td>
+</tr>
+<tr>
+<td><code>sortiert</code></td>
+<td>ein Eintrag je Messpunkt, alle Kanäle gleich lang; Punkte werden nach Frequenz gruppiert</td>
+<td>vorverarbeitete Dateien</td>
+</tr>
+</tbody>
+</table>
+<p>Das Layout wird aus den Kanal-Längen <strong>vorgeschlagen</strong> (gleich lang → sortiert;
+Signalkanal ganzzahliges Vielfaches des Feldkanals → unsortiert) und kann im
+Dialog jederzeit explizit übersteuert werden.</p>
+<h2 id="mapping-profile-json">Mapping-Profile (JSON)<a class="headerlink" href="#mapping-profile-json" title="Permanent link">&para;</a></h2>
+<p>Damit man pro Messrechner nur <strong>einmal</strong> zuordnen muss, lassen sich Zuordnungen
+als Profil speichern und laden – im Dialog über „Profil speichern …" /
+„Profil laden …". Profile sind einfache JSON-Dateien (UTF-8) und liegen
+standardmäßig unter <code>~/.polderfit/mapping-profile/</code>:</p>
+<pre><code class="language-json">{
+  &quot;polderfit_mapping_profil&quot;: 1,
+  &quot;name&quot;: &quot;Messrechner K3&quot;,
+  &quot;layout&quot;: &quot;sortiert&quot;,
+  &quot;zuordnung&quot;: {
+    &quot;frequenz&quot;:    [&quot;ZVB&quot;, &quot;frequency&quot;],
+    &quot;re_s21&quot;:      [&quot;ZVB&quot;, &quot;ReS21&quot;],
+    &quot;im_s21&quot;:      [&quot;ZVB&quot;, &quot;ImS21&quot;],
+    &quot;feld_before&quot;: [&quot;Field&quot;, &quot;Field-before&quot;],
+    &quot;feld_after&quot;:  [&quot;Field&quot;, &quot;Field-after&quot;]
+  }
+}
+</code></pre>
+<p>Zwei Profile für die bekannten WMI-Layouts sind <strong>eingebaut</strong>
+(<code>EINGEBAUTE_PROFILE</code>):</p>
+<ul>
+<li><strong>WMI unsortiert/roh</strong> – Gruppen <code>Read.PNAX</code>, <code>Read.Fieldbefore</code>,
+  <code>Read.Fieldafter</code>, optional <code>Read.Temperature</code>.</li>
+<li><strong>WMI sortiert/vorverarbeitet</strong> – Gruppen <code>ZVB</code> und <code>Field</code>.</li>
+</ul>
+<p>Dateien dieser Layouts laden daher wie bisher ohne jede Nachfrage-Zuordnung –
+der Dialog zeigt das erkannte Profil nur zur Bestätigung an.</p>
+<h2 id="skript-nutzung">Skript-Nutzung<a class="headerlink" href="#skript-nutzung" title="Permanent link">&para;</a></h2>
+<pre><code class="language-python">from polderfit.io import lade_tdms, inspiziere_tdms, MappingErforderlich
+
+ds = lade_tdms(&quot;Messung.tdms&quot;)            # Profil wird automatisch erkannt
+
+# Unbekanntes Layout: Struktur ansehen und manuell zuordnen
+try:
+    ds = lade_tdms(&quot;fremd.tdms&quot;)
+except MappingErforderlich as fehler:
+    print(fehler.struktur)                 # {gruppe: {kanal: n_werte}}
+    ds = lade_tdms(&quot;fremd.tdms&quot;, zuordnung={
+        &quot;frequenz&quot;:    (&quot;Acq&quot;, &quot;f_Hz&quot;),
+        &quot;re_s21&quot;:      (&quot;Acq&quot;, &quot;S21_re&quot;),
+        &quot;im_s21&quot;:      (&quot;Acq&quot;, &quot;S21_im&quot;),
+        &quot;feld_before&quot;: (&quot;Magnet&quot;, &quot;B_vor_T&quot;),
+    })                                     # layout wird vorgeschlagen
+
+ds.meta[&quot;zuordnung&quot;]        # verwendete Zuordnung (Nachvollziehbarkeit)
+ds.meta[&quot;mapping_profil&quot;]   # Profilname oder &quot;manuell&quot;
+</code></pre>
+<h2 id="defekte-tdms_index-dateien-bekannter-windows-fehler">Defekte <code>.tdms_index</code>-Dateien (bekannter Windows-Fehler)<a class="headerlink" href="#defekte-tdms_index-dateien-bekannter-windows-fehler" title="Permanent link">&para;</a></h2>
+<p>Neben einer <code>.tdms</code>-Datei liegt oft eine gleichnamige <code>.tdms_index</code>-Datei –
+ein reiner Beschleunigungs-Index. Wird die Datendatei kopiert/umbenannt oder
+neu geschrieben, ohne den Index zu aktualisieren, passt der Index nicht mehr
+und nptdms bricht ab mit:</p>
+<pre><code>ValueError: Attempted to read data segment at position … but did not find
+segment start header. Check that the tdms_index file matches the tdms data file.
+</code></pre>
+<p>PolderFit fängt das ab: die Datei wird automatisch ohne Index-Datei erneut
+gelesen (etwas langsamer, Daten vollständig) und eine Warnung im Protokoll und
+in <code>ds.meta["lade_warnungen"]</code> vermerkt. Empfehlung: die veraltete
+<code>.tdms_index</code>-Datei löschen.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../datenformate/" class="btn btn-neutral float-left" title="Die Messdaten (TDMS)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../verarbeitung/" class="btn btn-neutral float-right" title="Verarbeitung des Farbplots">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../datenformate/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../verarbeitung/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

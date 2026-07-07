@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Fehlerdiagnose - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Fehlerdiagnose";
+        var mkdocs_page_input_path = "troubleshooting.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Fehlerdiagnose</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#laden-schlagt-fehl-punktzahl-nicht-durch-feldanzahl-teilbar">Laden schlägt fehl: „Punktzahl … nicht durch Feldanzahl … teilbar"</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#nicht_fmr">Laden schlägt fehl: „Unbekanntes TDMS-Format"</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#timeout">Auswertung bricht nicht ab, dauert aber sehr lange</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#der-fit-ist-gut-aber-das-fenster-sitzt-sichtbar-falsch">Der Fit ist gut, aber das Fenster sitzt sichtbar falsch</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sehr-viele-linescans-werden-als-problematisch-gemeldet">Sehr viele Linescans werden als problematisch gemeldet</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ein-fit-sieht-gut-aus-wird-aber-als-problemfit-gemeldet">Ein Fit sieht gut aus, wird aber als Problemfit gemeldet</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#die-resonanz-wird-nur-bei-hohen-feldern-erwartet-das-fenster-sucht-zu-tief">Die Resonanz wird nur bei hohen Feldern erwartet, das Fenster sucht zu tief</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#grundsatzliche-diagnose">Grundsätzliche Diagnose</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Fehlerdiagnose</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<p>Dieses Kapitel ordnet typischen Fehlerbildern ihre Ursache und ein Vorgehen zu. Die
+beschriebenen Fälle stammen aus der Robustheitsprüfung über den realen Datenbestand
+(siehe <a href="../test-harness/">Robustheits-Harness</a>).</p>
+<h2 id="laden-schlagt-fehl-punktzahl-nicht-durch-feldanzahl-teilbar">Laden schlägt fehl: „Punktzahl … nicht durch Feldanzahl … teilbar"<a class="headerlink" href="#laden-schlagt-fehl-punktzahl-nicht-durch-feldanzahl-teilbar" title="Permanent link">&para;</a></h2>
+<p><strong>Ursache.</strong> Die Datei wurde mitten in der Messung auf die Platte geschrieben
+(Dateiname mit <code>_flush</code>); der letzte Feld-Sweep ist unvollständig.</p>
+<p><strong>Vorgehen.</strong> Aktuelle Programmstände behandeln diesen Fall automatisch: Die
+Sweep-Länge wird aus der Frequenzachse abgeleitet, auf die vollständigen Sweeps
+gekürzt und regulär ausgewertet (<code>polderfit/io/tdms_laden.py</code>). Tritt der Fehler
+dennoch auf, lässt sich die Sweep-Periode nicht bestimmen; in diesem Fall ist die
+Datei vermutlich beschädigt.</p>
+<h2 id="nicht_fmr">Laden schlägt fehl: „Unbekanntes TDMS-Format"<a class="headerlink" href="#nicht_fmr" title="Permanent link">&para;</a></h2>
+<p><strong>Ursache.</strong> Die Datei enthält weder die Gruppe <code>Read.PNAX</code> noch <code>ZVB</code>. Häufig
+handelt es sich um ein anderes Messverfahren – etwa Winkel-Sweeps bei festem Feld
+(Gruppe <code>Read.ZNA</code>) – oder um abgebrochene Dateien, die nur Konfigurationsdaten und
+keine Messdaten enthalten.</p>
+<p><strong>Vorgehen.</strong> Solche Dateien sind keine Feld-FMR-Linescans und werden bewusst
+zurückgewiesen. Es ist zu prüfen, ob die richtige Datei vorliegt. Winkel-Sweeps sind
+mit dieser Auswertung nicht zu bearbeiten.</p>
+<h2 id="timeout">Auswertung bricht nicht ab, dauert aber sehr lange<a class="headerlink" href="#timeout" title="Permanent link">&para;</a></h2>
+<p><strong>Ursache.</strong> Sehr hochauflösende Feld-Sweeps (mehrere tausend Feldpunkte je
+Linescan) führen zu langen Fit-Rechenzeiten. Das AutoWindow selbst ist davon kaum
+betroffen; die Rechenzeit entsteht im Fit über alle Frequenzen.</p>
+<p><strong>Vorgehen.</strong> Die Robustheitsprüfung bricht solche Dateien nach einer harten
+Zeitgrenze (90 s je Datei) kontrolliert ab und protokolliert sie als Timeout. Für die
+reguläre Auswertung einzelner Dateien ist mehr Zeit einzuplanen; gegebenenfalls
+empfiehlt sich eine Reduktion der Punktzahl bereits bei der Messung.</p>
+<h2 id="der-fit-ist-gut-aber-das-fenster-sitzt-sichtbar-falsch">Der Fit ist gut, aber das Fenster sitzt sichtbar falsch<a class="headerlink" href="#der-fit-ist-gut-aber-das-fenster-sitzt-sichtbar-falsch" title="Permanent link">&para;</a></h2>
+<p><strong>Ursache.</strong> Das AutoWindow ist an einem feldstationären Störfeature oder, bei sehr
+schwachem Signal, an Rauschen hängengeblieben. Der Fit erreicht dann auf dem falschen
+Ausschnitt ein kleines Residuum, ohne die eigentliche Resonanz zu erfassen.</p>
+<p><strong>Vorgehen.</strong>
+1. Die Dispersion manuell vorgeben: in der grafischen Oberfläche durch zwei Klicks in
+   der Übersicht, programmatisch über das Argument <code>zentren</code> von <code>fitte_alle</code>
+   beziehungsweise <code>fenster_aus_trasse</code>.
+2. Einzelne Frequenzen mit engeren Bandgrenzen über <code>fitte_neu</code> nachfitten.
+3. Bei verrauschten Daten <code>_PROMINENZ_MIN</code> erhöhen (siehe <a href="../tuning/">Tuning</a>).</p>
+<h2 id="sehr-viele-linescans-werden-als-problematisch-gemeldet">Sehr viele Linescans werden als problematisch gemeldet<a class="headerlink" href="#sehr-viele-linescans-werden-als-problematisch-gemeldet" title="Permanent link">&para;</a></h2>
+<p><strong>Mögliche Ursachen.</strong></p>
+<ul>
+<li><strong>In-plane-Messung mit Out-of-plane-Modell.</strong> Der Einzel-Fit verwendet <code>χ_oop</code>. Bei
+  In-plane-Geometrie passt das Modell nicht, die Dämpfung läuft an die obere Schranke
+  (<code>alpha unphysikalisch</code>, <code>alpha an Grenze</code>). Die Meldungen sind in diesem Fall
+  sachgerecht.</li>
+<li><strong>Keine Resonanz im Feldbereich.</strong> Bei tiefen Frequenzen liegt das Resonanzfeld
+  unter Umständen außerhalb des gemessenen Bereichs; ein Fit ist dann nicht sinnvoll
+  und wird zu Recht als problematisch eingestuft.</li>
+</ul>
+<p><strong>Vorgehen.</strong> Die Problemgründe je Linescan prüfen (<code>erg.problem_text</code>,
+<code>stapel.problem_statistik()</code>). Treten überwiegend physikalisch erwartbare Gründe auf,
+liegt kein Programmfehler vor.</p>
+<h2 id="ein-fit-sieht-gut-aus-wird-aber-als-problemfit-gemeldet">Ein Fit sieht gut aus, wird aber als Problemfit gemeldet<a class="headerlink" href="#ein-fit-sieht-gut-aus-wird-aber-als-problemfit-gemeldet" title="Permanent link">&para;</a></h2>
+<p><strong>Ursache (historisch).</strong> Ein numerisch nahezu perfekter Fit kann in ein
+<code>phi</code>-Nebenminimum mit singulärer Jacobi-Matrix laufen; <code>lmfit</code> liefert dann keine
+Unsicherheiten, und der Fit wurde früher allein deswegen als „keine Unsicherheiten"
+gemeldet.</p>
+<p><strong>Stand.</strong> Dieser Fall wird automatisch behandelt: Der Fit wird einmal mit um <code>π</code>
+verschobenem <code>phi</code>-Startwert wiederholt, und bei exzellentem Residuum
+(<code>rmse_norm ≤ RMSE_NORM_EXZELLENT</code>) zählt fehlende Kovarianz nicht mehr als
+Problemgrund (siehe <a href="../bewertung/">Bewertung der Fits</a>). Tritt die Meldung dennoch
+auf, ist das Residuum tatsächlich erhöht — dann Fenster und Startwerte prüfen oder
+den Linescan <a href="../interaktives-fitten/">interaktiv nachfitten</a>.</p>
+<h2 id="die-resonanz-wird-nur-bei-hohen-feldern-erwartet-das-fenster-sucht-zu-tief">Die Resonanz wird nur bei hohen Feldern erwartet, das Fenster sucht zu tief<a class="headerlink" href="#die-resonanz-wird-nur-bei-hohen-feldern-erwartet-das-fenster-sucht-zu-tief" title="Permanent link">&para;</a></h2>
+<p><strong>Ursache.</strong> Bei tiefen Frequenzen ohne Resonanz erzeugen feldstationäre Artefakte am
+unteren Feldrand mitunter scheinbare Kandidaten.</p>
+<p><strong>Vorgehen.</strong> Der feldstationäre Untergrundabzug und die gleitende Trasse mindern
+diesen Effekt bereits (siehe <a href="../autowindow/">AutoWindow im Detail</a>). Verbleibt das
+Problem, ist die Dispersion manuell vorzugeben; die Trasse folgt dann der erwarteten,
+mit der Frequenz steigenden Resonanzlage.</p>
+<h2 id="grundsatzliche-diagnose">Grundsätzliche Diagnose<a class="headerlink" href="#grundsatzliche-diagnose" title="Permanent link">&para;</a></h2>
+<p>Zur systematischen Untersuchung über viele Dateien hinweg dient das
+<a href="../test-harness/">Robustheits-Harness</a>. Es erzeugt zu auffälligen Linescans
+Diagnose-Diagramme (Signal, gewähltes Fenster und – sofern vorhanden – das
+Referenzband der sortierten Variante), anhand derer sich Fehlplatzierungen visuell
+prüfen lassen.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../tuning/" class="btn btn-neutral float-left" title="Parameter und Feineinstellung"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../test-harness/" class="btn btn-neutral float-right" title="Robustheitsprüfung über reale Messdaten">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../tuning/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../test-harness/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
