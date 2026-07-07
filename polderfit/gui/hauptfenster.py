@@ -51,6 +51,7 @@ from .fit_ansicht import FitAnsicht
 from .mapping_dialog import MappingDialog, VorschauDialog
 from .navigator_ansicht import NavigatorAnsicht
 from .verarbeitung_panel import VerarbeitungPanel
+from .trace_panel import TracePanel
 from .arbeiter import Arbeiter
 from .stil import PolderFit_QSS
 
@@ -114,14 +115,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
         )
         #: Undo-Stapel der Ausreisser-Listen (Snapshot VOR jeder Aenderung).
         self._ausreisser_undo: list[list[int]] = []
+        self.tracepanel = TracePanel()
 
         self._baue_oberflaeche()
+        self._baue_aktionen()
+        self._baue_menue()
         self._baue_werkzeugleiste()
         self._baue_aktivitaet_dock()
         self._baue_navigator_dock()
         self._baue_verarbeitung_dock()
         self._baue_fenster_dock()
         self._baue_ausreisser_dock()
+        self._baue_trace_dock()
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
         self._log("PolderFit bereit. Bitte eine TDMS-Datei laden.", "info")
 
@@ -168,99 +173,171 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
         self.linescan_dock = dock
 
-    def _baue_werkzeugleiste(self):
-        leiste = self.addToolBar("Hauptaktionen")
-        leiste.setMovable(False)
+    def _baue_aktionen(self):
+        """Legt alle Aktionen einmalig an; sie werden in Menue UND Toolbar verwendet.
 
-        # Klickbares PolderFit×WMI-Logo + Wortmarke ganz links -> oeffnet die Hilfe.
-        self.btn_logo = QtWidgets.QToolButton()
-        self.btn_logo.setIcon(app_icon())
-        self.btn_logo.setIconSize(QtCore.QSize(26, 26))
-        self.btn_logo.setText(" PolderFit")
-        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        self.btn_logo.setAutoRaise(True)
-        self.btn_logo.setToolTip("Hilfe & Infos (Bedienung, Walther-Meißner-Institut, Repository)")
-        self.btn_logo.setStyleSheet("font-weight: 600; font-size: 14px; padding: 2px 8px;")
-        self.btn_logo.clicked.connect(self._zeige_hilfe)
-        leiste.addWidget(self.btn_logo)
-        leiste.addSeparator()
+        Die Sichtbarkeits-Umschalter der Panels (``akt_verarbeitung``, ``akt_fenster``,
+        ``akt_linescan``, ``akt_ausreisser_panel``, ``akt_aktivitaet``) werden hier nur
+        angelegt; ihre Verbindung mit dem jeweiligen Dock erfolgt in den
+        ``_baue_*_dock``-Methoden, sobald das Dock existiert.
+        """
+        A = QtGui.QAction
 
-        self.akt_laden = leiste.addAction("TDMS laden")
+        # --- Datei ----------------------------------------------------------
+        self.akt_laden = A("TDMS laden …", self)
         self.akt_laden.triggered.connect(self._laden)
-        self.akt_fit = leiste.addAction("Auto-Fit (alle)")
+        self.akt_projekt_laden = A("Projekt laden …", self)
+        self.akt_projekt_laden.setToolTip(
+            "Gespeicherte Sitzung fortsetzen: TDMS wird neu gelesen, die Fits werden "
+            "mit den gespeicherten Fenstern deterministisch wiederhergestellt.")
+        self.akt_projekt_laden.triggered.connect(self._projekt_laden)
+        self.akt_projekt_speichern = A("Projekt speichern …", self)
+        self.akt_projekt_speichern.setToolTip(
+            "Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
+            "Ausschlusszonen, Ausreißer und Fitparameter.")
+        self.akt_projekt_speichern.triggered.connect(self._projekt_speichern)
+        self.akt_tdms = A("Export TDMS …", self)
+        self.akt_tdms.triggered.connect(self._export_tdms)
+        self.akt_xlsx = A("Export Excel …", self)
+        self.akt_xlsx.triggered.connect(self._export_excel)
+        self.akt_csv = A("Export CSV …", self)
+        self.akt_csv.triggered.connect(self._export_csv)
+        self.akt_beenden = A("Beenden", self)
+        self.akt_beenden.triggered.connect(self.close)
+
+        # --- Fit ------------------------------------------------------------
+        self.akt_fit = A("Auto-Fit (alle)", self)
         self.akt_fit.triggered.connect(self._auto_fit)
-        self.akt_seed = leiste.addAction("Resonanz vorgeben")
+        self.akt_seed = A("Resonanz vorgeben", self)
         self.akt_seed.setToolTip(
             "Zwei Punkte auf die Resonanz in der Übersicht klicken → die Fit-Fenster "
             "folgen dieser Dispersion (hilft, wenn der Auto-Fit an einem Störfeature hängt).")
         self.akt_seed.triggered.connect(self._resonanz_vorgeben)
-        self.akt_bereich = leiste.addAction("Bereich neu fitten")
+        self.akt_bereich = A("Bereich neu fitten", self)
         self.akt_bereich.setToolTip(
             "Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche und Fit "
             "wiederholt (löst Mehrdeutigkeiten neben der Mode auf). Esc bricht ab.")
         self.akt_bereich.triggered.connect(self._bereich_fitten)
-        self.akt_ausreisser = leiste.addAction("Ausreißer markieren")
+        self.akt_ausreisser = A("Ausreißer markieren", self)
         self.akt_ausreisser.setCheckable(True)
         self.akt_ausreisser.setToolTip(
             "Modus: Fit-Punkte im Farbplot anklicken oder per Kasten markieren → "
             "raus aus Darstellung und allen Rechnungen (insb. Kittel-Fit). "
             "Rückgängig und Liste im Ausreißer-Panel.")
         self.akt_ausreisser.toggled.connect(self._ausreisser_modus)
-        leiste.addSeparator()
-        self.akt_kittel = leiste.addAction("Kittel/LLG-Auswertung")
+        self.akt_kittel = A("Kittel/LLG-Auswertung", self)
         self.akt_kittel.triggered.connect(self._kittel_llg)
-        leiste.addSeparator()
-        self.akt_tdms = leiste.addAction("Export TDMS")
-        self.akt_tdms.triggered.connect(self._export_tdms)
-        self.akt_xlsx = leiste.addAction("Export Excel")
-        self.akt_xlsx.triggered.connect(self._export_excel)
-        self.akt_csv = leiste.addAction("Export CSV")
-        self.akt_csv.triggered.connect(self._export_csv)
-        leiste.addSeparator()
-        self.akt_projekt_speichern = leiste.addAction("Projekt speichern")
-        self.akt_projekt_speichern.setToolTip(
-            "Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
-            "Ausschlusszonen, Ausreißer und Fitparameter.")
-        self.akt_projekt_speichern.triggered.connect(self._projekt_speichern)
-        self.akt_projekt_laden = leiste.addAction("Projekt laden")
-        self.akt_projekt_laden.setToolTip(
-            "Gespeicherte Sitzung fortsetzen: TDMS wird neu gelesen, die Fits werden "
-            "mit den gespeicherten Fenstern deterministisch wiederhergestellt.")
-        self.akt_projekt_laden.triggered.connect(self._projekt_laden)
 
-        # Ansicht-Umschalter: ganzer Feldsweep statt Zoom aufs Resonanzband.
-        leiste.addSeparator()
-        self.akt_vollbereich = leiste.addAction("Vollbereich")
+        # --- Ansicht --------------------------------------------------------
+        self.akt_vollbereich = A("Linescan: ganzer Feldsweep", self)
         self.akt_vollbereich.setCheckable(True)
         self.akt_vollbereich.setToolTip(
-            "Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
+            "Im Linescan-Panel den ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
         self.akt_vollbereich.toggled.connect(self._vollbereich_umschalten)
-
-        # Problematische Fits im Resonanz-Overlay der Übersicht ausblenden.
-        self.akt_problemfits = leiste.addAction("Problemfits ausblenden")
+        self.akt_problemfits = A("Problemfits ausblenden", self)
         self.akt_problemfits.setCheckable(True)
         self.akt_problemfits.setToolTip(
             "Problematische Fits im Resonanz-Overlay der Übersicht ausblenden.")
         self.akt_problemfits.toggled.connect(self._problemfits_umschalten)
 
-        # Sichtbarkeits-Umschalter fuer die andockbaren Panels.
-        leiste.addSeparator()
-        self.akt_verarbeitung = leiste.addAction("Verarbeitung")
+        # Panel-Umschalter (Verbindung mit dem Dock in der jeweiligen _baue_*_dock-Methode).
+        self.akt_verarbeitung = A("Panel: Verarbeitung", self)
         self.akt_verarbeitung.setToolTip(
             "Verarbeitungskette des Farbplots (divide-slice, derivative-divide, "
             "relation-amplitude) ein-/ausblenden.")
-        self.akt_fenster = leiste.addAction("Fenster && Grenzen")
+        self.akt_fenster = A("Panel: Fenster & Grenzen", self)
         self.akt_fenster.setToolTip(
             "Interaktives In-Plot-Fitting: ziehbare Fenstergrenzen, Propagation, "
             "Fensterbreite in Punkten, Ausschlusszonen.")
-        self.akt_linescan = leiste.addAction("Linescan-Fit")
+        self.akt_linescan = A("Panel: Linescan-Fit", self)
         self.akt_linescan.setToolTip(
             "Linescan-Fit-Panel ein-/ausblenden (abdockbar fuer den zweiten Monitor).")
         self.akt_linescan.setCheckable(True)
         self.akt_linescan.setChecked(True)
         self.akt_linescan.toggled.connect(self.linescan_dock.setVisible)
         self.linescan_dock.visibilityChanged.connect(self.akt_linescan.setChecked)
-        self.akt_aktivitaet = leiste.addAction("Aktivität")
+        self.akt_ausreisser_panel = A("Panel: Ausreißer-Liste", self)
+        self.akt_ausreisser_panel.setToolTip(
+            "Liste der als Ausreißer markierten Punkte ein-/ausblenden.")
+        self.akt_aktivitaet = A("Panel: Aktivität", self)
+        self.akt_aktivitaet.setToolTip("Aktivitäts- und Protokoll-Panel ein-/ausblenden.")
+        self.akt_trace = A("Panel: Call-Trace (Debug)", self)
+        self.akt_trace.setToolTip(
+            "Entwickler-Werkzeug: zeigt live, welche polderfit-Funktionen aufgerufen "
+            "werden. Nur zur Fehlersuche einschalten.")
+
+        # --- Hilfe ----------------------------------------------------------
+        self.akt_hilfe = A("Bedienung & Infos …", self)
+        self.akt_hilfe.triggered.connect(self._zeige_hilfe)
+        self.akt_repo = A("Repository öffnen", self)
+        self.akt_repo.triggered.connect(
+            lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(REPO_URL)))
+
+    def _baue_menue(self):
+        """Menueleiste mit allen Aktionen – bei kleinem Fenster stets erreichbar."""
+        mb = self.menuBar()
+
+        m_datei = mb.addMenu("&Datei")
+        m_datei.addAction(self.akt_laden)
+        m_datei.addAction(self.akt_projekt_laden)
+        m_datei.addAction(self.akt_projekt_speichern)
+        m_datei.addSeparator()
+        m_datei.addAction(self.akt_tdms)
+        m_datei.addAction(self.akt_xlsx)
+        m_datei.addAction(self.akt_csv)
+        m_datei.addSeparator()
+        m_datei.addAction(self.akt_beenden)
+
+        m_fit = mb.addMenu("&Fit")
+        m_fit.addAction(self.akt_fit)
+        m_fit.addAction(self.akt_seed)
+        m_fit.addAction(self.akt_bereich)
+        m_fit.addSeparator()
+        m_fit.addAction(self.akt_ausreisser)
+        m_fit.addAction(self.akt_kittel)
+
+        m_ansicht = mb.addMenu("&Ansicht")
+        m_ansicht.addAction(self.akt_vollbereich)
+        m_ansicht.addAction(self.akt_problemfits)
+        m_ansicht.addSeparator()
+        m_ansicht.addAction(self.akt_verarbeitung)
+        m_ansicht.addAction(self.akt_fenster)
+        m_ansicht.addAction(self.akt_linescan)
+        m_ansicht.addAction(self.akt_ausreisser_panel)
+        m_ansicht.addAction(self.akt_aktivitaet)
+        m_ansicht.addAction(self.akt_trace)
+        self.menue_ansicht = m_ansicht  # weitere Panels haengen sich hier ein
+
+        m_hilfe = mb.addMenu("&Hilfe")
+        m_hilfe.addAction(self.akt_hilfe)
+        m_hilfe.addAction(self.akt_repo)
+
+    def _baue_werkzeugleiste(self):
+        """Schlanke Werkzeugleiste mit den haeufigsten Aktionen (Rest im Menue)."""
+        leiste = self.addToolBar("Hauptaktionen")
+        leiste.setObjectName("haupt_toolbar")
+        leiste.setMovable(False)
+
+        # Klickbares PolderFit-Logo + Wortmarke ganz links -> oeffnet die Hilfe.
+        self.btn_logo = QtWidgets.QToolButton()
+        self.btn_logo.setIcon(app_icon())
+        self.btn_logo.setIconSize(QtCore.QSize(24, 24))
+        self.btn_logo.setText(" PolderFit")
+        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.btn_logo.setAutoRaise(True)
+        self.btn_logo.setToolTip("Bedienung & Infos")
+        self.btn_logo.setStyleSheet("font-weight: 600; font-size: 14px; padding: 2px 8px;")
+        self.btn_logo.clicked.connect(self._zeige_hilfe)
+        leiste.addWidget(self.btn_logo)
+        leiste.addSeparator()
+
+        for aktion in (self.akt_laden, self.akt_fit, self.akt_seed,
+                       self.akt_bereich, self.akt_ausreisser):
+            leiste.addAction(aktion)
+        leiste.addSeparator()
+        leiste.addAction(self.akt_kittel)
+        leiste.addSeparator()
+        leiste.addAction(self.akt_vollbereich)
 
     def _baue_aktivitaet_dock(self):
         """Andockbares (abtrennbares) Panel mit Fortschritt und Live-Protokoll."""
@@ -377,6 +454,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # visibilityChanged(False), was die Toolbar-Toggles fehlleiten wuerde.
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
         self.fenster_dock = dock
+        self.akt_fenster.setCheckable(True)
+        self.akt_fenster.setChecked(True)
+        self.akt_fenster.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_fenster.setChecked)
 
     def _baue_ausreisser_dock(self):
         """Ausreisser-Liste (rechts); erscheint mit dem Markier-Modus."""
@@ -396,10 +477,33 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
         dock.setVisible(False)  # erscheint mit "Ausreißer markieren"
         self.ausreisser_dock = dock
-        self.akt_fenster.setCheckable(True)
-        self.akt_fenster.setChecked(True)
-        self.akt_fenster.toggled.connect(dock.setVisible)
-        dock.visibilityChanged.connect(self.akt_fenster.setChecked)
+        self.akt_ausreisser_panel.setCheckable(True)
+        self.akt_ausreisser_panel.setChecked(False)
+        self.akt_ausreisser_panel.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_ausreisser_panel.setChecked)
+
+    def _baue_trace_dock(self):
+        """Call-Trace-Panel (rechts, abdockbar); standardmaessig ausgeblendet."""
+        dock = QtWidgets.QDockWidget("Call-Trace (Debug)", self)
+        dock.setObjectName("trace_dock")
+        dock.setAllowedAreas(
+            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
+            | QtCore.Qt.BottomDockWidgetArea
+        )
+        dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetClosable
+        )
+        dock.setWidget(self.tracepanel)
+        dock.setMinimumWidth(320)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        dock.setVisible(False)  # erscheint ueber den Ansicht-Menue-Umschalter
+        self.trace_dock = dock
+        self.akt_trace.setCheckable(True)
+        self.akt_trace.setChecked(False)
+        self.akt_trace.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_trace.setChecked)
 
     # --- Aktivitaet / Protokoll -------------------------------------------
     def _log(self, text: str, art: str = "info") -> None:
@@ -1285,7 +1389,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._baue_hilfe_dialog().exec()
 
     def _baue_hilfe_dialog(self) -> QtWidgets.QDialog:
-        """Hilfe-Dialog: Bedienung, Physik-Kurzfassung, WMI-Bezug und Repository-Link."""
+        """Hilfe-Dialog: Bedienung und Repository-Link."""
         dlg = QtWidgets.QDialog(self)
         dlg.setWindowTitle("PolderFit – Hilfe & Infos")
         dlg.setWindowIcon(app_icon())
@@ -1298,7 +1402,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         kopf.addWidget(logo)
         titel = QtWidgets.QLabel(
             "<b style='font-size:16px'>PolderFit</b><br>"
-            "Breitband-FMR-Auswertung · Walther-Meißner-Institut")
+            "Breitband-FMR-Auswertung")
         titel.setTextFormat(QtCore.Qt.RichText)
         kopf.addWidget(titel, 1)
         lay.addLayout(kopf)
@@ -1321,47 +1425,35 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _hilfe_html() -> str:
         return f"""
         <html><body style="font-size:12px; line-height:1.45">
-        <p><b>PolderFit</b> wertet Breitband-Ferromagnetische-Resonanz-Messungen (PolderFit) aus:
-        TDMS einlesen, je Frequenz an die <b>Polder-Suszeptibilität</b> fitten und
-        übergreifend Kittel-/LLG-Parameter (µ₀M<sub>eff</sub>, g, α, µ₀H<sub>inh</sub>) bestimmen.</p>
+        <p><b>PolderFit</b> wertet Breitband-FMR-Messungen (bbFMR) aus: TDMS-Dateien einlesen,
+        je Frequenz das Resonanzsignal fitten und daraus die Materialparameter bestimmen.</p>
 
         <h3>Arbeitsablauf</h3>
         <ol>
           <li><b>TDMS laden</b> – sortiertes oder unsortiertes Format wird erkannt.</li>
           <li><b>Auto-Fit (alle)</b> – sucht je Frequenz die Resonanz, schneidet ein Band
-              und fittet Re &amp; Im gleichzeitig. Läuft im Hintergrund; Fortschritt und
-              Live-Protokoll im <b>Aktivitäts-Panel</b> (rechts).</li>
-          <li><b>Nachfitten</b> – im rechten Panel die <b>grünen Grenzlinien</b> ziehen
-              (Band wird automatisch herangezoomt; „Vollbereich" zeigt den ganzen Sweep).
+              und fittet Real- und Imaginärteil gleichzeitig. Läuft im Hintergrund;
+              Fortschritt und Protokoll im <b>Aktivitäts-Panel</b>.</li>
+          <li><b>Nachfitten</b> – im Linescan-Panel die <b>grünen Grenzlinien</b> ziehen
+              (das Band wird herangezoomt; „ganzer Feldsweep" zeigt den vollen Bereich).
               <i>Zurück/Weiter/Nochmal fitten/Nächster Problemfit</i> steuern den Korrekturlauf.</li>
-          <li><b>Kittel/LLG-Auswertung</b> – Resonanz vs. f (+Kittel), Linienbreite vs. f
-              (LLG → α, H<sub>inh</sub>) und Resonanz vs. T.</li>
-          <li><b>Export</b> – zugeschnittene Rohdaten + Fitkurven als TDMS, Parameter als Excel/CSV.</li>
+          <li><b>Kittel/LLG-Auswertung</b> – übergreifende Auswertung über alle Frequenzen.</li>
+          <li><b>Export</b> – zugeschnittene Rohdaten und Fitkurven als TDMS, Parameter als Excel/CSV.</li>
         </ol>
 
-        <h3>Übersicht (links) – Navigation &amp; Zoom</h3>
+        <h3>Übersicht – Navigation &amp; Zoom</h3>
         <ul>
-          <li><b>Klicken</b>: Frequenz wählen → der zugehörige Fit wird sofort geladen.</li>
+          <li><b>Klicken</b>: Frequenz wählen → der zugehörige Fit wird geladen.</li>
           <li><b>Kästchen ziehen</b>: auf den markierten Bereich zoomen.</li>
           <li><b>Mausrad</b>: rein/raus zoomen · <b>Doppelklick</b>: Zoom zurücksetzen.</li>
           <li><b>Umschalt+Mausrad</b> oder <b>↑/↓</b> (Pos1/Ende, Bild↑/↓): Frequenz wechseln.</li>
-          <li>Beim Zoomen erscheint links der <b>Navigator</b> – er zeigt, wo man sich in der
-              Gesamtmessung befindet (Klick im Navigator verschiebt den Ausschnitt).</li>
-          <li><b>„Problemfits ausblenden"</b>: blendet als problematisch markierte Fits im
-              Resonanz-Overlay aus.</li>
+          <li>Beim Zoomen erscheint der <b>Navigator</b> – er zeigt die Position in der
+              Gesamtmessung (Klick verschiebt den Ausschnitt).</li>
+          <li><b>„Problemfits ausblenden"</b>: blendet problematische Fits im Overlay aus.</li>
         </ul>
 
-        <h3>Physik (Kurzfassung)</h3>
-        <p>Gefittet wird das komplexe S21 mit der Polder-Suszeptibilität (oop). Aus B<sub>res</sub>(f)
-        folgt über die Kittel-Gleichung µ₀M<sub>eff</sub> und der g-Faktor, aus der Linienbreite
-        µ₀ΔH(f) über das LLG-Modell die Gilbert-Dämpfung α und die inhomogene Verbreiterung
-        µ₀H<sub>inh</sub>.</p>
-
         <hr>
-        <p>Entstanden am <b>Walther-Meißner-Institut</b>. Das Logo zeigt das Grundbild der
-        ferromagnetischen Resonanz: die <b>Magnetisierung M</b> (rot) präzediert auf einem
-        Kegel um das effektive <b>Feld H</b> (Achse); das transversale HF-Treiberfeld <b>h</b>
-        steht senkrecht auf H. Quellcode, Doku und Details:<br>
+        <p>Quellcode und Dokumentation:<br>
         <a href="{REPO_URL}">{REPO_URL}</a></p>
         </body></html>
         """

@@ -37,10 +37,19 @@ class Arbeiter(QtCore.QObject):
     @QtCore.Slot()
     def ausfuehren(self) -> None:
         """Im Worker-Thread ausgefuehrt (mit ``QThread.started`` verbunden)."""
+        # Call-Trace (falls aktiv) im EIGENEN Thread installieren – QThreads erben
+        # sys.setprofile nicht. Der Tracer meldet threadsicher per Qt-Signal.
+        from .trace_panel import aktiver_tracer
+        tracer = aktiver_tracer()
+        if tracer is not None:
+            tracer.installiere_hier()
         try:
             ergebnis = self._funktion(self._melde)
         except Exception as exc:  # an die GUI melden statt den Thread zu killen
             import traceback
             self.fehler.emit(f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}")
             return
+        finally:
+            if tracer is not None:
+                tracer.entferne_hier()
         self.fertig.emit(ergebnis)

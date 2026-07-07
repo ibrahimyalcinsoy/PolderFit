@@ -59,6 +59,35 @@ def test_hauptfenster_baut_mit_panels(app):
     assert bool(w.aktivitaet_dock.features() & QtWidgets.QDockWidget.DockWidgetFloatable)
 
 
+def test_menueleiste_haelt_alle_aktionen(app):
+    """Menueleiste enthaelt alle Aktionen -> bei kleinem Fenster stets erreichbar."""
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    menues = {m.title(): m for m in w.menuBar().findChildren(QtWidgets.QMenu)}
+    assert {"&Datei", "&Fit", "&Ansicht", "&Hilfe"} <= set(menues)
+    # Jede Aktion muss in mindestens einem Menue haengen (nicht nur in der Toolbar).
+    in_menue = {a for m in menues.values() for a in m.actions()}
+    for aktion in (w.akt_laden, w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
+                   w.akt_kittel, w.akt_tdms, w.akt_xlsx, w.akt_csv,
+                   w.akt_projekt_speichern, w.akt_projekt_laden, w.akt_vollbereich,
+                   w.akt_problemfits, w.akt_verarbeitung, w.akt_fenster, w.akt_linescan,
+                   w.akt_ausreisser_panel, w.akt_aktivitaet, w.akt_beenden, w.akt_hilfe):
+        assert aktion in in_menue
+    # Fenster-Umschalter zeigt jetzt auf den Fenster-Dock (nicht mehr fehlverdrahtet).
+    assert not w.fenster_dock.isHidden()
+    w.akt_fenster.setChecked(False)
+    assert w.fenster_dock.isHidden()
+
+
+def test_hilfe_ohne_physik_und_wmi(app):
+    """Hilfe-Text enthaelt keine Physik-Erklaerung und keinen WMI-/Logo-Text."""
+    from polderfit.gui.hauptfenster import Hauptfenster
+    html = Hauptfenster._hilfe_html()
+    for verboten in ("Walther-Meißner", "präzediert", "Polder-Suszeptibilität",
+                     "Physik", "µ₀M", "Kittel-Gleichung"):
+        assert verboten not in html
+
+
 def test_hintergrund_job_laeuft_durch(app):
     from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
@@ -161,7 +190,7 @@ def test_logo_hilfe_und_navigator_sichtbarkeit(app):
     w = Hauptfenster()
     assert w.btn_logo is not None
     htmltext = w._hilfe_html()
-    assert REPO_URL in htmltext and "Walther-Meißner" in htmltext
+    assert REPO_URL in htmltext
     # Navigator erscheint beim Zoomen, verschwindet beim Zurücksetzen.
     w._auf_zoom((2.6, 2.8), (10.0, 20.0), True)
     assert w.navigator_dock.isHidden() is False
