@@ -20,6 +20,19 @@ einen zentralen Modus-Manager:
 * Ein neuer Datensatz oder ein startender Hintergrund-Job beendet aktive
   Modi ebenfalls.
 
+## Rückgängig / Wiederholen (Strg+Z / Strg+Umschalt+Z)
+
+Alle Nachfit-Änderungen sind über einen zentralen Stapel umkehrbar (Menü
+*Bearbeiten*, auch im „Funktionen"-Dropdown; Wiederholen zusätzlich per
+Strg+Y): Grenzgeraden (einfügen, verschieben/rotieren, Seite wechseln,
+entfernen), Ausschlusszonen (hinzufügen/entfernen), Ausreißer
+(markieren/wieder aufnehmen) und die Nachfits selbst (Bereichs-Fit,
+Grenzgeraden-Fit, Grenzen ziehen, Nochmal fitten). Das Zurücknehmen stellt
+den exakten vorherigen Zustand aus einem Schnappschuss wieder her — auch bei
+Zonen **ohne Neurechnung** der betroffenen Fits. Ein neuer Auto-Fit oder
+Datensatz leert den Stapel (die alten Zustände gehören zum alten Stapel);
+die Tiefe beträgt 50 Schritte.
+
 ## Fenstersuche mit Stationär-Abzug (warum der Bereichs-Fit die Mode trifft)
 
 Die Fenstersuche aller Nachfit-Werkzeuge (Rechteck und Grenzgeraden) nutzt

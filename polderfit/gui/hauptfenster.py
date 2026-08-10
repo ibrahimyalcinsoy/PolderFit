@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import html
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -137,10 +138,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._grenzgeraden: list[Grenzgerade] = []
         self.ausreisserpanel = AusreisserPanel(
             wieder_aufnehmen=self._ausreisser_wieder_aufnehmen,
-            rueckgaengig=self._ausreisser_rueckgaengig,
+            rueckgaengig=self._rueckgaengig,
         )
-        #: Undo-Stapel der Ausreisser-Listen (Snapshot VOR jeder Aenderung).
-        self._ausreisser_undo: list[list[int]] = []
+        # Zentraler Rueckgaengig-/Wiederholen-Stapel (Strg+Z / Strg+Umschalt+Z):
+        # Eintraege (beschreibung, vorher(), nachher()) mit Zustands-
+        # Schnappschuessen - Zonen-Undo stellt die betroffenen Fits SOFORT
+        # wieder her, ohne neu zu rechnen. Gilt fuer Grenzgeraden, Zonen,
+        # Ausreisser und Nachfits; ein neuer Auto-Fit/Datensatz leert ihn.
+        self._undo_stapel: list[tuple[str, object, object]] = []
+        self._redo_stapel: list[tuple[str, object, object]] = []
+        #: Kopien der Grenzgeraden im zuletzt angezeigten Zustand (Vorher-
+        #: Schnappschuss fuer Undo - Endpunkt-Drags mutieren die Objekte live).
+        self._geraden_schatten: list[Grenzgerade] = []
         self.tracepanel = TracePanel()
 
         self._baue_oberflaeche()
@@ -278,6 +287,22 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_beenden.setShortcut(QtGui.QKeySequence.Quit)             # Strg+Q
         self.akt_beenden.triggered.connect(self.close)
 
+        # --- Bearbeiten (Rueckgaengig/Wiederholen) ---------------------------
+        self.akt_rueckgaengig = A("Rückgängig", self)
+        self.akt_rueckgaengig.setShortcut(QtGui.QKeySequence.Undo)        # Strg+Z
+        self.akt_rueckgaengig.setToolTip(
+            "Letzte Änderung zurücknehmen: Grenzgerade, Ausschlusszone, "
+            "Ausreißer oder Nachfit (Strg+Z).")
+        self.akt_rueckgaengig.setEnabled(False)
+        self.akt_rueckgaengig.triggered.connect(self._rueckgaengig)
+        self.akt_wiederholen = A("Wiederholen", self)
+        self.akt_wiederholen.setShortcuts(
+            [QtGui.QKeySequence.Redo, QtGui.QKeySequence("Ctrl+Y")])      # Strg+Umschalt+Z / Strg+Y
+        self.akt_wiederholen.setToolTip(
+            "Zurückgenommene Änderung wieder anwenden (Strg+Umschalt+Z oder Strg+Y).")
+        self.akt_wiederholen.setEnabled(False)
+        self.akt_wiederholen.triggered.connect(self._wiederholen)
+
         # --- Fit (interaktive Modi sind checkbar und EXKLUSIV) ---------------
         self.akt_fit = A("Auto-Fit (alle)", self)
         self.akt_fit.setShortcut(QtGui.QKeySequence("F5"))
@@ -380,6 +405,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_datei.addSeparator()
         m_datei.addAction(self.akt_beenden)
 
+        m_bearbeiten = mb.addMenu("&Bearbeiten")
+        m_bearbeiten.addAction(self.akt_rueckgaengig)
+        m_bearbeiten.addAction(self.akt_wiederholen)
+
         m_fit = mb.addMenu("&Fit")
         m_fit.addAction(self.akt_fit)
         m_fit.addAction(self.akt_seed)
@@ -430,6 +459,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         # "Funktionen"-Dropdown mit allen weiteren Aktionen.
         self.funktionen_menue = QtWidgets.QMenu("Funktionen", self)
+        self.funktionen_menue.addAction(self.akt_rueckgaengig)
+        self.funktionen_menue.addAction(self.akt_wiederholen)
+        self.funktionen_menue.addSeparator()
         self.funktionen_menue.addAction(self.akt_fit)
         self.funktionen_menue.addAction(self.akt_seed)
         self.funktionen_menue.addAction(self.akt_bereich)
@@ -726,42 +758,64 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _gerade_gezeichnet(self, punkte):
         """Callback nach zwei Klicks: neue Grenzgerade anlegen und anzeigen."""
         (b1, f1_ghz), (b2, f2_ghz) = punkte
+        vorher = self._geraden_schatten
         self._grenzgeraden.append(Grenzgerade(b1=float(b1), f1=f1_ghz * 1e9,
                                               b2=float(b2), f2=f2_ghz * 1e9))
         self._zeige_geraden()
+        self._merke_geraden_aenderung("Grenzgerade eingefügt", vorher)
         self._log(f"Grenzgerade eingefügt: ({b1:.3f} T, {f1_ghz:.2f} GHz) – "
                   f"({b2:.3f} T, {f2_ghz:.2f} GHz). Grüner Saum = wird neu "
                   f"gefittet; Seite per Doppelklick oder im Panel wechseln.", "ok")
 
     def _zeige_geraden(self):
-        """Synchronisiert Geraden-Overlay (Farbplot) und Panel-Liste."""
+        """Synchronisiert Geraden-Overlay (Farbplot), Panel-Liste und Schatten."""
         self.zonenpanel.setze_geraden(self._grenzgeraden)
         self.matrix.zeige_grenzgeraden(self._grenzgeraden,
                                        endpunkt_geaendert=self._gerade_geaendert,
                                        seite_gewechselt=self._gerade_seite)
+        self._geraden_schatten = self._geraden_kopie()
+
+    def _merke_geraden_aenderung(self, beschreibung: str,
+                                 vorher: list[Grenzgerade]) -> None:
+        """Registriert eine Geraden-Aenderung (``vorher`` = Schatten-Kopien)."""
+        nachher = self._geraden_schatten
+        self._merke_aenderung(beschreibung,
+                              lambda v=vorher: self._geraden_setzen(v),
+                              lambda n=nachher: self._geraden_setzen(n))
 
     def _gerade_geaendert(self, index: int, b1: float, f1_ghz: float,
                           b2: float, f2_ghz: float):
-        """Endpunkt im Farbplot gezogen: Geometrie uebernehmen."""
+        """Endpunkt im Farbplot gezogen: Geometrie uebernehmen.
+
+        Der Vorher-Zustand kommt aus dem Schatten (die Drag-Bewegung hat das
+        Objekt bereits live mutiert).
+        """
         if not (0 <= index < len(self._grenzgeraden)):
             return
+        vorher = self._geraden_schatten
         g = self._grenzgeraden[index]
         g.b1, g.f1, g.b2, g.f2 = float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9
         self.zonenpanel.setze_geraden(self._grenzgeraden)
+        self._geraden_schatten = self._geraden_kopie()
+        self._merke_geraden_aenderung("Grenzgerade verschoben", vorher)
 
     def _gerade_seite(self, index: int):
         """Gruene (Neu-Fit-)Seite der Geraden wechseln (Doppelklick/Panel)."""
         if not (0 <= index < len(self._grenzgeraden)):
             return
+        vorher = self._geraden_schatten
         self._grenzgeraden[index].seite_wechseln()
         self._zeige_geraden()
+        self._merke_geraden_aenderung("Grenzgerade: Seite gewechselt", vorher)
         self._log("Grenzgerade: Seiten getauscht (grün = wird neu gefittet).", "info")
 
     def _gerade_entfernen(self, index: int):
         if not (0 <= index < len(self._grenzgeraden)):
             return
+        vorher = self._geraden_schatten
         del self._grenzgeraden[index]
         self._zeige_geraden()
+        self._merke_geraden_aenderung("Grenzgerade entfernt", vorher)
         self._log("Grenzgerade entfernt.", "info")
 
     def _geraden_fit(self):
@@ -790,6 +844,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         modus = dialog.modus()
         breite = dialog.breite_punkte()
         self._bereich_modus, self._bereich_breite = modus, breite
+        # Undo-Schnappschuss ueber alle Fits (jede Frequenz kann betroffen sein).
+        fits_vorher = self._fit_zustand(range(len(stapel.ergebnisse)))
 
         def aufgabe(melde):
             def fortschritt(k, n, erg):
@@ -806,6 +862,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._zeige_aktuellen()
             if self._auswertungsfenster is not None:
                 self._auswertungsfenster.aktualisiere()
+            if neu:
+                fits_nachher = self._fit_zustand(range(len(stapel.ergebnisse)))
+                self._merke_aenderung(
+                    "Grenzgeraden-Fit",
+                    lambda: self._fit_zustand_setzen(fits_vorher),
+                    lambda: self._fit_zustand_setzen(fits_nachher))
             probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
             breite_text = f", Breite {breite} Punkte" if breite else ""
             text = (f"Grenzgeraden-Fit ({len(geraden)} Gerade(n){breite_text}): "
@@ -829,6 +891,107 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._dock_schmal_halten(self.ausreisser_dock, breite=300)
         self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
                   "aufziehen. Esc oder erneutes Auslösen beendet den Modus.", "info")
+
+    # --- Rueckgaengig / Wiederholen (zentraler Stapel) ------------------------
+    def _merke_aenderung(self, beschreibung: str, vorher, nachher) -> None:
+        """Registriert eine umkehrbare Aenderung.
+
+        ``vorher()``/``nachher()`` stellen den Zustand VOR bzw. NACH der
+        Aenderung wieder her (Schnappschuss-Closures). Eine neue Aenderung
+        verwirft den Wiederholen-Stapel.
+        """
+        self._undo_stapel.append((beschreibung, vorher, nachher))
+        del self._undo_stapel[:-50]
+        self._redo_stapel.clear()
+        self._aktualisiere_undo_aktionen()
+
+    def _rueckgaengig(self) -> None:
+        if self._job_laeuft:
+            self._log("Rückgängig: bitte warten, ein Hintergrundprozess läuft.", "warn")
+            return
+        if not self._undo_stapel:
+            self._log("Nichts rückgängig zu machen.", "info")
+            return
+        beschreibung, vorher, nachher = self._undo_stapel.pop()
+        vorher()
+        self._redo_stapel.append((beschreibung, vorher, nachher))
+        self._aktualisiere_undo_aktionen()
+        self._log(f"Rückgängig: {beschreibung}.", "ok")
+        self.statusBar().showMessage(f"Rückgängig: {beschreibung}.", 5000)
+
+    def _wiederholen(self) -> None:
+        if self._job_laeuft:
+            self._log("Wiederholen: bitte warten, ein Hintergrundprozess läuft.", "warn")
+            return
+        if not self._redo_stapel:
+            self._log("Nichts zu wiederholen.", "info")
+            return
+        beschreibung, vorher, nachher = self._redo_stapel.pop()
+        nachher()
+        self._undo_stapel.append((beschreibung, vorher, nachher))
+        self._aktualisiere_undo_aktionen()
+        self._log(f"Wiederholt: {beschreibung}.", "ok")
+        self.statusBar().showMessage(f"Wiederholt: {beschreibung}.", 5000)
+
+    def _undo_verwerfen(self) -> None:
+        """Leert beide Stapel (neuer Datensatz/Auto-Fit: alte Zustaende ungueltig)."""
+        self._undo_stapel.clear()
+        self._redo_stapel.clear()
+        self._aktualisiere_undo_aktionen()
+
+    def _aktualisiere_undo_aktionen(self) -> None:
+        self.akt_rueckgaengig.setEnabled(bool(self._undo_stapel))
+        self.akt_wiederholen.setEnabled(bool(self._redo_stapel))
+        self.akt_rueckgaengig.setText(
+            f"Rückgängig: {self._undo_stapel[-1][0]}" if self._undo_stapel
+            else "Rückgängig")
+        self.akt_wiederholen.setText(
+            f"Wiederholen: {self._redo_stapel[-1][0]}" if self._redo_stapel
+            else "Wiederholen")
+
+    # Schnappschuss-Helfer -----------------------------------------------------
+    def _geraden_kopie(self) -> list[Grenzgerade]:
+        return [replace(g) for g in self._grenzgeraden]
+
+    def _geraden_setzen(self, geraden: list[Grenzgerade]) -> None:
+        self._grenzgeraden = [replace(g) for g in geraden]
+        self._zeige_geraden()
+
+    def _fit_zustand(self, indizes) -> dict:
+        """Referenz-Schnappschuss der Fits an ``indizes`` (Fenster/Ergebnis/Beschnitt)."""
+        st = self.stapel
+        return {int(i): (st.fenster[i], st.ergebnisse[i], st.zugeschnitten[i])
+                for i in indizes if 0 <= i < len(st.ergebnisse)}
+
+    def _fit_zustand_setzen(self, zustand: dict) -> None:
+        st = self.stapel
+        if st is None:
+            return
+        for i, (fenster, ergebnis, beschnitt) in zustand.items():
+            if i < len(st.ergebnisse):
+                st.fenster[i] = fenster
+                st.ergebnisse[i] = ergebnis
+                st.zugeschnitten[i] = beschnitt
+        self._aktualisiere_overlay()
+        self._zeige_aktuellen()
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
+
+    def _zonen_zustand_setzen(self, zonen: list, fit_zustand: dict) -> None:
+        if self.stapel is None:
+            return
+        self.stapel.ausschlusszonen = list(zonen)
+        self.zonenpanel.setze_zonen(self.stapel.ausschlusszonen)
+        self.matrix.zeige_ausschlusszonen(self.stapel.ausschlusszonen)
+        self._fit_zustand_setzen(fit_zustand)
+
+    def _ausreisser_setzen(self, liste: list[int]) -> None:
+        if self.stapel is None:
+            return
+        self.stapel.ausreisser = sorted(liste)
+        self._aktualisiere_overlay()
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
 
     # --- Aktivitaet / Protokoll -------------------------------------------
     def _log(self, text: str, art: str = "info") -> None:
@@ -1010,7 +1173,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.stapel = StapelErgebnis(datensatz=datensatz)
             self.zonenpanel.setze_zonen([])
             self._grenzgeraden = []
+            self._geraden_schatten = []
             self.zonenpanel.setze_geraden([])
+            self._undo_verwerfen()  # alte Zustaende gehoeren zum alten Datensatz
             # Datenansicht sofort ermoeglichen: Verarbeitungs-Panel einblenden.
             self._dock_schmal_halten(self.verarbeitung_dock, breite=300)
             self._log(
@@ -1053,7 +1218,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _nach_autofit(self, stapel: StapelErgebnis) -> None:
         """Gemeinsamer Abschluss beider Auto-Fit-Wege (mit/ohne Vorgabe)."""
         self.stapel = stapel
-        self._ausreisser_undo = []  # Undo-Stapel gehoert zum alten Stapel
+        self._undo_verwerfen()  # Undo-Stapel gehoert zum alten Stapel
         self._aktualisiere_overlay()
         # Neuer Stapel: Ausschlusszonen beginnen leer.
         self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
@@ -1169,6 +1334,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         breite = dialog.breite_punkte()
         self._bereich_modus, self._bereich_breite = modus, breite
         f_min, f_max = f_min_ghz * 1e9, f_max_ghz * 1e9
+        betroffen_vorab = [int(i) for i in np.flatnonzero(
+            (stapel.datensatz.frequenzen >= f_min)
+            & (stapel.datensatz.frequenzen <= f_max))]
+        fits_vorher = self._fit_zustand(betroffen_vorab)
 
         def aufgabe(melde):
             def fortschritt(k, n, erg):
@@ -1185,6 +1354,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._zeige_aktuellen()
             if self._auswertungsfenster is not None:
                 self._auswertungsfenster.aktualisiere()
+            if neu:
+                fits_nachher = self._fit_zustand(betroffen_vorab)
+                self._merke_aenderung(
+                    "Bereichs-Fit",
+                    lambda: self._fit_zustand_setzen(fits_vorher),
+                    lambda: self._fit_zustand_setzen(fits_nachher))
             probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
             breite_text = f", Breite {breite} Punkte" if breite else ""
             text = (f"Bereichs-Fit [{feld_min:.3f}-{feld_max:.3f} T, "
@@ -1257,7 +1432,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not self.stapel or not self.stapel.ergebnisse:
             return
         i = self.aktueller_index
+        fits_vorher = self._fit_zustand([i])
         erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
+        fits_nachher = self._fit_zustand([i])
+        self._merke_aenderung(
+            f"Grenzen gezogen (f={erg.frequenz/1e9:.2f} GHz)",
+            lambda: self._fit_zustand_setzen(fits_vorher),
+            lambda: self._fit_zustand_setzen(fits_nachher))
         self._zeige_aktuellen()
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
@@ -1272,7 +1453,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         i = self.aktueller_index
         unten, oben = self.stapel.fenster[i]
-        fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
+        fits_vorher = self._fit_zustand([i])
+        erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
+        fits_nachher = self._fit_zustand([i])
+        self._merke_aenderung(
+            f"Nochmal gefittet (f={erg.frequenz/1e9:.2f} GHz)",
+            lambda: self._fit_zustand_setzen(fits_vorher),
+            lambda: self._fit_zustand_setzen(fits_nachher))
         self._zeige_aktuellen()
         self._aktualisiere_overlay()
 
@@ -1285,7 +1472,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._auswertungsfenster = AuswertungsFenster(
                 hole_stapel=lambda: self.stapel,
                 ausreisser_markieren=self._ausreisser_gewaehlt,
-                ausreisser_rueckgaengig=self._ausreisser_rueckgaengig,
+                ausreisser_rueckgaengig=self._rueckgaengig,
                 parent=self)
             self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
         else:
@@ -1350,6 +1537,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _zone_gezeichnet(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
         stapel = self.stapel
         zone = Ausschlusszone(feld_min, feld_max, f_min_ghz * 1e9, f_max_ghz * 1e9)
+        # Vorher-Schnappschuss fuer Undo: Zonenliste + Fits im betroffenen Band.
+        betroffen_vorab = [int(i) for i in np.flatnonzero(
+            (stapel.datensatz.frequenzen >= zone.frequenz_min)
+            & (stapel.datensatz.frequenzen <= zone.frequenz_max))]
+        zonen_vorher = list(stapel.ausschlusszonen)
+        fits_vorher = self._fit_zustand(betroffen_vorab)
 
         def aufgabe(melde):
             def fortschritt(k, n, erg):
@@ -1363,6 +1556,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._zeige_aktuellen()
             if self._auswertungsfenster is not None:
                 self._auswertungsfenster.aktualisiere()
+            zonen_nachher = list(stapel.ausschlusszonen)
+            fits_nachher = self._fit_zustand(betroffen_vorab)
+            self._merke_aenderung(
+                "Ausschlusszone hinzugefügt",
+                lambda: self._zonen_zustand_setzen(zonen_vorher, fits_vorher),
+                lambda: self._zonen_zustand_setzen(zonen_nachher, fits_nachher))
             self._log(f"Ausschlusszone [{feld_min:.3f}–{feld_max:.3f} T, "
                       f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz] aktiv: "
                       f"{len(betroffen)} Linescans neu gefittet.", "ok")
@@ -1375,6 +1574,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self._job_laeuft:
             return
         stapel = self.stapel
+        zone = stapel.ausschlusszonen[zonen_index]
+        betroffen_vorab = [int(i) for i in np.flatnonzero(
+            (stapel.datensatz.frequenzen >= zone.frequenz_min)
+            & (stapel.datensatz.frequenzen <= zone.frequenz_max))]
+        zonen_vorher = list(stapel.ausschlusszonen)
+        fits_vorher = self._fit_zustand(betroffen_vorab)
 
         def aufgabe(melde):
             return entferne_ausschlusszone(stapel, zonen_index,
@@ -1387,15 +1592,23 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._zeige_aktuellen()
             if self._auswertungsfenster is not None:
                 self._auswertungsfenster.aktualisiere()
+            zonen_nachher = list(stapel.ausschlusszonen)
+            fits_nachher = self._fit_zustand(betroffen_vorab)
+            self._merke_aenderung(
+                "Ausschlusszone entfernt",
+                lambda: self._zonen_zustand_setzen(zonen_vorher, fits_vorher),
+                lambda: self._zonen_zustand_setzen(zonen_nachher, fits_nachher))
             self._log(f"Ausschlusszone entfernt: {len(betroffen)} Linescans neu gefittet.", "ok")
 
         self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …")
 
     # --- Ausreisser-Management -----------------------------------------------
-    def _ausreisser_snapshot(self):
-        """Zustand VOR einer Aenderung fuer Undo sichern (begrenzte Tiefe)."""
-        self._ausreisser_undo.append(list(self.stapel.ausreisser))
-        del self._ausreisser_undo[:-50]
+    def _merke_ausreisser_aenderung(self, beschreibung: str,
+                                    vorher: list[int]) -> None:
+        nachher = list(self.stapel.ausreisser)
+        self._merke_aenderung(beschreibung,
+                              lambda v=vorher: self._ausreisser_setzen(v),
+                              lambda n=nachher: self._ausreisser_setzen(n))
 
     def _ausreisser_gewaehlt(self, indizes: list[int]):
         """Callback aus Farbplot/Auswertungsfenster: Punkte ausschliessen (Echtzeit)."""
@@ -1404,9 +1617,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         neu = [i for i in indizes if not self.stapel.ist_ausreisser(i)]
         if not neu:
             return
-        self._ausreisser_snapshot()
+        vorher = list(self.stapel.ausreisser)
         for i in neu:
             self.stapel.ausreisser_umschalten(i)
+        self._merke_ausreisser_aenderung(
+            f"Ausreißer markiert ({len(neu)} Punkt(e))", vorher)
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
@@ -1420,26 +1635,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Aus der Liste: Punkte wieder in Darstellung und Rechnungen aufnehmen."""
         if not self.stapel or not indizes:
             return
-        self._ausreisser_snapshot()
+        vorher = list(self.stapel.ausreisser)
         for i in indizes:
             if self.stapel.ist_ausreisser(i):
                 self.stapel.ausreisser_umschalten(i)
+        self._merke_ausreisser_aenderung(
+            f"Ausreißer wieder aufgenommen ({len(indizes)})", vorher)
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
         self._log(f"{len(indizes)} Ausreißer wieder aufgenommen – "
                   f"verbleibend {len(self.stapel.ausreisser)}.", "ok")
-
-    def _ausreisser_rueckgaengig(self):
-        if not self.stapel or not self._ausreisser_undo:
-            self._log("Ausreißer: nichts rueckgaengig zu machen.", "info")
-            return
-        self.stapel.ausreisser = self._ausreisser_undo.pop()
-        self._aktualisiere_overlay()
-        if self._auswertungsfenster is not None:
-            self._auswertungsfenster.aktualisiere()
-        self._log(f"Ausreißer: letzter Schritt rueckgaengig – "
-                  f"aktuell {len(self.stapel.ausreisser)} ausgeschlossen.", "ok")
 
     # --- Projekt speichern / laden -------------------------------------------
     def _projekt_speichern(self):
@@ -1508,7 +1714,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             voll, stapel = res
             self.datensatz_voll = voll
             self.stapel = stapel
-            self._ausreisser_undo = []
+            self._undo_verwerfen()
             if auswahl_dict:
                 self._letzte_auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
             self.matrix.zeige(voll)
@@ -1655,6 +1861,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
               fitten, Ausschlusszone, Ausreißer markieren); der aktive Modus ist im
               „Funktionen"-Menü markiert und wird rechts in der Statusleiste angezeigt.</li>
           <li><b>Esc</b> bricht jeden Modus ab; das Starten eines Modus beendet den vorherigen.</li>
+          <li><b>Strg+Z / Strg+Umschalt+Z</b> (auch Strg+Y): Änderungen rückgängig machen und
+              wiederholen – Grenzgeraden, Ausschlusszonen, Ausreißer und Nachfits. Das
+              Zurücknehmen einer Zone stellt die betroffenen Fits sofort wieder her,
+              ohne neu zu rechnen.</li>
         </ul>
 
         <h3>Übersicht – Navigation &amp; Zoom</h3>

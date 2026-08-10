@@ -27,8 +27,9 @@ lassen.
 4. **Ausreißer-Panel**: Liste aller ausgeschlossenen Punkte (Index, Frequenz,
    B_res) — einsehbar und editierbar:
    * *Wieder aufnehmen* (Auswahl) / *Alle wieder aufnehmen*
-   * *Rückgängig* — macht den jeweils letzten Schritt rückgängig
-     (Markieren wie Wiederaufnehmen, bis zu 50 Schritte).
+   * *Rückgängig* — nutzt den zentralen Rückgängig-Stapel des Programms
+     (Strg+Z; Wiederholen mit Strg+Umschalt+Z bzw. Strg+Y, bis zu 50
+     Schritte — gemeinsam mit Zonen, Grenzgeraden und Nachfits).
 
 Die Einzelfits selbst bleiben unangetastet — ein Ausreißer-Ausschluss ist
 eine reine Auswertungsentscheidung und jederzeit reversibel.
