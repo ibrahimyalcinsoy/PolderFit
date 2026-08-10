@@ -154,12 +154,11 @@ def test_neuer_datensatz_leert_undo(app):
     assert w.akt_rueckgaengig.text() == "Rückgängig"
 
 
-def test_undo_aktionen_in_menue_und_dropdown(app):
+def test_undo_aktionen_im_bearbeiten_menue(app):
     from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     menues = {m.title(): m for m in w.menuBar().findChildren(QtWidgets.QMenu)}
     assert "&Bearbeiten" in menues
     aktionen = set(menues["&Bearbeiten"].actions())
     assert w.akt_rueckgaengig in aktionen and w.akt_wiederholen in aktionen
-    assert w.akt_rueckgaengig in set(w.funktionen_menue.actions())
     assert w.akt_rueckgaengig.shortcut().toString() == "Ctrl+Z"

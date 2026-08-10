@@ -46,8 +46,12 @@ class AuswertungsFenster(QtWidgets.QDialog):
     """
 
     def __init__(self, hole_stapel, ausreisser_markieren=None,
-                 ausreisser_rueckgaengig=None, geometrie: str = "oop", parent=None):
+                 ausreisser_rueckgaengig=None, geometrie: str = "oop",
+                 hole_parameter=None, parent=None):
         super().__init__(parent)
+        #: Liefert die aktuellen PhysikParameter (g/gamma, gamma_fest, r2_min)
+        #: des Hauptfensters - oder None (Standardwerte).
+        self._hole_parameter = hole_parameter
         self.setWindowFlag(QtCore.Qt.Window, True)  # eigenes Fenster, nicht modal
         self.setWindowTitle("Kittel/LLG-Auswertung")
         self.resize(1080, 640)
@@ -124,6 +128,10 @@ class AuswertungsFenster(QtWidgets.QDialog):
             self.canvas.draw_idle()
             return
 
+        # Einstellbare Parameter (g/gamma, gamma_fest, r2_min) des Hauptfensters.
+        p = self._hole_parameter() if self._hole_parameter is not None else None
+        r2_min = p.r2_min if p is not None else 0.9
+
         # Plotpunkte = aktive (nicht ausgeschlossene), brauchbare Einzelfits;
         # gleiche Kriterien wie die Auswertung selbst (_gute_ergebnisse).
         gesperrt = set(stapel.ausreisser)
@@ -132,7 +140,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             if i in gesperrt:
                 continue
             gut = (e.erfolg and not e.problematisch and np.isfinite(e.B_res)
-                   and (not np.isfinite(e.R2) or e.R2 >= 0.9))
+                   and (not np.isfinite(e.R2) or e.R2 >= r2_min))
             if gut:
                 idx.append(i)
                 f.append(e.frequenz)
@@ -148,8 +156,14 @@ class AuswertungsFenster(QtWidgets.QDialog):
         fehler_text = ""
         if self._punkt_indizes.size >= 3:
             try:
-                self._info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(),
-                                                   geometrie=geometrie)
+                if p is not None:
+                    self._info = auswertung_kittel_llg(
+                        stapel.ergebnisse_aktiv(), geometrie=geometrie,
+                        gamma_fest=p.gamma_fest, gamma_start=p.gamma,
+                        r2_min=p.r2_min)
+                else:
+                    self._info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(),
+                                                       geometrie=geometrie)
             except Exception as exc:
                 fehler_text = str(exc)
         else:

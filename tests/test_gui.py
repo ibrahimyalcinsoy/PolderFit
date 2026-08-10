@@ -64,11 +64,11 @@ def test_menueleiste_haelt_alle_aktionen(app):
     from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
     menues = {m.title(): m for m in w.menuBar().findChildren(QtWidgets.QMenu)}
-    assert {"&Datei", "&Fit", "&Ansicht", "&Hilfe"} <= set(menues)
-    # Jede Aktion muss in mindestens einem Menue haengen (nicht nur in der Toolbar).
+    assert {"&Datei", "&Bearbeiten", "Fun&ktionen", "&Ansicht", "&Hilfe"} <= set(menues)
+    # Jede Aktion muss in mindestens einem Menue haengen.
     in_menue = {a for m in menues.values() for a in m.actions()}
     for aktion in (w.akt_laden, w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
-                   w.akt_kittel, w.akt_tdms, w.akt_xlsx, w.akt_csv,
+                   w.akt_kittel, w.akt_physik, w.akt_tdms, w.akt_xlsx, w.akt_csv,
                    w.akt_projekt_speichern, w.akt_projekt_laden, w.akt_vollbereich,
                    w.akt_problemfits, w.akt_verarbeitung, w.akt_zonen_panel, w.akt_linescan,
                    w.akt_ausreisser_panel, w.akt_aktivitaet, w.akt_beenden, w.akt_hilfe):
@@ -81,27 +81,25 @@ def test_menueleiste_haelt_alle_aktionen(app):
     assert w.zonen_dock.isHidden()
 
 
-def test_werkzeugleiste_schlank_mit_funktionen_dropdown(app):
-    """Toolbar: nur Laden + 'Funktionen'-Dropdown; alle Aktionen im Dropdown-Menue."""
+def test_eine_leiste_ohne_redundante_toolbar(app):
+    """EINE Leiste: keine separate Werkzeugleiste mehr; Logo und 'TDMS laden'
+    sitzen als Eckwidgets in der Menueleiste, das Funktionen-Menue haelt die
+    Fit-/Auswerteaktionen."""
     from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
-    assert w.btn_funktionen.menu() is w.funktionen_menue
+    assert w.findChildren(QtWidgets.QToolBar) == []       # keine zweite Leiste
+    mb = w.menuBar()
+    assert mb.cornerWidget(QtCore.Qt.TopLeftCorner) is w.btn_logo
+    assert mb.cornerWidget(QtCore.Qt.TopRightCorner) is w.btn_laden
+    assert w.btn_laden.defaultAction() is w.akt_laden
 
-    def alle_aktionen(menue):
-        gesammelt = []
-        for a in menue.actions():
-            gesammelt.append(a)
-            if a.menu() is not None:
-                gesammelt.extend(alle_aktionen(a.menu()))
-        return gesammelt
-
-    im_dropdown = set(alle_aktionen(w.funktionen_menue))
+    im_funktionen = set(w.funktionen_menue.actions())
     for aktion in (w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
-                   w.akt_kittel, w.akt_tdms, w.akt_xlsx, w.akt_csv,
-                   w.akt_vollbereich, w.akt_problemfits, w.akt_verarbeitung,
-                   w.akt_zonen_panel, w.akt_linescan, w.akt_ausreisser_panel,
-                   w.akt_aktivitaet, w.akt_trace):
-        assert aktion in im_dropdown
+                   w.akt_kittel, w.akt_physik):
+        assert aktion in im_funktionen
+    # Keine Redundanz: Export/Ansicht haengen NICHT nochmal im Funktionen-Menue.
+    assert w.akt_xlsx not in im_funktionen
+    assert w.akt_vollbereich not in im_funktionen
     # Interaktive Modi sind checkbar (sichtbarer Aktiv-Zustand).
     for aktion in (w.akt_seed, w.akt_bereich, w.akt_ausreisser):
         assert aktion.isCheckable()
@@ -110,14 +108,19 @@ def test_werkzeugleiste_schlank_mit_funktionen_dropdown(app):
     assert w.akt_bereich.shortcut().toString() == "Ctrl+B"
     assert w.akt_ausreisser.shortcut().toString() == "Ctrl+M"
     assert w.akt_xlsx.shortcut().toString() == "Ctrl+E"
+    assert w.akt_physik.shortcut().toString() == "Ctrl+P"
 
 
 def test_hilfe_ohne_physik_und_wmi(app):
-    """Hilfe-Text enthaelt keine Physik-Erklaerung und keinen WMI-/Logo-Text."""
+    """Hilfe-Text enthaelt keine Physik-ERKLAERUNG und keinen WMI-/Logo-Text.
+
+    Der Menuetitel "Physikalische Parameter" (Strg+P) ist erlaubt - verboten
+    sind erklaerende Physik-Inhalte (Formeln, Herleitungen, WMI-Bezug).
+    """
     from polderfit.gui.hauptfenster import Hauptfenster
     html = Hauptfenster._hilfe_html()
     for verboten in ("Walther-Meißner", "präzediert", "Polder-Suszeptibilität",
-                     "Physik", "µ₀M", "Kittel-Gleichung"):
+                     "µ₀M", "Kittel-Gleichung", "Präzession"):
         assert verboten not in html
 
 

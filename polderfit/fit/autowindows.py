@@ -401,6 +401,7 @@ def fenster_aus_trasse(
     zentren,
     gamma: float = GAMMA_STANDARD,
     breite_faktor: float = 8.0,
+    alpha_erwartet: float = 0.01,
 ) -> list[tuple[float, float]]:
     """Feldfenster um VORGEGEBENE Zentren ``B_res(f)`` (manueller Dispersions-Seed).
 
@@ -415,9 +416,9 @@ def fenster_aus_trasse(
     for k, ls in enumerate(datensatz.linescans):
         B = ls.feld
         c = float(np.clip(z[k], float(B.min()), float(B.max())))
-        # erwartete Linienbreite mu0*DeltaH = 2*omega*alpha/gamma (alpha ~ 0.01),
-        # eng gedeckelt:
-        dB = 2.0 * (2.0 * np.pi * ls.frequenz) * 0.01 / gamma
+        # erwartete Linienbreite mu0*DeltaH = 2*omega*alpha/gamma
+        # (``alpha_erwartet`` einstellbar), eng gedeckelt:
+        dB = 2.0 * (2.0 * np.pi * ls.frequenz) * alpha_erwartet / gamma
         halb = float(np.clip(breite_faktor * dB / 2.0, 0.04, 0.08))
         unten = max(c - halb, float(B.min()))
         oben = min(c + halb, float(B.max()))

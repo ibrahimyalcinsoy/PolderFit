@@ -157,6 +157,7 @@ def fitte_alle(
     fortschritt=None,
     zentren=None,
     auswahl: Auswertungsauswahl | None = None,
+    alpha_erwartet: float = 0.01,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -174,7 +175,8 @@ def fitte_alle(
             zentren = np.asarray(zentren)[indizes]
 
     if zentren is not None:
-        fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor)
+        fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor,
+                                     alpha_erwartet=alpha_erwartet)
     else:
         fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)
     stapel = StapelErgebnis(

@@ -136,3 +136,23 @@ Die Modellfunktionen wurden gegen folgende Quellen verifiziert:
 3. **Messprotokoll** `Protokoll_FMR_Python_2026-05-08` – Anforderungen sowie die
    inverse Suszeptibilität (Weiler, Gl. 2.7) als Quelle der Fitfunktionen. Die
    implementierte `χ_oop` stimmt numerisch mit der Inversion dieser Matrix überein.
+
+## Einstellbare Parameter (GUI)
+
+*Funktionen → Physikalische Parameter …* (`Strg+P`) öffnet den Dialog für die
+vom Nutzer wählbaren Größen (Konvention wie oben: Felder als µ₀H in Tesla,
+γ = g·µ_B/ħ in rad/(s·T); Müller 2023, Kap. 2):
+
+| Parameter | Wirkung | Standard |
+|---|---|---|
+| g-Faktor | γ = g·µ_B/ħ — Einzelfits (ΔH = 2ωα/γ), Fenstersuche, Startwert des Kittel-Fits | 2.0 |
+| γ festhalten | Kittel-Fit (oop) fittet nur µ₀M_eff; γ bleibt beim eingestellten Wert | aus |
+| Kittel-Geometrie | Vorgabe für das Auswertungsfenster: oop (Gl. 2.24) oder ip (Gl. 2.26) | oop |
+| Fensterbreite-Faktor | automatisches Fenster = Faktor × lokale FWHM | 8.0 |
+| R²-Schwelle (Einzelfit) | sekundäres Gütemaß der Problem-Einstufung | 0.9 |
+| R²-Minimum (Kittel/LLG) | Punktauswahl der übergreifenden Auswertung | 0.9 |
+| erwartetes α | Fensterbreite (ΔB = 2ωα/γ) beim Auto-Fit mit vorgegebener Resonanz | 0.01 |
+
+Änderungen wirken ab dem nächsten (Auto-/Nach-)Fit; die Kittel/LLG-Auswertung
+und der Excel-Export rechnen sofort mit den neuen Werten. „Standardwerte"
+setzt alles zurück.

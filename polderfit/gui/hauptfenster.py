@@ -7,11 +7,15 @@ Koordinatensystem, das sich mit "TDMS laden" fuellt. Damit laesst sich das
 Programm auch allein zur Datenansicht nutzen (Verarbeitungskette:
 derivative divide, divide slice, ... ganz ohne Fit).
 
-Alle weiteren Funktionen sind in einem "Funktionen"-Dropdown der schlanken
-Werkzeugleiste und in der Menueleiste untergebracht. Interaktive Modi
-(Resonanz vorgeben, Bereich neu fitten, Ausschlusszone, Ausreisser markieren)
-sind EXKLUSIV: es ist immer hoechstens ein Modus aktiv, der aktive Modus ist
-in Werkzeugleiste und Statusleiste deutlich markiert, Esc bricht ihn ab.
+Alle Funktionen sitzen in EINER Leiste: der Menueleiste mit klickbarem Logo
+(links), den Menues Datei/Bearbeiten/Funktionen/Ansicht/Hilfe und dem
+"TDMS laden"-Schnellzugriff (rechts). Interaktive Modi (Resonanz vorgeben,
+Bereich neu fitten, Ausschlusszone, Grenzgerade, Ausreisser markieren) sind
+EXKLUSIV: es ist immer hoechstens ein Modus aktiv, der aktive Modus ist im
+Menue und in der Statusleiste deutlich markiert, Esc bricht ihn ab.
+Physikalische Parameter (g-Faktor/gamma, Geometrie, Fensterfaktor,
+R2-Schwellen) sind ueber Funktionen -> "Physikalische Parameter" (Strg+P)
+einstellbar.
 
 Lang laufende Schritte (Laden grosser Dateien, Auto-Fit ueber alle Frequenzen)
 laufen in einem Hintergrund-Thread; ein andockbares Aktivitaets-Panel zeigt
@@ -51,6 +55,7 @@ from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
 from .ausreisser_panel import AusreisserPanel
 from .auswahl_dialog import AuswahlDialog
+from .parameter_dialog import ParameterDialog, PhysikParameter
 from .auswertung_fenster import AuswertungsFenster
 from .bereichsfit_dialog import BereichsFitDialog
 from .zonen_panel import ZonenPanel
@@ -109,6 +114,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Zuletzt benutzte Bereichs-Fit-Optionen (Vorbelegung des Dialogs).
         self._bereich_modus: str = "ueberschreiben"
         self._bereich_breite: int | None = None
+        #: Einstellbare physikalische Parameter (g-Faktor/gamma, Geometrie,
+        #: Fensterfaktor, R2-Schwellen, erwartetes alpha) - Dialog: Strg+P.
+        self._physik = PhysikParameter()
         # Offenes Kittel/LLG-Auswertungsfenster (hoechstens eines).
         self._auswertungsfenster: AuswertungsFenster | None = None
 
@@ -155,7 +163,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._baue_oberflaeche()
         self._baue_aktionen()
         self._baue_menue()
-        self._baue_werkzeugleiste()
         self._baue_aktivitaet_dock()
         self._baue_navigator_dock()
         self._baue_verarbeitung_dock()
@@ -248,7 +255,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.resizeDocks([dock], [hoehe], QtCore.Qt.Vertical)
 
     def _baue_aktionen(self):
-        """Legt alle Aktionen einmalig an; sie werden in Menue UND Dropdown verwendet.
+        """Legt alle Aktionen der Menueleiste einmalig an.
 
         Die Sichtbarkeits-Umschalter der Panels ohne bereits existierendes Dock
         (``akt_verarbeitung``, ``akt_zonen_panel``, ``akt_ausreisser_panel``,
@@ -337,6 +344,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Eigenes Auswertungsfenster: Kittel- und LLG-Fit mit Feld auf der "
             "x-Achse, Punkte direkt im Plot entfernen, Export mit Fehlermaßen.")
         self.akt_kittel.triggered.connect(self._kittel_llg)
+        self.akt_physik = A("Physikalische Parameter …", self)
+        self.akt_physik.setShortcut(QtGui.QKeySequence("Ctrl+P"))
+        self.akt_physik.setToolTip(
+            "g-Faktor/γ, Kittel-Geometrie, Fensterbreite-Faktor, R²-Schwellen "
+            "und erwartetes α einstellen (Konvention: µ₀H in Tesla, "
+            "γ = g·µ_B/ħ; Müller 2023, Kap. 2).")
+        self.akt_physik.triggered.connect(self._physik_dialog)
 
         # --- Ansicht --------------------------------------------------------
         self.akt_vollbereich = A("Linescan: ganzer Feldsweep", self)
@@ -391,8 +405,28 @@ class Hauptfenster(QtWidgets.QMainWindow):
             lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(REPO_URL)))
 
     def _baue_menue(self):
-        """Menueleiste mit allen Aktionen – bei kleinem Fenster stets erreichbar."""
+        """EINE Leiste fuer alles: Menueleiste mit Logo (links) und
+        "TDMS laden"-Schnellzugriff (rechts) als Eckwidgets.
+
+        Die fruehere zusaetzliche Werkzeugleiste entfaellt - sie war redundant
+        zur Menueleiste ("TDMS laden" doppelt, "Funktionen"-Dropdown spiegelte
+        die Menues Fit/Ansicht/Export). Das Fit-Menue heisst jetzt
+        "Funktionen" und ist das einzige Zuhause der Fit-/Auswerteaktionen.
+        """
         mb = self.menuBar()
+
+        # Klickbares PolderFit-Logo ganz links -> oeffnet die Hilfe.
+        self.btn_logo = QtWidgets.QToolButton()
+        self.btn_logo.setIcon(app_icon())
+        self.btn_logo.setIconSize(QtCore.QSize(22, 22))
+        self.btn_logo.setText(" PolderFit")
+        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.btn_logo.setAutoRaise(True)
+        self.btn_logo.setToolTip("Bedienung & Infos")
+        self.btn_logo.setStyleSheet(
+            "font-weight: 600; font-size: 14px; padding: 2px 10px; border: none;")
+        self.btn_logo.clicked.connect(self._zeige_hilfe)
+        mb.setCornerWidget(self.btn_logo, QtCore.Qt.TopLeftCorner)
 
         m_datei = mb.addMenu("&Datei")
         m_datei.addAction(self.akt_laden)
@@ -409,13 +443,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_bearbeiten.addAction(self.akt_rueckgaengig)
         m_bearbeiten.addAction(self.akt_wiederholen)
 
-        m_fit = mb.addMenu("&Fit")
-        m_fit.addAction(self.akt_fit)
-        m_fit.addAction(self.akt_seed)
-        m_fit.addAction(self.akt_bereich)
-        m_fit.addSeparator()
-        m_fit.addAction(self.akt_ausreisser)
-        m_fit.addAction(self.akt_kittel)
+        self.funktionen_menue = mb.addMenu("Fun&ktionen")
+        self.funktionen_menue.addAction(self.akt_fit)
+        self.funktionen_menue.addAction(self.akt_seed)
+        self.funktionen_menue.addAction(self.akt_bereich)
+        self.funktionen_menue.addSeparator()
+        self.funktionen_menue.addAction(self.akt_ausreisser)
+        self.funktionen_menue.addAction(self.akt_kittel)
+        self.funktionen_menue.addSeparator()
+        self.funktionen_menue.addAction(self.akt_physik)
 
         m_ansicht = mb.addMenu("&Ansicht")
         m_ansicht.addAction(self.akt_vollbereich)
@@ -433,64 +469,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_hilfe.addAction(self.akt_hilfe)
         m_hilfe.addAction(self.akt_repo)
 
-    def _baue_werkzeugleiste(self):
-        """Radikal schlanke Werkzeugleiste: Laden + "Funktionen"-Dropdown.
-
-        Alle Fit-/Auswerte-/Ansicht-Funktionen sind im Dropdown verborgen (und
-        bleiben parallel in der Menueleiste samt Shortcuts erreichbar)."""
-        leiste = self.addToolBar("Hauptaktionen")
-        leiste.setObjectName("haupt_toolbar")
-        leiste.setMovable(False)
-
-        # Klickbares PolderFit-Logo + Wortmarke ganz links -> oeffnet die Hilfe.
-        self.btn_logo = QtWidgets.QToolButton()
-        self.btn_logo.setIcon(app_icon())
-        self.btn_logo.setIconSize(QtCore.QSize(24, 24))
-        self.btn_logo.setText(" PolderFit")
-        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        self.btn_logo.setAutoRaise(True)
-        self.btn_logo.setToolTip("Bedienung & Infos")
-        self.btn_logo.setStyleSheet("font-weight: 600; font-size: 14px; padding: 2px 8px;")
-        self.btn_logo.clicked.connect(self._zeige_hilfe)
-        leiste.addWidget(self.btn_logo)
-        leiste.addSeparator()
-
-        leiste.addAction(self.akt_laden)
-
-        # "Funktionen"-Dropdown mit allen weiteren Aktionen.
-        self.funktionen_menue = QtWidgets.QMenu("Funktionen", self)
-        self.funktionen_menue.addAction(self.akt_rueckgaengig)
-        self.funktionen_menue.addAction(self.akt_wiederholen)
-        self.funktionen_menue.addSeparator()
-        self.funktionen_menue.addAction(self.akt_fit)
-        self.funktionen_menue.addAction(self.akt_seed)
-        self.funktionen_menue.addAction(self.akt_bereich)
-        self.funktionen_menue.addAction(self.akt_ausreisser)
-        self.funktionen_menue.addSeparator()
-        self.funktionen_menue.addAction(self.akt_kittel)
-        self.funktionen_menue.addSeparator()
-        m_export = self.funktionen_menue.addMenu("Export")
-        m_export.addAction(self.akt_tdms)
-        m_export.addAction(self.akt_xlsx)
-        m_export.addAction(self.akt_csv)
-        m_ansicht = self.funktionen_menue.addMenu("Ansicht")
-        m_ansicht.addAction(self.akt_vollbereich)
-        m_ansicht.addAction(self.akt_problemfits)
-        m_ansicht.addSeparator()
-        m_ansicht.addAction(self.akt_verarbeitung)
-        m_ansicht.addAction(self.akt_zonen_panel)
-        m_ansicht.addAction(self.akt_linescan)
-        m_ansicht.addAction(self.akt_ausreisser_panel)
-        m_ansicht.addAction(self.akt_aktivitaet)
-        m_ansicht.addAction(self.akt_trace)
-
-        self.btn_funktionen = QtWidgets.QToolButton()
-        self.btn_funktionen.setText("Funktionen ▾")
-        self.btn_funktionen.setMenu(self.funktionen_menue)
-        self.btn_funktionen.setPopupMode(QtWidgets.QToolButton.InstantPopup)
-        self.btn_funktionen.setToolTip(
-            "Alle Fit-, Auswerte- und Ansichtsfunktionen (auch in der Menueleiste).")
-        leiste.addWidget(self.btn_funktionen)
+        # Schnellzugriff "TDMS laden" ganz rechts in derselben Leiste.
+        self.btn_laden = QtWidgets.QToolButton()
+        self.btn_laden.setDefaultAction(self.akt_laden)
+        self.btn_laden.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        self.btn_laden.setStyleSheet("padding: 3px 12px; font-weight: 600;")
+        mb.setCornerWidget(self.btn_laden, QtCore.Qt.TopRightCorner)
 
     def _baue_aktivitaet_dock(self):
         """Andockbares (abtrennbares) Panel mit Fortschritt und Live-Protokoll."""
@@ -853,6 +837,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     f"✓ B_res={erg.B_res:.3f} T"
                 melde(k, n, f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}")
             return fitte_geraden_bereich(stapel, geraden, modus=modus,
+                                         breite_faktor=self._physik.breite_faktor,
                                          breite_punkte=breite,
                                          fortschritt=fortschritt)
 
@@ -1215,6 +1200,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
                       + auswahl.beschreibung(self.datensatz_voll), "info")
         return auswahl
 
+    def _physik_dialog(self):
+        """Dialog fuer die einstellbaren physikalischen Parameter (Strg+P)."""
+        dialog = ParameterDialog(self._physik, parent=self)
+        if not dialog.exec():
+            return
+        self._physik_uebernehmen(dialog.parameter())
+
+    def _physik_uebernehmen(self, parameter: PhysikParameter) -> None:
+        """Setzt neue Parameter und rechnet die Kittel/LLG-Auswertung neu."""
+        self._physik = parameter
+        self._log("Physikalische Parameter: " + parameter.beschreibung(), "ok")
+        if self.stapel is not None and self.stapel.ergebnisse:
+            # gamma des bestehenden Stapels anpassen: wirkt sofort auf alle
+            # NACHfits (fitte_neu nutzt stapel.gamma); bestehende Ergebnisse
+            # bleiben, bis neu gefittet wird.
+            self.stapel.gamma = parameter.gamma
+            self.stapel.r2_schwelle = parameter.r2_schwelle
+            self._log("Hinweis: bestehende Einzelfits bleiben unveraendert - "
+                      "neue Parameter wirken ab dem naechsten (Auto-/Nach-)Fit; "
+                      "die Kittel/LLG-Auswertung rechnet sofort neu.", "info")
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
+
     def _nach_autofit(self, stapel: StapelErgebnis) -> None:
         """Gemeinsamer Abschluss beider Auto-Fit-Wege (mit/ohne Vorgabe)."""
         self.stapel = stapel
@@ -1242,6 +1250,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         auswahl = self._frage_auswahl()
         if auswahl is None:
             return
+        physik = self._physik
 
         def aufgabe(melde):
             n = len(datensatz.linescans)
@@ -1258,7 +1267,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     text = ""
                 melde(i + 1, total, text)
 
-            return fitte_alle(datensatz, fortschritt=fortschritt, auswahl=auswahl)
+            return fitte_alle(datensatz, gamma=physik.gamma,
+                              breite_faktor=physik.breite_faktor,
+                              r2_schwelle=physik.r2_schwelle,
+                              fortschritt=fortschritt, auswahl=auswahl,
+                              alpha_erwartet=physik.alpha_erwartet)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
@@ -1288,6 +1301,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if auswahl is None:
             self._log("Auto-Fit mit Vorgabe abgebrochen (keine Auswertungsauswahl).", "info")
             return
+        physik = self._physik
         self._log(f"Dispersion gesetzt: {b1:.3f} T @ {f1/1e9:.1f} GHz – "
                   f"{b2:.3f} T @ {f2/1e9:.1f} GHz → Auto-Fit mit Vorgabe …", "ok")
 
@@ -1306,8 +1320,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     text = ""
                 melde(i + 1, total, text)
 
-            return fitte_alle(datensatz, fortschritt=fortschritt, zentren=zentren,
-                              auswahl=auswahl)
+            return fitte_alle(datensatz, gamma=physik.gamma,
+                              breite_faktor=physik.breite_faktor,
+                              r2_schwelle=physik.r2_schwelle,
+                              fortschritt=fortschritt, zentren=zentren,
+                              auswahl=auswahl,
+                              alpha_erwartet=physik.alpha_erwartet)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
@@ -1345,6 +1363,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     f"✓ B_res={erg.B_res:.3f} T"
                 melde(k, n, f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}")
             return fitte_bereich(stapel, feld_min, feld_max, f_min, f_max,
+                                 breite_faktor=self._physik.breite_faktor,
                                  modus=modus, breite_punkte=breite,
                                  fortschritt=fortschritt)
 
@@ -1473,6 +1492,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 hole_stapel=lambda: self.stapel,
                 ausreisser_markieren=self._ausreisser_gewaehlt,
                 ausreisser_rueckgaengig=self._rueckgaengig,
+                geometrie=self._physik.geometrie,
+                hole_parameter=lambda: self._physik,
                 parent=self)
             self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
         else:
@@ -1507,7 +1528,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         global_param = None
         try:
-            info = auswertung_kittel_llg(self.stapel.ergebnisse_aktiv())
+            p = self._physik
+            info = auswertung_kittel_llg(self.stapel.ergebnisse_aktiv(),
+                                         geometrie=p.geometrie,
+                                         gamma_fest=p.gamma_fest,
+                                         gamma_start=p.gamma, r2_min=p.r2_min)
             global_param = {**{f"kittel_{k}": v for k, v in info["kittel"].items()},
                             **{f"llg_{k}": v for k, v in info["llg"].items()}}
         except Exception:
@@ -1834,6 +1859,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         <ol>
           <li><b>TDMS laden</b> (Strg+O) – sortiertes oder unsortiertes Format wird erkannt.
               Danach füllt die Messung den Farbplot; das Verarbeitungs-Panel erscheint.</li>
+          <li><b>Physikalische Parameter</b> (Strg+P, optional) – g-Faktor/γ, Kittel-Geometrie
+              (oop/ip), Fensterbreite-Faktor, R²-Schwellen und erwartetes α einstellen;
+              wirkt ab dem nächsten Fit, die Kittel/LLG-Auswertung rechnet sofort neu.</li>
           <li><b>Auto-Fit (alle)</b> (F5) – sucht je Frequenz die Resonanz, schneidet ein Band
               und fittet Real- und Imaginärteil gleichzeitig. Läuft im Hintergrund;
               Fortschritt und Protokoll im <b>Aktivitäts-Panel</b>.</li>
