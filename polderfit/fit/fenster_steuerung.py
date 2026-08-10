@@ -16,9 +16,11 @@ Dieses Modul ist die gemeinsame Basis fuer das Rechteck-Nachfitten
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 
-from .autowindows import auto_fenster, schneide_band
+from .autowindows import auto_fenster_intervalle
 from .batch import Ausschlusszone, StapelErgebnis, fitte_neu
 
 #: Gueltige Modi fuer das Ueberschreib-Verhalten beim Neu-Fitten.
@@ -228,9 +230,6 @@ def fitte_bereich(
 
     Liefert ``(neu_gefittet, uebersprungen)`` - Listen von Stapel-Indizes.
     """
-    _pruefe_modus(modus)
-    if breite_punkte is not None and int(breite_punkte) < 4:
-        raise ValueError(f"breite_punkte muss >= 4 sein (erhalten: {breite_punkte}).")
     if feld_max < feld_min:
         feld_min, feld_max = feld_max, feld_min
     if frequenz_max < frequenz_min:
@@ -239,37 +238,136 @@ def fitte_bereich(
     frequenzen = stapel.datensatz.frequenzen
     betroffen = [int(i) for i in np.flatnonzero(
         (frequenzen >= frequenz_min) & (frequenzen <= frequenz_max))]
+    intervalle = {i: (float(feld_min), float(feld_max)) for i in betroffen}
+    return _fitte_mit_intervallen(stapel, intervalle, modus=modus,
+                                  breite_faktor=breite_faktor,
+                                  breite_punkte=breite_punkte,
+                                  fortschritt=fortschritt)
 
-    neu_gefittet: list[int] = []
+
+def _fitte_mit_intervallen(
+    stapel: StapelErgebnis,
+    intervalle: dict[int, tuple[float, float]],
+    modus: str = "ueberschreiben",
+    breite_faktor: float = 8.0,
+    breite_punkte: int | None = None,
+    fortschritt=None,
+) -> tuple[list[int], list[int]]:
+    """Gemeinsamer Kern von Rechteck- und Grenzgeraden-Fit.
+
+    Fenstersuche mit Stationaer-Abzug ueber :func:`auto_fenster_intervalle`
+    (siehe dort - behebt das Haengenbleiben an senkrechten Stoerstreifen),
+    danach je Index :func:`fitte_neu`. Liefert ``(neu_gefittet,
+    uebersprungen)``.
+    """
+    _pruefe_modus(modus)
+    if breite_punkte is not None and int(breite_punkte) < 4:
+        raise ValueError(f"breite_punkte muss >= 4 sein (erhalten: {breite_punkte}).")
+
     uebersprungen: list[int] = []
-    for k, i in enumerate(betroffen):
+    zu_fitten: dict[int, tuple[float, float]] = {}
+    for i, grenzen in intervalle.items():
         if (modus == "ergaenzen" and stapel.ergebnisse
                 and not stapel.ergebnisse[i].problematisch):
             uebersprungen.append(i)
             continue
-        ls = stapel.datensatz.linescans[i]
-        im_rechteck = int(np.count_nonzero(
-            (ls.feld >= feld_min) & (ls.feld <= feld_max)))
-        if im_rechteck < 4:
+        zu_fitten[i] = grenzen
+
+    fenster = auto_fenster_intervalle(stapel.datensatz, zu_fitten, stapel.gamma,
+                                      breite_faktor=breite_faktor,
+                                      breite_punkte=breite_punkte)
+    neu_gefittet: list[int] = []
+    reihenfolge = sorted(zu_fitten)
+    for k, i in enumerate(reihenfolge):
+        grenzen = fenster.get(i)
+        if grenzen is None:  # zu wenige Messpunkte im Intervall
             uebersprungen.append(i)
             continue
-
-        ausschnitt = schneide_band(ls, feld_min, feld_max)
-        unten, oben = auto_fenster(ausschnitt, stapel.gamma, breite_faktor)
-        if breite_punkte is not None:
-            # Feste Breite in Punkten um das gefundene Fensterzentrum.
-            zentrum = 0.5 * (unten + oben)
-            schritt = float(np.ptp(ls.feld)) / max(ls.feld.size - 1, 1)
-            halb = 0.5 * int(breite_punkte) * schritt
-            unten, oben = zentrum - halb, zentrum + halb
-        # Sicherheitsklemme: das Fenster darf das Rechteck nicht verlassen
-        # (auto_fenster arbeitet auf dem Ausschnitt, daher normalerweise ein
-        # No-Op - aber explizit ist hier besser als implizit).
-        unten = max(unten, feld_min)
-        oben = min(oben, feld_max)
-        ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben)
+        ergebnis = fitte_neu(stapel, i, feld_unten=grenzen[0], feld_oben=grenzen[1])
         neu_gefittet.append(i)
         if fortschritt is not None:
-            fortschritt(k + 1, len(betroffen), ergebnis)
+            fortschritt(k + 1, len(reihenfolge), ergebnis)
 
-    return neu_gefittet, uebersprungen
+    return neu_gefittet, sorted(uebersprungen)
+
+
+@dataclass
+class Grenzgerade:
+    """Gerade Grenzlinie im (Feld, Frequenz)-Raum mit gruener (Neu-Fit-)Seite.
+
+    Interaktiv wie in einem Textprogramm eingefuegt (zwei Klicks, an den
+    Endpunkten ziehbar -> verschieben/rotieren). Die GRUENE Seite wird beim
+    Grenzgeraden-Fit neu gefittet, die ROTE ignoriert; mit zwei Geraden
+    entsteht ein Band. Die Gerade ist unendlich (die Endpunkte sind nur die
+    Handgriffe); die Seite ist ueber das Vorzeichen des Kreuzprodukts
+    ``(P - P1) x (P2 - P1)`` definiert (``gruen_positiv``).
+    """
+
+    b1: float
+    f1: float          # Hz
+    b2: float
+    f2: float          # Hz
+    gruen_positiv: bool = True
+
+    def seite_wechseln(self) -> None:
+        self.gruen_positiv = not self.gruen_positiv
+
+    def erlaubtes_intervall(self, frequenz: float, feld_min: float,
+                            feld_max: float) -> tuple[float, float] | None:
+        """Feldintervall der gruenen Seite bei fester Frequenz (oder ``None``).
+
+        Kreuzprodukt ``cross(B) = (B - b1)*(f2 - f1) - (f - f1)*(b2 - b1)`` ist
+        linear in ``B``; die gruene Halbebene schneidet die Horizontale
+        ``f = const`` in einer Halbgeraden (bzw. ganz/gar nicht, wenn die
+        Gerade frequenz-konstant liegt).
+        """
+        db, df = self.b2 - self.b1, self.f2 - self.f1
+        if df == 0.0:
+            cross = -(frequenz - self.f1) * db
+            ok = (cross >= 0.0) == self.gruen_positiv or cross == 0.0
+            return (feld_min, feld_max) if ok else None
+        b_grenze = self.b1 + (frequenz - self.f1) * db / df
+        # cross(B) = (B - b_grenze) * df -> Vorzeichen haengt von df ab.
+        gruen_oberhalb = self.gruen_positiv == (df > 0.0)
+        if gruen_oberhalb:
+            lo, hi = max(feld_min, b_grenze), feld_max
+        else:
+            lo, hi = feld_min, min(feld_max, b_grenze)
+        return (lo, hi) if hi > lo else None
+
+
+def fitte_geraden_bereich(
+    stapel: StapelErgebnis,
+    geraden: list[Grenzgerade],
+    modus: str = "ueberschreiben",
+    breite_faktor: float = 8.0,
+    breite_punkte: int | None = None,
+    fortschritt=None,
+) -> tuple[list[int], list[int]]:
+    """Fittet alle Linescans im GRUENEN Bereich der Grenzgeraden neu.
+
+    Je Frequenz ergibt der Schnitt der gruenen Halbebenen (aller Geraden) mit
+    dem Datenbereich ein Feldintervall; leere Intervalle werden uebersprungen.
+    Fenstersuche und Fit laufen ueber :func:`_fitte_mit_intervallen` (mit
+    Stationaer-Abzug). Liefert ``(neu_gefittet, uebersprungen)``.
+    """
+    if not geraden:
+        return [], []
+    intervalle: dict[int, tuple[float, float]] = {}
+    uebersprungen: list[int] = []
+    for i, ls in enumerate(stapel.datensatz.linescans):
+        lo, hi = float(ls.feld.min()), float(ls.feld.max())
+        erlaubt: tuple[float, float] | None = (lo, hi)
+        for gerade in geraden:
+            if erlaubt is None:
+                break
+            erlaubt = gerade.erlaubtes_intervall(ls.frequenz, erlaubt[0], erlaubt[1])
+        if erlaubt is None:
+            uebersprungen.append(i)
+            continue
+        intervalle[i] = erlaubt
+    neu, weitere = _fitte_mit_intervallen(stapel, intervalle, modus=modus,
+                                          breite_faktor=breite_faktor,
+                                          breite_punkte=breite_punkte,
+                                          fortschritt=fortschritt)
+    return neu, sorted(uebersprungen + weitere)

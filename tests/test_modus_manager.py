@@ -75,6 +75,7 @@ def test_escape_bricht_jeden_modus_ab(app):
     for starten in (lambda: m.starte_dispersion_seed(lambda p: None),
                     lambda: m.starte_bereichs_fit(lambda *a: None),
                     lambda: m.starte_ausschluss_zeichnen(lambda *a: None),
+                    lambda: m.starte_gerade_zeichnen(lambda p: None),
                     lambda: m.setze_ausreisser_modus(True, gewaehlt=lambda i: None)):
         starten()
         assert m.modus is not None

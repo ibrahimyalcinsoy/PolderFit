@@ -33,11 +33,22 @@ class NavigatorAnsicht(FigureCanvasQTAgg):
         self.mpl_connect("button_release_event", self._on_release)
 
     def zeige(self, matrix, extent) -> None:
-        """Zeigt das Gesamtbild (Thumbnail der Messung)."""
+        """Zeigt das Gesamtbild (Thumbnail der Messung).
+
+        Farbskala wie in der Hauptuebersicht: robuste Perzentile statt
+        min/max - sonst quetschen einzelne Ausreisser (v. a. nach derivative
+        divide) die Skala und das Thumbnail wirkt einfarbig.
+        """
         self.ax.clear()
         if matrix is not None and extent is not None:
+            endlich = np.asarray(matrix)[np.isfinite(matrix)]
+            vmin = vmax = None
+            if endlich.size:
+                vmin, vmax = np.percentile(endlich, (2.0, 98.0))
+                if vmin == vmax:
+                    vmin = vmax = None
             self.ax.imshow(matrix, aspect="auto", origin="lower", cmap="viridis",
-                           extent=list(extent))
+                           extent=list(extent), vmin=vmin, vmax=vmax)
         self.ax.set_autoscale_on(False)
         self.ax.set_xticks([])
         self.ax.set_yticks([])

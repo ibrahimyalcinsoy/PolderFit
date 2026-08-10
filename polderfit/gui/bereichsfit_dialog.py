@@ -25,16 +25,18 @@ class BereichsFitDialog(QtWidgets.QDialog):
     def __init__(self, feld_min: float, feld_max: float,
                  f_min_ghz: float, f_max_ghz: float,
                  modus_vorgabe: str = "ueberschreiben",
-                 breite_vorgabe: int | None = None, parent=None):
+                 breite_vorgabe: int | None = None,
+                 info_text: str | None = None, titel: str | None = None,
+                 parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Bereich neu fitten")
+        self.setWindowTitle(titel or "Bereich neu fitten")
         lay = QtWidgets.QVBoxLayout(self)
 
-        info = QtWidgets.QLabel(
+        info = QtWidgets.QLabel(info_text or (
             f"Rechteck: {feld_min:.3f} – {feld_max:.3f} T, "
             f"{f_min_ghz:.2f} – {f_max_ghz:.2f} GHz.\n"
             "Dort werden Fenstersuche und Fit wiederholt; Ergebnisse ausserhalb "
-            "bleiben unangetastet.")
+            "bleiben unangetastet."))
         info.setWordWrap(True)
         lay.addWidget(info)
 

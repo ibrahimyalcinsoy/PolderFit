@@ -257,13 +257,7 @@ def auto_fenster_alle(
 
     # Feld-stationaeren Untergrund abziehen, falls gemeinsames Feldgitter vorliegt
     # (unsortierte Daten: jeder Linescan hat dieselbe Feldachse).
-    groessen = {ls.feld.size for ls in linescans}
-    gemeinsam = len(groessen) == 1 and n >= 8 and linescans[0].feld.size >= 8
-    if gemeinsam:
-        feld0 = linescans[0].feld
-        if not all(np.array_equal(linescans[k].feld, feld0) for k in (0, n // 2, n - 1)):
-            gemeinsam = False
-    if gemeinsam:
+    if _gemeinsames_feldgitter(linescans):
         reins = _stationaeren_untergrund_abziehen(reins)
 
     kand_b = np.empty(n)
@@ -302,6 +296,103 @@ def auto_fenster_alle(
             fenster.append(_fenster_um(ls.feld, reins[k], b_pred, breite_faktor))
         except Exception:
             fenster.append((float(ls.feld.min()), float(ls.feld.max())))
+    return fenster
+
+
+def _gemeinsames_feldgitter(linescans) -> bool:
+    """True, wenn alle Linescans dasselbe Feldgitter teilen (Stichprobenpruefung)."""
+    n = len(linescans)
+    groessen = {ls.feld.size for ls in linescans}
+    if len(groessen) != 1 or n < 8 or linescans[0].feld.size < 8:
+        return False
+    feld0 = linescans[0].feld
+    return all(np.array_equal(linescans[k].feld, feld0) for k in (0, n // 2, n - 1))
+
+
+def auto_fenster_intervalle(
+    datensatz: Messdatensatz,
+    intervalle: dict[int, tuple[float, float]],
+    gamma: float = GAMMA_STANDARD,
+    breite_faktor: float = 8.0,
+    breite_punkte: int | None = None,
+) -> dict[int, tuple[float, float] | None]:
+    """Fenstersuche je Linescan, beschraenkt auf ein FELDINTERVALL je Index.
+
+    Gemeinsamer Kern des Rechteck-Bereichs-Fits und des Grenzgeraden-Fits.
+    Entscheidend gegenueber der frueheren Einzeldetektion im Ausschnitt: die
+    Residuen werden auf den VOLLEN Linescans gebildet und (bei gemeinsamem
+    Feldgitter) um den feld-stationaeren Untergrund bereinigt
+    (:func:`_stationaeren_untergrund_abziehen`) - exakt wie beim Auto-Fit.
+    Senkrechte Stoerstreifen (stehende Wellen bei festen Feldwerten) dominieren
+    das Intervall damit nicht mehr; die Kandidatensuche findet die wandernde
+    Mode. Zusaetzlich stuetzt eine glatte lokale Trasse ueber die betroffenen
+    Linescans die schwachen Faelle.
+
+    ``intervalle``: ``{stapel_index: (feld_lo, feld_hi)}``. ``breite_punkte``
+    (optional) erzwingt eine feste Fensterbreite in Feldpunkten um das
+    gefundene Zentrum (ans Intervall geklemmt). Rueckgabe je Index
+    ``(unten, oben)`` oder ``None`` (Intervall mit < 4 Messpunkten).
+    """
+    linescans = datensatz.linescans
+    indizes = sorted(intervalle)
+    if not indizes:
+        return {}
+
+    reins: list[np.ndarray] = [_detrend_residuum(ls.feld, ls.s21) for ls in linescans]
+    if _gemeinsames_feldgitter(linescans):
+        reins = _stationaeren_untergrund_abziehen(reins)
+
+    # Kandidaten NUR im erlaubten Intervall suchen; Prominenz gegen die robuste
+    # Rauschbasis des GANZEN Linescans (Median/MAD ueber alle Feldpunkte).
+    masken: dict[int, np.ndarray] = {}
+    kand_b = np.full(len(indizes), np.nan)
+    kand_s = np.zeros(len(indizes))
+    for k, i in enumerate(indizes):
+        ls = linescans[i]
+        lo, hi = intervalle[i]
+        maske = (ls.feld >= lo) & (ls.feld <= hi)
+        masken[i] = maske
+        if maske.sum() < 4:
+            continue
+        rein = reins[i]
+        idx = np.flatnonzero(maske)
+        j = idx[int(np.argmax(rein[idx]))]
+        med = float(np.median(rein))
+        mad = float(np.median(np.abs(rein - med))) or 1e-12
+        kand_b[k] = float(ls.feld[j])
+        kand_s[k] = (float(rein[j]) - med) / (1.4826 * mad)
+
+    frequenzen = np.array([linescans[i].frequenz for i in indizes], dtype=float)
+    guide = _glatte_lokale_trasse(frequenzen, kand_b, kand_s)
+
+    fenster: dict[int, tuple[float, float] | None] = {}
+    for k, i in enumerate(indizes):
+        ls = linescans[i]
+        maske = masken[i]
+        if maske.sum() < 4:
+            fenster[i] = None
+            continue
+        B_int = ls.feld[maske]
+        rein_int = reins[i][maske]
+        spacing = float(np.ptp(ls.feld)) / ls.feld.size if ls.feld.size else 0.01
+        tol = max(0.08, 12.0 * spacing)
+        fuehrung = float(guide[k]) if guide is not None else kand_b[k]
+        if not np.isfinite(fuehrung):
+            fuehrung = 0.5 * (float(B_int.min()) + float(B_int.max()))
+        fuehrung = float(np.clip(fuehrung, float(B_int.min()), float(B_int.max())))
+        if kand_s[k] >= _PROMINENZ_MIN and abs(kand_b[k] - fuehrung) <= tol:
+            b_pred = kand_b[k]
+        else:
+            b_pred = _verfeinere_zentrum(B_int, rein_int, fuehrung, tol)
+        unten, oben = _fenster_um(B_int, rein_int, b_pred, breite_faktor)
+        if breite_punkte is not None:
+            zentrum = 0.5 * (unten + oben)
+            halb = 0.5 * int(breite_punkte) * (float(np.ptp(ls.feld)) / max(ls.feld.size - 1, 1))
+            unten = max(zentrum - halb, float(B_int.min()))
+            oben = min(zentrum + halb, float(B_int.max()))
+            if oben <= unten:
+                unten, oben = float(B_int.min()), float(B_int.max())
+        fenster[i] = (unten, oben)
     return fenster
 
 

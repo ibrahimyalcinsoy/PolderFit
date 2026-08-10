@@ -149,3 +149,108 @@ def test_feste_fensterbreite_in_punkten():
     with pytest.raises(ValueError):
         fitte_bereich(stapel, 0.55, 1.30, ds.frequenzen.min(),
                       ds.frequenzen.max(), breite_punkte=2)
+
+
+def _datensatz_mit_stationaerem_stoerstreifen(n_freq=24, n_feld=220):
+    """Wandernde Mode + STARKER feld-stationaerer Stoerstreifen (fester B-Wert).
+
+    Reproduziert das Fehlerbild aus der Praxis (stehende Wellen als senkrechte
+    Streifen im Farbplot): Der Streifen sitzt bei festem Feld INNERHALB des
+    Nachfit-Rechtecks und ist staerker als die Mode. Ohne den feld-stationaeren
+    Untergrundabzug schnappt die Fenstersuche im Rechteck auf den Streifen.
+    n_freq >= 8 und gemeinsames Feldgitter, damit der Abzug greift.
+    """
+    freqs = np.linspace(8e9, 18e9, n_freq)
+    B = np.linspace(0.5, 1.6, n_feld)
+    rng = np.random.default_rng(7)
+    moden, b_res_wahr = [], []
+    for f in freqs:
+        omega = 2 * np.pi * f
+        br = omega / GAMMA + MU0MEFF
+        b_res_wahr.append(br)
+        moden.append(chi_oop(B, br, 0.01, omega, GAMMA))
+    # Stationaerer Streifen: fester Feldwert, ueber ALLE Frequenzen identisch
+    # (stehende Welle), deutlich staerker als die Mode.
+    skala = max(float(np.abs(m).max()) for m in moden)
+    hwhm = 0.015
+    streifen = 3.0 * skala * hwhm / ((B - 1.30) + 1j * hwhm)
+    linescans = []
+    for f, mode in zip(freqs, moden):
+        s = 5e4 * (mode + streifen) + (0.02 + 0.01j)
+        s += rng.normal(scale=2e-4, size=n_feld) + 1j * rng.normal(scale=2e-4, size=n_feld)
+        linescans.append(Linescan(frequenz=float(f), feld=B, re=s.real, im=s.imag))
+    ds = Messdatensatz(quelle="t", format_typ="sortiert", linescans=linescans)
+    return ds, np.array(b_res_wahr)
+
+
+def test_bereichs_fit_ignoriert_stationaeren_stoerstreifen():
+    """Rechteck enthaelt Mode UND stationaeren Streifen -> Fit trifft die Mode."""
+    ds, b_res_wahr = _datensatz_mit_stationaerem_stoerstreifen()
+    stapel = fitte_alle(ds)
+    # Rechteck grosszuegig: enthaelt bewusst auch den Streifen bei 1.30 T.
+    neu, uebersprungen = fitte_bereich(
+        stapel, feld_min=0.55, feld_max=1.55,
+        frequenz_min=ds.frequenzen.min(), frequenz_max=ds.frequenzen.max())
+    assert len(neu) == len(ds) and not uebersprungen
+    daneben = [i for i in neu if abs(stapel.ergebnisse[i].B_res - b_res_wahr[i]) > 0.03]
+    assert not daneben, (
+        f"{len(daneben)} Fits haengen am stationaeren Streifen statt an der Mode: "
+        + ", ".join(f"f={ds.frequenzen[i]/1e9:.1f} GHz B={stapel.ergebnisse[i].B_res:.3f}"
+                    for i in daneben[:5]))
+
+
+def test_grenzgerade_erlaubtes_intervall():
+    from polderfit.fit import Grenzgerade
+
+    # Feld-konstante Gerade (senkrecht im Plot): trennt links/rechts.
+    g = Grenzgerade(b1=1.0, f1=5e9, b2=1.0, f2=50e9, gruen_positiv=True)
+    lo, hi = g.erlaubtes_intervall(20e9, 0.5, 1.6)
+    assert (lo, hi) == (1.0, 1.6)          # gruen = hohe Felder
+    g.seite_wechseln()
+    lo, hi = g.erlaubtes_intervall(20e9, 0.5, 1.6)
+    assert (lo, hi) == (0.5, 1.0)          # nach dem Wechsel: tiefe Felder
+
+    # Frequenz-konstante Gerade (waagerecht): ganze Zeile erlaubt oder nicht.
+    g2 = Grenzgerade(b1=0.5, f1=20e9, b2=1.6, f2=20e9, gruen_positiv=True)
+    oben = g2.erlaubtes_intervall(30e9, 0.5, 1.6)
+    unten = g2.erlaubtes_intervall(10e9, 0.5, 1.6)
+    assert (oben is None) != (unten is None)  # genau eine Seite erlaubt
+
+    # Schraege Gerade: Grenzfeld wandert linear mit der Frequenz.
+    g3 = Grenzgerade(b1=1.0, f1=10e9, b2=1.2, f2=20e9, gruen_positiv=True)
+    a = g3.erlaubtes_intervall(10e9, 0.0, 2.0)
+    b = g3.erlaubtes_intervall(20e9, 0.0, 2.0)
+    assert a is not None and b is not None
+    grenze_a = a[0] if a[0] > 0.0 else a[1]
+    grenze_b = b[0] if b[0] > 0.0 else b[1]
+    assert abs(grenze_a - 1.0) < 1e-9 and abs(grenze_b - 1.2) < 1e-9
+
+
+def test_grenzgeraden_fit_nur_gruene_seite():
+    from polderfit.fit import Grenzgerade, fitte_geraden_bereich
+
+    ds, b_res_wahr = _datensatz_mit_stationaerem_stoerstreifen()
+    stapel = fitte_alle(ds)
+    # Senkrechte Gerade bei 1.25 T, gruen = tiefe Felder (Mode-Seite; der
+    # Streifen bei 1.30 T liegt auf der roten Seite).
+    gerade = Grenzgerade(b1=1.25, f1=ds.frequenzen.min(),
+                         b2=1.25, f2=ds.frequenzen.max(), gruen_positiv=False)
+    neu, uebersprungen = fitte_geraden_bereich(stapel, [gerade])
+    assert neu
+    for i in neu:
+        e = stapel.ergebnisse[i]
+        unten, oben = stapel.fenster[i]
+        assert oben <= 1.25 + 1e-9          # Fenster bleibt auf der gruenen Seite
+        if b_res_wahr[i] <= 1.25:           # Mode liegt im gruenen Bereich
+            assert abs(e.B_res - b_res_wahr[i]) < 0.03
+
+    # Zwei Geraden -> Band: nur Frequenzen, deren Zeile das Band schneidet.
+    quer = Grenzgerade(b1=0.5, f1=12e9, b2=1.6, f2=12e9, gruen_positiv=True)
+    erlaubt_oben = quer.erlaubtes_intervall(15e9, 0.5, 1.6) is not None
+    neu2, ueber2 = fitte_geraden_bereich(stapel, [gerade, quer])
+    betroffene_f = {stapel.datensatz.frequenzen[i] for i in neu2}
+    if erlaubt_oben:
+        assert all(f > 12e9 for f in betroffene_f)
+    else:
+        assert all(f < 12e9 for f in betroffene_f)
+    assert set(neu2) | set(ueber2) == set(range(len(ds)))

@@ -20,9 +20,23 @@ einen zentralen Modus-Manager:
 * Ein neuer Datensatz oder ein startender Hintergrund-Job beendet aktive
   Modi ebenfalls.
 
-## Nachfitten: zwei Wege
+## Fenstersuche mit Stationär-Abzug (warum der Bereichs-Fit die Mode trifft)
 
-Zum Neu-Fitten von Teilbereichen gibt es genau **zwei** Werkzeuge:
+Die Fenstersuche aller Nachfit-Werkzeuge (Rechteck und Grenzgeraden) nutzt
+denselben Mechanismus wie der Auto-Fit: Die Residuen werden auf den **vollen**
+Linescans gebildet und um den **feld-stationären Untergrund** bereinigt
+(Median über die Frequenzachse je Feldpunkt). Senkrechte Störstreifen im
+Farbplot — stehende Wellen bei festen Feldwerten, die nicht mit der Frequenz
+wandern — fallen dabei heraus; übrig bleibt die wandernde Resonanz. Erst
+danach wird der Kandidat **innerhalb** des erlaubten Feldbereichs gesucht,
+gestützt durch eine glatte lokale Dispersions-Trasse über die betroffenen
+Frequenzen. (Früher suchte der Bereichs-Fit je Linescan isoliert im
+Ausschnitt — dort dominierte der Störstreifen, und die Fenster schnappten
+auf den Streifen statt auf die Mode.)
+
+## Nachfitten: drei Wege
+
+Zum Neu-Fitten von Teilbereichen gibt es **drei** Werkzeuge:
 
 ### 1. Bereich neu fitten (Rechteck, `Strg+B`)
 
@@ -73,7 +87,37 @@ neu, uebersprungen = fitte_bereich(
 )
 ```
 
-### 2. Grenzen im Linescan ziehen (Einzelfrequenz)
+### 2. Grenzgeraden (freier Bereich, wie eine Linie in Word)
+
+Panel *Zonen & Grenzgeraden* → **„Gerade einzeichnen (2 Klicks)"**:
+
+1. Zwei Punkte im Farbplot klicken → die (unendliche) Gerade erscheint mit
+   zwei **Handgriffen** an den geklickten Punkten. Handgriff ziehen =
+   verschieben/rotieren, wie eine eingefügte Linie in einem Textprogramm.
+2. Die Seiten sind farblich markiert: **grüner Saum = wird neu gefittet**,
+   **roter Saum = wird ignoriert**. **Doppelklick auf die Linie** (oder der
+   Panel-Knopf „Seite wechseln") tauscht die Seiten.
+3. Mit **zwei Geraden** entsteht ein Band (Schnitt der grünen Seiten) — z. B.
+   zwei parallele Geraden entlang der Mode, um nur diesen Schlauch neu zu
+   fitten und alles daneben zu ignorieren.
+4. **„Grünen Bereich neu fitten …"** öffnet denselben Optionen-Dialog wie der
+   Rechteck-Fit (Modus, feste Fensterbreite) und fittet je Frequenz nur im
+   erlaubten Feldintervall neu; Frequenzen ganz auf der roten Seite bleiben
+   unangetastet.
+
+Skript-Nutzung:
+
+```python
+from polderfit.fit import Grenzgerade, fitte_geraden_bereich
+
+geraden = [
+    Grenzgerade(b1=2.76, f1=40.5e9, b2=2.85, f2=43.8e9, gruen_positiv=True),
+    Grenzgerade(b1=2.84, f1=40.5e9, b2=2.93, f2=43.8e9, gruen_positiv=False),
+]
+neu, uebersprungen = fitte_geraden_bereich(stapel, geraden)
+```
+
+### 3. Grenzen im Linescan ziehen (Einzelfrequenz)
 
 Im Linescan-Fit-Panel lassen sich die **grünen Bandgrenzen** des einzelnen
 Linescans mit der Maus verschieben — der Fit läuft sofort mit den neuen
@@ -90,7 +134,7 @@ ganze Bereiche.
 
 ## Ausschlusszonen (Bereich aus der Auswertung nehmen)
 
-Panel *Ausschlusszonen* (Menü *Ansicht → Panel: Ausschlusszonen*):
+Panel *Zonen & Grenzgeraden* (Menü *Ansicht → Panel: Zonen & Grenzgeraden*):
 „Zone im Farbplot einzeichnen" (Umschalt-Knopf, zeigt den aktiven Modus) →
 Rechteck um die störenden Punkte aufziehen (z. B. den zur Feldachse parallelen
 Abschnitt unten im Plot). Die Punkte in der Zone werden aus **allen**

@@ -115,7 +115,9 @@ class FitAnsicht(FigureCanvasQTAgg):
 
         titel = f"f = {linescan.frequenz/1e9:.3f} GHz"
         if ergebnis is not None:
+            dh_mt = ergebnis.dH * 1e3 if np.isfinite(ergebnis.dH) else float("nan")
             titel += (f"   |   B_res = {ergebnis.B_res:.4f} T, "
+                      f"ΔH = {dh_mt:.2f} mT, "
                       f"alpha = {ergebnis.alpha:.2e}, R² = {ergebnis.R2:.4f}")
         self.ax_re.set_title(titel)
         self.ax_re.set_ylabel("Re S21")

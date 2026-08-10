@@ -38,8 +38,10 @@ from ..io import (
 )
 from ..fit.batch import Ausschlusszone, StapelErgebnis, fitte_alle, fitte_neu
 from ..fit.fenster_steuerung import (
+    Grenzgerade,
     entferne_ausschlusszone,
     fitte_bereich,
+    fitte_geraden_bereich,
     fuege_ausschlusszone_hinzu,
 )
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
@@ -78,6 +80,7 @@ _MODUS_TEXTE = {
     "bereich": "Modus: Bereich neu fitten – Rechteck aufziehen · Esc bricht ab",
     "zone": "Modus: Ausschlusszone – Rechteck aufziehen · Esc bricht ab",
     "ausreisser": "Modus: Ausreißer markieren – Punkt anklicken oder Kasten aufziehen · Esc beendet",
+    "gerade": "Modus: Grenzgerade – zwei Punkte klicken · Esc bricht ab",
 }
 
 
@@ -124,7 +127,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.zonenpanel = ZonenPanel(
             zone_umschalten=self._zone_modus,
             zone_entfernen=self._zone_entfernen,
+            gerade_umschalten=self._gerade_modus,
+            gerade_seite=self._gerade_seite,
+            gerade_entfernen=self._gerade_entfernen,
+            geraden_fit=self._geraden_fit,
         )
+        #: Grenzgeraden (Neu-Fit-Bereich); bleiben ueber Auto-Fits erhalten,
+        #: werden mit einem neuen Datensatz verworfen.
+        self._grenzgeraden: list[Grenzgerade] = []
         self.ausreisserpanel = AusreisserPanel(
             wieder_aufnehmen=self._ausreisser_wieder_aufnehmen,
             rueckgaengig=self._ausreisser_rueckgaengig,
@@ -182,6 +192,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_naechstes_problem.clicked.connect(self._naechster_problemfit)
         for b in (self.btn_zurueck, self.btn_weiter, self.btn_neu, self.btn_naechstes_problem):
             knopfreihe.addWidget(b)
+        # Vollbereich-Umschalter direkt am Linescan-Panel (gespiegelt mit der
+        # Menue-Aktion akt_vollbereich; Verbindung in _baue_aktionen).
+        self.chk_vollbereich = QtWidgets.QCheckBox("ganzer Feldsweep")
+        self.chk_vollbereich.setToolTip(
+            "Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
+        knopfreihe.addWidget(self.chk_vollbereich)
         layout.addLayout(knopfreihe)
 
         self.label_info = QtWidgets.QLabel("—")
@@ -285,6 +301,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_vollbereich.setToolTip(
             "Im Linescan-Panel den ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
         self.akt_vollbereich.toggled.connect(self._vollbereich_umschalten)
+        # Checkbox im Linescan-Panel spiegelt die Aktion (beide Richtungen;
+        # setChecked mit unveraendertem Wert loest kein toggled aus -> keine Schleife).
+        self.chk_vollbereich.toggled.connect(self.akt_vollbereich.setChecked)
+        self.akt_vollbereich.toggled.connect(self.chk_vollbereich.setChecked)
         self.akt_problemfits = A("Problemfits ausblenden", self)
         self.akt_problemfits.setCheckable(True)
         self.akt_problemfits.setToolTip(
@@ -297,10 +317,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Verarbeitungskette des Farbplots (divide-slice, derivative-divide, "
             "relation-amplitude) ein-/ausblenden – funktioniert direkt nach dem "
             "Laden, ganz ohne Fit.")
-        self.akt_zonen_panel = A("Panel: Ausschlusszonen", self)
+        self.akt_zonen_panel = A("Panel: Zonen && Grenzgeraden", self)
         self.akt_zonen_panel.setToolTip(
-            "Liste der Ausschlusszonen (Messpunkte aus allen Fits ausnehmen) "
-            "ein-/ausblenden.")
+            "Nachfit-Werkzeuge ein-/ausblenden: Ausschlusszonen (Messpunkte aus "
+            "allen Fits ausnehmen) und Grenzgeraden (nur den grünen Bereich "
+            "neu fitten).")
         self.akt_linescan = A("Panel: Linescan-Fit", self)
         self.akt_linescan.setToolTip(
             "Linescan-Fit-Panel ein-/ausblenden (abdockbar fuer den zweiten Monitor).")
@@ -518,8 +539,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dock.visibilityChanged.connect(self.akt_verarbeitung.setChecked)
 
     def _baue_zonen_dock(self):
-        """Ausschlusszonen (links): Zeichnen-Modus und Zonenliste."""
-        dock = QtWidgets.QDockWidget("Ausschlusszonen", self)
+        """Nachfit-Werkzeuge (links): Grenzgeraden und Ausschlusszonen."""
+        dock = QtWidgets.QDockWidget("Zonen & Grenzgeraden", self)
         dock.setObjectName("zonen_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
@@ -602,6 +623,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 aktion.setChecked(soll)
                 aktion.blockSignals(False)
         self.zonenpanel.setze_modus_aktiv(modus == "zone")
+        self.zonenpanel.setze_gerade_modus_aktiv(modus == "gerade")
         if modus is None:
             self.modus_label.setVisible(False)
             self.statusBar().showMessage("Modus beendet.", 4000)
@@ -664,6 +686,113 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._log("Ausschlusszone: Rechteck um die auszuschliessenden Punkte "
                   "aufziehen (Esc bricht ab).", "info")
         self.matrix.starte_ausschluss_zeichnen(self._zone_gezeichnet)
+
+    def _gerade_modus(self, an: bool):
+        """Umschalter des Grenzgeraden-Zeichenmodus (zwei Klicks im Farbplot)."""
+        if not an:
+            if self.matrix.modus == "gerade":
+                self.matrix.beende_modus()
+            return
+        if not self._modus_start_erlaubt(braucht_fits=True):
+            self.zonenpanel.setze_gerade_modus_aktiv(False)
+            return
+        self._log("Grenzgerade: zwei Punkte im Farbplot klicken – danach an den "
+                  "Endpunkten ziehbar; Doppelklick auf die Linie wechselt die "
+                  "grüne (Neu-Fit-)Seite. Esc bricht ab.", "info")
+        self.matrix.starte_gerade_zeichnen(self._gerade_gezeichnet)
+
+    def _gerade_gezeichnet(self, punkte):
+        """Callback nach zwei Klicks: neue Grenzgerade anlegen und anzeigen."""
+        (b1, f1_ghz), (b2, f2_ghz) = punkte
+        self._grenzgeraden.append(Grenzgerade(b1=float(b1), f1=f1_ghz * 1e9,
+                                              b2=float(b2), f2=f2_ghz * 1e9))
+        self._zeige_geraden()
+        self._log(f"Grenzgerade eingefügt: ({b1:.3f} T, {f1_ghz:.2f} GHz) – "
+                  f"({b2:.3f} T, {f2_ghz:.2f} GHz). Grüner Saum = wird neu "
+                  f"gefittet; Seite per Doppelklick oder im Panel wechseln.", "ok")
+
+    def _zeige_geraden(self):
+        """Synchronisiert Geraden-Overlay (Farbplot) und Panel-Liste."""
+        self.zonenpanel.setze_geraden(self._grenzgeraden)
+        self.matrix.zeige_grenzgeraden(self._grenzgeraden,
+                                       endpunkt_geaendert=self._gerade_geaendert,
+                                       seite_gewechselt=self._gerade_seite)
+
+    def _gerade_geaendert(self, index: int, b1: float, f1_ghz: float,
+                          b2: float, f2_ghz: float):
+        """Endpunkt im Farbplot gezogen: Geometrie uebernehmen."""
+        if not (0 <= index < len(self._grenzgeraden)):
+            return
+        g = self._grenzgeraden[index]
+        g.b1, g.f1, g.b2, g.f2 = float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9
+        self.zonenpanel.setze_geraden(self._grenzgeraden)
+
+    def _gerade_seite(self, index: int):
+        """Gruene (Neu-Fit-)Seite der Geraden wechseln (Doppelklick/Panel)."""
+        if not (0 <= index < len(self._grenzgeraden)):
+            return
+        self._grenzgeraden[index].seite_wechseln()
+        self._zeige_geraden()
+        self._log("Grenzgerade: Seiten getauscht (grün = wird neu gefittet).", "info")
+
+    def _gerade_entfernen(self, index: int):
+        if not (0 <= index < len(self._grenzgeraden)):
+            return
+        del self._grenzgeraden[index]
+        self._zeige_geraden()
+        self._log("Grenzgerade entfernt.", "info")
+
+    def _geraden_fit(self):
+        """Nachfitten des gruenen Bereichs aller Grenzgeraden (mit Optionen)."""
+        if not self.stapel or not self.stapel.ergebnisse:
+            self._log("Grenzgeraden-Fit: bitte zuerst einen Auto-Fit ausfuehren.", "warn")
+            return
+        if not self._grenzgeraden:
+            self._log("Grenzgeraden-Fit: bitte zuerst eine Gerade einzeichnen.", "warn")
+            return
+        if self._job_laeuft:
+            return
+        stapel = self.stapel
+        geraden = list(self._grenzgeraden)
+        dialog = BereichsFitDialog(
+            0.0, 0.0, 0.0, 0.0,
+            modus_vorgabe=self._bereich_modus, breite_vorgabe=self._bereich_breite,
+            titel="Grünen Bereich neu fitten",
+            info_text=(f"{len(geraden)} Grenzgerade(n): Im GRÜNEN Bereich werden "
+                       "Fenstersuche und Fit wiederholt; die rote Seite bleibt "
+                       "unangetastet."),
+            parent=self)
+        if not dialog.exec():
+            self._log("Grenzgeraden-Fit abgebrochen.", "info")
+            return
+        modus = dialog.modus()
+        breite = dialog.breite_punkte()
+        self._bereich_modus, self._bereich_breite = modus, breite
+
+        def aufgabe(melde):
+            def fortschritt(k, n, erg):
+                status = "⚠ " + erg.problem_text if erg.problematisch else \
+                    f"✓ B_res={erg.B_res:.3f} T"
+                melde(k, n, f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}")
+            return fitte_geraden_bereich(stapel, geraden, modus=modus,
+                                         breite_punkte=breite,
+                                         fortschritt=fortschritt)
+
+        def bei_fertig(res):
+            neu, uebersprungen = res
+            self._aktualisiere_overlay()
+            self._zeige_aktuellen()
+            if self._auswertungsfenster is not None:
+                self._auswertungsfenster.aktualisiere()
+            probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
+            breite_text = f", Breite {breite} Punkte" if breite else ""
+            text = (f"Grenzgeraden-Fit ({len(geraden)} Gerade(n){breite_text}): "
+                    f"{len(neu)} neu gefittet, {len(probleme)} problematisch, "
+                    f"{len(uebersprungen)} uebersprungen (rote Seite/ohne Daten).")
+            self._log(text, "warn" if probleme else "ok")
+            self.statusBar().showMessage(text)
+
+        self._starte_job(aufgabe, bei_fertig, "Grenzgeraden-Fit läuft …")
 
     def _ausreisser_modus(self, an: bool):
         """Umschalter 'Ausreißer markieren': Punkte anklicken/einrahmen."""
@@ -851,6 +980,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.datensatz_voll = datensatz
             self.stapel = StapelErgebnis(datensatz=datensatz)
             self.zonenpanel.setze_zonen([])
+            self._grenzgeraden = []
+            self.zonenpanel.setze_geraden([])
             # Datenansicht sofort ermoeglichen: Verarbeitungs-Panel einblenden.
             self.verarbeitung_dock.setVisible(True)
             self._log(
@@ -899,8 +1030,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
         self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
         self.aktueller_index = 0
-        # Fuer den Korrekturlauf: Linescan-Panel jetzt einblenden.
+        # Fuer den Korrekturlauf: Linescan- und Nachfit-Panel jetzt einblenden.
         self.linescan_dock.setVisible(True)
+        self.zonen_dock.setVisible(True)
         self._zeige_aktuellen()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
@@ -1061,9 +1193,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         status = f"PROBLEM: {e.problem_text}" if e.problematisch else "OK"
         # 1-R² in wissenschaftlicher Notation, damit echte Variation sichtbar wird.
         eins_minus_r2 = (1.0 - e.R2) if np.isfinite(e.R2) else float("nan")
+        dh_mt = e.dH * 1e3 if np.isfinite(e.dH) else float("nan")
         text = (
             f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
-            f"B_res={e.B_res:.4f} T │ alpha={e.alpha:.2e} │ "
+            f"B_res={e.B_res:.4f} T │ ΔH={dh_mt:.2f} mT │ alpha={e.alpha:.2e} │ "
             f"rmse_norm={e.rmse_norm:.3f} │ 1-R²={eins_minus_r2:.1e} │ "
             f"Fenster {punkte_im_fenster} Pkt │ {status}")
         self.label_info.setText(text)
@@ -1468,9 +1601,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
           <li><b>Auto-Fit (alle)</b> (F5) – sucht je Frequenz die Resonanz, schneidet ein Band
               und fittet Real- und Imaginärteil gleichzeitig. Läuft im Hintergrund;
               Fortschritt und Protokoll im <b>Aktivitäts-Panel</b>.</li>
-          <li><b>Nachfitten</b> – zwei Wege: <b>„Bereich neu fitten"</b> (Strg+B, Rechteck im
-              Farbplot; Optionen: überschreiben/ergänzen, feste Fensterbreite) oder die
-              <b>grünen Grenzlinien</b> im Linescan-Panel ziehen.
+          <li><b>Nachfitten</b> – <b>„Bereich neu fitten"</b> (Strg+B, Rechteck im
+              Farbplot; Optionen: überschreiben/ergänzen, feste Fensterbreite), die
+              <b>grünen Grenzlinien</b> im Linescan-Panel ziehen oder <b>Grenzgeraden</b>
+              (Panel „Zonen &amp; Grenzgeraden"): Linie per zwei Klicks einfügen, an den
+              Endpunkten ziehen (verschieben/rotieren), grüner Saum = wird neu gefittet,
+              roter Saum = wird ignoriert (Doppelklick auf die Linie wechselt die Seite);
+              zwei Geraden ergeben ein Band.
               <i>Zurück/Weiter/Nochmal fitten/Nächster Problemfit</i> steuern den Korrekturlauf.</li>
           <li><b>Ausreißer markieren</b> (Strg+M) – falsche Fit-Punkte anklicken oder per Kasten
               entfernen; reversibel (Liste + Rückgängig im Ausreißer-Panel). Ausgeschlossene

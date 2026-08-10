@@ -48,7 +48,7 @@ _ZOOM_RAUS = 1.25
 _BOX_SCHWELLE_REL = 0.02
 
 #: Alle bekannten Interaktionsmodi (zentrale Verwaltung, exklusiv).
-MODI = ("seed", "bereich", "zone", "ausreisser")
+MODI = ("seed", "bereich", "zone", "ausreisser", "gerade")
 
 #: Mauszeiger je Modus.
 _MODUS_CURSOR = {
@@ -56,7 +56,20 @@ _MODUS_CURSOR = {
     "bereich": QtCore.Qt.CrossCursor,
     "zone": QtCore.Qt.CrossCursor,
     "ausreisser": QtCore.Qt.PointingHandCursor,
+    "gerade": QtCore.Qt.CrossCursor,
 }
+
+#: Modi, die ueber ZWEI Klicks zwei Punkte einsammeln.
+_ZWEI_PUNKT_MODI = ("seed", "gerade")
+
+#: Farben der Grenzgeraden-Seiten (gruen = wird neu gefittet, rot = ignoriert).
+_GERADE_GRUEN = "#3FA34D"
+_GERADE_ROT = "#C0392B"
+#: Breite des Seitensaums in Achsen-Anteilen.
+_GERADE_SAUM = 0.025
+#: Relative Trefferdistanz fuer Endpunkt-Griffe bzw. Doppelklick auf die Linie.
+_GRIFF_TOLERANZ = 0.035
+_LINIEN_TOLERANZ = 0.02
 
 
 class MatrixAnsicht(FigureCanvasQTAgg):
@@ -102,6 +115,13 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # Ausschlusszonen (Anzeige).
         self._zonen: list = []
         self._zonen_patches: list = []
+        # Grenzgeraden (Anzeige + Endpunkt-Drag): Objekte mit b1/f1/b2/f2 (Hz)
+        # und gruen_positiv; Seitensaeume gruen/rot je Fit-/Ignorier-Seite.
+        self._geraden: list = []
+        self._geraden_artists: list = []
+        self._gerade_geaendert_cb = None   # (index, b1, f1_ghz, b2, f2_ghz)
+        self._gerade_seite_cb = None       # (index)
+        self._drag_endpunkt = None         # (geraden_index, "p1"|"p2")
         # Ausreisser-Overlay-Zustand.
         self._res_ausgeschlossen = None
 
@@ -127,6 +147,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         ``callback`` haengt vom Modus ab:
 
         * ``"seed"``     – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
+        * ``"gerade"``   – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
         * ``"bereich"``  – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
         * ``"zone"``     – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
         * ``"ausreisser"`` – ``callback(indizes)``, mehrfach (Modus bleibt aktiv)
@@ -137,7 +158,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._modus_aufraeumen()
         self._modus = name
         self._modus_cb = callback
-        if name == "seed":
+        if name in _ZWEI_PUNKT_MODI:
             self._seed_punkte = []
         self.setCursor(_MODUS_CURSOR[name])
         # Tastaturfokus sicherstellen, damit Esc sofort wirkt (auch wenn der
@@ -181,6 +202,13 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         """Zonen-Modus: naechstes Rechteck wird als Ausschlusszone gemeldet."""
         self.starte_modus("zone", fertig)
 
+    def starte_gerade_zeichnen(self, fertig) -> None:
+        """Geraden-Modus: die naechsten zwei Klicks definieren eine Grenzgerade.
+
+        ``fertig(punkte)`` erhaelt ``[(B1, f1_GHz), (B2, f2_GHz)]``.
+        """
+        self.starte_modus("gerade", fertig)
+
     def setze_ausreisser_modus(self, an: bool, gewaehlt=None) -> None:
         """Schaltet den (dauerhaften) Ausreisser-Markiermodus um.
 
@@ -208,6 +236,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_aktiv = False
         # Neuer Datensatz: Overlays und Modi des alten verwerfen.
         self._zonen = []
+        self._geraden = []
+        self._drag_endpunkt = None
         self.beende_modus()
         self._render()
 
@@ -291,6 +321,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # Neuzeichnen verwerfen (remove() auf toten Artists wuerde werfen).
         self._zonen_patches = []
         self._seed_marker = []
+        self._geraden_artists = []
         self.ax.clear()
         self.ax.grid(False)
         # Robuste Farbgrenzen: einzelne Ausreisser (nach dd haeufig) duerfen die
@@ -320,6 +351,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             fontsize=7.2, color="#6B6657")
         if self._zonen:
             self._zeichne_zonen()
+        if self._geraden:
+            self._zeichne_geraden()
         self._tight_layout_sicher()
         self.draw_idle()
 
@@ -546,6 +579,157 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zonen_patches.append(patch)
         self.draw_idle()
 
+    # --- Grenzgeraden (Anzeige + Endpunkt-Drag) -------------------------------
+    def zeige_grenzgeraden(self, geraden, endpunkt_geaendert=None,
+                           seite_gewechselt=None) -> None:
+        """Zeichnet die Grenzgeraden mit gruenem/rotem Seitensaum.
+
+        ``geraden``: Objekte mit ``b1/f1/b2/f2`` (f in Hz) und ``gruen_positiv``
+        (:class:`polderfit.fit.fenster_steuerung.Grenzgerade`). Die Endpunkte
+        sind ziehbar (verschieben/rotieren); nach dem Loslassen wird
+        ``endpunkt_geaendert(index, b1, f1_ghz, b2, f2_ghz)`` gerufen.
+        Doppelklick auf eine Linie ruft ``seite_gewechselt(index)``.
+        """
+        self._geraden = list(geraden)
+        if endpunkt_geaendert is not None:
+            self._gerade_geaendert_cb = endpunkt_geaendert
+        if seite_gewechselt is not None:
+            self._gerade_seite_cb = seite_gewechselt
+        self._zeichne_geraden()
+
+    def _fraktion(self, x: float, y: float) -> tuple[float, float]:
+        """Datenkoordinaten (T, GHz) -> Achsen-Anteile des Extents."""
+        fx0, fx1, fy0, fy1 = self._extent
+        return ((x - fx0) / (fx1 - fx0 or 1.0), (y - fy0) / (fy1 - fy0 or 1.0))
+
+    def _aus_fraktion(self, u: float, v: float) -> tuple[float, float]:
+        fx0, fx1, fy0, fy1 = self._extent
+        return (fx0 + u * (fx1 - fx0), fy0 + v * (fy1 - fy0))
+
+    def _unendliche_linie_im_extent(self, p1, p2):
+        """Schnittsegment der unendlichen Geraden p1->p2 mit dem Extent-Rechteck.
+
+        Punkte in Datenkoordinaten (T, GHz); Liang-Barsky ueber t in (-inf, inf).
+        """
+        fx0, fx1, fy0, fy1 = self._extent
+        (x1, y1), (x2, y2) = p1, p2
+        dx, dy = x2 - x1, y2 - y1
+        if dx == 0.0 and dy == 0.0:
+            return None
+        tmin, tmax = -1e18, 1e18
+        for p, q0, q1 in ((dx, fx0 - x1, fx1 - x1), (dy, fy0 - y1, fy1 - y1)):
+            if p == 0.0:
+                if q0 * q1 > 0:  # Linie liegt komplett ausserhalb dieses Bandes
+                    return None
+                continue
+            t0, t1 = q0 / p, q1 / p
+            if t0 > t1:
+                t0, t1 = t1, t0
+            tmin, tmax = max(tmin, t0), min(tmax, t1)
+        if tmax <= tmin:
+            return None
+        return (x1 + tmin * dx, y1 + tmin * dy, x1 + tmax * dx, y1 + tmax * dy)
+
+    def _zeichne_geraden(self) -> None:
+        from matplotlib.patches import Polygon
+        for artist in self._geraden_artists:
+            artist.remove()
+        self._geraden_artists = []
+        if self._extent is None or not self._geraden:
+            self.draw_idle()
+            return
+        for gerade in self._geraden:
+            p1 = (float(gerade.b1), float(gerade.f1) / 1e9)
+            p2 = (float(gerade.b2), float(gerade.f2) / 1e9)
+            seg = self._unendliche_linie_im_extent(p1, p2)
+            if seg is None:
+                continue
+            x0, y0, x1, y1 = seg
+            # Seitensaeume in Achsen-Anteilen (Feld- und Frequenzspanne
+            # unterscheiden sich um Groessenordnungen).
+            a = np.array(self._fraktion(x0, y0))
+            b = np.array(self._fraktion(x1, y1))
+            richtung = b - a
+            laenge = float(np.hypot(*richtung)) or 1.0
+            normale = np.array([-richtung[1], richtung[0]]) / laenge
+            # Welche Seite ist gruen? Testpunkt auf +normale auswerten.
+            mitte = 0.5 * (a + b) + _GERADE_SAUM * normale
+            tb, tf_ghz = self._aus_fraktion(*mitte)
+            cross = ((tb - gerade.b1) * (gerade.f2 - gerade.f1)
+                     - (tf_ghz * 1e9 - gerade.f1) * (gerade.b2 - gerade.b1))
+            plus_ist_gruen = (cross >= 0.0) == bool(gerade.gruen_positiv)
+            for vorzeichen, farbe, alpha in (
+                    (+1.0, _GERADE_GRUEN if plus_ist_gruen else _GERADE_ROT, 0.28),
+                    (-1.0, _GERADE_ROT if plus_ist_gruen else _GERADE_GRUEN, 0.28)):
+                ecken_frak = [a, b,
+                              b + vorzeichen * _GERADE_SAUM * normale,
+                              a + vorzeichen * _GERADE_SAUM * normale]
+                ecken = [self._aus_fraktion(u, v) for u, v in ecken_frak]
+                patch = self.ax.add_patch(Polygon(
+                    ecken, closed=True, facecolor=farbe, edgecolor="none",
+                    alpha=alpha, zorder=5, label="_gerade_saum"))
+                self._geraden_artists.append(patch)
+            linie = self.ax.plot([x0, x1], [y0, y1], "-", color="#2B2B28",
+                                 lw=1.6, zorder=6, label="_gerade")[0]
+            linie.set_path_effects(
+                [pe.Stroke(linewidth=3.0, foreground="#FFFFFFAA"), pe.Normal()])
+            self._geraden_artists.append(linie)
+            griffe = self.ax.plot([p1[0], p2[0]], [p1[1], p2[1]], "s",
+                                  color="#E8A317", mec="white", mew=1.2, ms=9,
+                                  ls="", zorder=9, label="_gerade_griff")[0]
+            self._geraden_artists.append(griffe)
+        self.draw_idle()
+
+    def _finde_geraden_endpunkt(self, event):
+        """(geraden_index, "p1"|"p2") des Endpunkts nahe der Maus, sonst None."""
+        if not self._geraden or self._extent is None:
+            return None
+        if event.xdata is None or event.ydata is None:
+            return None
+        eu, ev = self._fraktion(event.xdata, event.ydata)
+        bester = None
+        bester_abstand = _GRIFF_TOLERANZ
+        for gi, gerade in enumerate(self._geraden):
+            for name, bb, ff in (("p1", gerade.b1, gerade.f1),
+                                 ("p2", gerade.b2, gerade.f2)):
+                u, v = self._fraktion(float(bb), float(ff) / 1e9)
+                abstand = float(np.hypot(eu - u, ev - v))
+                if abstand <= bester_abstand:
+                    bester = (gi, name)
+                    bester_abstand = abstand
+        return bester
+
+    def _finde_gerade_linie(self, event):
+        """Index der Grenzgeraden nahe der Maus (Punkt-Linien-Abstand), sonst None."""
+        if not self._geraden or self._extent is None:
+            return None
+        if event.xdata is None or event.ydata is None:
+            return None
+        p = np.array(self._fraktion(event.xdata, event.ydata))
+        for gi, gerade in enumerate(self._geraden):
+            a = np.array(self._fraktion(float(gerade.b1), float(gerade.f1) / 1e9))
+            b = np.array(self._fraktion(float(gerade.b2), float(gerade.f2) / 1e9))
+            richtung = b - a
+            laenge = float(np.hypot(*richtung))
+            if laenge <= 0:
+                continue
+            einheit = richtung / laenge
+            abstand = abs(float(einheit[0] * (p - a)[1] - einheit[1] * (p - a)[0]))
+            if abstand <= _LINIEN_TOLERANZ:
+                return gi
+        return None
+
+    def _endpunkt_bewegen(self, event) -> None:
+        gi, name = self._drag_endpunkt
+        if event.xdata is None or event.ydata is None or gi >= len(self._geraden):
+            return
+        gerade = self._geraden[gi]
+        if name == "p1":
+            gerade.b1, gerade.f1 = float(event.xdata), float(event.ydata) * 1e9
+        else:
+            gerade.b2, gerade.f2 = float(event.xdata), float(event.ydata) * 1e9
+        self._zeichne_geraden()
+
     # --- Ausreisser-Auswahl --------------------------------------------------
     def _sichtbare_resonanzpunkte(self) -> np.ndarray:
         """Indizes der aktuell im Overlay gezeichneten Resonanzpunkte."""
@@ -615,13 +799,26 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if event.inaxes != self.ax or self._freq_achse is None:
             return
         self.setFocus()
-        if self._modus == "seed":   # Seed-Modus: Klick als Resonanzpunkt
+        if self._modus in _ZWEI_PUNKT_MODI:   # Seed/Gerade: Klick sammelt Punkte
             self._seed_klick(event)
             return
         if getattr(event, "dblclick", False):
             self._press_xy = None
+            # Doppelklick auf eine Grenzgerade wechselt die gruene Seite;
+            # sonst wie gehabt: Zoom zuruecksetzen.
+            treffer = self._finde_gerade_linie(event)
+            if treffer is not None and self._gerade_seite_cb is not None:
+                self._gerade_seite_cb(treffer)
+                return
             self._zoom_zuruecksetzen()
             return
+        # Endpunkt einer Grenzgerade anfassen (nur ausserhalb der Modi).
+        if self._modus is None:
+            griff = self._finde_geraden_endpunkt(event)
+            if griff is not None:
+                self._drag_endpunkt = griff
+                self.setCursor(QtCore.Qt.ClosedHandCursor)
+                return
         if event.xdata is None or event.ydata is None:
             return
         self._press_xy = (event.xdata, event.ydata)
@@ -629,9 +826,17 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
 
     def _on_move(self, event):
+        if self._drag_endpunkt is not None:
+            if event.inaxes == self.ax:
+                self._endpunkt_bewegen(event)
+            return
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             if not self._box_aktiv:
                 self._setze_ruhe_cursor(ausserhalb=True)
+            return
+        if self._press_xy is None and self._modus is None \
+                and self._finde_geraden_endpunkt(event) is not None:
+            self.setCursor(QtCore.Qt.OpenHandCursor)   # Griff in Reichweite
             return
         if self._press_xy is not None:
             x0, y0 = self._press_xy
@@ -655,6 +860,15 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self.setCursor(QtCore.Qt.CrossCursor)  # Hinweis: Kästchen aufziehbar
 
     def _on_release(self, event):
+        if self._drag_endpunkt is not None:
+            gi, _name = self._drag_endpunkt
+            self._drag_endpunkt = None
+            self.unsetCursor()
+            if gi < len(self._geraden) and self._gerade_geaendert_cb is not None:
+                g = self._geraden[gi]
+                self._gerade_geaendert_cb(gi, float(g.b1), float(g.f1) / 1e9,
+                                          float(g.b2), float(g.f2) / 1e9)
+            return
         if self._press_xy is None:
             return
         war_box = self._box_aktiv
