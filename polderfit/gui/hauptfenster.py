@@ -175,6 +175,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Farbplot als Zentrum in voller Breite; das Linescan-Fit-Panel ist ein
         abdockbares Fenster, das erst nach dem ersten Auto-Fit erscheint
         (Multi-Monitor-Betrieb: Panel einfach auf den zweiten Bildschirm ziehen)."""
+        # Der Farbplot ist IMMER das groesste Element: garantierte Mindestbreite,
+        # Docks muessen sich fuegen (siehe auch _dock_schmal_halten).
+        self.matrix.setMinimumWidth(520)
         self.setCentralWidget(self.matrix)
 
         rechts = QtWidgets.QWidget()
@@ -219,6 +222,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
         dock.setVisible(False)  # erscheint nach dem ersten Auto-Fit
         self.linescan_dock = dock
+
+    def _dock_schmal_halten(self, dock: QtWidgets.QDockWidget,
+                            breite: int | None = None,
+                            hoehe: int | None = None) -> None:
+        """Blendet ein Dock ein und klemmt es auf seine Sollgroesse.
+
+        Ohne diese Klemme verteilt Qt beim Einblenden den Platz nach den
+        (grossen) sizeHints der Matplotlib-Canvases - das Dock blaeht sich auf
+        und quetscht den zentralen Farbplot zu einem Streifen zusammen.
+        """
+        dock.setVisible(True)
+        if breite is not None:
+            self.resizeDocks([dock], [breite], QtCore.Qt.Horizontal)
+        if hoehe is not None:
+            self.resizeDocks([dock], [hoehe], QtCore.Qt.Vertical)
 
     def _baue_aktionen(self):
         """Legt alle Aktionen einmalig an; sie werden in Menue UND Dropdown verwendet.
@@ -485,9 +503,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         dock.setWidget(inhalt)
         dock.setMinimumWidth(300)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
-        dock.setVisible(False)  # erscheint automatisch mit dem ersten Hintergrund-Job
+        # Unten andocken: nimmt dem Farbplot keine Breite weg. Erscheint
+        # automatisch mit einem Hintergrund-Job und verschwindet danach wieder
+        # (manuell jederzeit ueber Ansicht -> Panel: Aktivitaet).
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, dock)
+        dock.setVisible(False)
         self.aktivitaet_dock = dock
+        self._aktivitaet_war_sichtbar = False
         # Toolbar-Umschalter mit der Sichtbarkeit des Docks verbinden.
         self.akt_aktivitaet.setCheckable(True)
         self.akt_aktivitaet.setChecked(False)
@@ -804,7 +826,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.akt_ausreisser.setChecked(False)
             return
         self.matrix.setze_ausreisser_modus(True, gewaehlt=self._ausreisser_gewaehlt)
-        self.ausreisser_dock.setVisible(True)
+        self._dock_schmal_halten(self.ausreisser_dock, breite=300)
         self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
                   "aufziehen. Esc oder erneutes Auslösen beendet den Modus.", "info")
 
@@ -847,7 +869,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._setze_bedienelemente(False)
         self._setze_aktivitaet(titel)
         self._log(titel, "info")
-        self.aktivitaet_dock.setVisible(True)
+        # Aktivitaet nur fuer die Dauer des Jobs einblenden (unten, flach) -
+        # war sie schon offen (manuell), bleibt sie es auch danach.
+        self._aktivitaet_war_sichtbar = self.aktivitaet_dock.isVisible()
+        self._dock_schmal_halten(self.aktivitaet_dock, hoehe=210)
         self.fortschritt_balken.setRange(0, 0)  # "busy", bis erster Fortschritt kommt
 
         self._thread = QtCore.QThread(self)
@@ -904,6 +929,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.fortschritt_balken.setValue(0)
         self._setze_aktivitaet("Bereit.")
         self._setze_bedienelemente(True)
+        # Automatisch eingeblendetes Aktivitaets-Panel wieder schliessen -
+        # der Farbplot soll das Bild dominieren (Protokoll bleibt erhalten).
+        if not self._aktivitaet_war_sichtbar:
+            self.aktivitaet_dock.setVisible(False)
 
     # --- Aktionen ----------------------------------------------------------
     def _laden(self):
@@ -983,7 +1012,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._grenzgeraden = []
             self.zonenpanel.setze_geraden([])
             # Datenansicht sofort ermoeglichen: Verarbeitungs-Panel einblenden.
-            self.verarbeitung_dock.setVisible(True)
+            self._dock_schmal_halten(self.verarbeitung_dock, breite=300)
             self._log(
                 f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
                 f"{len(datensatz)} Frequenzen (Profil: "
@@ -1030,9 +1059,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
         self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
         self.aktueller_index = 0
-        # Fuer den Korrekturlauf: Linescan- und Nachfit-Panel jetzt einblenden.
-        self.linescan_dock.setVisible(True)
-        self.zonen_dock.setVisible(True)
+        # Fuer den Korrekturlauf: NUR das Linescan-Panel einblenden (schmal
+        # geklemmt, der Farbplot bleibt das groesste Element). Zonen &
+        # Grenzgeraden holt man sich bei Bedarf ueber Ansicht/Funktionen.
+        self._dock_schmal_halten(self.linescan_dock, breite=500)
         self._zeige_aktuellen()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
@@ -1493,8 +1523,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
             self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
             self.aktueller_index = 0
-            self.verarbeitung_dock.setVisible(True)
-            self.linescan_dock.setVisible(True)
+            self._dock_schmal_halten(self.verarbeitung_dock, breite=300)
+            self._dock_schmal_halten(self.linescan_dock, breite=500)
             self._zeige_aktuellen()
             if self._auswertungsfenster is not None:
                 self._auswertungsfenster.aktualisiere()

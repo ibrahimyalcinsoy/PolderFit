@@ -262,3 +262,58 @@ def test_grenzlinien_interaktion(app):
     fa._on_release(_ev(fa.ax_re, xdata=2.93, ydata=0.0))
     assert fa._gezogen is None
     assert "unten" in gerufen and gerufen["unten"] <= gerufen["oben"]
+
+
+def _stapel_fuer(w, n=10):
+    """Synthetischer Fit-Stapel am Hauptfenster (fuer Layout-Tests)."""
+    from polderfit.fit.batch import StapelErgebnis
+    from polderfit.fit.linescan_fit import FitErgebnis
+    ds = _mini_datensatz(n)
+    ds.meta["zuordnung"] = {"re": ("g", "k")}
+    w.matrix.zeige(ds)
+    w.datensatz_voll = ds
+    stapel = StapelErgebnis(datensatz=ds)
+    for i, f in enumerate(ds.frequenzen):
+        stapel.ergebnisse.append(FitErgebnis(frequenz=float(f), erfolg=True,
+                                             B_res=2.7 + 0.06 * i, problematisch=False))
+        stapel.fenster.append((2.5, 3.5))
+        stapel.zugeschnitten.append(ds.linescans[i])
+    w.stapel = stapel
+    return stapel
+
+
+def test_farbplot_bleibt_dominant_nach_autofit(app):
+    """Regression: Nach dem Auto-Fit darf der Farbplot nicht zerquetscht werden.
+
+    Nur das Linescan-Panel oeffnet sich (schmal geklemmt); Zonen & Grenzgeraden
+    bleiben zu, und der zentrale Farbplot hat eine garantierte Mindestbreite.
+    """
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    stapel = _stapel_fuer(w)
+    w._nach_autofit(stapel)
+    assert not w.linescan_dock.isHidden()
+    assert w.zonen_dock.isHidden()          # oeffnet nur auf Wunsch
+    assert w.matrix.minimumWidth() >= 500   # Plot ist immer das groesste Element
+
+
+def test_aktivitaet_erscheint_nur_waehrend_des_jobs(app):
+    """Das Aktivitaets-Panel oeffnet sich mit dem Job und schliesst sich danach."""
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    assert w.aktivitaet_dock.isHidden()
+    sichtbar_waehrend = {}
+
+    def aufgabe(melde):
+        melde(1, 2, "laeuft")
+        return "ok"
+
+    def fertig(res):
+        sichtbar_waehrend["an"] = not w.aktivitaet_dock.isHidden()
+
+    w._starte_job(aufgabe, fertig, "Layout-Testjob …")
+    _pumpe(1500)
+    assert sichtbar_waehrend.get("an") is True   # waehrend des Jobs offen
+    assert w.aktivitaet_dock.isHidden()          # danach wieder zu
+    # Unten angedockt (nimmt dem Farbplot keine Breite weg).
+    assert w.dockWidgetArea(w.aktivitaet_dock) == QtCore.Qt.BottomDockWidgetArea
