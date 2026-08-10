@@ -54,7 +54,7 @@ def test_bereichs_fit_meldet_rechteck_statt_zoom(app):
     _ziehe_box(ansicht, 3.2, 40.0, 2.8, 10.0)  # absichtlich "verdreht" gezogen
 
     assert empfangen == {"b0": 2.8, "b1": 3.2, "f0": 10.0, "f1": 40.0}
-    assert ansicht._bereich_fertig is None                      # Modus beendet
+    assert ansicht.modus is None                                # Modus beendet
     assert ansicht.ax.get_xlim() == xlim_vorher                 # NICHT gezoomt
 
     # Danach zoomt ein Rechteck wieder normal.
@@ -69,7 +69,7 @@ def test_escape_bricht_bereichs_fit_ab(app):
     aufrufe = []
     ansicht.starte_bereichs_fit(lambda *a: aufrufe.append(a))
     ansicht._on_key(_ev(ansicht.ax, key="escape"))
-    assert ansicht._bereich_fertig is None
+    assert ansicht.modus is None
     _ziehe_box(ansicht, 3.2, 40.0, 2.8, 10.0)                   # zoomt jetzt normal
     assert not aufrufe
 

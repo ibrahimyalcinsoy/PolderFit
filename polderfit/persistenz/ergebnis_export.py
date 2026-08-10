@@ -13,9 +13,21 @@ import pandas as pd
 from ..fit.linescan_fit import FitErgebnis
 
 
-def parameter_tabelle(ergebnisse: list[FitErgebnis]) -> pd.DataFrame:
-    """Baut die Parametertabelle (eine Zeile je Frequenz)."""
-    return pd.DataFrame([e.als_zeile() for e in ergebnisse]).sort_values("frequenz_Hz")
+def parameter_tabelle(ergebnisse: list[FitErgebnis],
+                      ausreisser: list[int] | None = None) -> pd.DataFrame:
+    """Baut die Parametertabelle (eine Zeile je Frequenz).
+
+    ``ausreisser`` (Stapel-Indizes) kennzeichnet die manuell ausgeschlossenen
+    Punkte in einer eigenen Spalte - sie bleiben im Export einsehbar, gehen
+    aber in keine uebergreifende Auswertung (Kittel/LLG) ein.
+    """
+    gesperrt = set(ausreisser or [])
+    zeilen = []
+    for i, e in enumerate(ergebnisse):
+        zeile = e.als_zeile()
+        zeile["ausreisser"] = i in gesperrt
+        zeilen.append(zeile)
+    return pd.DataFrame(zeilen).sort_values("frequenz_Hz")
 
 
 def _global_tabelle(global_param: dict | None) -> pd.DataFrame:
@@ -26,18 +38,20 @@ def _global_tabelle(global_param: dict | None) -> pd.DataFrame:
     )
 
 
-def exportiere_csv(ergebnisse: list[FitErgebnis], pfad: str) -> None:
+def exportiere_csv(ergebnisse: list[FitErgebnis], pfad: str,
+                   ausreisser: list[int] | None = None) -> None:
     """Schreibt die Parametertabelle als CSV."""
-    parameter_tabelle(ergebnisse).to_csv(pfad, index=False)
+    parameter_tabelle(ergebnisse, ausreisser).to_csv(pfad, index=False)
 
 
 def exportiere_excel(
     ergebnisse: list[FitErgebnis],
     pfad: str,
     global_param: dict | None = None,
+    ausreisser: list[int] | None = None,
 ) -> None:
     """Schreibt Parameter (Blatt 'Einzelfits') und Kittel/LLG (Blatt 'Global')."""
-    tab = parameter_tabelle(ergebnisse)
+    tab = parameter_tabelle(ergebnisse, ausreisser)
     with pd.ExcelWriter(pfad, engine="openpyxl") as writer:
         tab.to_excel(writer, sheet_name="Einzelfits", index=False)
         _global_tabelle(global_param).to_excel(writer, sheet_name="Global", index=False)

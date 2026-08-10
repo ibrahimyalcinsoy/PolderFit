@@ -70,13 +70,46 @@ def test_menueleiste_haelt_alle_aktionen(app):
     for aktion in (w.akt_laden, w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
                    w.akt_kittel, w.akt_tdms, w.akt_xlsx, w.akt_csv,
                    w.akt_projekt_speichern, w.akt_projekt_laden, w.akt_vollbereich,
-                   w.akt_problemfits, w.akt_verarbeitung, w.akt_fenster, w.akt_linescan,
+                   w.akt_problemfits, w.akt_verarbeitung, w.akt_zonen_panel, w.akt_linescan,
                    w.akt_ausreisser_panel, w.akt_aktivitaet, w.akt_beenden, w.akt_hilfe):
         assert aktion in in_menue
-    # Fenster-Umschalter zeigt jetzt auf den Fenster-Dock (nicht mehr fehlverdrahtet).
-    assert not w.fenster_dock.isHidden()
-    w.akt_fenster.setChecked(False)
-    assert w.fenster_dock.isHidden()
+    # Zonen-Umschalter steuert den (anfangs verborgenen) Zonen-Dock.
+    assert w.zonen_dock.isHidden()
+    w.akt_zonen_panel.setChecked(True)
+    assert not w.zonen_dock.isHidden()
+    w.akt_zonen_panel.setChecked(False)
+    assert w.zonen_dock.isHidden()
+
+
+def test_werkzeugleiste_schlank_mit_funktionen_dropdown(app):
+    """Toolbar: nur Laden + 'Funktionen'-Dropdown; alle Aktionen im Dropdown-Menue."""
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    assert w.btn_funktionen.menu() is w.funktionen_menue
+
+    def alle_aktionen(menue):
+        gesammelt = []
+        for a in menue.actions():
+            gesammelt.append(a)
+            if a.menu() is not None:
+                gesammelt.extend(alle_aktionen(a.menu()))
+        return gesammelt
+
+    im_dropdown = set(alle_aktionen(w.funktionen_menue))
+    for aktion in (w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
+                   w.akt_kittel, w.akt_tdms, w.akt_xlsx, w.akt_csv,
+                   w.akt_vollbereich, w.akt_problemfits, w.akt_verarbeitung,
+                   w.akt_zonen_panel, w.akt_linescan, w.akt_ausreisser_panel,
+                   w.akt_aktivitaet, w.akt_trace):
+        assert aktion in im_dropdown
+    # Interaktive Modi sind checkbar (sichtbarer Aktiv-Zustand).
+    for aktion in (w.akt_seed, w.akt_bereich, w.akt_ausreisser):
+        assert aktion.isCheckable()
+    # Sinnvolle Shortcuts fuer den Laboralltag.
+    assert w.akt_kittel.shortcut().toString() == "Ctrl+K"
+    assert w.akt_bereich.shortcut().toString() == "Ctrl+B"
+    assert w.akt_ausreisser.shortcut().toString() == "Ctrl+M"
+    assert w.akt_xlsx.shortcut().toString() == "Ctrl+E"
 
 
 def test_hilfe_ohne_physik_und_wmi(app):
@@ -210,7 +243,7 @@ def test_matrix_dispersion_seed(app):
     m._on_press(_ev(m.ax, xdata=3.0, ydata=40.0))   # zweiter Punkt -> Callback
     assert "p" in got and len(got["p"]) == 2
     assert got["p"][0] == (2.0, 10.0) and got["p"][1] == (3.0, 40.0)
-    assert m._seed_fertig is None                    # Seed-Modus wieder aus
+    assert m.modus is None                           # Seed-Modus wieder aus
 
 
 def test_grenzlinien_interaktion(app):

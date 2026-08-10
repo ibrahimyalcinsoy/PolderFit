@@ -88,7 +88,11 @@ def plot_resonanz_vs_frequenz(
     r2_min: float = 0.9,
     ax=None,
 ):
-    """Plot Resonanzfeld vs. Frequenz inkl. Kittel-Fit. Liefert (fig, info)."""
+    """Kittel-Dispersionsplot: Feld (x) gegen Frequenz (y), wie im Farbplot.
+
+    Liefert (fig, info). Die Kittel-Modelle sind als ``B_res(f)`` formuliert;
+    fuer die Feld-x-Darstellung werden schlicht die Plot-Argumente getauscht.
+    """
     import matplotlib.pyplot as plt
 
     info = auswertung_kittel_llg(ergebnisse, geometrie, gamma_fest, r2_min=r2_min)
@@ -97,18 +101,18 @@ def plot_resonanz_vs_frequenz(
 
     fig = ax.figure if ax is not None else plt.figure(figsize=(6, 4.5))
     ax = ax or fig.add_subplot(111)
-    ax.plot(f / 1e9, b, "o", ms=4, label="Messung")
+    ax.plot(b, f / 1e9, "o", ms=4, label="Messung")
     ff = np.linspace(f.min(), f.max(), 400)
     if geometrie == "ip":
         bb = kittel_ip(ff, kit["mu0Meff"], kit["mu0Hu"], kit["gamma"])
     else:
         bb = kittel_oop(ff, kit["mu0Meff"], kit["gamma"])
-    ax.plot(ff / 1e9, bb, "-",
+    ax.plot(bb, ff / 1e9, "-",
             label=(f"Kittel {geometrie}: $\\mu_0 M_{{eff}}$={kit['mu0Meff']:.3f} T, "
                    f"g={kit['g_faktor']:.3f}"))
-    ax.set_xlabel("Frequenz (GHz)")
-    ax.set_ylabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
-    ax.set_title("Resonanz vs. Frequenz")
+    ax.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
+    ax.set_ylabel("Frequenz (GHz)")
+    ax.set_title("Dispersion (Kittel)")
     ax.legend()
     fig.tight_layout()
     return fig, info
@@ -120,22 +124,31 @@ def plot_linienbreite(
     r2_min: float = 0.9,
     ax=None,
 ):
-    """Plot Linienbreite mu0*DeltaH vs. Frequenz inkl. LLG-Fit. Liefert (fig, info)."""
+    """Plot Linienbreite mu0*DeltaH ueber dem Resonanzfeld inkl. LLG-Fit.
+
+    Der LLG-Fit selbst laeuft weiterhin ueber der Frequenz (Gl. 2.28 ist in f
+    linear); fuer die Darstellung wird jeder Punkt bei seinem Resonanzfeld
+    aufgetragen und die Fitgerade durch die (B_res, DeltaH(f))-Paare gelegt.
+    Liefert (fig, info).
+    """
     import matplotlib.pyplot as plt
 
-    f, _b, dh, _t = _gute_ergebnisse(ergebnisse, r2_min)
+    f, b, dh, _t = _gute_ergebnisse(ergebnisse, r2_min)
     llg = fit_linienbreite(f, dh, gamma=gamma)
 
     fig = ax.figure if ax is not None else plt.figure(figsize=(6, 4.5))
     ax = ax or fig.add_subplot(111)
-    ax.plot(f / 1e9, dh * 1e3, "o", ms=4, label="Messung")
-    ff = np.linspace(f.min(), f.max(), 400)
-    ax.plot(ff / 1e9, linienbreite(ff, llg["mu0Hinh"], llg["alpha"], gamma) * 1e3, "-",
+    ax.plot(b, dh * 1e3, "o", ms=4, label="Messung")
+    # Fitlinie an den Stuetzstellen der Messpunkte, nach Feld sortiert (die
+    # Zuordnung f -> B_res kommt aus der Messung selbst, kein Modell noetig).
+    reihenfolge = np.argsort(b)
+    ax.plot(b[reihenfolge],
+            linienbreite(f[reihenfolge], llg["mu0Hinh"], llg["alpha"], gamma) * 1e3, "-",
             label=(f"LLG: $\\alpha$={llg['alpha']:.2e}, "
                    f"$\\mu_0 H_{{inh}}$={llg['mu0Hinh']*1e3:.2f} mT"))
-    ax.set_xlabel("Frequenz (GHz)")
+    ax.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
     ax.set_ylabel(r"Linienbreite $\mu_0\Delta H$ (mT)")
-    ax.set_title("Linienbreite vs. Frequenz (LLG)")
+    ax.set_title("Linienbreite (LLG)")
     ax.legend()
     fig.tight_layout()
     return fig, {"llg": llg}

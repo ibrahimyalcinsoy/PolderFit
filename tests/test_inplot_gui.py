@@ -1,9 +1,6 @@
 # Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
-"""Offscreen-Smoke-Tests des interaktiven In-Plot-Fittings (GUI-Seite):
-
-ziehbare Fenstergrenzen, Ausschlusszonen-Zeichnen, Fenster-Panel und die
-abdockbaren Ansichten (Multi-Monitor).
-"""
+"""Offscreen-Smoke-Tests der Ausschlusszonen (GUI-Seite) und der abdockbaren
+Ansichten (Multi-Monitor)."""
 
 import os
 
@@ -40,55 +37,6 @@ def _mini_datensatz(n=10):
     return Messdatensatz(quelle="t", format_typ="sortiert", linescans=ls)
 
 
-def _ansicht_mit_grenzen(callback=None):
-    from polderfit.gui.matrix_ansicht import MatrixAnsicht
-    ansicht = MatrixAnsicht()
-    ds = _mini_datensatz()
-    ansicht.zeige(ds)
-    fenster = [(2.7 + 0.01 * i, 3.3 + 0.01 * i) for i in range(len(ds))]
-    ansicht.zeige_fenstergrenzen(ds.frequenzen, fenster, grenze_gezogen=callback)
-    return ansicht, ds, fenster
-
-
-def test_grenzen_werden_gezeichnet_und_versteckt(app):
-    ansicht, ds, fenster = _ansicht_mit_grenzen()
-    labels = [ln.get_label() for ln in ansicht.ax.lines]
-    assert "_grenze_links" in labels and "_grenze_rechts" in labels
-    ansicht.verstecke_fenstergrenzen()
-    labels = [ln.get_label() for ln in ansicht.ax.lines]
-    assert "_grenze_links" not in labels
-
-
-def test_grenze_ziehen_meldet_index_seite_wert(app):
-    gezogen = {}
-    ansicht, ds, fenster = _ansicht_mit_grenzen(
-        lambda i, seite, wert: gezogen.update(index=i, seite=seite, wert=wert))
-
-    # Nahe der linken Grenze von Linescan 4 anfassen (f in GHz auf der y-Achse).
-    f4_ghz = ds.frequenzen[4] / 1e9
-    links4 = fenster[4][0]
-    ansicht._on_press(_ev(ansicht.ax, xdata=links4 + 0.001, ydata=f4_ghz))
-    assert ansicht._drag_grenze == ("links", 4)
-    ansicht._on_move(_ev(ansicht.ax, xdata=2.60, ydata=f4_ghz))
-    ansicht._on_release(_ev(ansicht.ax, xdata=2.60, ydata=f4_ghz))
-    assert gezogen == {"index": 4, "seite": "links", "wert": 2.60}
-    assert ansicht._drag_grenze is None
-
-
-def test_klick_fern_der_grenze_bleibt_frequenzwahl(app):
-    gewaehlt = []
-    from polderfit.gui.matrix_ansicht import MatrixAnsicht
-    ansicht = MatrixAnsicht(frequenz_gewaehlt=gewaehlt.append)
-    ds = _mini_datensatz()
-    ansicht.zeige(ds)
-    ansicht.zeige_fenstergrenzen(ds.frequenzen, [(2.7, 3.3)] * len(ds))
-    # Klick weit weg von beiden Grenzen -> normale Frequenzauswahl.
-    ansicht._on_press(_ev(ansicht.ax, xdata=3.0, ydata=ds.frequenzen[6] / 1e9))
-    assert ansicht._drag_grenze is None
-    ansicht._on_release(_ev(ansicht.ax, xdata=3.0, ydata=ds.frequenzen[6] / 1e9))
-    assert gewaehlt == [6]
-
-
 def test_ausschluss_zeichnen_meldet_rechteck(app):
     from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
@@ -100,7 +48,7 @@ def test_ausschluss_zeichnen_meldet_rechteck(app):
     ansicht._on_move(_ev(ansicht.ax, xdata=3.0, ydata=20.0))
     ansicht._on_release(_ev(ansicht.ax, xdata=3.0, ydata=20.0))
     assert empfangen == {"b0": 2.6, "b1": 3.0, "f0": 8.0, "f1": 20.0}
-    assert ansicht._ausschluss_fertig is None
+    assert ansicht.modus is None  # Modus nach dem Rechteck beendet
 
 
 def test_zonen_anzeige(app):
@@ -114,29 +62,23 @@ def test_zonen_anzeige(app):
     assert ansicht._zonen_patches == []
 
 
-def test_fenster_panel_callbacks_und_zustand(app):
-    from polderfit.gui.fenster_panel import FensterPanel
+def test_zonen_panel_callbacks_und_zustand(app):
+    from polderfit.gui.zonen_panel import ZonenPanel
     aufrufe = []
-    panel = FensterPanel(
-        grenzen_umschalten=lambda an: aufrufe.append(("grenzen", an)),
-        breite_anwenden=lambda p, m: aufrufe.append(("breite", p, m)),
-        propagieren=lambda m: aufrufe.append(("prop", m)),
-        zone_zeichnen=lambda: aufrufe.append(("zone",)),
+    panel = ZonenPanel(
+        zone_umschalten=lambda an: aufrufe.append(("zone", an)),
         zone_entfernen=lambda i: aufrufe.append(("weg", i)),
     )
-    assert panel.modus() == "ueberschreiben"
-    panel.modus_combo.setCurrentIndex(1)
-    assert panel.modus() == "ergaenzen"
+    # Zeichnen-Knopf ist checkbar (sichtbarer Modus-Zustand).
+    assert panel.btn_zone.isCheckable()
+    panel.btn_zone.setChecked(True)
+    assert ("zone", True) in aufrufe
 
-    panel.chk_grenzen.setChecked(True)
-    panel.breite_spin.setValue(25)
-    panel.btn_breite.click()
-    panel.btn_propagieren.click()
-    panel.btn_zone.click()
-    assert ("grenzen", True) in aufrufe
-    assert ("breite", 25, "ergaenzen") in aufrufe
-    assert ("prop", "ergaenzen") in aufrufe
-    assert ("zone",) in aufrufe
+    # Sync vom Modus-Manager loest KEINEN Rueckruf aus.
+    aufrufe.clear()
+    panel.setze_modus_aktiv(False)
+    assert panel.btn_zone.isChecked() is False
+    assert aufrufe == []
 
     panel.setze_zonen([Ausschlusszone(2.6, 2.8, 10e9, 20e9)])
     assert panel.zonen_liste.count() == 1
@@ -144,17 +86,18 @@ def test_fenster_panel_callbacks_und_zustand(app):
     panel.btn_zone_entfernen.click()
     assert ("weg", 0) in aufrufe
 
-    panel.setze_breite_info(17, 2.7, 3.1)
-    assert "17 Punkte" in panel.breite_info.text()
-
 
 def test_hauptfenster_docks_fuer_multimonitor(app):
     from polderfit.gui.hauptfenster import Hauptfenster
     w = Hauptfenster()
-    # Linescan-Fit-Panel und Fenster-Panel sind abdockbare Fenster.
-    for dock in (w.linescan_dock, w.fenster_dock):
+    # Linescan-Fit-Panel und Zonen-Panel sind abdockbare Fenster.
+    for dock in (w.linescan_dock, w.zonen_dock):
         assert bool(dock.features() & QtWidgets.QDockWidget.DockWidgetFloatable)
     # Farbplot ist das zentrale Widget.
     assert w.centralWidget() is w.matrix
-    assert w.fensterpanel is not None
-    assert w.akt_fenster.isCheckable() and w.akt_linescan.isCheckable()
+    assert w.zonenpanel is not None
+    assert w.akt_zonen_panel.isCheckable() and w.akt_linescan.isCheckable()
+    # Aufgeraeumter Start: Panels erscheinen erst bei Bedarf.
+    for dock in (w.linescan_dock, w.zonen_dock, w.verarbeitung_dock,
+                 w.aktivitaet_dock, w.ausreisser_dock):
+        assert dock.isHidden()

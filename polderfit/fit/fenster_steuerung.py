@@ -201,6 +201,7 @@ def fitte_bereich(
     frequenz_max: float,
     breite_faktor: float = 8.0,
     modus: str = "ueberschreiben",
+    breite_punkte: int | None = None,
     fortschritt=None,
 ) -> tuple[list[int], list[int]]:
     """Fittet alle Linescans im Rechteck (Feld x Frequenz) neu.
@@ -219,12 +220,17 @@ def fitte_bereich(
     werden uebersprungen (unveraendert). ``modus='ergaenzen'`` ueberschreibt
     nur die als problematisch markierten Fits - bereits gute Ergebnisse
     anderer Bereiche bleiben unangetastet (waehlbar: ueberschreiben vs.
-    hinzufuegen). ``fortschritt(k, n, ergebnis)`` ist ein optionaler
-    GUI-Callback.
+    hinzufuegen). ``breite_punkte`` (optional) erzwingt eine feste
+    Fensterbreite in Feldpunkten um das gefundene Fensterzentrum (ans
+    Rechteck geklemmt) - der explizite Nutzer-Hebel gegen zu enge
+    Automatik-Fenster, jetzt direkt am Bereichs-Fit. ``fortschritt(k, n,
+    ergebnis)`` ist ein optionaler GUI-Callback.
 
     Liefert ``(neu_gefittet, uebersprungen)`` - Listen von Stapel-Indizes.
     """
     _pruefe_modus(modus)
+    if breite_punkte is not None and int(breite_punkte) < 4:
+        raise ValueError(f"breite_punkte muss >= 4 sein (erhalten: {breite_punkte}).")
     if feld_max < feld_min:
         feld_min, feld_max = feld_max, feld_min
     if frequenz_max < frequenz_min:
@@ -250,6 +256,12 @@ def fitte_bereich(
 
         ausschnitt = schneide_band(ls, feld_min, feld_max)
         unten, oben = auto_fenster(ausschnitt, stapel.gamma, breite_faktor)
+        if breite_punkte is not None:
+            # Feste Breite in Punkten um das gefundene Fensterzentrum.
+            zentrum = 0.5 * (unten + oben)
+            schritt = float(np.ptp(ls.feld)) / max(ls.feld.size - 1, 1)
+            halb = 0.5 * int(breite_punkte) * schritt
+            unten, oben = zentrum - halb, zentrum + halb
         # Sicherheitsklemme: das Fenster darf das Rechteck nicht verlassen
         # (auto_fenster arbeitet auf dem Ausschnitt, daher normalerweise ein
         # No-Op - aber explizit ist hier besser als implizit).

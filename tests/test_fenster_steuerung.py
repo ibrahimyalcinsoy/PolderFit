@@ -125,3 +125,27 @@ def test_verdrehte_grenzen_werden_sortiert():
     f = ds.frequenzen
     neu1, _ = fitte_bereich(stapel, 1.30, 0.55, f[3], f[2])  # beides verdreht
     assert neu1 == [2, 3]
+
+
+def test_feste_fensterbreite_in_punkten():
+    """Option 'Fensterbreite fest': Fenster = Zentrum +/- Breite/2 Feldpunkte."""
+    import pytest
+
+    ds, _ = _zweimoden_datensatz(n_freq=6)
+    stapel = fitte_alle(ds)
+    breite = 40
+    neu, _ = fitte_bereich(stapel, 0.55, 1.30,
+                           ds.frequenzen.min(), ds.frequenzen.max(),
+                           breite_punkte=breite)
+    assert neu
+    for i in neu:
+        ls = ds.linescans[i]
+        schritt = float(np.ptp(ls.feld)) / (ls.feld.size - 1)
+        unten, oben = stapel.fenster[i]
+        # Ans Rechteck geklemmt, sonst exakt die verlangte Breite.
+        assert oben - unten <= breite * schritt + 1e-9
+        assert unten >= 0.55 - 1e-9 and oben <= 1.30 + 1e-9
+
+    with pytest.raises(ValueError):
+        fitte_bereich(stapel, 0.55, 1.30, ds.frequenzen.min(),
+                      ds.frequenzen.max(), breite_punkte=2)

@@ -1,11 +1,17 @@
 # Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
 """Hauptfenster der PolderFit-GUI.
 
-Verbindet die 2D-Uebersicht mit dem interaktiven Linescan-Panel und stellt den
-gesamten Arbeitsablauf bereit: TDMS laden -> AutoWindows + Auto-Fit -> je
-Frequenz Grenzen verschieben und neu fitten -> uebergreifende Auswertung ->
-Export (TDMS, Excel/CSV). Der Korrekturlauf (continue / zurueck / nochmal fitten)
-ist ueber die Navigations- und "Neu fitten"-Schaltflaechen abgebildet.
+Im Zentrum steht der Farbplot der TDMS-Messung (Feld auf der x-, Frequenz auf
+der y-Achse) in voller Breite - beim Start als leeres kariertes
+Koordinatensystem, das sich mit "TDMS laden" fuellt. Damit laesst sich das
+Programm auch allein zur Datenansicht nutzen (Verarbeitungskette:
+derivative divide, divide slice, ... ganz ohne Fit).
+
+Alle weiteren Funktionen sind in einem "Funktionen"-Dropdown der schlanken
+Werkzeugleiste und in der Menueleiste untergebracht. Interaktive Modi
+(Resonanz vorgeben, Bereich neu fitten, Ausschlusszone, Ausreisser markieren)
+sind EXKLUSIV: es ist immer hoechstens ein Modus aktiv, der aktive Modus ist
+in Werkzeugleiste und Statusleiste deutlich markiert, Esc bricht ihn ab.
 
 Lang laufende Schritte (Laden grosser Dateien, Auto-Fit ueber alle Frequenzen)
 laufen in einem Hintergrund-Thread; ein andockbares Aktivitaets-Panel zeigt
@@ -32,12 +38,9 @@ from ..io import (
 )
 from ..fit.batch import Ausschlusszone, StapelErgebnis, fitte_alle, fitte_neu
 from ..fit.fenster_steuerung import (
-    dispersions_zentren,
     entferne_ausschlusszone,
     fitte_bereich,
     fuege_ausschlusszone_hinzu,
-    propagiere_grenzen,
-    setze_fensterbreite_punkte,
 )
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
 from ..persistenz.projekt import lade_sitzung, speichere_sitzung, stelle_stapel_wieder_her
@@ -45,7 +48,9 @@ from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
 from .ausreisser_panel import AusreisserPanel
 from .auswahl_dialog import AuswahlDialog
-from .fenster_panel import FensterPanel
+from .auswertung_fenster import AuswertungsFenster
+from .bereichsfit_dialog import BereichsFitDialog
+from .zonen_panel import ZonenPanel
 from .matrix_ansicht import MatrixAnsicht
 from .fit_ansicht import FitAnsicht
 from .mapping_dialog import MappingDialog, VorschauDialog
@@ -65,6 +70,14 @@ REPO_URL = "https://github.com/ibrahimyalcinsoy/PolderFit"
 _LOG_FARBEN = {
     "info": "#5A5648", "ok": "#2E7D38", "warn": "#B8860B",
     "problem": "#C0392B", "auto": "#6B6657",
+}
+
+#: Statusleisten-Text je aktivem Interaktionsmodus.
+_MODUS_TEXTE = {
+    "seed": "Modus: Resonanz vorgeben – zwei Punkte auf die Resonanz klicken · Esc bricht ab",
+    "bereich": "Modus: Bereich neu fitten – Rechteck aufziehen · Esc bricht ab",
+    "zone": "Modus: Ausschlusszone – Rechteck aufziehen · Esc bricht ab",
+    "ausreisser": "Modus: Ausreißer markieren – Punkt anklicken oder Kasten aufziehen · Esc beendet",
 }
 
 
@@ -89,6 +102,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.datensatz_voll = None
         # Zuletzt benutzte Auswertungsauswahl (Jumper/Bereich) als Vorbelegung.
         self._letzte_auswahl: Auswertungsauswahl | None = None
+        # Zuletzt benutzte Bereichs-Fit-Optionen (Vorbelegung des Dialogs).
+        self._bereich_modus: str = "ueberschreiben"
+        self._bereich_breite: int | None = None
+        # Offenes Kittel/LLG-Auswertungsfenster (hoechstens eines).
+        self._auswertungsfenster: AuswertungsFenster | None = None
 
         # Hintergrund-Job-Zustand.
         self._thread: QtCore.QThread | None = None
@@ -98,15 +116,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._bei_fertig = None
 
         self.matrix = MatrixAnsicht(frequenz_gewaehlt=self._frequenz_gewaehlt,
-                                    zoom_geaendert=self._auf_zoom)
+                                    zoom_geaendert=self._auf_zoom,
+                                    modus_geaendert=self._auf_modus_geaendert)
         self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert)
         self.navigator = NavigatorAnsicht(bereich_gewaehlt=self._navigator_bereich)
         self.verarbeitung = VerarbeitungPanel(geaendert=self._verarbeitung_geaendert)
-        self.fensterpanel = FensterPanel(
-            grenzen_umschalten=self._grenzen_umschalten,
-            breite_anwenden=self._breite_anwenden,
-            propagieren=self._propagieren,
-            zone_zeichnen=self._zone_zeichnen,
+        self.zonenpanel = ZonenPanel(
+            zone_umschalten=self._zone_modus,
             zone_entfernen=self._zone_entfernen,
         )
         self.ausreisserpanel = AusreisserPanel(
@@ -124,17 +140,31 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._baue_aktivitaet_dock()
         self._baue_navigator_dock()
         self._baue_verarbeitung_dock()
-        self._baue_fenster_dock()
+        self._baue_zonen_dock()
         self._baue_ausreisser_dock()
         self._baue_trace_dock()
-        self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden.")
+
+        # Statusleiste: dauerhafte Modus-Anzeige (rechts), sichtbar nur im Modus.
+        self.modus_label = QtWidgets.QLabel("")
+        self.modus_label.setObjectName("modus_anzeige")
+        self.modus_label.setVisible(False)
+        self.statusBar().addPermanentWidget(self.modus_label)
+
+        # Esc bricht jeden Interaktionsmodus ab - egal, welches Widget den
+        # Tastaturfokus hat (der Canvas allein reicht nicht, wenn der Modus
+        # aus Menue/Toolbar gestartet wurde).
+        esc = QtGui.QShortcut(QtGui.QKeySequence("Escape"), self)
+        esc.setContext(QtCore.Qt.WindowShortcut)
+        esc.activated.connect(self.matrix.beende_modus)
+
+        self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden (Strg+O).")
         self._log("PolderFit bereit. Bitte eine TDMS-Datei laden.", "info")
 
     # --- Aufbau ------------------------------------------------------------
     def _baue_oberflaeche(self):
-        """Farbplot als Zentrum; das Linescan-Fit-Panel ist ein abdockbares
-        Fenster (Multi-Monitor-Betrieb: Panel einfach auf den zweiten
-        Bildschirm ziehen)."""
+        """Farbplot als Zentrum in voller Breite; das Linescan-Fit-Panel ist ein
+        abdockbares Fenster, das erst nach dem ersten Auto-Fit erscheint
+        (Multi-Monitor-Betrieb: Panel einfach auf den zweiten Bildschirm ziehen)."""
         self.setCentralWidget(self.matrix)
 
         rechts = QtWidgets.QWidget()
@@ -171,13 +201,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
         rechts.setMinimumWidth(480)
         dock.setWidget(rechts)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        dock.setVisible(False)  # erscheint nach dem ersten Auto-Fit
         self.linescan_dock = dock
 
     def _baue_aktionen(self):
-        """Legt alle Aktionen einmalig an; sie werden in Menue UND Toolbar verwendet.
+        """Legt alle Aktionen einmalig an; sie werden in Menue UND Dropdown verwendet.
 
         Die Sichtbarkeits-Umschalter der Panels ohne bereits existierendes Dock
-        (``akt_verarbeitung``, ``akt_fenster``, ``akt_ausreisser_panel``,
+        (``akt_verarbeitung``, ``akt_zonen_panel``, ``akt_ausreisser_panel``,
         ``akt_aktivitaet``, ``akt_trace``) werden hier nur angelegt; ihre Verbindung
         mit dem jeweiligen Dock erfolgt in den ``_baue_*_dock``-Methoden. Nur
         ``akt_linescan`` wird direkt verbunden, weil das Linescan-Dock schon steht.
@@ -189,6 +220,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_laden.setShortcut(QtGui.QKeySequence.Open)          # Strg+O
         self.akt_laden.triggered.connect(self._laden)
         self.akt_projekt_laden = A("Projekt laden …", self)
+        self.akt_projekt_laden.setShortcut(QtGui.QKeySequence("Ctrl+Shift+O"))
         self.akt_projekt_laden.setToolTip(
             "Gespeicherte Sitzung fortsetzen: TDMS wird neu gelesen, die Fits werden "
             "mit den gespeicherten Fenstern deterministisch wiederhergestellt.")
@@ -200,37 +232,51 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Ausschlusszonen, Ausreißer und Fitparameter.")
         self.akt_projekt_speichern.triggered.connect(self._projekt_speichern)
         self.akt_tdms = A("Export TDMS …", self)
+        self.akt_tdms.setShortcut(QtGui.QKeySequence("Ctrl+Shift+T"))
         self.akt_tdms.triggered.connect(self._export_tdms)
         self.akt_xlsx = A("Export Excel …", self)
+        self.akt_xlsx.setShortcut(QtGui.QKeySequence("Ctrl+E"))
         self.akt_xlsx.triggered.connect(self._export_excel)
         self.akt_csv = A("Export CSV …", self)
+        self.akt_csv.setShortcut(QtGui.QKeySequence("Ctrl+Shift+E"))
         self.akt_csv.triggered.connect(self._export_csv)
         self.akt_beenden = A("Beenden", self)
         self.akt_beenden.setShortcut(QtGui.QKeySequence.Quit)             # Strg+Q
         self.akt_beenden.triggered.connect(self.close)
 
-        # --- Fit ------------------------------------------------------------
+        # --- Fit (interaktive Modi sind checkbar und EXKLUSIV) ---------------
         self.akt_fit = A("Auto-Fit (alle)", self)
         self.akt_fit.setShortcut(QtGui.QKeySequence("F5"))
         self.akt_fit.triggered.connect(self._auto_fit)
         self.akt_seed = A("Resonanz vorgeben", self)
+        self.akt_seed.setShortcut(QtGui.QKeySequence("Ctrl+D"))
+        self.akt_seed.setCheckable(True)
         self.akt_seed.setToolTip(
-            "Zwei Punkte auf die Resonanz in der Übersicht klicken → die Fit-Fenster "
-            "folgen dieser Dispersion (hilft, wenn der Auto-Fit an einem Störfeature hängt).")
-        self.akt_seed.triggered.connect(self._resonanz_vorgeben)
+            "Modus: Zwei Punkte auf die Resonanz in der Übersicht klicken → die "
+            "Fit-Fenster folgen dieser Dispersion (hilft, wenn der Auto-Fit an "
+            "einem Störfeature hängt). Esc bricht ab.")
+        self.akt_seed.toggled.connect(self._seed_umschalten)
         self.akt_bereich = A("Bereich neu fitten", self)
+        self.akt_bereich.setShortcut(QtGui.QKeySequence("Ctrl+B"))
+        self.akt_bereich.setCheckable(True)
         self.akt_bereich.setToolTip(
-            "Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche und Fit "
-            "wiederholt (löst Mehrdeutigkeiten neben der Mode auf). Esc bricht ab.")
-        self.akt_bereich.triggered.connect(self._bereich_fitten)
+            "Modus: Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche "
+            "und Fit wiederholt (löst Mehrdeutigkeiten neben der Mode auf). "
+            "Optionen (Modus, Fensterbreite) folgen im Dialog. Esc bricht ab.")
+        self.akt_bereich.toggled.connect(self._bereich_umschalten)
         self.akt_ausreisser = A("Ausreißer markieren", self)
+        self.akt_ausreisser.setShortcut(QtGui.QKeySequence("Ctrl+M"))
         self.akt_ausreisser.setCheckable(True)
         self.akt_ausreisser.setToolTip(
             "Modus: Fit-Punkte im Farbplot anklicken oder per Kasten markieren → "
-            "raus aus Darstellung und allen Rechnungen (insb. Kittel-Fit). "
-            "Rückgängig und Liste im Ausreißer-Panel.")
+            "raus aus Darstellung und ALLEN Rechnungen (insb. Kittel-Fit). "
+            "Reversibel: Rückgängig und Liste im Ausreißer-Panel. Esc beendet.")
         self.akt_ausreisser.toggled.connect(self._ausreisser_modus)
-        self.akt_kittel = A("Kittel/LLG-Auswertung", self)
+        self.akt_kittel = A("Kittel/LLG-Auswertung …", self)
+        self.akt_kittel.setShortcut(QtGui.QKeySequence("Ctrl+K"))
+        self.akt_kittel.setToolTip(
+            "Eigenes Auswertungsfenster: Kittel- und LLG-Fit mit Feld auf der "
+            "x-Achse, Punkte direkt im Plot entfernen, Export mit Fehlermaßen.")
         self.akt_kittel.triggered.connect(self._kittel_llg)
 
         # --- Ansicht --------------------------------------------------------
@@ -249,16 +295,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_verarbeitung = A("Panel: Verarbeitung", self)
         self.akt_verarbeitung.setToolTip(
             "Verarbeitungskette des Farbplots (divide-slice, derivative-divide, "
-            "relation-amplitude) ein-/ausblenden.")
-        self.akt_fenster = A("Panel: Fenster & Grenzen", self)
-        self.akt_fenster.setToolTip(
-            "Interaktives In-Plot-Fitting: ziehbare Fenstergrenzen, Propagation, "
-            "Fensterbreite in Punkten, Ausschlusszonen.")
+            "relation-amplitude) ein-/ausblenden – funktioniert direkt nach dem "
+            "Laden, ganz ohne Fit.")
+        self.akt_zonen_panel = A("Panel: Ausschlusszonen", self)
+        self.akt_zonen_panel.setToolTip(
+            "Liste der Ausschlusszonen (Messpunkte aus allen Fits ausnehmen) "
+            "ein-/ausblenden.")
         self.akt_linescan = A("Panel: Linescan-Fit", self)
         self.akt_linescan.setToolTip(
             "Linescan-Fit-Panel ein-/ausblenden (abdockbar fuer den zweiten Monitor).")
         self.akt_linescan.setCheckable(True)
-        self.akt_linescan.setChecked(True)
+        self.akt_linescan.setChecked(False)
         self.akt_linescan.toggled.connect(self.linescan_dock.setVisible)
         self.linescan_dock.visibilityChanged.connect(self.akt_linescan.setChecked)
         self.akt_ausreisser_panel = A("Panel: Ausreißer-Liste", self)
@@ -307,7 +354,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_ansicht.addAction(self.akt_problemfits)
         m_ansicht.addSeparator()
         m_ansicht.addAction(self.akt_verarbeitung)
-        m_ansicht.addAction(self.akt_fenster)
+        m_ansicht.addAction(self.akt_zonen_panel)
         m_ansicht.addAction(self.akt_linescan)
         m_ansicht.addAction(self.akt_ausreisser_panel)
         m_ansicht.addAction(self.akt_aktivitaet)
@@ -319,7 +366,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_hilfe.addAction(self.akt_repo)
 
     def _baue_werkzeugleiste(self):
-        """Schlanke Werkzeugleiste mit den haeufigsten Aktionen (Rest im Menue)."""
+        """Radikal schlanke Werkzeugleiste: Laden + "Funktionen"-Dropdown.
+
+        Alle Fit-/Auswerte-/Ansicht-Funktionen sind im Dropdown verborgen (und
+        bleiben parallel in der Menueleiste samt Shortcuts erreichbar)."""
         leiste = self.addToolBar("Hauptaktionen")
         leiste.setObjectName("haupt_toolbar")
         leiste.setMovable(False)
@@ -337,13 +387,39 @@ class Hauptfenster(QtWidgets.QMainWindow):
         leiste.addWidget(self.btn_logo)
         leiste.addSeparator()
 
-        for aktion in (self.akt_laden, self.akt_fit, self.akt_seed,
-                       self.akt_bereich, self.akt_ausreisser):
-            leiste.addAction(aktion)
-        leiste.addSeparator()
-        leiste.addAction(self.akt_kittel)
-        leiste.addSeparator()
-        leiste.addAction(self.akt_vollbereich)
+        leiste.addAction(self.akt_laden)
+
+        # "Funktionen"-Dropdown mit allen weiteren Aktionen.
+        self.funktionen_menue = QtWidgets.QMenu("Funktionen", self)
+        self.funktionen_menue.addAction(self.akt_fit)
+        self.funktionen_menue.addAction(self.akt_seed)
+        self.funktionen_menue.addAction(self.akt_bereich)
+        self.funktionen_menue.addAction(self.akt_ausreisser)
+        self.funktionen_menue.addSeparator()
+        self.funktionen_menue.addAction(self.akt_kittel)
+        self.funktionen_menue.addSeparator()
+        m_export = self.funktionen_menue.addMenu("Export")
+        m_export.addAction(self.akt_tdms)
+        m_export.addAction(self.akt_xlsx)
+        m_export.addAction(self.akt_csv)
+        m_ansicht = self.funktionen_menue.addMenu("Ansicht")
+        m_ansicht.addAction(self.akt_vollbereich)
+        m_ansicht.addAction(self.akt_problemfits)
+        m_ansicht.addSeparator()
+        m_ansicht.addAction(self.akt_verarbeitung)
+        m_ansicht.addAction(self.akt_zonen_panel)
+        m_ansicht.addAction(self.akt_linescan)
+        m_ansicht.addAction(self.akt_ausreisser_panel)
+        m_ansicht.addAction(self.akt_aktivitaet)
+        m_ansicht.addAction(self.akt_trace)
+
+        self.btn_funktionen = QtWidgets.QToolButton()
+        self.btn_funktionen.setText("Funktionen ▾")
+        self.btn_funktionen.setMenu(self.funktionen_menue)
+        self.btn_funktionen.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+        self.btn_funktionen.setToolTip(
+            "Alle Fit-, Auswerte- und Ansichtsfunktionen (auch in der Menueleiste).")
+        leiste.addWidget(self.btn_funktionen)
 
     def _baue_aktivitaet_dock(self):
         """Andockbares (abtrennbares) Panel mit Fortschritt und Live-Protokoll."""
@@ -389,10 +465,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dock.setWidget(inhalt)
         dock.setMinimumWidth(300)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        dock.setVisible(False)  # erscheint automatisch mit dem ersten Hintergrund-Job
         self.aktivitaet_dock = dock
         # Toolbar-Umschalter mit der Sichtbarkeit des Docks verbinden.
         self.akt_aktivitaet.setCheckable(True)
-        self.akt_aktivitaet.setChecked(True)
+        self.akt_aktivitaet.setChecked(False)
         self.akt_aktivitaet.toggled.connect(dock.setVisible)
         dock.visibilityChanged.connect(self.akt_aktivitaet.setChecked)
 
@@ -433,16 +510,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dock.setWidget(rollbereich)
         dock.setMinimumWidth(280)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+        dock.setVisible(False)  # erscheint mit der geladenen Messung
         self.verarbeitung_dock = dock
         self.akt_verarbeitung.setCheckable(True)
-        self.akt_verarbeitung.setChecked(True)
+        self.akt_verarbeitung.setChecked(False)
         self.akt_verarbeitung.toggled.connect(dock.setVisible)
         dock.visibilityChanged.connect(self.akt_verarbeitung.setChecked)
 
-    def _baue_fenster_dock(self):
-        """Fenster & Grenzen (links): interaktives In-Plot-Fitting."""
-        dock = QtWidgets.QDockWidget("Fenster & Grenzen", self)
-        dock.setObjectName("fenster_dock")
+    def _baue_zonen_dock(self):
+        """Ausschlusszonen (links): Zeichnen-Modus und Zonenliste."""
+        dock = QtWidgets.QDockWidget("Ausschlusszonen", self)
+        dock.setObjectName("zonen_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
         )
@@ -453,17 +531,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
         )
         rollbereich = QtWidgets.QScrollArea()
         rollbereich.setWidgetResizable(True)
-        rollbereich.setWidget(self.fensterpanel)
+        rollbereich.setWidget(self.zonenpanel)
         dock.setWidget(rollbereich)
         dock.setMinimumWidth(280)
         # Bewusst NICHT tabifiziert: hinter einem Tab liegende Docks melden
         # visibilityChanged(False), was die Toolbar-Toggles fehlleiten wuerde.
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
-        self.fenster_dock = dock
-        self.akt_fenster.setCheckable(True)
-        self.akt_fenster.setChecked(True)
-        self.akt_fenster.toggled.connect(dock.setVisible)
-        dock.visibilityChanged.connect(self.akt_fenster.setChecked)
+        dock.setVisible(False)  # erscheint nach dem ersten Auto-Fit
+        self.zonen_dock = dock
+        self.akt_zonen_panel.setCheckable(True)
+        self.akt_zonen_panel.setChecked(False)
+        self.akt_zonen_panel.toggled.connect(dock.setVisible)
+        dock.visibilityChanged.connect(self.akt_zonen_panel.setChecked)
 
     def _baue_ausreisser_dock(self):
         """Ausreisser-Liste (rechts); erscheint mit dem Markier-Modus."""
@@ -511,6 +590,95 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_trace.toggled.connect(dock.setVisible)
         dock.visibilityChanged.connect(self.akt_trace.setChecked)
 
+    # --- Modus-Verwaltung (exklusiv, sichtbar, Esc bricht ab) ----------------
+    def _auf_modus_geaendert(self, modus: str | None):
+        """Vom Modus-Manager der Matrix gemeldet: Anzeige und Umschalter syncen."""
+        for aktion, name in ((self.akt_seed, "seed"),
+                             (self.akt_bereich, "bereich"),
+                             (self.akt_ausreisser, "ausreisser")):
+            soll = (modus == name)
+            if aktion.isChecked() != soll:
+                aktion.blockSignals(True)
+                aktion.setChecked(soll)
+                aktion.blockSignals(False)
+        self.zonenpanel.setze_modus_aktiv(modus == "zone")
+        if modus is None:
+            self.modus_label.setVisible(False)
+            self.statusBar().showMessage("Modus beendet.", 4000)
+        else:
+            text = _MODUS_TEXTE.get(modus, modus)
+            self.modus_label.setText(text.split(" – ")[0])
+            self.modus_label.setVisible(True)
+            self.statusBar().showMessage(text)
+
+    def _modus_start_erlaubt(self, braucht_fits: bool = False) -> bool:
+        """Gemeinsame Vorbedingungen aller Interaktionsmodi (nicht-modal gemeldet)."""
+        if self._job_laeuft:
+            self._log("Es laeuft ein Hintergrundprozess – Modus nicht gestartet.", "warn")
+            return False
+        if self.stapel is None or self.datensatz_voll is None:
+            self._log("Modus nicht verfuegbar: bitte zuerst eine TDMS-Datei laden.", "warn")
+            self.statusBar().showMessage("Bitte zuerst eine TDMS-Datei laden.", 5000)
+            return False
+        if braucht_fits and not self.stapel.ergebnisse:
+            self._log("Modus nicht verfuegbar: bitte zuerst einen Auto-Fit ausfuehren.", "warn")
+            self.statusBar().showMessage("Bitte zuerst einen Auto-Fit ausfuehren.", 5000)
+            return False
+        return True
+
+    def _seed_umschalten(self, an: bool):
+        """Umschalter 'Resonanz vorgeben' (Dispersions-Seed)."""
+        if not an:
+            if self.matrix.modus == "seed":
+                self.matrix.beende_modus()
+            return
+        if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
+            self.akt_seed.setChecked(False)
+            return
+        self._log("Resonanz vorgeben: zwei Punkte auf die Resonanz in der Übersicht "
+                  "klicken (tiefe und hohe Frequenz). Esc bricht ab.", "info")
+        self.matrix.starte_dispersion_seed(self._seed_fertig)
+
+    def _bereich_umschalten(self, an: bool):
+        """Umschalter 'Bereich neu fitten' (Rechteck-Nachfitten)."""
+        if not an:
+            if self.matrix.modus == "bereich":
+                self.matrix.beende_modus()
+            return
+        if not self._modus_start_erlaubt(braucht_fits=True):
+            self.akt_bereich.setChecked(False)
+            return
+        self._log("Bereich neu fitten: Rechteck um die Mode aufziehen "
+                  "(Esc bricht ab).", "info")
+        self.matrix.starte_bereichs_fit(self._bereich_gewaehlt)
+
+    def _zone_modus(self, an: bool):
+        """Umschalter des Zonen-Zeichenmodus (aus dem Ausschlusszonen-Panel)."""
+        if not an:
+            if self.matrix.modus == "zone":
+                self.matrix.beende_modus()
+            return
+        if not self._modus_start_erlaubt(braucht_fits=True):
+            self.zonenpanel.setze_modus_aktiv(False)
+            return
+        self._log("Ausschlusszone: Rechteck um die auszuschliessenden Punkte "
+                  "aufziehen (Esc bricht ab).", "info")
+        self.matrix.starte_ausschluss_zeichnen(self._zone_gezeichnet)
+
+    def _ausreisser_modus(self, an: bool):
+        """Umschalter 'Ausreißer markieren': Punkte anklicken/einrahmen."""
+        if not an:
+            if self.matrix.modus == "ausreisser":
+                self.matrix.beende_modus()
+            return
+        if not self._modus_start_erlaubt(braucht_fits=True):
+            self.akt_ausreisser.setChecked(False)
+            return
+        self.matrix.setze_ausreisser_modus(True, gewaehlt=self._ausreisser_gewaehlt)
+        self.ausreisser_dock.setVisible(True)
+        self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
+                  "aufziehen. Esc oder erneutes Auslösen beendet den Modus.", "info")
+
     # --- Aktivitaet / Protokoll -------------------------------------------
     def _log(self, text: str, art: str = "info") -> None:
         """Schreibt eine farbige, zeitgestempelte Protokollzeile (Auto-Scroll)."""
@@ -542,12 +710,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self._job_laeuft:
             self._log("Es laeuft bereits ein Hintergrundprozess – bitte warten.", "warn")
             return
+        # Kein Interaktionsmodus parallel zu einem Hintergrund-Job.
+        self.matrix.beende_modus()
         self._job_laeuft = True
         self._job_titel = titel
         self._bei_fertig = bei_fertig
         self._setze_bedienelemente(False)
         self._setze_aktivitaet(titel)
         self._log(titel, "info")
+        self.aktivitaet_dock.setVisible(True)
         self.fortschritt_balken.setRange(0, 0)  # "busy", bis erster Fortschritt kommt
 
         self._thread = QtCore.QThread(self)
@@ -679,16 +850,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.navigator_dock.setVisible(False)  # erst beim Zoomen einblenden
             self.datensatz_voll = datensatz
             self.stapel = StapelErgebnis(datensatz=datensatz)
-            self.fensterpanel.setze_zonen([])
-            self.fensterpanel.setze_breite_info(None)
-            self.fensterpanel.chk_grenzen.setChecked(False)  # neue Messung, alte Grenzen weg
+            self.zonenpanel.setze_zonen([])
+            # Datenansicht sofort ermoeglichen: Verarbeitungs-Panel einblenden.
+            self.verarbeitung_dock.setVisible(True)
             self._log(
                 f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
                 f"{len(datensatz)} Frequenzen (Profil: "
                 f"{datensatz.meta.get('mapping_profil', 'manuell')}).", "ok")
             self.statusBar().showMessage(
                 f"Geladen: {os.path.basename(pfad_)} ({datensatz.format_typ}, "
-                f"{len(datensatz)} Frequenzen). Jetzt 'Auto-Fit' starten.")
+                f"{len(datensatz)} Frequenzen). Daten ansehen (Verarbeitung) "
+                f"oder 'Auto-Fit' starten.")
 
         self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …")
 
@@ -717,6 +889,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._log("Auswertungsauswahl: "
                       + auswahl.beschreibung(self.datensatz_voll), "info")
         return auswahl
+
+    def _nach_autofit(self, stapel: StapelErgebnis) -> None:
+        """Gemeinsamer Abschluss beider Auto-Fit-Wege (mit/ohne Vorgabe)."""
+        self.stapel = stapel
+        self._ausreisser_undo = []  # Undo-Stapel gehoert zum alten Stapel
+        self._aktualisiere_overlay()
+        # Neuer Stapel: Ausschlusszonen beginnen leer.
+        self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
+        self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+        self.aktueller_index = 0
+        # Fuer den Korrekturlauf: Linescan-Panel jetzt einblenden.
+        self.linescan_dock.setVisible(True)
+        self._zeige_aktuellen()
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
 
     def _auto_fit(self):
         if self.stapel is None or self.datensatz_voll is None:
@@ -747,15 +934,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return fitte_alle(datensatz, fortschritt=fortschritt, auswahl=auswahl)
 
         def bei_fertig(stapel):
-            self.stapel = stapel
-            self._ausreisser_undo = []  # Undo-Stapel gehoert zum alten Stapel
-            self._aktualisiere_overlay()
-            # Neuer Stapel: Ausschlusszonen beginnen leer, Grenzen-Overlay neu.
-            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
-            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
-            self._aktualisiere_grenzen_overlay()
-            self.aktueller_index = 0
-            self._zeige_aktuellen()
+            self._nach_autofit(stapel)
             n_prob = len(stapel.index_problematisch())
             art = "ok" if n_prob == 0 else "warn"
             self._log(f"Auto-Fit fertig: {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.", art)
@@ -765,20 +944,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 f"Auto-Fit fertig. {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.")
 
         self._starte_job(aufgabe, bei_fertig, "Auto-Fit läuft …")
-
-    def _resonanz_vorgeben(self):
-        """Startet den Dispersions-Seed: zwei Klicks auf die Resonanz in der Übersicht."""
-        if self.stapel is None:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
-            return
-        if not self._mapping_vorhanden():
-            return
-        if self._job_laeuft:
-            return
-        self._log("Resonanz vorgeben: zwei Punkte auf die Resonanz in der Übersicht klicken "
-                  "(tiefe und hohe Frequenz).", "info")
-        self.statusBar().showMessage("Resonanz vorgeben: zwei Punkte auf die Resonanz klicken …")
-        self.matrix.starte_dispersion_seed(self._seed_fertig)
 
     def _seed_fertig(self, punkte):
         """Callback nach zwei Klicks: Kittel-Gerade legen und mit Vorgabe neu fitten."""
@@ -818,14 +983,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               auswahl=auswahl)
 
         def bei_fertig(stapel):
-            self.stapel = stapel
-            self._ausreisser_undo = []
-            self._aktualisiere_overlay()
-            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
-            self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
-            self._aktualisiere_grenzen_overlay()
-            self.aktueller_index = 0
-            self._zeige_aktuellen()
+            self._nach_autofit(stapel)
             n_prob = len(stapel.index_problematisch())
             self._log(f"Auto-Fit (mit Vorgabe) fertig: {len(stapel.ergebnisse)} Fits, "
                       f"{n_prob} problematisch.", "ok" if n_prob <= len(stapel.ergebnisse) // 3 else "warn")
@@ -834,23 +992,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         self._starte_job(aufgabe, bei_fertig, "Auto-Fit mit vorgegebener Dispersion …")
 
-    def _bereich_fitten(self):
-        """Startet den Bereichs-Fit: Rechteck im Farbplot aufziehen -> dort neu fitten."""
-        if not self.stapel or not self.stapel.ergebnisse:
-            QtWidgets.QMessageBox.information(
-                self, "Hinweis", "Bitte zuerst einen Auto-Fit ausfuehren - der "
-                "Bereichs-Fit ueberschreibt gezielt bestehende Fits.")
-            return
-        if self._job_laeuft:
-            return
-        self._log("Bereich neu fitten: Rechteck um die Mode aufziehen "
-                  "(Esc bricht ab).", "info")
-        self.statusBar().showMessage("Bereich neu fitten: Rechteck im Farbplot aufziehen …")
-        self.matrix.starte_bereichs_fit(self._bereich_gewaehlt)
-
     def _bereich_gewaehlt(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
-        """Callback nach dem Aufziehen: nur im Rechteck neu fitten (Hintergrund)."""
+        """Callback nach dem Aufziehen: Optionen abfragen, dann im Rechteck neu fitten."""
         stapel = self.stapel
+        if stapel is None or not stapel.ergebnisse:
+            return
+        dialog = BereichsFitDialog(feld_min, feld_max, f_min_ghz, f_max_ghz,
+                                   modus_vorgabe=self._bereich_modus,
+                                   breite_vorgabe=self._bereich_breite, parent=self)
+        if not dialog.exec():
+            self._log("Bereichs-Fit abgebrochen.", "info")
+            return
+        modus = dialog.modus()
+        breite = dialog.breite_punkte()
+        self._bereich_modus, self._bereich_breite = modus, breite
         f_min, f_max = f_min_ghz * 1e9, f_max_ghz * 1e9
 
         def aufgabe(melde):
@@ -859,18 +1014,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     f"✓ B_res={erg.B_res:.3f} T"
                 melde(k, n, f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}")
             return fitte_bereich(stapel, feld_min, feld_max, f_min, f_max,
-                                 modus=self.fensterpanel.modus(),
+                                 modus=modus, breite_punkte=breite,
                                  fortschritt=fortschritt)
 
         def bei_fertig(res):
             neu, uebersprungen = res
             self._aktualisiere_overlay()
-            self._aktualisiere_grenzen_overlay()
             self._zeige_aktuellen()
+            if self._auswertungsfenster is not None:
+                self._auswertungsfenster.aktualisiere()
             probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
+            breite_text = f", Breite {breite} Punkte" if breite else ""
             text = (f"Bereichs-Fit [{feld_min:.3f}-{feld_max:.3f} T, "
-                    f"{f_min_ghz:.2f}-{f_max_ghz:.2f} GHz]: {len(neu)} neu gefittet, "
-                    f"{len(probleme)} problematisch, "
+                    f"{f_min_ghz:.2f}-{f_max_ghz:.2f} GHz{breite_text}]: "
+                    f"{len(neu)} neu gefittet, {len(probleme)} problematisch, "
                     f"{len(uebersprungen)} uebersprungen (ohne Daten/Modus 'ergaenzen').")
             self._log(text, "warn" if probleme else "ok")
             self.statusBar().showMessage(text)
@@ -899,9 +1056,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
         # enthalten als die angezeigte Matrix.
         self.matrix.markiere_frequenz_wert(self.stapel.ergebnisse[i].frequenz)
-        # Fenster-Panel: tatsaechliche Fensterbreite in Punkten anzeigen.
         punkte_im_fenster = int(np.count_nonzero((voll.feld >= unten) & (voll.feld <= oben)))
-        self.fensterpanel.setze_breite_info(punkte_im_fenster, unten, oben)
         e = self.stapel.ergebnisse[i]
         status = f"PROBLEM: {e.problem_text}" if e.problematisch else "OK"
         # 1-R² in wissenschaftlicher Notation, damit echte Variation sichtbar wird.
@@ -909,7 +1064,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         text = (
             f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
             f"B_res={e.B_res:.4f} T │ alpha={e.alpha:.2e} │ "
-            f"rmse_norm={e.rmse_norm:.3f} │ 1-R²={eins_minus_r2:.1e} │ {status}")
+            f"rmse_norm={e.rmse_norm:.3f} │ 1-R²={eins_minus_r2:.1e} │ "
+            f"Fenster {punkte_im_fenster} Pkt │ {status}")
         self.label_info.setText(text)
         self.statusBar().showMessage(text)
 
@@ -941,7 +1097,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben)
         self._zeige_aktuellen()
         self._aktualisiere_overlay()
-        self._aktualisiere_grenzen_overlay()
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
         art = "problem" if erg.problematisch else "ok"
         self._log(f"Neu gefittet f={erg.frequenz/1e9:.2f} GHz "
                   f"[{unten:.3f}–{oben:.3f} T] → {'⚠ ' + erg.problem_text if erg.problematisch else '✓ OK'}",
@@ -957,36 +1114,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._aktualisiere_overlay()
 
     def _kittel_llg(self):
+        """Oeffnet das Kittel/LLG-Auswertungsfenster (eigenes, nicht-modales Fenster)."""
         if not self.stapel or not self.stapel.ergebnisse:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
             return
-        geo, ok = QtWidgets.QInputDialog.getItem(
-            self, "Geometrie", "Kittel-Geometrie:", ["oop", "ip"], 0, False)
-        if not ok:
-            return
-        # Ausreisser fliegen aus ALLEN uebergreifenden Rechnungen und Plots.
-        aktive = self.stapel.ergebnisse_aktiv()
+        if self._auswertungsfenster is None:
+            self._auswertungsfenster = AuswertungsFenster(
+                hole_stapel=lambda: self.stapel,
+                ausreisser_markieren=self._ausreisser_gewaehlt,
+                ausreisser_rueckgaengig=self._ausreisser_rueckgaengig,
+                parent=self)
+            self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
+        else:
+            self._auswertungsfenster.aktualisiere()
+        self._auswertungsfenster.show()
+        self._auswertungsfenster.raise_()
+        self._auswertungsfenster.activateWindow()
         n_ausreisser = len(self.stapel.ausreisser)
         if n_ausreisser:
             self._log(f"Kittel/LLG: {n_ausreisser} Ausreißer ausgeschlossen "
-                      f"({len(aktive)} Punkte verbleiben).", "info")
-        try:
-            info = auswertung_kittel_llg(aktive, geometrie=geo)
-        except Exception as exc:
-            QtWidgets.QMessageBox.warning(self, "Auswertung", str(exc))
-            self._log(f"Kittel/LLG fehlgeschlagen: {exc}", "problem")
-            return
-        kit, llg = info["kittel"], info["llg"]
-        self._log(
-            f"Kittel {geo}: µ0Meff={kit['mu0Meff']:.4f} T, g={kit['g_faktor']:.3f}; "
-            f"LLG: α={llg['alpha']:.3e}, µ0Hinh={llg['mu0Hinh']*1e3:.2f} mT.", "ok")
-        from ..auswertung.uebersicht import (
-            plot_resonanz_vs_frequenz, plot_linienbreite, plot_resonanz_vs_temperatur)
-        plot_resonanz_vs_frequenz(aktive, geometrie=geo)
-        plot_linienbreite(aktive, gamma=info["kittel"]["gamma"])
-        plot_resonanz_vs_temperatur(aktive)
-        import matplotlib.pyplot as plt
-        plt.show()
+                      f"({len(self.stapel.ergebnisse_aktiv())} Punkte verbleiben).", "info")
+
+    def _auswertungsfenster_zu(self, *_args):
+        self._auswertungsfenster = None
 
     # --- Export ------------------------------------------------------------
     def _export_tdms(self):
@@ -1012,7 +1162,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                             **{f"llg_{k}": v for k, v in info["llg"].items()}}
         except Exception:
             pass
-        exportiere_excel(self.stapel.ergebnisse, pfad, global_param)
+        exportiere_excel(self.stapel.ergebnisse, pfad, global_param,
+                         ausreisser=self.stapel.ausreisser)
         self.statusBar().showMessage(f"Excel gespeichert: {pfad}")
         self._log(f"Excel gespeichert: {os.path.basename(pfad)}", "ok")
 
@@ -1022,7 +1173,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         pfad, _ = QtWidgets.QFileDialog.getSaveFileName(self, "CSV speichern", "", "CSV (*.csv)")
         if not pfad:
             return
-        exportiere_csv(self.stapel.ergebnisse, pfad)
+        exportiere_csv(self.stapel.ergebnisse, pfad, ausreisser=self.stapel.ausreisser)
         self.statusBar().showMessage(f"CSV gespeichert: {pfad}")
         self._log(f"CSV gespeichert: {os.path.basename(pfad)}", "ok")
 
@@ -1032,136 +1183,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return False
         return True
 
-    # --- Interaktives In-Plot-Fitting (Fenster & Grenzen) --------------------
-    def _aktualisiere_grenzen_overlay(self):
-        """Zeichnet die ziehbaren Fenstergrenzen im Farbplot neu (falls aktiv)."""
-        if not self.stapel or not self.stapel.fenster:
-            return
-        if self.fensterpanel.grenzen_aktiv():
-            self.matrix.zeige_fenstergrenzen(
-                self.stapel.datensatz.frequenzen, self.stapel.fenster,
-                grenze_gezogen=self._grenze_im_plot_gezogen)
-
-    def _grenzen_umschalten(self, an: bool):
-        if not an:
-            self.matrix.verstecke_fenstergrenzen()
-            return
-        if not self.stapel or not self.stapel.fenster:
-            self._log("Grenzen anzeigen: erst nach einem Auto-Fit verfuegbar.", "warn")
-            self.fensterpanel.chk_grenzen.setChecked(False)
-            return
-        self._aktualisiere_grenzen_overlay()
-        self._log("Fenstergrenzen eingeblendet - Grenze anfassen und horizontal "
-                  "ziehen; der Linescan fittet sofort neu.", "info")
-
-    def _grenze_im_plot_gezogen(self, index: int, seite: str, wert: float):
-        """Eine Grenze wurde im Farbplot losgelassen: diesen Linescan neu fitten."""
-        if not self.stapel or not self.stapel.ergebnisse or self._job_laeuft:
-            self._aktualisiere_grenzen_overlay()
-            return
-        unten, oben = self.stapel.fenster[index]
-        if seite == "links":
-            unten = wert
-        else:
-            oben = wert
-        if oben <= unten:
-            self._log("Grenze verworfen: linke Grenze muss links der rechten bleiben.", "warn")
-            self._aktualisiere_grenzen_overlay()
-            return
-        ergebnis = fitte_neu(self.stapel, index, feld_unten=unten, feld_oben=oben)
-        self.aktueller_index = index
-        self._zeige_aktuellen()
-        self._aktualisiere_overlay()
-        self._aktualisiere_grenzen_overlay()
-        art = "problem" if ergebnis.problematisch else "ok"
-        self._log(f"Grenze ({seite}) gezogen: f={ergebnis.frequenz/1e9:.2f} GHz → "
-                  f"[{unten:.3f}–{oben:.3f} T] "
-                  f"{'⚠ ' + ergebnis.problem_text if ergebnis.problematisch else '✓'}", art)
-        if self.fensterpanel.auto_propagieren():
-            self._propagieren(self.fensterpanel.modus(), ab_index=index)
-
-    def _propagieren(self, modus: str, ab_index: int | None = None):
-        """Grenzen des aktuellen Linescans (als Trassen-Offsets) auf folgende anwenden."""
-        if not self.stapel or not self.stapel.ergebnisse:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
-            return
-        if self._job_laeuft:
-            return
-        stapel = self.stapel
-        basis = self.aktueller_index if ab_index is None else ab_index
-        try:
-            zentren = dispersions_zentren(stapel)
-        except ValueError as fehler:
-            self._log(f"Propagation nicht moeglich: {fehler}", "warn")
-            return
-        unten, oben = stapel.fenster[basis]
-        offset_links = unten - float(zentren[basis])
-        offset_rechts = oben - float(zentren[basis])
-        if offset_rechts <= offset_links:
-            self._log("Propagation verworfen: ungueltige Fenster-Offsets.", "warn")
-            return
-        f_basis = stapel.datensatz.frequenzen[basis] / 1e9
-
-        def aufgabe(melde):
-            def fortschritt(k, n, erg):
-                melde(k, n, "" if not erg.problematisch else
-                      f"  f={erg.frequenz/1e9:6.2f} GHz  ⚠ {erg.problem_text}")
-            return propagiere_grenzen(stapel, basis + 1, offset_links, offset_rechts,
-                                      zentren=zentren, modus=modus, fortschritt=fortschritt)
-
-        def bei_fertig(neu):
-            self._aktualisiere_overlay()
-            self._aktualisiere_grenzen_overlay()
-            self._zeige_aktuellen()
-            self._log(f"Grenzen ab f={f_basis:.2f} GHz propagiert "
-                      f"(Offsets {offset_links:+.3f}/{offset_rechts:+.3f} T zur Trasse): "
-                      f"{len(neu)} Linescans neu gefittet ({modus}).", "ok")
-
-        self._starte_job(aufgabe, bei_fertig, "Grenzen propagieren …")
-
-    def _breite_anwenden(self, punkte: int, modus: str):
-        """Fensterbreite in Punkten explizit auf alle Linescans anwenden."""
-        if not self.stapel or not self.stapel.ergebnisse:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst fitten.")
-            return
-        if self._job_laeuft:
-            return
-        stapel = self.stapel
-        try:
-            zentren = dispersions_zentren(stapel)
-        except ValueError as fehler:
-            self._log(f"Fensterbreite nicht anwendbar: {fehler}", "warn")
-            return
-
-        def aufgabe(melde):
-            def fortschritt(k, n, erg):
-                melde(k, n, "" if not erg.problematisch else
-                      f"  f={erg.frequenz/1e9:6.2f} GHz  ⚠ {erg.problem_text}")
-            return setze_fensterbreite_punkte(stapel, punkte, zentren=zentren,
-                                              modus=modus, fortschritt=fortschritt)
-
-        def bei_fertig(neu):
-            self._aktualisiere_overlay()
-            self._aktualisiere_grenzen_overlay()
-            self._zeige_aktuellen()
-            self._log(f"Fensterbreite {punkte} Punkte angewandt: "
-                      f"{len(neu)} Linescans neu gefittet ({modus}).", "ok")
-
-        self._starte_job(aufgabe, bei_fertig, f"Fensterbreite {punkte} Punkte …")
-
-    def _zone_zeichnen(self):
-        """Startet das Einzeichnen einer Ausschlusszone im Farbplot."""
-        if not self.stapel or not self.stapel.ergebnisse:
-            QtWidgets.QMessageBox.information(
-                self, "Hinweis", "Bitte zuerst einen Auto-Fit ausfuehren.")
-            return
-        if self._job_laeuft:
-            return
-        self._log("Ausschlusszone: Rechteck um die auszuschliessenden Punkte "
-                  "aufziehen (Esc bricht ab).", "info")
-        self.statusBar().showMessage("Ausschlusszone im Farbplot aufziehen …")
-        self.matrix.starte_ausschluss_zeichnen(self._zone_gezeichnet)
-
+    # --- Ausschlusszonen ------------------------------------------------------
     def _zone_gezeichnet(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
         stapel = self.stapel
         zone = Ausschlusszone(feld_min, feld_max, f_min_ghz * 1e9, f_max_ghz * 1e9)
@@ -1172,11 +1194,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return fuege_ausschlusszone_hinzu(stapel, zone, fortschritt=fortschritt)
 
         def bei_fertig(betroffen):
-            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
             self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
             self._aktualisiere_overlay()
-            self._aktualisiere_grenzen_overlay()
             self._zeige_aktuellen()
+            if self._auswertungsfenster is not None:
+                self._auswertungsfenster.aktualisiere()
             self._log(f"Ausschlusszone [{feld_min:.3f}–{feld_max:.3f} T, "
                       f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz] aktiv: "
                       f"{len(betroffen)} Linescans neu gefittet.", "ok")
@@ -1195,46 +1218,37 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                            fortschritt=lambda k, n, e: melde(k, n, ""))
 
         def bei_fertig(betroffen):
-            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
             self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
             self._aktualisiere_overlay()
-            self._aktualisiere_grenzen_overlay()
             self._zeige_aktuellen()
+            if self._auswertungsfenster is not None:
+                self._auswertungsfenster.aktualisiere()
             self._log(f"Ausschlusszone entfernt: {len(betroffen)} Linescans neu gefittet.", "ok")
 
         self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …")
 
-    # --- Ausreisser-Management (Bereich 6) -----------------------------------
-    def _ausreisser_modus(self, an: bool):
-        """Umschalter (Menue/Werkzeugleiste): Punkte anklicken/einrahmen -> Ausreisser."""
-        if an and (not self.stapel or not self.stapel.ergebnisse):
-            self._log("Ausreißer markieren: erst nach einem Auto-Fit moeglich.", "warn")
-            self.akt_ausreisser.setChecked(False)
-            return
-        self.matrix.setze_ausreisser_modus(an, gewaehlt=self._ausreisser_gewaehlt)
-        if an:
-            self.ausreisser_dock.setVisible(True)
-            self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
-                      "aufziehen. Erneutes Auslösen von „Ausreißer markieren“ beendet.", "info")
-        else:
-            self.statusBar().showMessage("Ausreißer-Modus beendet.")
-
+    # --- Ausreisser-Management -----------------------------------------------
     def _ausreisser_snapshot(self):
         """Zustand VOR einer Aenderung fuer Undo sichern (begrenzte Tiefe)."""
         self._ausreisser_undo.append(list(self.stapel.ausreisser))
         del self._ausreisser_undo[:-50]
 
     def _ausreisser_gewaehlt(self, indizes: list[int]):
-        """Callback aus dem Farbplot: markierte Punkte ausschliessen (Echtzeit)."""
+        """Callback aus Farbplot/Auswertungsfenster: Punkte ausschliessen (Echtzeit)."""
         if not self.stapel or not indizes:
             return
+        neu = [i for i in indizes if not self.stapel.ist_ausreisser(i)]
+        if not neu:
+            return
         self._ausreisser_snapshot()
-        for i in indizes:
-            if not self.stapel.ist_ausreisser(i):
-                self.stapel.ausreisser_umschalten(i)
+        for i in neu:
+            self.stapel.ausreisser_umschalten(i)
         self._aktualisiere_overlay()
-        frequenzen = [self.stapel.ergebnisse[i].frequenz / 1e9 for i in indizes]
-        self._log(f"Ausreißer markiert: {len(indizes)} Punkt(e) "
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
+        frequenzen = [self.stapel.ergebnisse[i].frequenz / 1e9 for i in neu]
+        self._log(f"Ausreißer markiert: {len(neu)} Punkt(e) "
                   f"({', '.join(f'{f:.2f}' for f in frequenzen[:6])}"
                   f"{' …' if len(frequenzen) > 6 else ''} GHz) – "
                   f"insgesamt {len(self.stapel.ausreisser)} ausgeschlossen.", "ok")
@@ -1248,6 +1262,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if self.stapel.ist_ausreisser(i):
                 self.stapel.ausreisser_umschalten(i)
         self._aktualisiere_overlay()
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
         self._log(f"{len(indizes)} Ausreißer wieder aufgenommen – "
                   f"verbleibend {len(self.stapel.ausreisser)}.", "ok")
 
@@ -1257,6 +1273,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         self.stapel.ausreisser = self._ausreisser_undo.pop()
         self._aktualisiere_overlay()
+        if self._auswertungsfenster is not None:
+            self._auswertungsfenster.aktualisiere()
         self._log(f"Ausreißer: letzter Schritt rueckgaengig – "
                   f"aktuell {len(self.stapel.ausreisser)} ausgeschlossen.", "ok")
 
@@ -1339,11 +1357,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.navigator.zeige(mat, ext)
             self.navigator_dock.setVisible(False)
             self._aktualisiere_overlay()
-            self.fensterpanel.setze_zonen(stapel.ausschlusszonen)
+            self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
             self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
-            self._aktualisiere_grenzen_overlay()
             self.aktueller_index = 0
+            self.verarbeitung_dock.setVisible(True)
+            self.linescan_dock.setVisible(True)
             self._zeige_aktuellen()
+            if self._auswertungsfenster is not None:
+                self._auswertungsfenster.aktualisiere()
             self._log(f"Projekt geladen: {os.path.basename(pfad)} – "
                       f"{len(stapel.ergebnisse)} Fits wiederhergestellt, "
                       f"{len(stapel.ausreisser)} Ausreißer, "
@@ -1354,8 +1375,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._starte_job(aufgabe, bei_fertig, f"Lade Projekt {os.path.basename(pfad)} …")
 
     def _verarbeitung_geaendert(self, kette, anzeige_modus: str):
-        """Callback des Verarbeitungspanels: Kette neu auf den Farbplot anwenden."""
-        if self.stapel is None:
+        """Callback des Verarbeitungspanels: Kette neu auf den Farbplot anwenden.
+
+        Funktioniert ab dem Laden der Messung - ein Fit-Stapel ist NICHT noetig
+        (reine Datenansicht: derivative divide & Co. ohne Auswertung).
+        """
+        if self.datensatz_voll is None:
             return
         try:
             self.matrix.setze_verarbeitung(kette, anzeige_modus)
@@ -1432,20 +1457,38 @@ class Hauptfenster(QtWidgets.QMainWindow):
         return f"""
         <html><body style="font-size:12px; line-height:1.45">
         <p><b>PolderFit</b> wertet Breitband-FMR-Messungen (bbFMR) aus: TDMS-Dateien einlesen,
-        je Frequenz das Resonanzsignal fitten und daraus die Materialparameter bestimmen.</p>
+        je Frequenz das Resonanzsignal fitten und daraus die Materialparameter bestimmen.
+        Die Karte lässt sich auch <b>allein zur Datenansicht</b> nutzen (Verarbeitung:
+        derivative divide, divide slice, … – ganz ohne Fit).</p>
 
         <h3>Arbeitsablauf</h3>
         <ol>
-          <li><b>TDMS laden</b> – sortiertes oder unsortiertes Format wird erkannt.</li>
-          <li><b>Auto-Fit (alle)</b> – sucht je Frequenz die Resonanz, schneidet ein Band
+          <li><b>TDMS laden</b> (Strg+O) – sortiertes oder unsortiertes Format wird erkannt.
+              Danach füllt die Messung den Farbplot; das Verarbeitungs-Panel erscheint.</li>
+          <li><b>Auto-Fit (alle)</b> (F5) – sucht je Frequenz die Resonanz, schneidet ein Band
               und fittet Real- und Imaginärteil gleichzeitig. Läuft im Hintergrund;
               Fortschritt und Protokoll im <b>Aktivitäts-Panel</b>.</li>
-          <li><b>Nachfitten</b> – im Linescan-Panel die <b>grünen Grenzlinien</b> ziehen
-              (das Band wird herangezoomt; „ganzer Feldsweep" zeigt den vollen Bereich).
+          <li><b>Nachfitten</b> – zwei Wege: <b>„Bereich neu fitten"</b> (Strg+B, Rechteck im
+              Farbplot; Optionen: überschreiben/ergänzen, feste Fensterbreite) oder die
+              <b>grünen Grenzlinien</b> im Linescan-Panel ziehen.
               <i>Zurück/Weiter/Nochmal fitten/Nächster Problemfit</i> steuern den Korrekturlauf.</li>
-          <li><b>Kittel/LLG-Auswertung</b> – übergreifende Auswertung über alle Frequenzen.</li>
-          <li><b>Export</b> – zugeschnittene Rohdaten und Fitkurven als TDMS, Parameter als Excel/CSV.</li>
+          <li><b>Ausreißer markieren</b> (Strg+M) – falsche Fit-Punkte anklicken oder per Kasten
+              entfernen; reversibel (Liste + Rückgängig im Ausreißer-Panel). Ausgeschlossene
+              Punkte fehlen in ALLEN Auswertungen und sind im Export gekennzeichnet.</li>
+          <li><b>Kittel/LLG-Auswertung</b> (Strg+K) – eigenes Fenster mit Feld auf der x-Achse:
+              Punkte direkt im Plot entfernen, Fit rechnet sofort neu; Export mit Plot,
+              Parametern und Messfehlern.</li>
+          <li><b>Export</b> – Rohdaten/Fitkurven als TDMS, Parameter samt Unsicherheiten
+              als Excel (Strg+E)/CSV.</li>
         </ol>
+
+        <h3>Interaktive Modi</h3>
+        <ul>
+          <li>Es ist immer höchstens <b>ein</b> Modus aktiv (Resonanz vorgeben, Bereich neu
+              fitten, Ausschlusszone, Ausreißer markieren); der aktive Modus ist im
+              „Funktionen"-Menü markiert und wird rechts in der Statusleiste angezeigt.</li>
+          <li><b>Esc</b> bricht jeden Modus ab; das Starten eines Modus beendet den vorherigen.</li>
+        </ul>
 
         <h3>Übersicht – Navigation &amp; Zoom</h3>
         <ul>
@@ -1497,5 +1540,6 @@ def starte_gui(argv=None):
     app.setWindowIcon(app_icon())
     app.setStyleSheet(PolderFit_QSS)
     fenster = Hauptfenster()
-    fenster.show()
+    # Farbplot in voller Breite: maximiert starten.
+    fenster.showMaximized()
     return app.exec()

@@ -9,14 +9,22 @@ lassen.
 
 ## Bedienung
 
-1. Menü *Fit → Ausreißer markieren* (Umschalter, auch in der Werkzeugleiste; erst
-   nach einem Auto-Fit). Das Ausreißer-Panel (rechts) erscheint automatisch.
+1. Menü *Fit → Ausreißer markieren* (`Strg+M`, Umschalter, auch im
+   „Funktionen"-Dropdown; erst nach einem Auto-Fit). Das Ausreißer-Panel
+   (rechts) erscheint automatisch. Der aktive Modus ist farblich markiert und
+   wird rechts in der Statusleiste angezeigt.
 2. Im Farbplot: Punkt anklicken (nächstgelegener sichtbarer Fit-Punkt) oder Kasten
    aufziehen (alle Punkte darin). Markierte Punkte werden aus der Darstellung und aus
    allen übergreifenden Rechnungen entfernt: Kittel-/LLG-Fit, Publikationsplots und
-   Globalparameter des Excel-Exports. Der Modus bleibt aktiv, bis die Aktion erneut
-   ausgelöst wird; der Kasten-Zoom ist währenddessen ausgesetzt.
-3. **Ausreißer-Panel**: Liste aller ausgeschlossenen Punkte (Index, Frequenz,
+   Globalparameter des Excel-Exports; im Excel-/CSV-Export sind sie in der
+   Spalte `ausreisser` gekennzeichnet. Der Modus bleibt aktiv, bis er erneut
+   ausgelöst oder mit `Esc` beendet wird; der Kasten-Zoom ist währenddessen
+   ausgesetzt. Das Starten eines anderen Modus (z. B. Bereichs-Fit) beendet
+   den Ausreißer-Modus automatisch.
+3. Alternativ direkt im **Kittel/LLG-Auswertungsfenster** (`Strg+K`): dort
+   Punkte im Dispersions- oder Linienbreiten-Plot anklicken bzw. einrahmen —
+   gleiche Ausreißer-Liste, der Kittel-/LLG-Fit rechnet sofort neu.
+4. **Ausreißer-Panel**: Liste aller ausgeschlossenen Punkte (Index, Frequenz,
    B_res) — einsehbar und editierbar:
    * *Wieder aufnehmen* (Auswahl) / *Alle wieder aufnehmen*
    * *Rückgängig* — macht den jeweils letzten Schritt rückgängig

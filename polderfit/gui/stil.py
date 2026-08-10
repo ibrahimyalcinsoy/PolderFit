@@ -31,6 +31,12 @@ QToolBar QToolButton {{
 QToolBar QToolButton:hover {{ background-color: #F6EDD3; }}
 QToolBar QToolButton:pressed {{ background-color: #ECDFB8; }}
 QToolBar QToolButton:disabled {{ color: #BBB6A8; }}
+QToolBar QToolButton:checked {{
+    background-color: {PolderFit_GOLD};
+    color: #FFFFFF;
+    font-weight: 600;
+}}
+QToolBar QToolButton:checked:hover {{ background-color: #D0910F; }}
 QToolBar::separator {{ background: #E6E2D8; width: 1px; margin: 4px 6px; }}
 
 QMenuBar {{
@@ -62,6 +68,22 @@ QPushButton {{
 QPushButton:hover {{ border-color: {PolderFit_GOLD}; background-color: #FCF6E8; }}
 QPushButton:pressed {{ background-color: #ECDFB8; }}
 QPushButton:disabled {{ color: #AFA99A; background-color: #F2F0EA; border-color: #E6E2D8; }}
+QPushButton:checked {{
+    background-color: {PolderFit_GOLD};
+    border-color: #D0910F;
+    color: #FFFFFF;
+    font-weight: 600;
+}}
+
+QMenu::item:checked {{ background-color: #FCF6E8; font-weight: 600; }}
+
+QLabel#modus_anzeige {{
+    background-color: {PolderFit_GOLD};
+    color: #FFFFFF;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 3px 10px;
+}}
 
 QDockWidget {{ font-weight: 600; }}
 QDockWidget::title {{

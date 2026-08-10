@@ -3,7 +3,8 @@
 
 Zeigt die gesamte Messung als Falschfarbenbild, ueberlagert die gefitteten
 Resonanzfelder und markiert die aktuell gewaehlte Frequenz mit einer horizontalen
-Linie.
+Linie. Ohne geladene Daten erscheint ein leeres, kariertes Koordinatensystem
+(Feld auf der x-, Frequenz auf der y-Achse) als Platzhalter.
 
 Bedienung:
 
@@ -15,9 +16,11 @@ Bedienung:
 * **Pfeiltasten** ``hoch/runter`` (bzw. ``links/rechts``), ``Bild hoch/runter``
   (10er-Schritt), ``Pos1/Ende`` (erste/letzte Frequenz); ``+/-/0`` zoomen.
 
-Jede Frequenzauswahl meldet den Index ueber ``frequenz_gewaehlt(index)``; Zoom-
-Aenderungen melden ``zoom_geaendert(xlim, ylim, ist_gezoomt)`` (fuer den Navigator).
-Problematische Fits lassen sich im Resonanz-Overlay optional ausblenden.
+Interaktive Modi (Seed, Bereichs-Fit, Ausschlusszone, Ausreisser) laufen ueber
+einen ZENTRALEN Modus-Manager: es ist immer hoechstens EIN Modus aktiv, das
+Starten eines Modus beendet den vorherigen, ``Esc`` bricht jeden Modus ab und
+jede Aenderung wird ueber ``modus_geaendert(name | None)`` gemeldet, damit die
+Werkzeugleiste den aktiven Modus eindeutig anzeigen kann.
 """
 
 from __future__ import annotations
@@ -44,16 +47,30 @@ _ZOOM_RAUS = 1.25
 #: Aufzieh-Kaestchen wird (darunter zaehlt es als Klick = Frequenzauswahl).
 _BOX_SCHWELLE_REL = 0.02
 
+#: Alle bekannten Interaktionsmodi (zentrale Verwaltung, exklusiv).
+MODI = ("seed", "bereich", "zone", "ausreisser")
+
+#: Mauszeiger je Modus.
+_MODUS_CURSOR = {
+    "seed": QtCore.Qt.CrossCursor,
+    "bereich": QtCore.Qt.CrossCursor,
+    "zone": QtCore.Qt.CrossCursor,
+    "ausreisser": QtCore.Qt.PointingHandCursor,
+}
+
 
 class MatrixAnsicht(FigureCanvasQTAgg):
     """Falschfarben-Uebersicht der Magnitude mit Resonanz-Overlay und Zoom."""
 
-    def __init__(self, frequenz_gewaehlt=None, zoom_geaendert=None):
+    def __init__(self, frequenz_gewaehlt=None, zoom_geaendert=None,
+                 modus_geaendert=None):
         self.figur = Figure(figsize=(5, 5))
         super().__init__(self.figur)
         self.ax = self.figur.add_subplot(111)
         self.frequenz_gewaehlt = frequenz_gewaehlt
         self.zoom_geaendert = zoom_geaendert
+        #: Meldet jeden Moduswechsel: ``modus_geaendert(name | None)``.
+        self.modus_geaendert = modus_geaendert
         self._datensatz: Messdatensatz | None = None
         self._matrix = None
         self._freq_achse = None
@@ -76,28 +93,17 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_aktiv = False
         self._box_corner = None
         self._box_patch = None
+        # ZENTRALER Modus-Manager: hoechstens ein Modus aktiv (siehe MODI).
+        self._modus: str | None = None
+        self._modus_cb = None              # fertig(...) bzw. gewaehlt(indizes)
         # Dispersions-Seed: zwei Klicks auf die Resonanz vorgeben.
-        self._seed_fertig = None
         self._seed_punkte: list[tuple[float, float]] = []
         self._seed_marker: list = []
-        # Bereichs-Fit-Modus: naechstes aufgezogenes Rechteck neu fitten statt zoomen.
-        self._bereich_fertig = None
-        # Fenstergrenzen-Overlay (interaktives In-Plot-Fitting): zwei ziehbare
-        # Polylinien links/rechts der Resonanz; nur der Bereich dazwischen fittet.
-        self._grenzen_freq = None          # Hz-Array der Stapel-Frequenzen
-        self._grenzen_fenster = None       # list[(unten, oben)] je Stapel-Index
-        self._grenzen_sichtbar = False
-        self._grenze_gezogen = None        # Callback(index, seite, neuer_feldwert)
-        self._grenzen_linien: dict = {}    # "links"/"rechts" -> Line2D
-        self._drag_grenze = None           # (seite, index) waehrend des Ziehens
-        # Ausschlusszonen: Anzeige + Zeichenmodus.
+        # Ausschlusszonen (Anzeige).
         self._zonen: list = []
         self._zonen_patches: list = []
-        self._ausschluss_fertig = None
-        # Ausreisser-Markiermodus: Klick/Kasten waehlt Resonanzpunkte aus.
+        # Ausreisser-Overlay-Zustand.
         self._res_ausgeschlossen = None
-        self._ausreisser_aktiv = False
-        self._ausreisser_gewaehlt = None   # Callback(liste_von_indizes)
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.mpl_connect("button_press_event", self._on_press)
@@ -106,6 +112,87 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.mpl_connect("scroll_event", self._on_scroll)
         self.mpl_connect("key_press_event", self._on_key)
         self.mpl_connect("figure_leave_event", self._on_leave)
+
+        self._zeichne_platzhalter()
+
+    # --- Modus-Manager -------------------------------------------------------
+    @property
+    def modus(self) -> str | None:
+        """Name des aktiven Interaktionsmodus (oder ``None``)."""
+        return self._modus
+
+    def starte_modus(self, name: str, callback) -> None:
+        """Aktiviert einen Interaktionsmodus; ein laufender Modus wird beendet.
+
+        ``callback`` haengt vom Modus ab:
+
+        * ``"seed"``     – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
+        * ``"bereich"``  – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
+        * ``"zone"``     – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
+        * ``"ausreisser"`` – ``callback(indizes)``, mehrfach (Modus bleibt aktiv)
+        """
+        if name not in MODI:
+            raise ValueError(f"Unbekannter Modus {name!r} (erlaubt: {MODI}).")
+        if self._modus is not None:
+            self._modus_aufraeumen()
+        self._modus = name
+        self._modus_cb = callback
+        if name == "seed":
+            self._seed_punkte = []
+        self.setCursor(_MODUS_CURSOR[name])
+        # Tastaturfokus sicherstellen, damit Esc sofort wirkt (auch wenn der
+        # Modus aus Menue/Toolbar gestartet wurde und der Canvas nie geklickt war).
+        self.setFocus()
+        self._melde_modus()
+
+    def beende_modus(self) -> None:
+        """Beendet den aktiven Modus (Abbruch oder Abschluss); meldet den Wechsel."""
+        if self._modus is None:
+            return
+        self._modus_aufraeumen()
+        self._melde_modus()
+
+    def _modus_aufraeumen(self) -> None:
+        """Setzt allen Modus-Zustand zurueck (ohne Meldung)."""
+        self._modus = None
+        self._modus_cb = None
+        self._seed_punkte = []
+        for m in self._seed_marker:
+            m.remove()
+        if self._seed_marker:
+            self._seed_marker = []
+            self.draw_idle()
+        self.unsetCursor()
+
+    def _melde_modus(self) -> None:
+        if self.modus_geaendert is not None:
+            self.modus_geaendert(self._modus)
+
+    # Bequeme Starter (von Hauptfenster/Tests verwendet).
+    def starte_dispersion_seed(self, fertig) -> None:
+        """Seed-Modus: die naechsten zwei Klicks markieren die Resonanz."""
+        self.starte_modus("seed", fertig)
+
+    def starte_bereichs_fit(self, fertig) -> None:
+        """Bereichs-Fit-Modus: naechstes Rechteck wird als Fit-Bereich gemeldet."""
+        self.starte_modus("bereich", fertig)
+
+    def starte_ausschluss_zeichnen(self, fertig) -> None:
+        """Zonen-Modus: naechstes Rechteck wird als Ausschlusszone gemeldet."""
+        self.starte_modus("zone", fertig)
+
+    def setze_ausreisser_modus(self, an: bool, gewaehlt=None) -> None:
+        """Schaltet den (dauerhaften) Ausreisser-Markiermodus um.
+
+        Aktiv: ein Klick waehlt den naechstgelegenen sichtbaren Resonanzpunkt,
+        ein aufgezogener Kasten alle Punkte darin; ``gewaehlt(indizes)`` wird
+        mit den getroffenen Stapel-Indizes aufgerufen (Echtzeit, mehrfach).
+        Zoom per Kasten ist waehrenddessen ausgesetzt.
+        """
+        if an:
+            self.starte_modus("ausreisser", gewaehlt)
+        elif self._modus == "ausreisser":
+            self.beende_modus()
 
     def zeige(self, datensatz: Messdatensatz) -> None:
         """Stellt den Datensatz dar (Rohmatrix cachen, aktuelle Kette anwenden)."""
@@ -119,14 +206,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_freq = self._res_bres = self._res_problem = None
         self._press_xy = None
         self._box_aktiv = False
-        # Neuer Datensatz: Overlays des alten (Grenzen, Zonen, Modi) verwerfen.
-        self._grenzen_freq = None
-        self._grenzen_fenster = None
-        self._grenzen_sichtbar = False
-        self._drag_grenze = None
+        # Neuer Datensatz: Overlays und Modi des alten verwerfen.
         self._zonen = []
-        self._bereich_fertig = None
-        self._ausschluss_fertig = None
+        self.beende_modus()
         self._render()
 
     def setze_verarbeitung(self, kette: Verarbeitungskette | None,
@@ -163,9 +245,40 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self.markiere_frequenz(index)
         self.draw_idle()
 
+    def _zeichne_platzhalter(self) -> None:
+        """Leeres kariertes Koordinatensystem, solange keine Daten geladen sind."""
+        self.ax.clear()
+        self.ax.set_xlim(0.0, 1.0)
+        self.ax.set_ylim(0.0, 1.0)
+        self.ax.set_xticks(np.linspace(0.0, 1.0, 11))
+        self.ax.set_yticks(np.linspace(0.0, 1.0, 11))
+        self.ax.set_xticklabels([])
+        self.ax.set_yticklabels([])
+        self.ax.tick_params(length=0)
+        self.ax.grid(True, which="both", color="#DDD8CA", lw=0.8)
+        self.ax.set_facecolor("#FDFDFB")
+        for kante in self.ax.spines.values():
+            kante.set_color("#C9C3B2")
+        self.ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
+        self.ax.set_ylabel("Frequenz (GHz)")
+        self.ax.text(0.5, 0.55, "Keine Messung geladen",
+                     transform=self.ax.transAxes, ha="center", va="center",
+                     fontsize=15, fontweight="bold", color="#8A8574")
+        self.ax.text(0.5, 0.45,
+                     "Datei → „TDMS laden …“ (Strg+O) öffnet eine Messung.\n"
+                     "Danach lässt sich die Karte allein zur Datenansicht nutzen\n"
+                     "(Verarbeitung: derivative divide, divide slice, …).",
+                     transform=self.ax.transAxes, ha="center", va="center",
+                     fontsize=10, color="#8A8574")
+        self._tight_layout_sicher()
+        self.draw_idle()
+
     def _render(self) -> None:
         """Zeichnet das Falschfarbenbild aus Rohmatrix + Kette + Anzeige-Modus neu."""
         feld, freq, Z = self._feld_achse, self._freq_achse, self._Z_komplex
+        if Z is None:
+            self._zeichne_platzhalter()
+            return
         if self._kette is not None:
             feld, freq, Z = self._kette.anwenden(feld, freq, Z)
         matrix = anzeige_transform(Z, self._anzeige_modus)
@@ -176,9 +289,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_patch = None
         # ax.clear() entsorgt alle Overlay-Artists - Referenzen VOR dem
         # Neuzeichnen verwerfen (remove() auf toten Artists wuerde werfen).
-        self._grenzen_linien = {}
         self._zonen_patches = []
+        self._seed_marker = []
         self.ax.clear()
+        self.ax.grid(False)
         # Robuste Farbgrenzen: einzelne Ausreisser (nach dd haeufig) duerfen die
         # Skala nicht dominieren, sonst ist die Mode nicht mit dem Auge erkennbar.
         endlich = matrix[np.isfinite(matrix)]
@@ -204,8 +318,6 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             "Doppelklick = zurück · ↑/↓ · ⇧+Rad",
             transform=self.ax.transAxes, ha="center", va="top",
             fontsize=7.2, color="#6B6657")
-        if self._grenzen_sichtbar:
-            self._zeichne_grenzen()
         if self._zonen:
             self._zeichne_zonen()
         self._tight_layout_sicher()
@@ -414,94 +526,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.draw_idle()
         self._melde_zoom()
 
-    # --- Fenstergrenzen (ziehbare Polylinien links/rechts der Resonanz) -----
-    def zeige_fenstergrenzen(self, frequenzen, fenster, grenze_gezogen=None) -> None:
-        """Zeichnet die Fenstergrenzen als ziehbare Polylinien uebers Bild.
-
-        ``frequenzen`` (Hz) und ``fenster`` (Liste ``(unten, oben)`` in T)
-        gehoeren zum Fit-Stapel. ``grenze_gezogen(index, seite, feldwert)``
-        wird nach dem Loslassen einer gezogenen Grenze aufgerufen
-        (``seite`` = "links"/"rechts", ``index`` = Stapel-Index).
-        """
-        self._grenzen_freq = np.asarray(frequenzen, dtype=float)
-        self._grenzen_fenster = [tuple(f) for f in fenster]
-        if grenze_gezogen is not None:
-            self._grenze_gezogen = grenze_gezogen
-        self._grenzen_sichtbar = True
-        self._zeichne_grenzen()
-
-    def verstecke_fenstergrenzen(self) -> None:
-        self._grenzen_sichtbar = False
-        self._drag_grenze = None
-        for linie in self._grenzen_linien.values():
-            linie.remove()
-        self._grenzen_linien = {}
-        self.draw_idle()
-
-    def _zeichne_grenzen(self) -> None:
-        for linie in self._grenzen_linien.values():
-            linie.remove()
-        self._grenzen_linien = {}
-        if not self._grenzen_sichtbar or self._grenzen_freq is None:
-            return
-        f_ghz = self._grenzen_freq / 1e9
-        stil = dict(lw=1.8, ls="-", marker="", zorder=7, alpha=0.9,
-                    path_effects=[pe.Stroke(linewidth=3.0, foreground="#00000066"),
-                                  pe.Normal()])
-        self._grenzen_linien["links"] = self.ax.plot(
-            [f[0] for f in self._grenzen_fenster], f_ghz,
-            color="#E8A317", label="_grenze_links", **stil)[0]
-        self._grenzen_linien["rechts"] = self.ax.plot(
-            [f[1] for f in self._grenzen_fenster], f_ghz,
-            color="#4FC3F7", label="_grenze_rechts", **stil)[0]
-        self.draw_idle()
-
-    def _finde_grenze(self, event) -> tuple[str, int] | None:
-        """(seite, index) der Grenze nahe am Mauszeiger, sonst None."""
-        if not self._grenzen_sichtbar or self._grenzen_freq is None:
-            return None
-        if event.xdata is None or event.ydata is None:
-            return None
-        x0, x1 = self.ax.get_xlim()
-        toleranz = 0.015 * abs(x1 - x0)
-        index = int(np.argmin(np.abs(self._grenzen_freq / 1e9 - event.ydata)))
-        unten, oben = self._grenzen_fenster[index]
-        abstaende = {"links": abs(event.xdata - unten), "rechts": abs(event.xdata - oben)}
-        seite = min(abstaende, key=abstaende.get)
-        return (seite, index) if abstaende[seite] <= toleranz else None
-
-    def _grenze_bewegen(self, event) -> None:
-        """Waehrend des Ziehens: den einen Polylinien-Stuetzpunkt live mitfuehren."""
-        seite, index = self._drag_grenze
-        if event.xdata is None:
-            return
-        unten, oben = self._grenzen_fenster[index]
-        if seite == "links":
-            self._grenzen_fenster[index] = (float(event.xdata), oben)
-        else:
-            self._grenzen_fenster[index] = (unten, float(event.xdata))
-        linie = self._grenzen_linien.get(seite)
-        if linie is not None:
-            x = linie.get_xdata()
-            x[index] = event.xdata
-            linie.set_xdata(x)
-            self.draw_idle()
-
-    # --- Ausschlusszonen ----------------------------------------------------
-    def starte_ausschluss_zeichnen(self, fertig) -> None:
-        """Naechstes aufgezogenes Rechteck wird als Ausschlusszone gemeldet.
-
-        ``fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)``; ``Esc`` bricht ab.
-        """
-        self._ausschluss_fertig = fertig
-        self._bereich_fertig = None
-        self._seed_fertig = None
-        self.setCursor(QtCore.Qt.CrossCursor)
-
-    def ausschluss_zeichnen_abbrechen(self) -> None:
-        self._ausschluss_fertig = None
-        self.unsetCursor()
-
+    # --- Ausschlusszonen (Anzeige) ------------------------------------------
     def zeige_ausschlusszonen(self, zonen) -> None:
         """Zeichnet die Ausschlusszonen als schraffierte Rechtecke."""
         self._zonen = list(zonen)
@@ -521,23 +546,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zonen_patches.append(patch)
         self.draw_idle()
 
-    # --- Ausreisser-Markiermodus ---------------------------------------------
-    def setze_ausreisser_modus(self, an: bool, gewaehlt=None) -> None:
-        """Schaltet den Ausreisser-Modus (Toolbar-Umschalter, bleibt aktiv).
-
-        Aktiv: ein Klick waehlt den naechstgelegenen sichtbaren Resonanzpunkt,
-        ein aufgezogener Kasten alle Punkte darin; ``gewaehlt(indizes)`` wird
-        mit den getroffenen Stapel-Indizes aufgerufen (Echtzeit, mehrfach).
-        Zoom per Kasten ist waehrenddessen ausgesetzt.
-        """
-        self._ausreisser_aktiv = bool(an)
-        if gewaehlt is not None:
-            self._ausreisser_gewaehlt = gewaehlt
-        if an:
-            self.setCursor(QtCore.Qt.PointingHandCursor)
-        else:
-            self.unsetCursor()
-
+    # --- Ausreisser-Auswahl --------------------------------------------------
     def _sichtbare_resonanzpunkte(self) -> np.ndarray:
         """Indizes der aktuell im Overlay gezeichneten Resonanzpunkte."""
         if self._res_freq is None:
@@ -563,8 +572,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         dy = (self._res_freq[kandidaten] / 1e9 - event.ydata) / max(abs(y1 - y0), 1e-12)
         abstand = np.hypot(dx, dy)
         naechster = int(np.argmin(abstand))
-        if abstand[naechster] <= 0.03 and self._ausreisser_gewaehlt is not None:
-            self._ausreisser_gewaehlt([int(kandidaten[naechster])])
+        if abstand[naechster] <= 0.03 and self._modus_cb is not None:
+            self._modus_cb([int(kandidaten[naechster])])
 
     def _ausreisser_kasten(self, x0, y0, x1, y1) -> None:
         """Kasten im Ausreisser-Modus: alle sichtbaren Punkte darin melden."""
@@ -575,46 +584,16 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         f_ghz = self._res_freq[kandidaten] / 1e9
         drin = ((b >= min(x0, x1)) & (b <= max(x0, x1))
                 & (f_ghz >= min(y0, y1)) & (f_ghz <= max(y0, y1)))
-        if drin.any() and self._ausreisser_gewaehlt is not None:
-            self._ausreisser_gewaehlt([int(i) for i in kandidaten[drin]])
+        if drin.any() and self._modus_cb is not None:
+            self._modus_cb([int(i) for i in kandidaten[drin]])
 
-    # --- Bereichs-Fit (Rechteck aufziehen -> nur dort neu fitten) -----------
-    def starte_bereichs_fit(self, fertig) -> None:
-        """Aktiviert den Bereichs-Fit-Modus: das naechste aufgezogene Rechteck
-        wird als Fit-Bereich gemeldet statt zu zoomen.
-
-        ``fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)`` wird mit den
-        Rechteck-Grenzen in Plot-Einheiten (Tesla, GHz) aufgerufen.
-        ``Esc`` bricht den Modus ab.
-        """
-        self._bereich_fertig = fertig
-        self._seed_fertig = None  # Modi schliessen sich gegenseitig aus
-        self.setCursor(QtCore.Qt.CrossCursor)
-
-    def bereichs_fit_abbrechen(self) -> None:
-        self._bereich_fertig = None
-        self.unsetCursor()
-
-    def _bereich_abschliessen(self, x0, y0, x1, y1) -> None:
-        fertig = self._bereich_fertig
-        self._bereich_fertig = None
-        self.unsetCursor()
+    # --- Modus-Abschluesse ----------------------------------------------------
+    def _rechteck_abschliessen(self, x0, y0, x1, y1) -> None:
+        """Beendet Bereichs-/Zonen-Modus mit dem aufgezogenen Rechteck."""
+        fertig = self._modus_cb
+        self.beende_modus()
         if fertig is not None:
             fertig(min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
-
-    # --- Dispersions-Seed (zwei Klicks auf die Resonanz) -------------------
-    def starte_dispersion_seed(self, fertig) -> None:
-        """Aktiviert den Seed-Modus: die naechsten zwei Klicks markieren die Resonanz.
-
-        ``fertig(punkte)`` wird mit ``[(B1, f1_GHz), (B2, f2_GHz)]`` aufgerufen.
-        """
-        self._seed_fertig = fertig
-        self._seed_punkte = []
-        for m in self._seed_marker:
-            m.remove()
-        self._seed_marker = []
-        self.setCursor(QtCore.Qt.CrossCursor)
-        self.draw_idle()
 
     def _seed_klick(self, event) -> None:
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
@@ -625,15 +604,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._seed_marker.append(mk)
         self.draw_idle()
         if len(self._seed_punkte) >= 2:
-            fertig = self._seed_fertig
+            fertig = self._modus_cb
             punkte = list(self._seed_punkte)
-            self._seed_fertig = None
-            self._seed_punkte = []
-            self.unsetCursor()
-            for m in self._seed_marker:
-                m.remove()
-            self._seed_marker = []
-            self.draw_idle()
+            self.beende_modus()
             if fertig is not None:
                 fertig(punkte)
 
@@ -642,17 +615,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if event.inaxes != self.ax or self._freq_achse is None:
             return
         self.setFocus()
-        if self._seed_fertig is not None:   # Seed-Modus: Klick als Resonanzpunkt
+        if self._modus == "seed":   # Seed-Modus: Klick als Resonanzpunkt
             self._seed_klick(event)
             return
-        # Fenstergrenze anfassen (hat Vorrang vor Box/Klick, ausser ein
-        # Zeichenmodus ist aktiv).
-        if self._ausschluss_fertig is None and self._bereich_fertig is None:
-            treffer = self._finde_grenze(event)
-            if treffer is not None:
-                self._drag_grenze = treffer
-                self.setCursor(QtCore.Qt.SizeHorCursor)
-                return
         if getattr(event, "dblclick", False):
             self._press_xy = None
             self._zoom_zuruecksetzen()
@@ -664,20 +629,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
 
     def _on_move(self, event):
-        if self._drag_grenze is not None:
-            if event.inaxes == self.ax:
-                self._grenze_bewegen(event)
-            return
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             if not self._box_aktiv:
-                self.unsetCursor()
+                self._setze_ruhe_cursor(ausserhalb=True)
             return
-        if self._press_xy is None and self._grenzen_sichtbar \
-                and self._ausschluss_fertig is None and self._bereich_fertig is None:
-            # Hinweis-Cursor: Grenze in Reichweite -> horizontal ziehbar.
-            if self._finde_grenze(event) is not None:
-                self.setCursor(QtCore.Qt.SizeHorCursor)
-                return
         if self._press_xy is not None:
             x0, y0 = self._press_xy
             if not self._box_aktiv:
@@ -688,20 +643,18 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 self._box_corner = (x0, y0, event.xdata, event.ydata)
                 self._zeichne_box()
             return
-        self.setCursor(QtCore.Qt.CrossCursor)  # Hinweis: Kästchen aufziehbar
+        self._setze_ruhe_cursor()
+
+    def _setze_ruhe_cursor(self, ausserhalb: bool = False) -> None:
+        """Cursor ausserhalb von Drags: Modus-Cursor halten, sonst Standard."""
+        if self._modus is not None:
+            self.setCursor(_MODUS_CURSOR[self._modus])
+        elif ausserhalb:
+            self.unsetCursor()
+        else:
+            self.setCursor(QtCore.Qt.CrossCursor)  # Hinweis: Kästchen aufziehbar
 
     def _on_release(self, event):
-        if self._drag_grenze is not None:
-            seite, index = self._drag_grenze
-            self._drag_grenze = None
-            self.unsetCursor()
-            # Endwert aus dem live mitgefuehrten Fenster (robust, falls die
-            # Maus ausserhalb der Achse losgelassen wurde).
-            unten, oben = self._grenzen_fenster[index]
-            wert = unten if seite == "links" else oben
-            if self._grenze_gezogen is not None:
-                self._grenze_gezogen(index, seite, float(wert))
-            return
         if self._press_xy is None:
             return
         war_box = self._box_aktiv
@@ -711,29 +664,23 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
         self._entferne_box()
         if war_box and box is not None:
-            if self._ausschluss_fertig is not None:
-                self._ausschluss_abschliessen(*box)  # Ausschlusszone einzeichnen
-            elif self._bereich_fertig is not None:
-                self._bereich_abschliessen(*box)     # Bereichs-Fit statt Zoom
-            elif self._ausreisser_aktiv:
+            if self._modus == "zone":
+                self._rechteck_abschliessen(*box)    # Ausschlusszone einzeichnen
+            elif self._modus == "bereich":
+                self._rechteck_abschliessen(*box)    # Bereichs-Fit statt Zoom
+            elif self._modus == "ausreisser":
                 self._ausreisser_kasten(*box)        # Ausreisser gemeinsam markieren
             else:
                 self._auf_box_zoom(*box)
         elif event.inaxes == self.ax and event.ydata is not None:
-            if self._ausreisser_aktiv:
+            if self._modus == "ausreisser":
                 self._ausreisser_klick(event)        # Einzelpunkt markieren
             else:
                 self._waehle_index(self._index_aus_y(event.ydata))
 
-    def _ausschluss_abschliessen(self, x0, y0, x1, y1) -> None:
-        fertig = self._ausschluss_fertig
-        self._ausschluss_fertig = None
-        self.unsetCursor()
-        if fertig is not None:
-            fertig(min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
-
     def _on_leave(self, event):
-        self.unsetCursor()
+        if self._modus is None:
+            self.unsetCursor()
 
     def _on_scroll(self, event):
         if self._freq_achse is None:
@@ -745,13 +692,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zoom(event, _ZOOM_REIN if event.step > 0 else _ZOOM_RAUS)
 
     def _on_key(self, event):
-        if event.key == "escape":
-            if self._bereich_fertig is not None:
-                self.bereichs_fit_abbrechen()
-                return
-            if self._ausschluss_fertig is not None:
-                self.ausschluss_zeichnen_abbrechen()
-                return
+        if event.key == "escape" and self._modus is not None:
+            self.beende_modus()
+            return
         if self._freq_achse is None:
             return
         n = len(self._freq_achse)
