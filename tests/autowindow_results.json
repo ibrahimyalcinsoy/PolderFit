@@ -6,8 +6,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 989,
-   "WINDOW_FLAGGED": 12,
+   "OK": 1001,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -22,8 +22,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 885,
-   "WINDOW_FLAGGED": 115,
+   "OK": 893,
+   "WINDOW_FLAGGED": 107,
    "WINDOW_FAIL": 1,
    "KEIN_ZIEL": 0
   },
@@ -166,8 +166,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 839,
-   "WINDOW_FLAGGED": 158,
+   "OK": 846,
+   "WINDOW_FLAGGED": 151,
    "WINDOW_FAIL": 4,
    "KEIN_ZIEL": 0
   },
@@ -179,7 +179,7 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 1,
-   "FENSTER_ZU_ENG": 6
+   "FENSTER_ZU_ENG": 5
   },
   "probleme": [
    {
@@ -236,8 +236,8 @@
     "i": 142,
     "f_GHz": 7.1086,
     "fenster": [
-     3.21774,
-     3.79694
+     3.46304,
+     3.55204
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -248,9 +248,9 @@
     "info": {
      "prom": 12.22,
      "b_peak": 4.3469,
-     "breite": 0.5792,
+     "breite": 0.08899,
      "resonanz_da": true,
-     "rmse_norm": 0.149,
+     "rmse_norm": 0.146,
      "fwhm": 1.80025
     }
    },
@@ -499,8 +499,8 @@
     "i": 155,
     "f_GHz": 7.7584,
     "fenster": [
-     2.60085,
-     2.65735
+     2.60314,
+     2.63739
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -511,9 +511,9 @@
     "info": {
      "prom": 15.2,
      "b_peak": 4.3469,
-     "breite": 0.0565,
+     "breite": 0.03426,
      "resonanz_da": true,
-     "rmse_norm": 0.018,
+     "rmse_norm": 0.021,
      "fwhm": 1.80025
     }
    }
@@ -522,17 +522,17 @@
  "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden."
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-10-20GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB' gefun"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu20nm-27GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-5-15GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB' gefund"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg.tdms",
@@ -541,8 +541,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 927,
-   "WINDOW_FLAGGED": 37,
+   "OK": 932,
+   "WINDOW_FLAGGED": 32,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 37
   },
@@ -559,8 +559,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 923,
-   "WINDOW_FLAGGED": 27,
+   "OK": 930,
+   "WINDOW_FLAGGED": 20,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 51
   },
@@ -577,19 +577,19 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 804,
-   "WINDOW_FLAGGED": 12,
-   "WINDOW_FAIL": 6,
+   "OK": 807,
+   "WINDOW_FLAGGED": 6,
+   "WINDOW_FAIL": 9,
    "KEIN_ZIEL": 179
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 0,
-    "fail": 6
+    "fail": 9
    }
   },
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 10
+   "FENSTER_ZU_ENG": 8
   },
   "probleme": [
    {
@@ -597,7 +597,7 @@
     "f_GHz": 9.7581,
     "fenster": [
      2.70832,
-     2.74268
+     2.74232
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -608,7 +608,7 @@
     "info": {
      "prom": 10.29,
      "b_peak": 2.77395,
-     "breite": 0.03437,
+     "breite": 0.03401,
      "resonanz_da": true,
      "rmse_norm": 0.007,
      "fwhm": 0.15595
@@ -618,8 +618,8 @@
     "i": 196,
     "f_GHz": 9.808,
     "fenster": [
-     2.70645,
-     2.7459
+     2.7096,
+     2.74397
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -630,9 +630,9 @@
     "info": {
      "prom": 11.69,
      "b_peak": 2.77395,
-     "breite": 0.03945,
+     "breite": 0.03437,
      "resonanz_da": true,
-     "rmse_norm": 0.005,
+     "rmse_norm": 0.006,
      "fwhm": 0.14465
     }
    },
@@ -640,8 +640,8 @@
     "i": 197,
     "f_GHz": 9.858,
     "fenster": [
-     2.70645,
-     2.7514
+     2.71155,
+     2.74592
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -652,9 +652,9 @@
     "info": {
      "prom": 12.41,
      "b_peak": 2.77395,
-     "breite": 0.04495,
+     "breite": 0.03437,
      "resonanz_da": true,
-     "rmse_norm": 0.003,
+     "rmse_norm": 0.004,
      "fwhm": 0.13675
     }
    },
@@ -663,7 +663,7 @@
     "f_GHz": 9.908,
     "fenster": [
      2.71412,
-     2.74848
+     2.74779
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -674,10 +674,54 @@
     "info": {
      "prom": 12.73,
      "b_peak": 2.77395,
-     "breite": 0.03437,
+     "breite": 0.03367,
      "resonanz_da": true,
      "rmse_norm": 0.006,
      "fwhm": 0.13675
+    }
+   },
+   {
+    "i": 199,
+    "f_GHz": 9.958,
+    "fenster": [
+     2.71502,
+     2.74939
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 14.65,
+     "b_peak": 2.77395,
+     "breite": 0.03437,
+     "resonanz_da": true,
+     "rmse_norm": 0.008,
+     "fwhm": 0.12755
+    }
+   },
+   {
+    "i": 200,
+    "f_GHz": 10.008,
+    "fenster": [
+     2.71677,
+     2.75114
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 13.93,
+     "b_peak": 2.77395,
+     "breite": 0.03437,
+     "resonanz_da": true,
+     "rmse_norm": 0.004,
+     "fwhm": 0.12755
     }
    },
    {
@@ -685,7 +729,7 @@
     "f_GHz": 10.058,
     "fenster": [
      2.71952,
-     2.75388
+     2.75291
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -696,10 +740,32 @@
     "info": {
      "prom": 16.81,
      "b_peak": 2.77395,
-     "breite": 0.03437,
+     "breite": 0.03339,
      "resonanz_da": true,
      "rmse_norm": 0.005,
      "fwhm": 0.12195
+    }
+   },
+   {
+    "i": 202,
+    "f_GHz": 10.108,
+    "fenster": [
+     2.72032,
+     2.75469
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 18.72,
+     "b_peak": 2.77395,
+     "breite": 0.03437,
+     "resonanz_da": true,
+     "rmse_norm": 0.007,
+     "fwhm": 0.11255
     }
    },
    {
@@ -707,7 +773,7 @@
     "f_GHz": 10.158,
     "fenster": [
      2.72227,
-     2.75663
+     2.75619
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -718,7 +784,7 @@
     "info": {
      "prom": 18.93,
      "b_peak": 2.77395,
-     "breite": 0.03437,
+     "breite": 0.03392,
      "resonanz_da": true,
      "rmse_norm": 0.008,
      "fwhm": 0.11255
@@ -753,8 +819,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 905,
-   "WINDOW_FLAGGED": 37,
+   "OK": 912,
+   "WINDOW_FLAGGED": 30,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 59
   },
@@ -767,12 +833,12 @@
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new.tdms': weder 'Read.PNAX' noch 'ZVB' "
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K-new_flush.tdms': weder 'Read.PNAX' noch "
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg_flush.tdms",
@@ -781,8 +847,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 821,
-   "WINDOW_FLAGGED": 16,
+   "OK": 827,
+   "WINDOW_FLAGGED": 10,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 164
   },
@@ -795,12 +861,12 @@
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K.tdms': weder 'Read.PNAX' noch 'ZVB' gefu"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-300K_flush.tdms': weder 'Read.PNAX' noch 'ZVB"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop--290K-30.75deg.tdms",
@@ -809,8 +875,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 821,
-   "WINDOW_FLAGGED": 17,
+   "OK": 827,
+   "WINDOW_FLAGGED": 11,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 163
   },
@@ -821,12 +887,12 @@
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new.tdms': weder 'Read.PNAX' noch 'ZVB' ge"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Cu-Si/CoFe-Cu31nm-18GHz(Si-500um-Crystec)/Linescan-2D-map-oop-rotate-2.7T-1-20GHz-5K-new_flush.tdms': weder 'Read.PNAX' noch 'Z"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Quarz-Konschtanz/0001-Quarz/2nd-piece/2024-NOV-20-Linescan-2D-map-oop--5K_-39.6deg-sorted-for-FTF.tdms": {
   "datei": "CoFe-Quarz-Konschtanz/0001-Quarz/2nd-piece/2024-NOV-20-Linescan-2D-map-oop--5K_-39.6deg-sorted-for-FTF.tdms",
@@ -835,8 +901,8 @@
   "n_resonanzen": 90,
   "hat_gt": false,
   "zaehler": {
-   "OK": 88,
-   "WINDOW_FLAGGED": 2,
+   "OK": 90,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -867,15 +933,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 824,
-   "WINDOW_FLAGGED": 22,
+   "OK": 829,
+   "WINDOW_FLAGGED": 17,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 155
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 1,
-   "FENSTER_ZU_ENG": 2
+   "FENSTER_ZU_ENG": 3
   },
   "probleme": []
  },
@@ -886,8 +952,8 @@
   "n_resonanzen": 90,
   "hat_gt": false,
   "zaehler": {
-   "OK": 89,
-   "WINDOW_FLAGGED": 1,
+   "OK": 90,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -902,15 +968,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 823,
-   "WINDOW_FLAGGED": 28,
+   "OK": 834,
+   "WINDOW_FLAGGED": 17,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 150
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 2,
-   "FENSTER_ZU_ENG": 2
+   "FENSTER_ZU_ENG": 3
   },
   "probleme": []
  },
@@ -921,13 +987,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 370,
-   "WINDOW_FLAGGED": 4,
+   "OK": 374,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 627
   },
   "klasse_zaehler": {},
-  "morph_zaehler": {},
+  "morph_zaehler": {
+   "FENSTER_ZU_ENG": 4
+  },
   "probleme": []
  },
  "CoFe-Quarz-Konschtanz/0001-Quarz/small-cut-piece/2025-MAR-15-Linescan-2D-map-oop--5K_-0.7deg.tdms": {
@@ -937,8 +1005,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 917,
-   "WINDOW_FLAGGED": 26,
+   "OK": 931,
+   "WINDOW_FLAGGED": 12,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 58
   },
@@ -985,8 +1053,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 919,
-   "WINDOW_FLAGGED": 20,
+   "OK": 931,
+   "WINDOW_FLAGGED": 8,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 62
   },
@@ -1080,8 +1148,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 758,
-   "WINDOW_FLAGGED": 219,
+   "OK": 769,
+   "WINDOW_FLAGGED": 208,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 24
   },
@@ -1092,8 +1160,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 27,
-   "FENSTER_ZU_ENG": 2
+   "MEHRFACHRESONANZ": 25,
+   "FENSTER_ZU_ENG": 3
   },
   "probleme": [
    {
@@ -1326,7 +1394,7 @@
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res.tdms': weder 'Read.PNAX' noch 'ZVB' ge"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--290K-64.875deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--290K-64.875deg.tdms",
@@ -1335,8 +1403,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 958,
-   "WINDOW_FLAGGED": 43,
+   "OK": 972,
+   "WINDOW_FLAGGED": 29,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -1350,12 +1418,12 @@
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K-high-res_flush.tdms': weder 'Read.PNAX' noch 'Z"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorh"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--5K-64.875deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop--5K-64.875deg.tdms",
@@ -1364,8 +1432,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 990,
-   "WINDOW_FLAGGED": 11,
+   "OK": 1001,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -1380,21 +1448,21 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 920,
-   "WINDOW_FLAGGED": 32,
+   "OK": 932,
+   "WINDOW_FLAGGED": 20,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 49
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 16
+   "MEHRFACHRESONANZ": 11
   },
   "probleme": []
  },
  "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-1sp-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--290K-33.35deg-GGG-mode-ip-2.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--290K-33.35deg-GGG-mode-ip-2.tdms",
@@ -1419,8 +1487,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 777,
-   "WINDOW_FLAGGED": 172,
+   "OK": 786,
+   "WINDOW_FLAGGED": 163,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 52
   },
@@ -1438,34 +1506,36 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 285,
-   "WINDOW_FLAGGED": 7,
+   "OK": 292,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 709
   },
   "klasse_zaehler": {},
-  "morph_zaehler": {},
+  "morph_zaehler": {
+   "FENSTER_ZU_ENG": 2
+  },
   "probleme": []
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--tempsweep+-33.35deg.tdms': weder 'Read.PNAX' noch 'ZVB' "
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K.tdms': weder 'Read.PNAX' noch 'ZVB"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-5K_flush.tdms': weder 'Read.PNAX' noc"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' g"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg_flush.tdms": {
   "datei": "CoFe-Cu-Si/CoFe-Cu12nm-45GHz(Si-500um-Crystec)/Linescan-2D-map-oop--5K-3.625deg_flush.tdms",
@@ -1474,14 +1544,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 579,
-   "WINDOW_FLAGGED": 5,
+   "OK": 583,
+   "WINDOW_FLAGGED": 1,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 417
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 12
+   "FENSTER_ZU_ENG": 8
   },
   "probleme": []
  },
@@ -1492,8 +1562,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 897,
-   "WINDOW_FLAGGED": 32,
+   "OK": 913,
+   "WINDOW_FLAGGED": 16,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 72
   },
@@ -1510,8 +1580,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 956,
-   "WINDOW_FLAGGED": 23,
+   "OK": 964,
+   "WINDOW_FLAGGED": 15,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 22
   },
@@ -1529,21 +1599,71 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 956,
-   "WINDOW_FLAGGED": 10,
-   "WINDOW_FAIL": 0,
+   "OK": 962,
+   "WINDOW_FLAGGED": 2,
+   "WINDOW_FAIL": 2,
    "KEIN_ZIEL": 35
   },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "FENSTER_ZU_ENG": 7
+  "klasse_zaehler": {
+   "FENSTER_LEER": {
+    "flagged": 0,
+    "fail": 2
+   }
   },
-  "probleme": []
+  "morph_zaehler": {
+   "FENSTER_ZU_ENG": 4
+  },
+  "probleme": [
+   {
+    "i": 39,
+    "f_GHz": 6.755,
+    "fenster": [
+     2.3396,
+     2.41349
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 10.35,
+     "b_peak": 2.45645,
+     "breite": 0.07389,
+     "resonanz_da": true,
+     "rmse_norm": 0.012,
+     "fwhm": 0.18115
+    }
+   },
+   {
+    "i": 40,
+    "f_GHz": 6.8,
+    "fenster": [
+     2.3396,
+     2.4161
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 10.44,
+     "b_peak": 2.46045,
+     "breite": 0.0765,
+     "resonanz_da": true,
+     "rmse_norm": 0.01,
+     "fwhm": 0.1791
+    }
+   }
+  ]
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch '"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--5K-33.35deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/CoFe-on-best-sapphire-of-all-time/Linescan-2D-map-oop--5K-33.35deg.tdms",
@@ -1552,8 +1672,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 960,
-   "WINDOW_FLAGGED": 27,
+   "OK": 970,
+   "WINDOW_FLAGGED": 17,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 14
   },
@@ -1570,8 +1690,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 921,
-   "WINDOW_FLAGGED": 32,
+   "OK": 932,
+   "WINDOW_FLAGGED": 21,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 48
   },
@@ -1588,8 +1708,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 929,
-   "WINDOW_FLAGGED": 35,
+   "OK": 932,
+   "WINDOW_FLAGGED": 32,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 37
   },
@@ -1606,8 +1726,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 889,
-   "WINDOW_FLAGGED": 43,
+   "OK": 897,
+   "WINDOW_FLAGGED": 35,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 69
   },
@@ -1625,8 +1745,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 889,
-   "WINDOW_FLAGGED": 35,
+   "OK": 897,
+   "WINDOW_FLAGGED": 27,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 77
   },
@@ -1650,7 +1770,7 @@
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 25,
+   "MEHRFACHRESONANZ": 14,
    "FENSTER_ZU_ENG": 1
   },
   "probleme": []
@@ -1658,12 +1778,12 @@
  "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms": {
   "datei": "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene G"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFe-Sapphire(500um)/r-plane/2023-MAR-24-Linescan-2D-map-oop--5K_6.357deg_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhan"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFe-Sapphire(500um)/r-plane/2023-APR-03-Linescan-2D-map-oop--5K_6.357deg_flush.tdms": {
   "datei": "CoFe-Sapphire(500um)/r-plane/2023-APR-03-Linescan-2D-map-oop--5K_6.357deg_flush.tdms",
@@ -1672,14 +1792,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 915,
-   "WINDOW_FLAGGED": 10,
+   "OK": 919,
+   "WINDOW_FLAGGED": 6,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 76
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 13
+   "FENSTER_ZU_ENG": 9
   },
   "probleme": []
  },
@@ -1690,8 +1810,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 904,
-   "WINDOW_FLAGGED": 79,
+   "OK": 916,
+   "WINDOW_FLAGGED": 67,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 18
   },
@@ -1703,7 +1823,7 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 39,
-   "FENSTER_ZU_WEIT": 2
+   "FENSTER_ZU_WEIT": 1
   },
   "probleme": [
    {
@@ -1739,8 +1859,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 917,
-   "WINDOW_FLAGGED": 39,
+   "OK": 926,
+   "WINDOW_FLAGGED": 30,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 45
   },
@@ -1758,8 +1878,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 916,
-   "WINDOW_FLAGGED": 37,
+   "OK": 921,
+   "WINDOW_FLAGGED": 32,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 48
   },
@@ -1776,14 +1896,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 228,
-   "WINDOW_FLAGGED": 2,
+   "OK": 230,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 771
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 1
+   "FENSTER_ZU_ENG": 4
   },
   "probleme": []
  },
@@ -1794,14 +1914,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 941,
-   "WINDOW_FLAGGED": 25,
+   "OK": 950,
+   "WINDOW_FLAGGED": 16,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 35
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 8
+   "MEHRFACHRESONANZ": 7
   },
   "probleme": []
  },
@@ -1812,15 +1932,16 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 926,
-   "WINDOW_FLAGGED": 39,
+   "OK": 933,
+   "WINDOW_FLAGGED": 32,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 36
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 26,
-   "FENSTER_ZU_WEIT": 1
+   "FENSTER_ZU_WEIT": 1,
+   "FENSTER_ZU_ENG": 1
   },
   "probleme": []
  },
@@ -1831,15 +1952,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 466,
-   "WINDOW_FLAGGED": 28,
+   "OK": 468,
+   "WINDOW_FLAGGED": 26,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 507
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 9,
-   "FENSTER_ZU_ENG": 10
+   "FENSTER_ZU_ENG": 8
   },
   "probleme": []
  },
@@ -1850,8 +1971,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 955,
-   "WINDOW_FLAGGED": 40,
+   "OK": 965,
+   "WINDOW_FLAGGED": 30,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 6
   },
@@ -2345,8 +2466,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 952,
-   "WINDOW_FLAGGED": 14,
+   "OK": 960,
+   "WINDOW_FLAGGED": 6,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 35
   },
@@ -2370,7 +2491,7 @@
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 7
+   "MEHRFACHRESONANZ": 5
   },
   "probleme": []
  },
@@ -2397,8 +2518,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 918,
-   "WINDOW_FLAGGED": 46,
+   "OK": 920,
+   "WINDOW_FLAGGED": 44,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 37
   },
@@ -2497,8 +2618,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 918,
-   "WINDOW_FLAGGED": 44,
+   "OK": 919,
+   "WINDOW_FLAGGED": 43,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 39
   },
@@ -2516,18 +2637,18 @@
   "hat_gt": false,
   "zaehler": {
    "OK": 731,
-   "WINDOW_FLAGGED": 10,
-   "WINDOW_FAIL": 3,
+   "WINDOW_FLAGGED": 3,
+   "WINDOW_FAIL": 10,
    "KEIN_ZIEL": 257
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 0,
-    "fail": 3
+    "fail": 10
    }
   },
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 13
+   "FENSTER_ZU_ENG": 9
   },
   "probleme": [
    {
@@ -2575,11 +2696,55 @@
     }
    },
    {
+    "i": 269,
+    "f_GHz": 13.4573,
+    "fenster": [
+     2.85915,
+     2.89286
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 13.07,
+     "b_peak": 2.9256,
+     "breite": 0.03371,
+     "resonanz_da": true,
+     "rmse_norm": 0.017,
+     "fwhm": 1.5598
+    }
+   },
+   {
+    "i": 270,
+    "f_GHz": 13.5073,
+    "fenster": [
+     2.8599,
+     2.89456
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 14.11,
+     "b_peak": 2.9256,
+     "breite": 0.03466,
+     "resonanz_da": true,
+     "rmse_norm": 0.021,
+     "fwhm": 1.5598
+    }
+   },
+   {
     "i": 271,
     "f_GHz": 13.5573,
     "fenster": [
-     2.85915,
-     2.9007
+     2.86159,
+     2.89626
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -2590,10 +2755,120 @@
     "info": {
      "prom": 13.28,
      "b_peak": 2.9256,
-     "breite": 0.04155,
+     "breite": 0.03466,
      "resonanz_da": true,
      "rmse_norm": 0.014,
      "fwhm": 1.5598
+    }
+   },
+   {
+    "i": 272,
+    "f_GHz": 13.6073,
+    "fenster": [
+     2.86339,
+     2.89805
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 16.31,
+     "b_peak": 2.9256,
+     "breite": 0.03466,
+     "resonanz_da": true,
+     "rmse_norm": 0.015,
+     "fwhm": 1.5598
+    }
+   },
+   {
+    "i": 274,
+    "f_GHz": 13.7073,
+    "fenster": [
+     2.86738,
+     2.90204
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 15.27,
+     "b_peak": 2.9256,
+     "breite": 0.03466,
+     "resonanz_da": true,
+     "rmse_norm": 0.009,
+     "fwhm": 1.5598
+    }
+   },
+   {
+    "i": 275,
+    "f_GHz": 13.7573,
+    "fenster": [
+     2.86904,
+     2.9037
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 18.43,
+     "b_peak": 2.9256,
+     "breite": 0.03466,
+     "resonanz_da": true,
+     "rmse_norm": 0.022,
+     "fwhm": 0.11835
+    }
+   },
+   {
+    "i": 276,
+    "f_GHz": 13.8072,
+    "fenster": [
+     2.8705,
+     2.90516
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 18.73,
+     "b_peak": 2.9256,
+     "breite": 0.03466,
+     "resonanz_da": true,
+     "rmse_norm": 0.015,
+     "fwhm": 1.5598
+    }
+   },
+   {
+    "i": 277,
+    "f_GHz": 13.8572,
+    "fenster": [
+     2.87241,
+     2.90707
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 17.36,
+     "b_peak": 2.9256,
+     "breite": 0.03466,
+     "resonanz_da": true,
+     "rmse_norm": 0.016,
+     "fwhm": 0.11585
     }
    }
   ]
@@ -2605,14 +2880,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 873,
-   "WINDOW_FLAGGED": 50,
+   "OK": 878,
+   "WINDOW_FLAGGED": 45,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 78
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 15,
+   "FENSTER_ZU_ENG": 1,
    "FENSTER_ZU_WEIT": 2
   },
   "probleme": []
@@ -2624,8 +2900,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 889,
-   "WINDOW_FLAGGED": 55,
+   "OK": 897,
+   "WINDOW_FLAGGED": 47,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 57
   },
@@ -2643,8 +2919,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 887,
-   "WINDOW_FLAGGED": 57,
+   "OK": 897,
+   "WINDOW_FLAGGED": 47,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 57
   },
@@ -2662,8 +2938,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 893,
-   "WINDOW_FLAGGED": 59,
+   "OK": 903,
+   "WINDOW_FLAGGED": 49,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 49
   },
@@ -2688,8 +2964,8 @@
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 7,
-   "FENSTER_ZU_ENG": 1
+   "MEHRFACHRESONANZ": 4,
+   "FENSTER_ZU_ENG": 2
   },
   "probleme": []
  },
@@ -2726,8 +3002,7 @@
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 36,
-   "FENSTER_ZU_WEIT": 1
+   "MEHRFACHRESONANZ": 34
   },
   "probleme": []
  },
@@ -2745,8 +3020,8 @@
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 26,
-   "FENSTER_ZU_ENG": 4
+   "MEHRFACHRESONANZ": 21,
+   "FENSTER_ZU_ENG": 2
   },
   "probleme": []
  },
@@ -2757,8 +3032,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 856,
-   "WINDOW_FLAGGED": 74,
+   "OK": 863,
+   "WINDOW_FLAGGED": 67,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 71
   },
@@ -2776,8 +3051,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 903,
-   "WINDOW_FLAGGED": 52,
+   "OK": 908,
+   "WINDOW_FLAGGED": 47,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 46
   },
@@ -2796,8 +3071,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 850,
-   "WINDOW_FLAGGED": 53,
+   "OK": 857,
+   "WINDOW_FLAGGED": 46,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 98
   },
@@ -2814,15 +3089,16 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 937,
-   "WINDOW_FLAGGED": 21,
+   "OK": 943,
+   "WINDOW_FLAGGED": 15,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 43
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 33,
-   "FENSTER_ZU_WEIT": 22
+   "MEHRFACHRESONANZ": 10,
+   "FENSTER_ZU_ENG": 2,
+   "FENSTER_ZU_WEIT": 2
   },
   "probleme": []
  },
@@ -2833,8 +3109,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 959,
-   "WINDOW_FLAGGED": 27,
+   "OK": 973,
+   "WINDOW_FLAGGED": 13,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 15
   },
@@ -2867,8 +3143,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 931,
-   "WINDOW_FLAGGED": 14,
+   "OK": 934,
+   "WINDOW_FLAGGED": 11,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 56
   },
@@ -2919,8 +3195,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 895,
-   "WINDOW_FLAGGED": 44,
+   "OK": 902,
+   "WINDOW_FLAGGED": 37,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 62
   },
@@ -2938,8 +3214,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 573,
-   "WINDOW_FLAGGED": 52,
+   "OK": 575,
+   "WINDOW_FLAGGED": 50,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 376
   },
@@ -2947,7 +3223,7 @@
   "morph_zaehler": {
    "FENSTER_ZU_WEIT": 3,
    "MEHRFACHRESONANZ": 23,
-   "FENSTER_ZU_ENG": 13
+   "FENSTER_ZU_ENG": 9
   },
   "probleme": []
  },
@@ -2958,8 +3234,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 905,
-   "WINDOW_FLAGGED": 58,
+   "OK": 913,
+   "WINDOW_FLAGGED": 50,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 38
   },
@@ -2976,14 +3252,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 423,
-   "WINDOW_FLAGGED": 4,
+   "OK": 427,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 574
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 6
+   "FENSTER_ZU_ENG": 9
   },
   "probleme": []
  },
@@ -2994,8 +3270,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 945,
-   "WINDOW_FLAGGED": 33,
+   "OK": 954,
+   "WINDOW_FLAGGED": 24,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 23
   },
@@ -3012,8 +3288,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 963,
-   "WINDOW_FLAGGED": 33,
+   "OK": 970,
+   "WINDOW_FLAGGED": 26,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 5
   },
@@ -3030,14 +3306,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 891,
-   "WINDOW_FLAGGED": 73,
+   "OK": 899,
+   "WINDOW_FLAGGED": 65,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 37
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 58,
+   "MEHRFACHRESONANZ": 57,
    "FENSTER_ZU_ENG": 1,
    "FENSTER_ZU_WEIT": 1
   },
@@ -3050,8 +3326,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 507,
-   "WINDOW_FLAGGED": 17,
+   "OK": 510,
+   "WINDOW_FLAGGED": 14,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 477
   },
@@ -3062,7 +3338,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 2
+   "MEHRFACHRESONANZ": 2,
+   "FENSTER_ZU_ENG": 5
   },
   "probleme": [
    {
@@ -3201,8 +3478,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 572,
-   "WINDOW_FLAGGED": 20,
+   "OK": 579,
+   "WINDOW_FLAGGED": 13,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 409
   },
@@ -3213,7 +3490,7 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 5
+   "MEHRFACHRESONANZ": 2
   },
   "probleme": [
    {
@@ -3337,14 +3614,14 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 14,
-   "FENSTER_ZU_ENG": 73
+   "FENSTER_ZU_ENG": 77
   },
   "probleme": [
    {
     "i": 461,
     "f_GHz": 23.0554,
     "fenster": [
-     1.98358,
+     2.08013,
      2.12788
     ],
     "klassen": [
@@ -3356,9 +3633,9 @@
     "info": {
      "prom": 10.14,
      "b_peak": 1.8446,
-     "breite": 0.14429,
+     "breite": 0.04774,
      "resonanz_da": true,
-     "rmse_norm": 0.142,
+     "rmse_norm": 0.156,
      "fwhm": 0.75315
     }
    },
@@ -3680,8 +3957,8 @@
     "i": 712,
     "f_GHz": 35.6029,
     "fenster": [
-     2.82135,
-     3.62135
+     2.95217,
+     3.47516
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -3692,9 +3969,9 @@
     "info": {
      "prom": 10.03,
      "b_peak": 1.8446,
-     "breite": 0.8,
+     "breite": 0.52299,
      "resonanz_da": true,
-     "rmse_norm": 0.135,
+     "rmse_norm": 0.141,
      "fwhm": 0.7647
     }
    },
@@ -3794,8 +4071,8 @@
     "i": 723,
     "f_GHz": 36.1528,
     "fenster": [
-     2.88525,
-     3.6494
+     2.93647,
+     3.48453
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -3806,9 +4083,9 @@
     "info": {
      "prom": 10.19,
      "b_peak": 1.8446,
-     "breite": 0.76415,
+     "breite": 0.54805,
      "resonanz_da": true,
-     "rmse_norm": 0.14,
+     "rmse_norm": 0.142,
      "fwhm": 0.7703
     }
    },
@@ -3816,8 +4093,8 @@
     "i": 724,
     "f_GHz": 36.2028,
     "fenster": [
-     2.85165,
-     3.6494
+     2.93478,
+     3.48441
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -3828,9 +4105,9 @@
     "info": {
      "prom": 10.09,
      "b_peak": 1.8446,
-     "breite": 0.79775,
+     "breite": 0.54964,
      "resonanz_da": true,
-     "rmse_norm": 0.131,
+     "rmse_norm": 0.137,
      "fwhm": 0.7716
     }
    }
@@ -3839,7 +4116,7 @@
  "CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms": {
   "datei": "CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/CoFeSiB(3nm)-Si(675µm)/2025-AUG-25-Linescan-240K_0deg_TEST.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Set.P"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CoFeSiB(20nm)-Si(675µm)/2025-JUN-11-Linescan-2D-map-oop-rotated-5K_1.65deg.tdms": {
   "datei": "CoFeSiB(20nm)-Si(675µm)/2025-JUN-11-Linescan-2D-map-oop-rotated-5K_1.65deg.tdms",
@@ -3848,19 +4125,19 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 779,
-   "WINDOW_FLAGGED": 194,
-   "WINDOW_FAIL": 25,
+   "OK": 788,
+   "WINDOW_FLAGGED": 184,
+   "WINDOW_FAIL": 26,
    "KEIN_ZIEL": 3
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 40,
-    "fail": 25
+    "fail": 26
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 59,
+   "MEHRFACHRESONANZ": 57,
    "FENSTER_ZU_ENG": 14,
    "FENSTER_ZU_WEIT": 2
   },
@@ -3991,7 +4268,7 @@
     "f_GHz": 41.6017,
     "fenster": [
      2.54912,
-     2.6939
+     2.65441
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -4002,9 +4279,9 @@
     "info": {
      "prom": 10.84,
      "b_peak": 2.97605,
-     "breite": 0.14479,
+     "breite": 0.10529,
      "resonanz_da": true,
-     "rmse_norm": 0.183,
+     "rmse_norm": 0.174,
      "fwhm": 0.06695
     }
    },
@@ -4013,7 +4290,7 @@
     "f_GHz": 41.6517,
     "fenster": [
      2.50499,
-     2.64978
+     2.6449
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -4024,9 +4301,9 @@
     "info": {
      "prom": 12.64,
      "b_peak": 2.97605,
-     "breite": 0.14479,
+     "breite": 0.13991,
      "resonanz_da": true,
-     "rmse_norm": 0.16,
+     "rmse_norm": 0.162,
      "fwhm": 0.01675
     }
    },
@@ -4035,7 +4312,7 @@
     "f_GHz": 41.7017,
     "fenster": [
      2.48307,
-     2.62785
+     2.60407
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -4046,9 +4323,9 @@
     "info": {
      "prom": 12.76,
      "b_peak": 2.9791,
-     "breite": 0.14479,
+     "breite": 0.121,
      "resonanz_da": true,
-     "rmse_norm": 0.169,
+     "rmse_norm": 0.142,
      "fwhm": 0.01945
     }
    },
@@ -4056,7 +4333,7 @@
     "i": 835,
     "f_GHz": 41.7516,
     "fenster": [
-     2.43966,
+     2.44699,
      2.58444
     ],
     "klassen": [
@@ -4068,9 +4345,9 @@
     "info": {
      "prom": 13.38,
      "b_peak": 2.9812,
-     "breite": 0.14479,
+     "breite": 0.13745,
      "resonanz_da": true,
-     "rmse_norm": 0.138,
+     "rmse_norm": 0.134,
      "fwhm": 0.0186
     }
    },
@@ -4541,7 +4818,7 @@
     "f_GHz": 43.6513,
     "fenster": [
      2.1362,
-     2.2874
+     2.27976
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -4552,10 +4829,32 @@
     "info": {
      "prom": 10.51,
      "b_peak": 3.0463,
-     "breite": 0.1512,
+     "breite": 0.14356,
      "resonanz_da": true,
-     "rmse_norm": 0.121,
+     "rmse_norm": 0.116,
      "fwhm": 0.01945
+    }
+   },
+   {
+    "i": 877,
+    "f_GHz": 43.8512,
+    "fenster": [
+     1.96406,
+     2.30588
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 10.37,
+     "b_peak": 3.0532,
+     "breite": 0.34182,
+     "resonanz_da": true,
+     "rmse_norm": 0.159,
+     "fwhm": 0.0203
     }
    },
    {
@@ -4585,7 +4884,7 @@
     "f_GHz": 44.2012,
     "fenster": [
      2.49068,
-     2.63547
+     2.59541
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -4596,9 +4895,9 @@
     "info": {
      "prom": 10.36,
      "b_peak": 3.06515,
-     "breite": 0.14479,
+     "breite": 0.10473,
      "resonanz_da": true,
-     "rmse_norm": 0.15,
+     "rmse_norm": 0.125,
      "fwhm": 0.01975
     }
    },
@@ -4697,7 +4996,7 @@
      "b_peak": 3.1802,
      "breite": 0.0276,
      "resonanz_da": true,
-     "rmse_norm": 0.012,
+     "rmse_norm": 0.01,
      "fwhm": 0.01385
     }
    },
@@ -4843,8 +5142,8 @@
     "i": 969,
     "f_GHz": 48.4503,
     "fenster": [
-     2.4759,
-     2.62068
+     2.48624,
+     2.57224
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -4855,9 +5154,9 @@
     "info": {
      "prom": 10.41,
      "b_peak": 3.2077,
-     "breite": 0.14479,
+     "breite": 0.086,
      "resonanz_da": true,
-     "rmse_norm": 0.186,
+     "rmse_norm": 0.15,
      "fwhm": 0.0186
     }
    },
@@ -4865,7 +5164,7 @@
     "i": 972,
     "f_GHz": 48.6003,
     "fenster": [
-     2.43114,
+     2.45659,
      2.57593
     ],
     "klassen": [
@@ -4877,9 +5176,9 @@
     "info": {
      "prom": 12.78,
      "b_peak": 3.213,
-     "breite": 0.14479,
+     "breite": 0.11934,
      "resonanz_da": true,
-     "rmse_norm": 0.173,
+     "rmse_norm": 0.139,
      "fwhm": 0.01485
     }
    },
@@ -5031,7 +5330,7 @@
     "f_GHz": 49.1002,
     "fenster": [
      2.30382,
-     2.4486
+     2.38171
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5042,9 +5341,9 @@
     "info": {
      "prom": 11.01,
      "b_peak": 3.2288,
-     "breite": 0.14479,
+     "breite": 0.07789,
      "resonanz_da": true,
-     "rmse_norm": 0.166,
+     "rmse_norm": 0.164,
      "fwhm": 0.0177
     }
    },
@@ -5078,8 +5377,8 @@
     "i": 984,
     "f_GHz": 49.2002,
     "fenster": [
-     2.32127,
-     2.46606
+     2.34738,
+     2.42684
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5090,9 +5389,9 @@
     "info": {
      "prom": 10.07,
      "b_peak": 3.23305,
-     "breite": 0.14479,
+     "breite": 0.07946,
      "resonanz_da": true,
-     "rmse_norm": 0.222,
+     "rmse_norm": 0.219,
      "fwhm": 0.0249
     }
    },
@@ -5358,7 +5657,7 @@
     "f_GHz": 49.85,
     "fenster": [
      2.14681,
-     2.29159
+     2.19041
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5369,9 +5668,9 @@
     "info": {
      "prom": 12.55,
      "b_peak": 3.2524,
-     "breite": 0.14479,
+     "breite": 0.04361,
      "resonanz_da": true,
-     "rmse_norm": 0.182,
+     "rmse_norm": 0.189,
      "fwhm": 0.0232
     }
    },
@@ -5428,8 +5727,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 552,
-   "WINDOW_FLAGGED": 5,
+   "OK": 555,
+   "WINDOW_FLAGGED": 2,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 444
   },
@@ -5437,7 +5736,7 @@
   "morph_zaehler": {
    "FENSTER_ZU_WEIT": 1,
    "MEHRFACHRESONANZ": 1,
-   "FENSTER_ZU_ENG": 8
+   "FENSTER_ZU_ENG": 5
   },
   "probleme": []
  },
@@ -5448,8 +5747,8 @@
   "n_resonanzen": 44,
   "hat_gt": false,
   "zaehler": {
-   "OK": 43,
-   "WINDOW_FLAGGED": 1,
+   "OK": 44,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -5486,8 +5785,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 176,
-   "WINDOW_FLAGGED": 3,
+   "OK": 179,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 822
   },
@@ -5502,8 +5801,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 864,
-   "WINDOW_FLAGGED": 72,
+   "OK": 874,
+   "WINDOW_FLAGGED": 62,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 65
   },
@@ -5514,7 +5813,7 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 39,
+   "MEHRFACHRESONANZ": 38,
    "FENSTER_ZU_WEIT": 4
   },
   "probleme": [
@@ -5593,8 +5892,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 951,
-   "WINDOW_FLAGGED": 36,
+   "OK": 967,
+   "WINDOW_FLAGGED": 20,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 14
   },
@@ -5611,15 +5910,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 953,
-   "WINDOW_FLAGGED": 21,
-   "WINDOW_FAIL": 8,
+   "OK": 966,
+   "WINDOW_FLAGGED": 6,
+   "WINDOW_FAIL": 10,
    "KEIN_ZIEL": 19
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 1,
-    "fail": 8
+    "fail": 10
    }
   },
   "morph_zaehler": {
@@ -5676,8 +5975,8 @@
     "i": 27,
     "f_GHz": 1.3597,
     "fenster": [
-     1.62115,
-     1.64755
+     1.62346,
+     1.64502
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5688,9 +5987,9 @@
     "info": {
      "prom": 13.25,
      "b_peak": 1.6836,
-     "breite": 0.0264,
+     "breite": 0.02156,
      "resonanz_da": true,
-     "rmse_norm": 0.031,
+     "rmse_norm": 0.032,
      "fwhm": 0.13935
     }
    },
@@ -5698,8 +5997,8 @@
     "i": 28,
     "f_GHz": 1.4097,
     "fenster": [
-     1.62205,
-     1.65485
+     1.62518,
+     1.6485
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5710,9 +6009,9 @@
     "info": {
      "prom": 13.21,
      "b_peak": 1.67855,
-     "breite": 0.0328,
+     "breite": 0.02332,
      "resonanz_da": true,
-     "rmse_norm": 0.043,
+     "rmse_norm": 0.044,
      "fwhm": 0.1359
     }
    },
@@ -5720,7 +6019,7 @@
     "i": 29,
     "f_GHz": 1.4597,
     "fenster": [
-     1.62882,
+     1.62896,
      1.65038
     ],
     "klassen": [
@@ -5732,7 +6031,7 @@
     "info": {
      "prom": 12.77,
      "b_peak": 1.67855,
-     "breite": 0.02156,
+     "breite": 0.02142,
      "resonanz_da": true,
      "rmse_norm": 0.041,
      "fwhm": 0.1274
@@ -5742,8 +6041,8 @@
     "i": 30,
     "f_GHz": 1.5097,
     "fenster": [
-     1.62895,
-     1.65735
+     1.63152,
+     1.65308
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5754,7 +6053,7 @@
     "info": {
      "prom": 11.9,
      "b_peak": 1.6802,
-     "breite": 0.0284,
+     "breite": 0.02156,
      "resonanz_da": true,
      "rmse_norm": 0.027,
      "fwhm": 0.1312
@@ -5764,7 +6063,7 @@
     "i": 32,
     "f_GHz": 1.6097,
     "fenster": [
-     1.63622,
+     1.63652,
      1.65778
     ],
     "klassen": [
@@ -5776,7 +6075,7 @@
     "info": {
      "prom": 12.52,
      "b_peak": 1.6802,
-     "breite": 0.02156,
+     "breite": 0.02126,
      "resonanz_da": true,
      "rmse_norm": 0.029,
      "fwhm": 0.12565
@@ -5786,8 +6085,8 @@
     "i": 33,
     "f_GHz": 1.6597,
     "fenster": [
-     1.63785,
-     1.66225
+     1.63866,
+     1.66023
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5798,7 +6097,7 @@
     "info": {
      "prom": 11.34,
      "b_peak": 1.67855,
-     "breite": 0.0244,
+     "breite": 0.02156,
      "resonanz_da": true,
      "rmse_norm": 0.032,
      "fwhm": 0.12565
@@ -5809,7 +6108,7 @@
     "f_GHz": 1.7097,
     "fenster": [
      1.64107,
-     1.66263
+     1.66246
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -5820,10 +6119,54 @@
     "info": {
      "prom": 14.55,
      "b_peak": 1.67855,
-     "breite": 0.02156,
+     "breite": 0.0214,
      "resonanz_da": true,
      "rmse_norm": 0.041,
      "fwhm": 0.11805
+    }
+   },
+   {
+    "i": 35,
+    "f_GHz": 1.7596,
+    "fenster": [
+     1.6429,
+     1.66446
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 16.05,
+     "b_peak": 1.67855,
+     "breite": 0.02156,
+     "resonanz_da": true,
+     "rmse_norm": 0.024,
+     "fwhm": 0.1113
+    }
+   },
+   {
+    "i": 36,
+    "f_GHz": 1.8096,
+    "fenster": [
+     1.64496,
+     1.66653
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 17.97,
+     "b_peak": 1.67855,
+     "breite": 0.02156,
+     "resonanz_da": true,
+     "rmse_norm": 0.026,
+     "fwhm": 0.10735
     }
    }
   ]
@@ -5870,15 +6213,15 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 899,
-   "WINDOW_FLAGGED": 59,
-   "WINDOW_FAIL": 0,
+   "OK": 913,
+   "WINDOW_FLAGGED": 44,
+   "WINDOW_FAIL": 1,
    "KEIN_ZIEL": 43
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 7,
-    "fail": 0
+    "fail": 1
    }
   },
   "morph_zaehler": {
@@ -5999,6 +6342,32 @@
     }
    },
    {
+    "i": 983,
+    "f_GHz": 49.1502,
+    "fenster": [
+     2.9286,
+     2.9578
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 11.51,
+     "b_peak": 3.28905,
+     "breite": 0.0292,
+     "resonanz_da": true,
+     "rmse_norm": 0.15,
+     "gt_band": [
+      2.96805,
+      3.46595
+     ],
+     "fwhm": 1.56975
+    }
+   },
+   {
     "i": 984,
     "f_GHz": 49.2002,
     "fenster": [
@@ -6093,8 +6462,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 897,
-   "WINDOW_FLAGGED": 51,
+   "OK": 905,
+   "WINDOW_FLAGGED": 43,
    "WINDOW_FAIL": 3,
    "KEIN_ZIEL": 50
   },
@@ -6105,16 +6474,16 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 141,
-   "FENSTER_ZU_WEIT": 1
+   "MEHRFACHRESONANZ": 101,
+   "FENSTER_ZU_ENG": 1
   },
   "probleme": [
    {
     "i": 48,
     "f_GHz": 2.4095,
     "fenster": [
-     1.75773,
-     1.82333
+     1.77565,
+     1.80635
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -6125,9 +6494,9 @@
     "info": {
      "prom": 31.58,
      "b_peak": 1.4526,
-     "breite": 0.0656,
+     "breite": 0.0307,
      "resonanz_da": true,
-     "rmse_norm": 0.173,
+     "rmse_norm": 0.17,
      "fwhm": 0.2574
     }
    },
@@ -6135,8 +6504,8 @@
     "i": 49,
     "f_GHz": 2.4595,
     "fenster": [
-     1.671,
-     1.725
+     1.69756,
+     1.71664
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -6147,9 +6516,9 @@
     "info": {
      "prom": 44.52,
      "b_peak": 1.4561,
-     "breite": 0.054,
+     "breite": 0.01908,
      "resonanz_da": true,
-     "rmse_norm": 0.156,
+     "rmse_norm": 0.121,
      "fwhm": 0.00675
     }
    },
@@ -6157,8 +6526,8 @@
     "i": 50,
     "f_GHz": 2.5095,
     "fenster": [
-     1.67305,
-     1.72585
+     1.68387,
+     1.71054
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -6169,9 +6538,9 @@
     "info": {
      "prom": 46.5,
      "b_peak": 1.4609,
-     "breite": 0.0528,
+     "breite": 0.02668,
      "resonanz_da": true,
-     "rmse_norm": 0.209,
+     "rmse_norm": 0.215,
      "fwhm": 0.00795
     }
    },
@@ -6309,8 +6678,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 842,
-   "WINDOW_FLAGGED": 92,
+   "OK": 855,
+   "WINDOW_FLAGGED": 79,
    "WINDOW_FAIL": 1,
    "KEIN_ZIEL": 66
   },
@@ -6322,8 +6691,7 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 45,
-   "FENSTER_ZU_ENG": 2,
-   "FENSTER_ZU_WEIT": 3
+   "FENSTER_ZU_ENG": 2
   },
   "probleme": [
    {
@@ -6373,21 +6741,35 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 35,
-   "WINDOW_FLAGGED": 30,
+   "OK": 40,
+   "WINDOW_FLAGGED": 25,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 936
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 5
+   "MEHRFACHRESONANZ": 2
   },
   "probleme": []
  },
  "CoFeSiB(40nm)-Si(675µm)/Sample-2/2025-FEB-17-Linescan-2D-map-oop-rotated-5K_-3.1deg_flush.tdms": {
   "datei": "CoFeSiB(40nm)-Si(675µm)/Sample-2/2025-FEB-17-Linescan-2D-map-oop-rotated-5K_-3.1deg_flush.tdms",
-  "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "status_datei": "OK",
+  "format": "unsortiert",
+  "n_resonanzen": 1001,
+  "hat_gt": false,
+  "zaehler": {
+   "OK": 423,
+   "WINDOW_FLAGGED": 3,
+   "WINDOW_FAIL": 0,
+   "KEIN_ZIEL": 575
+  },
+  "klasse_zaehler": {},
+  "morph_zaehler": {
+   "FENSTER_ZU_ENG": 9,
+   "MEHRFACHRESONANZ": 40
+  },
+  "probleme": []
  },
  "CrSBr/2024-NOV-15-Linescan-2D-map-perp-to-a-5K_-30deg_-1.5-1.5T.tdms": {
   "datei": "CrSBr/2024-NOV-15-Linescan-2D-map-perp-to-a-5K_-30deg_-1.5-1.5T.tdms",
@@ -6397,22 +6779,22 @@
  "CrSBr/2024-NOV-15-Linescan-2D-map-perp-to-a-5K_-40deg_-1.5-1.5T.tdms": {
   "datei": "CrSBr/2024-NOV-15-Linescan-2D-map-perp-to-a-5K_-40deg_-1.5-1.5T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "dauer_s": 90.1
  },
  "CrSBr/2024-NOV-16-Linescan-2D-map-45°-to-CPW-5K_-75deg_-1.5-1.5T.tdms": {
   "datei": "CrSBr/2024-NOV-16-Linescan-2D-map-45°-to-CPW-5K_-75deg_-1.5-1.5T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.3
+  "dauer_s": 90.2
  },
  "CrSBr/2024-NOV-16-Linescan-2D-map-45°-to-CPW-5K_-75deg_-1.5-1.5T_flush.tdms": {
   "datei": "CrSBr/2024-NOV-16-Linescan-2D-map-45°-to-CPW-5K_-75deg_-1.5-1.5T_flush.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.1
+  "dauer_s": 90.2
  },
  "CrSBr/2024-NOV-16-Linescan-2D-map-parallel-to-CPW-5K_-120deg_-1.5-1.5T.tdms": {
   "datei": "CrSBr/2024-NOV-16-Linescan-2D-map-parallel-to-CPW-5K_-120deg_-1.5-1.5T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "dauer_s": 90.3
  },
  "CrSBr/2024-NOV-16-Linescan-2D-map-parallel-to-CPW-5K_-120deg_-1.5-1.5T_flush.tdms": {
   "datei": "CrSBr/2024-NOV-16-Linescan-2D-map-parallel-to-CPW-5K_-120deg_-1.5-1.5T_flush.tdms",
@@ -6438,9 +6820,9 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 258,
-   "FENSTER_ZU_ENG": 15,
-   "FENSTER_ZU_WEIT": 2
+   "MEHRFACHRESONANZ": 253,
+   "FENSTER_ZU_ENG": 19,
+   "FENSTER_ZU_WEIT": 1
   },
   "probleme": [
    {
@@ -6477,15 +6859,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 444,
-   "WINDOW_FLAGGED": 427,
+   "OK": 459,
+   "WINDOW_FLAGGED": 412,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 130
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 480,
-   "FENSTER_ZU_ENG": 8
+   "MEHRFACHRESONANZ": 435,
+   "FENSTER_ZU_ENG": 32
   },
   "probleme": []
  },
@@ -6496,8 +6878,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 354,
-   "WINDOW_FLAGGED": 478,
+   "OK": 360,
+   "WINDOW_FLAGGED": 472,
    "WINDOW_FAIL": 1,
    "KEIN_ZIEL": 168
   },
@@ -6508,8 +6890,7 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 230,
-   "FENSTER_ZU_WEIT": 15
+   "MEHRFACHRESONANZ": 222
   },
   "probleme": [
    {
@@ -6679,7 +7060,7 @@
      "b_peak": 1.8584,
      "breite": 0.0072,
      "resonanz_da": true,
-     "rmse_norm": 0.022,
+     "rmse_norm": 0.019,
      "fwhm": 0.1674
     }
    },
@@ -6799,8 +7180,6 @@
     "morph": [],
     "status": "WINDOW_FLAGGED",
     "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
      "B_res am Fensterrand",
      "alpha unphysikalisch"
     ],
@@ -6809,7 +7188,7 @@
      "b_peak": 1.8678,
      "breite": 0.006,
      "resonanz_da": true,
-     "rmse_norm": 0.024,
+     "rmse_norm": 0.025,
      "fwhm": 0.1689
     }
    },
@@ -8943,52 +9322,28 @@
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-86°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-86°-to-CPW-5K_0.4-0.8T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 0,
-   "WINDOW_FLAGGED": 2,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 999
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 2
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.1
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-27-Linescan-2D-map-parallel-to-CPW-20K_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-27-Linescan-2D-map-parallel-to-CPW-20K_-0.1-2T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.1
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-27-Linescan-2D-map-parallel-to-CPW-30K_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-27-Linescan-2D-map-parallel-to-CPW-30K_-0.1-2T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.1
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-87°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-87°-to-CPW-5K_0.4-0.8T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 0,
-   "WINDOW_FLAGGED": 0,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 1001
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {},
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-27-Linescan-2D-map-parallel-to-CPW-40K_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-27-Linescan-2D-map-parallel-to-CPW-40K_-0.1-2T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.1
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-85°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-85°-to-CPW-5K_0.4-0.8T.tdms",
@@ -8997,21 +9352,8 @@
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-89°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-89°-to-CPW-5K_0.4-0.8T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 43,
-   "WINDOW_FLAGGED": 81,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 877
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 106
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-94°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-94°-to-CPW-5K_0.4-0.8T.tdms",
@@ -9065,27 +9407,13 @@
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-91°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-91°-to-CPW-5K_0.4-0.8T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 0,
-   "WINDOW_FLAGGED": 15,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 986
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 12,
-   "FENSTER_ZU_ENG": 5
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-88°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-88°-to-CPW-5K_0.4-0.8T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "dauer_s": 90.1
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-map-parallel-to-CPW-5K-100°_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-map-parallel-to-CPW-5K-100°_-0.1-2T.tdms",
@@ -9094,285 +9422,28 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 401,
-   "WINDOW_FLAGGED": 538,
+   "OK": 415,
+   "WINDOW_FLAGGED": 524,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 62
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "FENSTER_ZU_ENG": 22,
-   "MEHRFACHRESONANZ": 324,
+   "MEHRFACHRESONANZ": 312,
    "FENSTER_ZU_WEIT": 2
   },
   "probleme": []
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-map-parallel-to-CPW-50K_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-28-Linescan-2D-map-parallel-to-CPW-50K_-0.1-2T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 371,
-   "WINDOW_FLAGGED": 59,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 571
-  },
-  "klasse_zaehler": {
-   "FENSTER_LEER": {
-    "flagged": 9,
-    "fail": 0
-   }
-  },
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 33,
-   "FENSTER_ZU_ENG": 32,
-   "FENSTER_ZU_WEIT": 9
-  },
-  "probleme": [
-   {
-    "i": 983,
-    "f_GHz": 49.1502,
-    "fenster": [
-     1.63435,
-     1.67555
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 13.97,
-     "b_peak": 1.5836,
-     "breite": 0.0412,
-     "resonanz_da": true,
-     "rmse_norm": 0.076,
-     "fwhm": 0.06395
-    }
-   },
-   {
-    "i": 984,
-    "f_GHz": 49.2002,
-    "fenster": [
-     1.6371,
-     1.6755
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
-     "B_res am Fensterrand",
-     "alpha unphysikalisch"
-    ],
-    "info": {
-     "prom": 13.55,
-     "b_peak": 1.5857,
-     "breite": 0.0384,
-     "resonanz_da": true,
-     "rmse_norm": 0.017,
-     "fwhm": 0.0639
-    }
-   },
-   {
-    "i": 985,
-    "f_GHz": 49.2501,
-    "fenster": [
-     1.63195,
-     1.68195
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 13.87,
-     "b_peak": 1.5876,
-     "breite": 0.05,
-     "resonanz_da": true,
-     "rmse_norm": 0.023,
-     "fwhm": 0.06455
-    }
-   },
-   {
-    "i": 986,
-    "f_GHz": 49.3001,
-    "fenster": [
-     1.6307,
-     1.6807
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 14.64,
-     "b_peak": 1.5898,
-     "breite": 0.05,
-     "resonanz_da": true,
-     "rmse_norm": 0.009,
-     "fwhm": 0.064
-    }
-   },
-   {
-    "i": 987,
-    "f_GHz": 49.3501,
-    "fenster": [
-     1.6326,
-     1.6794
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 14.6,
-     "b_peak": 1.59115,
-     "breite": 0.0468,
-     "resonanz_da": true,
-     "rmse_norm": 0.016,
-     "fwhm": 0.06295
-    }
-   },
-   {
-    "i": 988,
-    "f_GHz": 49.4001,
-    "fenster": [
-     1.6351,
-     1.6763
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 14.56,
-     "b_peak": 1.59285,
-     "breite": 0.0412,
-     "resonanz_da": true,
-     "rmse_norm": 0.039,
-     "fwhm": 0.064
-    }
-   },
-   {
-    "i": 989,
-    "f_GHz": 49.4501,
-    "fenster": [
-     1.6326,
-     1.6794
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 14.85,
-     "b_peak": 1.595,
-     "breite": 0.0468,
-     "resonanz_da": true,
-     "rmse_norm": 0.035,
-     "fwhm": 0.06485
-    }
-   },
-   {
-    "i": 990,
-    "f_GHz": 49.5001,
-    "fenster": [
-     1.63565,
-     1.67765
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 14.33,
-     "b_peak": 1.5961,
-     "breite": 0.042,
-     "resonanz_da": true,
-     "rmse_norm": 0.026,
-     "fwhm": 0.06545
-    }
-   },
-   {
-    "i": 993,
-    "f_GHz": 49.6501,
-    "fenster": [
-     1.6295,
-     1.6819
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "B_res am Fensterrand"
-    ],
-    "info": {
-     "prom": 15.49,
-     "b_peak": 1.60055,
-     "breite": 0.0524,
-     "resonanz_da": true,
-     "rmse_norm": 0.019,
-     "fwhm": 0.061
-    }
-   }
-  ]
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-90°-to-CPW-5K_0.4-0.8T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-90°-to-CPW-5K_0.4-0.8T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 1,
-   "WINDOW_FLAGGED": 1,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 999
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 2
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "CrSBr/smaller-piece/2024-NOV-25-Linescan-2D-map-perp-to-CPW-5K_-1.5-3T-sorted-for-FTF.tdms": {
   "datei": "CrSBr/smaller-piece/2024-NOV-25-Linescan-2D-map-perp-to-CPW-5K_-1.5-3T-sorted-for-FTF.tdms",
@@ -9397,16 +9468,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 619,
-   "WINDOW_FLAGGED": 22,
+   "OK": 624,
+   "WINDOW_FLAGGED": 17,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 360
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 18,
-   "FENSTER_ZU_ENG": 12,
-   "FENSTER_ZU_WEIT": 26
+   "FENSTER_ZU_ENG": 12
   },
   "probleme": []
  },
@@ -9433,8 +9503,8 @@
   "n_resonanzen": 28,
   "hat_gt": false,
   "zaehler": {
-   "OK": 17,
-   "WINDOW_FLAGGED": 1,
+   "OK": 18,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 10
   },
@@ -9451,8 +9521,8 @@
   "n_resonanzen": 40,
   "hat_gt": false,
   "zaehler": {
-   "OK": 36,
-   "WINDOW_FLAGGED": 2,
+   "OK": 38,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 2
   },
@@ -9462,62 +9532,18 @@
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-map-parallel-to-CPW-5K-70°_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-29-Linescan-2D-map-parallel-to-CPW-5K-70°_-0.1-2T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 354,
-   "WINDOW_FLAGGED": 212,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 435
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 337,
-   "FENSTER_ZU_ENG": 52,
-   "FENSTER_ZU_WEIT": 85
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-30-Linescan-2D-map-parallel-to-CPW-5K-110°_-0.1-2T_flush.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-30-Linescan-2D-map-parallel-to-CPW-5K-110°_-0.1-2T_flush.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 378,
-   "WINDOW_FLAGGED": 22,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 601
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 46,
-   "FENSTER_ZU_WEIT": 28
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.3
  },
  "CrSBr/singlecrystalline sample by Florian1/2025-JAN-30-Linescan-2D-map-parallel-to-CPW-5K-110°_-0.1-2T.tdms": {
   "datei": "CrSBr/singlecrystalline sample by Florian1/2025-JAN-30-Linescan-2D-map-parallel-to-CPW-5K-110°_-0.1-2T.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 382,
-   "WINDOW_FLAGGED": 236,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 383
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 202,
-   "FENSTER_ZU_WEIT": 23,
-   "FENSTER_ZU_ENG": 11
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.3
  },
  "GaFeB(10nm)-Si(675µm)/2025-MAY-22-Linescan-2D-map-oop-rotated-5K_-4deg.tdms": {
   "datei": "GaFeB(10nm)-Si(675µm)/2025-MAY-22-Linescan-2D-map-oop-rotated-5K_-4deg.tdms",
@@ -9526,8 +9552,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 857,
-   "WINDOW_FLAGGED": 79,
+   "OK": 869,
+   "WINDOW_FLAGGED": 67,
    "WINDOW_FAIL": 2,
    "KEIN_ZIEL": 63
   },
@@ -9538,15 +9564,16 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 83,
-   "FENSTER_ZU_WEIT": 3
+   "MEHRFACHRESONANZ": 73,
+   "FENSTER_ZU_ENG": 13,
+   "FENSTER_ZU_WEIT": 1
   },
   "probleme": [
    {
     "i": 878,
     "f_GHz": 43.9012,
     "fenster": [
-     2.58985,
+     2.63947,
      2.68985
     ],
     "klassen": [
@@ -9558,9 +9585,9 @@
     "info": {
      "prom": 15.09,
      "b_peak": 2.8796,
-     "breite": 0.1,
+     "breite": 0.05038,
      "resonanz_da": true,
-     "rmse_norm": 0.199,
+     "rmse_norm": 0.233,
      "fwhm": 0.016
     }
    },
@@ -9568,7 +9595,7 @@
     "i": 879,
     "f_GHz": 43.9512,
     "fenster": [
-     2.616,
+     2.63706,
      2.73
     ],
     "klassen": [
@@ -9580,9 +9607,9 @@
     "info": {
      "prom": 15.74,
      "b_peak": 2.8796,
-     "breite": 0.114,
+     "breite": 0.09294,
      "resonanz_da": true,
-     "rmse_norm": 0.159,
+     "rmse_norm": 0.109,
      "fwhm": 0.01635
     }
    },
@@ -9620,8 +9647,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 857,
-   "WINDOW_FLAGGED": 70,
+   "OK": 866,
+   "WINDOW_FLAGGED": 61,
    "WINDOW_FAIL": 2,
    "KEIN_ZIEL": 72
   },
@@ -9632,7 +9659,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 85
+   "FENSTER_ZU_ENG": 1,
+   "MEHRFACHRESONANZ": 80
   },
   "probleme": [
    {
@@ -9663,7 +9691,7 @@
     "i": 879,
     "f_GHz": 43.9512,
     "fenster": [
-     2.616,
+     2.63706,
      2.73
     ],
     "klassen": [
@@ -9675,9 +9703,9 @@
     "info": {
      "prom": 14.57,
      "b_peak": 2.8796,
-     "breite": 0.114,
+     "breite": 0.09294,
      "resonanz_da": true,
-     "rmse_norm": 0.159,
+     "rmse_norm": 0.109,
      "fwhm": 0.01635
     }
    },
@@ -9735,7 +9763,7 @@
     "f_GHz": 46.0508,
     "fenster": [
      1.95855,
-     2.25095
+     2.17021
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -9746,9 +9774,9 @@
     "info": {
      "prom": 12.11,
      "b_peak": 1.6157,
-     "breite": 0.2924,
+     "breite": 0.21166,
      "resonanz_da": true,
-     "rmse_norm": 0.153,
+     "rmse_norm": 0.115,
      "fwhm": 0.02275
     }
    },
@@ -9791,8 +9819,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 910,
-   "WINDOW_FLAGGED": 37,
+   "OK": 917,
+   "WINDOW_FLAGGED": 30,
    "WINDOW_FAIL": 4,
    "KEIN_ZIEL": 50
   },
@@ -9803,7 +9831,7 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 5,
+   "MEHRFACHRESONANZ": 4,
    "FENSTER_ZU_WEIT": 1
   },
   "probleme": [
@@ -9929,8 +9957,8 @@
     "i": 965,
     "f_GHz": 48.2503,
     "fenster": [
-     1.4975,
-     2.2975
+     1.61549,
+     1.96228
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -9941,9 +9969,9 @@
     "info": {
      "prom": 13.94,
      "b_peak": 3.03975,
-     "breite": 0.8,
+     "breite": 0.34679,
      "resonanz_da": true,
-     "rmse_norm": 0.095,
+     "rmse_norm": 0.098,
      "fwhm": 0.0191
     }
    },
@@ -9951,8 +9979,8 @@
     "i": 967,
     "f_GHz": 48.3503,
     "fenster": [
-     1.29935,
-     2.09935
+     1.52298,
+     2.03067
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -9963,9 +9991,9 @@
     "info": {
      "prom": 13.24,
      "b_peak": 3.0451,
-     "breite": 0.8,
+     "breite": 0.50769,
      "resonanz_da": true,
-     "rmse_norm": 0.086,
+     "rmse_norm": 0.096,
      "fwhm": 0.0227
     }
    }
@@ -9978,15 +10006,14 @@
   "n_resonanzen": 180,
   "hat_gt": false,
   "zaehler": {
-   "OK": 159,
-   "WINDOW_FLAGGED": 4,
+   "OK": 161,
+   "WINDOW_FLAGGED": 2,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 17
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 12,
-   "FENSTER_ZU_WEIT": 3
+   "MEHRFACHRESONANZ": 8
   },
   "probleme": []
  },
@@ -9997,8 +10024,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 903,
-   "WINDOW_FLAGGED": 58,
+   "OK": 907,
+   "WINDOW_FLAGGED": 54,
    "WINDOW_FAIL": 4,
    "KEIN_ZIEL": 36
   },
@@ -10009,8 +10036,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 65,
-   "FENSTER_ZU_ENG": 12,
+   "MEHRFACHRESONANZ": 47,
+   "FENSTER_ZU_ENG": 15,
    "FENSTER_ZU_WEIT": 2
   },
   "probleme": [
@@ -10019,7 +10046,7 @@
     "f_GHz": 48.6003,
     "fenster": [
      2.6271,
-     2.7139
+     2.66862
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -10030,9 +10057,9 @@
     "info": {
      "prom": 6.05,
      "b_peak": 1.7134,
-     "breite": 0.0868,
+     "breite": 0.04152,
      "resonanz_da": true,
-     "rmse_norm": 0.193,
+     "rmse_norm": 0.206,
      "gt_band": [
       2.75145,
       3.24975
@@ -10450,16 +10477,16 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 161,
-   "WINDOW_FLAGGED": 174,
+   "OK": 163,
+   "WINDOW_FLAGGED": 172,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 666
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 247,
-   "FENSTER_ZU_ENG": 8,
-   "FENSTER_ZU_WEIT": 5
+   "MEHRFACHRESONANZ": 241,
+   "FENSTER_ZU_ENG": 5,
+   "FENSTER_ZU_WEIT": 4
   },
   "probleme": []
  },
@@ -10499,22 +10526,8 @@
  },
  "GGG(500µm)-YIG(200nm)-verkehrt-gemounted/Linescan-2D-map-oop--5K-73deg.tdms": {
   "datei": "GGG(500µm)-YIG(200nm)-verkehrt-gemounted/Linescan-2D-map-oop--5K-73deg.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 572,
-   "WINDOW_FLAGGED": 33,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 396
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 7,
-   "FENSTER_ZU_ENG": 11
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.2
  },
  "Gratings/CoFe-Gratings-SiO2-400nm/2023-MAY-09-Linescan-2D-map-oop--300K_77.74deg.tdms": {
   "datei": "Gratings/CoFe-Gratings-SiO2-400nm/2023-MAY-09-Linescan-2D-map-oop--300K_77.74deg.tdms",
@@ -10523,23 +10536,22 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 898,
-   "WINDOW_FLAGGED": 41,
+   "OK": 903,
+   "WINDOW_FLAGGED": 36,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 62
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 56,
-   "FENSTER_ZU_ENG": 8,
-   "FENSTER_ZU_WEIT": 8
+   "FENSTER_ZU_ENG": 8
   },
   "probleme": []
  },
  "CrSBr/smaller-piece/2024-NOV-25-Linescan-2D-map-perp-to-CPW-5K_-1.5-3T.tdms": {
   "datei": "CrSBr/smaller-piece/2024-NOV-25-Linescan-2D-map-perp-to-CPW-5K_-1.5-3T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.5
+  "dauer_s": 90.3
  },
  "Gratings/CoFe-Gratings-SiO2-400nm/2023-MAY-08-Linescan-2D-map-oop--5K_77.74deg_flush.tdms": {
   "datei": "Gratings/CoFe-Gratings-SiO2-400nm/2023-MAY-08-Linescan-2D-map-oop--5K_77.74deg_flush.tdms",
@@ -10548,29 +10560,29 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 573,
+   "OK": 572,
    "WINDOW_FLAGGED": 385,
-   "WINDOW_FAIL": 1,
+   "WINDOW_FAIL": 2,
    "KEIN_ZIEL": 42
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 2,
-    "fail": 1
+    "fail": 2
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 132,
-   "FENSTER_ZU_WEIT": 46,
-   "FENSTER_ZU_ENG": 48
+   "MEHRFACHRESONANZ": 131,
+   "FENSTER_ZU_WEIT": 12,
+   "FENSTER_ZU_ENG": 57
   },
   "probleme": [
    {
     "i": 81,
     "f_GHz": 4.0592,
     "fenster": [
-     3.7518,
-     3.853
+     3.76704,
+     3.81366
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -10581,9 +10593,9 @@
     "info": {
      "prom": 10.18,
      "b_peak": 3.3891,
-     "breite": 0.1012,
+     "breite": 0.04662,
      "resonanz_da": true,
-     "rmse_norm": 0.186,
+     "rmse_norm": 0.198,
      "fwhm": 0.03165
     }
    },
@@ -10610,6 +10622,28 @@
      "resonanz_da": true,
      "rmse_norm": 0.173,
      "fwhm": 0.02555
+    }
+   },
+   {
+    "i": 86,
+    "f_GHz": 4.3091,
+    "fenster": [
+     3.6418,
+     3.69985
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 10.28,
+     "b_peak": 3.3891,
+     "breite": 0.05805,
+     "resonanz_da": true,
+     "rmse_norm": 0.205,
+     "fwhm": 0.0231
     }
    },
    {
@@ -10658,17 +10692,17 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 397,
-   "FENSTER_ZU_ENG": 3,
-   "FENSTER_ZU_WEIT": 27
+   "MEHRFACHRESONANZ": 367,
+   "FENSTER_ZU_ENG": 36,
+   "FENSTER_ZU_WEIT": 24
   },
   "probleme": [
    {
     "i": 127,
     "f_GHz": 6.3587,
     "fenster": [
-     1.5199,
-     1.5899
+     1.53182,
+     1.57912
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -10679,9 +10713,9 @@
     "info": {
      "prom": 10.63,
      "b_peak": 1.3698,
-     "breite": 0.07,
+     "breite": 0.0473,
      "resonanz_da": true,
-     "rmse_norm": 0.141,
+     "rmse_norm": 0.143,
      "fwhm": 0.00875
     }
    }
@@ -10690,12 +10724,12 @@
  "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms": {
   "datei": "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-04-Linescan-2D-map-oop--300K_79.5deg-10dBm.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. "
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "CrSBr/smaller-piece/2024-NOV-26-Linescan-2D-map-parallel-to-CPW-5K_-1.5-3T.tdms": {
   "datei": "CrSBr/smaller-piece/2024-NOV-26-Linescan-2D-map-parallel-to-CPW-5K_-1.5-3T.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.4
+  "dauer_s": 90.2
  },
  "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-02-Linescan-2D-map-oop--5K_79.5deg_flush.tdms": {
   "datei": "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-02-Linescan-2D-map-oop--5K_79.5deg_flush.tdms",
@@ -10783,8 +10817,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 197,
-   "FENSTER_ZU_ENG": 73
+   "MEHRFACHRESONANZ": 194,
+   "FENSTER_ZU_ENG": 91
   },
   "probleme": [
    {
@@ -11607,7 +11641,7 @@
     "f_GHz": 37.7025,
     "fenster": [
      3.35017,
-     3.54057
+     3.49085
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -11618,9 +11652,9 @@
     "info": {
      "prom": 4.64,
      "b_peak": 2.7136,
-     "breite": 0.1904,
+     "breite": 0.14068,
      "resonanz_da": false,
-     "rmse_norm": 0.096,
+     "rmse_norm": 0.12,
      "gt_band": [
       3.1857,
       3.38085
@@ -16418,19 +16452,19 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 130,
+   "OK": 111,
    "WINDOW_FLAGGED": 379,
-   "WINDOW_FAIL": 298,
+   "WINDOW_FAIL": 317,
    "KEIN_ZIEL": 194
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 297,
-    "fail": 298
+    "fail": 317
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 594,
+   "MEHRFACHRESONANZ": 563,
    "FENSTER_ZU_ENG": 3,
    "FENSTER_ZU_WEIT": 1
   },
@@ -21972,23 +22006,21 @@
     "i": 374,
     "f_GHz": 18.7063,
     "fenster": [
-     3.42836,
+     3.97513,
      4.22836
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.43,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.25323,
      "resonanz_da": true,
-     "rmse_norm": 0.132,
+     "rmse_norm": 0.146,
      "gt_band": [
       2.4442,
       2.64345
@@ -22052,8 +22084,8 @@
     "i": 377,
     "f_GHz": 18.8562,
     "fenster": [
-     3.95035,
-     4.28315
+     4.04527,
+     4.20797
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -22064,9 +22096,9 @@
     "info": {
      "prom": 6.17,
      "b_peak": 4.11675,
-     "breite": 0.3328,
+     "breite": 0.1627,
      "resonanz_da": true,
-     "rmse_norm": 0.129,
+     "rmse_norm": 0.14,
      "gt_band": [
       2.46075,
       2.66005
@@ -22078,8 +22110,8 @@
     "i": 378,
     "f_GHz": 18.9062,
     "fenster": [
-     3.95035,
-     4.28315
+     4.0447,
+     4.20805
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -22090,9 +22122,9 @@
     "info": {
      "prom": 6.31,
      "b_peak": 4.11675,
-     "breite": 0.3328,
+     "breite": 0.16335,
      "resonanz_da": true,
-     "rmse_norm": 0.136,
+     "rmse_norm": 0.139,
      "gt_band": [
       2.46075,
       2.66005
@@ -22104,23 +22136,21 @@
     "i": 379,
     "f_GHz": 18.9562,
     "fenster": [
-     3.51664,
-     4.31664
+     4.06106,
+     4.18397
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 5.84,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.12291,
      "resonanz_da": false,
-     "rmse_norm": 0.147,
+     "rmse_norm": 0.156,
      "gt_band": [
       2.46075,
       2.66005
@@ -22162,23 +22192,21 @@
     "i": 381,
     "f_GHz": 19.0562,
     "fenster": [
-     3.71675,
-     4.47965
+     4.0522,
+     4.19598
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.46,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14378,
      "resonanz_da": true,
-     "rmse_norm": 0.117,
+     "rmse_norm": 0.13,
      "gt_band": [
       2.46075,
       2.66005
@@ -22190,23 +22218,21 @@
     "i": 382,
     "f_GHz": 19.1062,
     "fenster": [
-     3.60034,
-     4.40034
+     4.06246,
+     4.18923
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.3,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.12677,
      "resonanz_da": true,
-     "rmse_norm": 0.115,
+     "rmse_norm": 0.132,
      "gt_band": [
       2.46075,
       2.66005
@@ -22274,8 +22300,8 @@
     "i": 385,
     "f_GHz": 19.2562,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05578,
+     4.19394
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -22288,9 +22314,9 @@
     "info": {
      "prom": 6.22,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.13816,
      "resonanz_da": true,
-     "rmse_norm": 0.118,
+     "rmse_norm": 0.136,
      "gt_band": [
       2.46075,
       2.66005
@@ -22302,23 +22328,21 @@
     "i": 386,
     "f_GHz": 19.3061,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05528,
+     4.19418
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.32,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.1389,
      "resonanz_da": true,
-     "rmse_norm": 0.12,
+     "rmse_norm": 0.138,
      "gt_band": [
       2.479,
       2.67775
@@ -22330,23 +22354,21 @@
     "i": 387,
     "f_GHz": 19.3561,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05369,
+     4.19544
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.34,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14175,
      "resonanz_da": true,
-     "rmse_norm": 0.113,
+     "rmse_norm": 0.136,
      "gt_band": [
       2.479,
       2.67775
@@ -22415,23 +22437,21 @@
     "i": 390,
     "f_GHz": 19.5061,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05463,
+     4.19554
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.39,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14091,
      "resonanz_da": true,
-     "rmse_norm": 0.118,
+     "rmse_norm": 0.137,
      "gt_band": [
       2.479,
       2.67775
@@ -22443,23 +22463,21 @@
     "i": 391,
     "f_GHz": 19.5561,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05349,
+     4.19687
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.5,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14338,
      "resonanz_da": true,
-     "rmse_norm": 0.128,
+     "rmse_norm": 0.145,
      "gt_band": [
       2.479,
       2.67775
@@ -22471,23 +22489,21 @@
     "i": 392,
     "f_GHz": 19.6061,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05293,
+     4.19617
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.34,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14323,
      "resonanz_da": true,
-     "rmse_norm": 0.113,
+     "rmse_norm": 0.137,
      "gt_band": [
       2.479,
       2.67775
@@ -22551,23 +22567,21 @@
     "i": 395,
     "f_GHz": 19.756,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05314,
+     4.19671
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.42,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14357,
      "resonanz_da": true,
-     "rmse_norm": 0.119,
+     "rmse_norm": 0.137,
      "gt_band": [
       2.479,
       2.67775
@@ -22579,23 +22593,21 @@
     "i": 396,
     "f_GHz": 19.806,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05296,
+     4.1962
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.66,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14324,
      "resonanz_da": true,
-     "rmse_norm": 0.132,
+     "rmse_norm": 0.147,
      "gt_band": [
       2.4956,
       2.6944
@@ -22607,23 +22619,21 @@
     "i": 397,
     "f_GHz": 19.856,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05345,
+     4.19724
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.35,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14378,
      "resonanz_da": true,
-     "rmse_norm": 0.118,
+     "rmse_norm": 0.14,
      "gt_band": [
       2.4956,
       2.6944
@@ -22687,23 +22697,21 @@
     "i": 400,
     "f_GHz": 20.006,
     "fenster": [
-     3.7209,
-     4.47965
+     4.05201,
+     4.19792
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.69,
      "b_peak": 4.11675,
-     "breite": 0.75875,
+     "breite": 0.14592,
      "resonanz_da": true,
-     "rmse_norm": 0.119,
+     "rmse_norm": 0.131,
      "gt_band": [
       2.4956,
       2.6944
@@ -22715,23 +22723,21 @@
     "i": 401,
     "f_GHz": 20.056,
     "fenster": [
-     3.71485,
-     4.47965
+     4.05196,
+     4.19834
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.84,
      "b_peak": 4.11675,
-     "breite": 0.7648,
+     "breite": 0.14638,
      "resonanz_da": true,
-     "rmse_norm": 0.145,
+     "rmse_norm": 0.159,
      "gt_band": [
       2.4956,
       2.6944
@@ -22797,23 +22803,21 @@
     "i": 404,
     "f_GHz": 20.206,
     "fenster": [
-     3.7209,
-     4.47965
+     4.05324,
+     4.19755
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 6.61,
      "b_peak": 4.11675,
-     "breite": 0.75875,
+     "breite": 0.1443,
      "resonanz_da": true,
-     "rmse_norm": 0.115,
+     "rmse_norm": 0.138,
      "gt_band": [
       2.4956,
       2.6944
@@ -23707,23 +23711,21 @@
     "i": 438,
     "f_GHz": 21.9056,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05064,
+     4.19783
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 7.17,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14719,
      "resonanz_da": true,
-     "rmse_norm": 0.126,
+     "rmse_norm": 0.151,
      "gt_band": [
       2.5647,
       2.7635
@@ -23791,23 +23793,21 @@
     "i": 441,
     "f_GHz": 22.0556,
     "fenster": [
-     3.71675,
-     4.47965
+     4.05226,
+     4.19753
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 7.4,
      "b_peak": 4.11675,
-     "breite": 0.7629,
+     "breite": 0.14527,
      "resonanz_da": true,
-     "rmse_norm": 0.112,
+     "rmse_norm": 0.137,
      "gt_band": [
       2.5647,
       2.7635
@@ -24037,23 +24037,21 @@
     "i": 450,
     "f_GHz": 22.5055,
     "fenster": [
-     3.7209,
-     4.47965
+     4.05145,
+     4.19931
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 7.62,
      "b_peak": 4.11675,
-     "breite": 0.75875,
+     "breite": 0.14786,
      "resonanz_da": true,
-     "rmse_norm": 0.148,
+     "rmse_norm": 0.166,
      "gt_band": [
       2.5818,
       2.7814
@@ -24065,23 +24063,21 @@
     "i": 451,
     "f_GHz": 22.5555,
     "fenster": [
-     3.71485,
-     4.47965
+     4.05083,
+     4.19915
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 7.45,
      "b_peak": 4.11675,
-     "breite": 0.7648,
+     "breite": 0.14831,
      "resonanz_da": true,
-     "rmse_norm": 0.123,
+     "rmse_norm": 0.135,
      "gt_band": [
       2.5818,
       2.7814
@@ -24305,23 +24301,21 @@
     "i": 460,
     "f_GHz": 23.0054,
     "fenster": [
-     3.7209,
-     4.47965
+     4.05143,
+     4.19986
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 7.67,
      "b_peak": 4.11675,
-     "breite": 0.75875,
+     "breite": 0.14843,
      "resonanz_da": true,
-     "rmse_norm": 0.123,
+     "rmse_norm": 0.149,
      "gt_band": [
       2.59955,
       2.7981
@@ -28189,7 +28183,7 @@
     "i": 602,
     "f_GHz": 30.104,
     "fenster": [
-     3.55685,
+     3.67105,
      3.86445
     ],
     "klassen": [
@@ -28201,9 +28195,9 @@
     "info": {
      "prom": 7.64,
      "b_peak": 4.1159,
-     "breite": 0.3076,
+     "breite": 0.1934,
      "resonanz_da": true,
-     "rmse_norm": 0.135,
+     "rmse_norm": 0.093,
      "gt_band": [
       2.84025,
       3.0399
@@ -28272,7 +28266,7 @@
     "f_GHz": 30.2539,
     "fenster": [
      3.04065,
-     3.84065
+     3.45963
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -28283,9 +28277,9 @@
     "info": {
      "prom": 7.81,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.41898,
      "resonanz_da": true,
-     "rmse_norm": 0.115,
+     "rmse_norm": 0.135,
      "gt_band": [
       2.84025,
       3.0399
@@ -28594,23 +28588,21 @@
     "i": 622,
     "f_GHz": 31.1038,
     "fenster": [
-     2.2269,
-     3.0269
+     2.52429,
+     2.69717
     ],
     "klassen": [
      "FENSTER_LEER"
     ],
-    "morph": [
-     "MEHRFACHRESONANZ"
-    ],
+    "morph": [],
     "status": "WINDOW_FAIL",
     "gruende": [],
     "info": {
      "prom": 7.68,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.17287,
      "resonanz_da": true,
-     "rmse_norm": 0.134,
+     "rmse_norm": 0.113,
      "gt_band": [
       2.8752,
       3.0737
@@ -29582,7 +29574,7 @@
     "f_GHz": 33.9532,
     "fenster": [
      2.85748,
-     2.94122
+     2.89116
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -29593,9 +29585,9 @@
     "info": {
      "prom": 7.98,
      "b_peak": 4.11675,
-     "breite": 0.08374,
+     "breite": 0.03368,
      "resonanz_da": true,
-     "rmse_norm": 0.14,
+     "rmse_norm": 0.129,
      "gt_band": [
       2.97815,
       3.17785
@@ -31752,11 +31744,281 @@
     }
    },
    {
+    "i": 824,
+    "f_GHz": 41.2018,
+    "fenster": [
+     2.94555,
+     3.42033
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.67,
+     "b_peak": 4.1177,
+     "breite": 0.47478,
+     "resonanz_da": true,
+     "rmse_norm": 0.111,
+     "gt_band": [
+      3.21985,
+      3.41845
+     ],
+     "fwhm": 0.99865
+    }
+   },
+   {
+    "i": 846,
+    "f_GHz": 42.3015,
+    "fenster": [
+     3.02485,
+     3.45816
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.37,
+     "b_peak": 4.1202,
+     "breite": 0.43331,
+     "resonanz_da": true,
+     "rmse_norm": 0.12,
+     "gt_band": [
+      3.2719,
+      3.4709
+     ],
+     "fwhm": 1.00095
+    }
+   },
+   {
+    "i": 851,
+    "f_GHz": 42.5515,
+    "fenster": [
+     2.9255,
+     3.40972
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 9.08,
+     "b_peak": 4.11675,
+     "breite": 0.48422,
+     "resonanz_da": true,
+     "rmse_norm": 0.139,
+     "gt_band": [
+      3.2719,
+      3.4709
+     ],
+     "fwhm": 1.11345
+    }
+   },
+   {
+    "i": 852,
+    "f_GHz": 42.6015,
+    "fenster": [
+     2.92603,
+     3.41432
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.59,
+     "b_peak": 4.1159,
+     "breite": 0.48829,
+     "resonanz_da": true,
+     "rmse_norm": 0.127,
+     "gt_band": [
+      3.2719,
+      3.4709
+     ],
+     "fwhm": 0.99765
+    }
+   },
+   {
+    "i": 853,
+    "f_GHz": 42.6515,
+    "fenster": [
+     2.92032,
+     3.40273
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.6,
+     "b_peak": 4.11675,
+     "breite": 0.48242,
+     "resonanz_da": true,
+     "rmse_norm": 0.141,
+     "gt_band": [
+      3.2719,
+      3.4709
+     ],
+     "fwhm": 0.9954
+    }
+   },
+   {
+    "i": 854,
+    "f_GHz": 42.7015,
+    "fenster": [
+     3.02485,
+     3.43887
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 9.14,
+     "b_peak": 4.1177,
+     "breite": 0.41402,
+     "resonanz_da": true,
+     "rmse_norm": 0.115,
+     "gt_band": [
+      3.2719,
+      3.4709
+     ],
+     "fwhm": 0.99465
+    }
+   },
+   {
+    "i": 855,
+    "f_GHz": 42.7514,
+    "fenster": [
+     2.9248,
+     3.41824
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.42,
+     "b_peak": 4.11675,
+     "breite": 0.49344,
+     "resonanz_da": true,
+     "rmse_norm": 0.136,
+     "gt_band": [
+      3.2719,
+      3.4709
+     ],
+     "fwhm": 1.00095
+    }
+   },
+   {
+    "i": 856,
+    "f_GHz": 42.8014,
+    "fenster": [
+     2.9179,
+     3.41673
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.18,
+     "b_peak": 4.1177,
+     "breite": 0.49883,
+     "resonanz_da": true,
+     "rmse_norm": 0.129,
+     "gt_band": [
+      3.28865,
+      3.4878
+     ],
+     "fwhm": 1.00305
+    }
+   },
+   {
+    "i": 870,
+    "f_GHz": 43.5013,
+    "fenster": [
+     2.9224,
+     3.39904
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.43,
+     "b_peak": 4.1177,
+     "breite": 0.47664,
+     "resonanz_da": true,
+     "rmse_norm": 0.126,
+     "gt_band": [
+      3.3065,
+      3.50555
+     ],
+     "fwhm": 1.00475
+    }
+   },
+   {
+    "i": 872,
+    "f_GHz": 43.6013,
+    "fenster": [
+     2.92685,
+     3.38506
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 7.93,
+     "b_peak": 4.1177,
+     "breite": 0.45821,
+     "resonanz_da": true,
+     "rmse_norm": 0.123,
+     "gt_band": [
+      3.3065,
+      3.50555
+     ],
+     "fwhm": 1.11675
+    }
+   },
+   {
     "i": 896,
     "f_GHz": 44.801,
     "fenster": [
      2.9179,
-     3.7179
+     3.42067
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -31769,9 +32031,9 @@
     "info": {
      "prom": 8.2,
      "b_peak": 4.1177,
-     "breite": 0.8,
+     "breite": 0.50277,
      "resonanz_da": true,
-     "rmse_norm": 0.112,
+     "rmse_norm": 0.124,
      "gt_band": [
       3.358,
       3.5569
@@ -31806,11 +32068,37 @@
     }
    },
    {
+    "i": 899,
+    "f_GHz": 44.951,
+    "fenster": [
+     3.0196,
+     3.4614
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.07,
+     "b_peak": 4.1177,
+     "breite": 0.4418,
+     "resonanz_da": true,
+     "rmse_norm": 0.108,
+     "gt_band": [
+      3.358,
+      3.5569
+     ],
+     "fwhm": 1.00185
+    }
+   },
+   {
     "i": 901,
     "f_GHz": 45.051,
     "fenster": [
      2.91165,
-     3.71165
+     3.45678
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -31821,9 +32109,9 @@
     "info": {
      "prom": 8.42,
      "b_peak": 4.1177,
-     "breite": 0.8,
+     "breite": 0.54513,
      "resonanz_da": true,
-     "rmse_norm": 0.114,
+     "rmse_norm": 0.124,
      "gt_band": [
       3.358,
       3.5569
@@ -31836,7 +32124,7 @@
     "f_GHz": 45.151,
     "fenster": [
      2.91715,
-     3.71715
+     3.4364
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -31849,9 +32137,9 @@
     "info": {
      "prom": 8.51,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.51925,
      "resonanz_da": true,
-     "rmse_norm": 0.111,
+     "rmse_norm": 0.122,
      "gt_band": [
       3.358,
       3.5569
@@ -31864,7 +32152,7 @@
     "f_GHz": 45.201,
     "fenster": [
      2.9347,
-     3.7011
+     3.47022
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -31875,9 +32163,9 @@
     "info": {
      "prom": 8.94,
      "b_peak": 4.11675,
-     "breite": 0.7664,
+     "breite": 0.53552,
      "resonanz_da": true,
-     "rmse_norm": 0.104,
+     "rmse_norm": 0.109,
      "gt_band": [
       3.358,
       3.5569
@@ -31886,11 +32174,37 @@
     }
    },
    {
+    "i": 905,
+    "f_GHz": 45.251,
+    "fenster": [
+     2.9422,
+     3.47492
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 8.69,
+     "b_peak": 4.11675,
+     "breite": 0.53272,
+     "resonanz_da": true,
+     "rmse_norm": 0.13,
+     "gt_band": [
+      3.358,
+      3.5569
+     ],
+     "fwhm": 1.00195
+    }
+   },
+   {
     "i": 906,
     "f_GHz": 45.3009,
     "fenster": [
-     3.27078,
-     3.35452
+     3.28157,
+     3.34184
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -31901,9 +32215,9 @@
     "info": {
      "prom": 8.28,
      "b_peak": 4.1188,
-     "breite": 0.08374,
+     "breite": 0.06027,
      "resonanz_da": true,
-     "rmse_norm": 0.158,
+     "rmse_norm": 0.099,
      "gt_band": [
       3.37595,
       3.5737
@@ -31916,7 +32230,7 @@
     "f_GHz": 45.3509,
     "fenster": [
      2.9138,
-     3.7138
+     3.52611
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -31927,9 +32241,9 @@
     "info": {
      "prom": 7.7,
      "b_peak": 4.1202,
-     "breite": 0.8,
+     "breite": 0.61231,
      "resonanz_da": true,
-     "rmse_norm": 0.116,
+     "rmse_norm": 0.127,
      "gt_band": [
       3.37595,
       3.5737
@@ -32078,7 +32392,7 @@
     "f_GHz": 45.7508,
     "fenster": [
      2.8712,
-     3.6712
+     3.43942
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32091,9 +32405,9 @@
     "info": {
      "prom": 7.09,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.56822,
      "resonanz_da": true,
-     "rmse_norm": 0.096,
+     "rmse_norm": 0.105,
      "gt_band": [
       3.37595,
       3.5737
@@ -32106,7 +32420,7 @@
     "f_GHz": 45.8008,
     "fenster": [
      2.88655,
-     3.68655
+     3.43808
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32119,9 +32433,9 @@
     "info": {
      "prom": 7.44,
      "b_peak": 4.1188,
-     "breite": 0.8,
+     "breite": 0.55153,
      "resonanz_da": true,
-     "rmse_norm": 0.098,
+     "rmse_norm": 0.108,
      "gt_band": [
       3.39255,
       3.59145
@@ -32133,8 +32447,8 @@
     "i": 917,
     "f_GHz": 45.8508,
     "fenster": [
-     2.84895,
-     3.64895
+     2.86498,
+     3.40364
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32147,9 +32461,9 @@
     "info": {
      "prom": 7.23,
      "b_peak": 4.1159,
-     "breite": 0.8,
+     "breite": 0.53866,
      "resonanz_da": true,
-     "rmse_norm": 0.107,
+     "rmse_norm": 0.115,
      "gt_band": [
       3.39255,
       3.59145
@@ -32161,8 +32475,8 @@
     "i": 918,
     "f_GHz": 45.9008,
     "fenster": [
-     2.6851,
-     3.4851
+     2.71182,
+     3.39897
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32175,9 +32489,9 @@
     "info": {
      "prom": 8.01,
      "b_peak": 4.11485,
-     "breite": 0.8,
+     "breite": 0.68715,
      "resonanz_da": true,
-     "rmse_norm": 0.114,
+     "rmse_norm": 0.112,
      "gt_band": [
       3.39255,
       3.59145
@@ -32189,8 +32503,8 @@
     "i": 919,
     "f_GHz": 45.9508,
     "fenster": [
-     2.6851,
-     3.4851
+     2.71393,
+     3.39372
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32203,7 +32517,7 @@
     "info": {
      "prom": 7.22,
      "b_peak": 4.11485,
-     "breite": 0.8,
+     "breite": 0.67979,
      "resonanz_da": true,
      "rmse_norm": 0.124,
      "gt_band": [
@@ -32217,8 +32531,8 @@
     "i": 920,
     "f_GHz": 46.0008,
     "fenster": [
-     2.70785,
-     3.50785
+     2.7555,
+     3.36276
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32231,9 +32545,9 @@
     "info": {
      "prom": 7.36,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.60725,
      "resonanz_da": true,
-     "rmse_norm": 0.127,
+     "rmse_norm": 0.123,
      "gt_band": [
       3.39255,
       3.59145
@@ -32245,7 +32559,7 @@
     "i": 921,
     "f_GHz": 46.0508,
     "fenster": [
-     3.03628,
+     3.06642,
      3.12002
     ],
     "klassen": [
@@ -32257,9 +32571,9 @@
     "info": {
      "prom": 7.67,
      "b_peak": 4.1177,
-     "breite": 0.08374,
+     "breite": 0.0536,
      "resonanz_da": true,
-     "rmse_norm": 0.145,
+     "rmse_norm": 0.08,
      "gt_band": [
       3.39255,
       3.59145
@@ -32271,8 +32585,8 @@
     "i": 922,
     "f_GHz": 46.1008,
     "fenster": [
-     2.8512,
-     3.6512
+     2.88295,
+     3.39478
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32285,9 +32599,9 @@
     "info": {
      "prom": 7.56,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.51182,
      "resonanz_da": true,
-     "rmse_norm": 0.115,
+     "rmse_norm": 0.121,
      "gt_band": [
       3.39255,
       3.59145
@@ -32299,8 +32613,8 @@
     "i": 924,
     "f_GHz": 46.2008,
     "fenster": [
-     2.84995,
-     3.64995
+     2.87312,
+     3.41956
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32313,9 +32627,9 @@
     "info": {
      "prom": 7.51,
      "b_peak": 4.1159,
-     "breite": 0.8,
+     "breite": 0.54644,
      "resonanz_da": true,
-     "rmse_norm": 0.116,
+     "rmse_norm": 0.12,
      "gt_band": [
       3.39255,
       3.59145
@@ -32328,7 +32642,7 @@
     "f_GHz": 46.2507,
     "fenster": [
      2.9224,
-     3.7224
+     3.46628
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32341,9 +32655,9 @@
     "info": {
      "prom": 7.39,
      "b_peak": 4.11485,
-     "breite": 0.8,
+     "breite": 0.54388,
      "resonanz_da": true,
-     "rmse_norm": 0.111,
+     "rmse_norm": 0.113,
      "gt_band": [
       3.39255,
       3.59145
@@ -32356,7 +32670,7 @@
     "f_GHz": 46.4007,
     "fenster": [
      2.8995,
-     3.6995
+     3.47165
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32369,9 +32683,9 @@
     "info": {
      "prom": 7.38,
      "b_peak": 4.1188,
-     "breite": 0.8,
+     "breite": 0.57215,
      "resonanz_da": true,
-     "rmse_norm": 0.098,
+     "rmse_norm": 0.107,
      "gt_band": [
       3.41025,
       3.60895
@@ -32412,7 +32726,7 @@
     "f_GHz": 46.6007,
     "fenster": [
      2.92685,
-     3.72685
+     3.47096
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32425,9 +32739,9 @@
     "info": {
      "prom": 6.96,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.54411,
      "resonanz_da": true,
-     "rmse_norm": 0.093,
+     "rmse_norm": 0.098,
      "gt_band": [
       3.41025,
       3.60895
@@ -32436,11 +32750,39 @@
     }
    },
    {
+    "i": 935,
+    "f_GHz": 46.7507,
+    "fenster": [
+     3.0968,
+     3.52695
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 7.12,
+     "b_peak": 4.1177,
+     "breite": 0.43015,
+     "resonanz_da": true,
+     "rmse_norm": 0.111,
+     "gt_band": [
+      3.41025,
+      3.60895
+     ],
+     "fwhm": 1.14755
+    }
+   },
+   {
     "i": 937,
     "f_GHz": 46.8506,
     "fenster": [
      2.9224,
-     3.7224
+     3.46187
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32453,9 +32795,9 @@
     "info": {
      "prom": 7.27,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.53947,
      "resonanz_da": true,
-     "rmse_norm": 0.096,
+     "rmse_norm": 0.097,
      "gt_band": [
       3.42685,
       3.6262
@@ -32468,7 +32810,7 @@
     "f_GHz": 46.9006,
     "fenster": [
      2.84895,
-     3.64895
+     3.40986
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32481,9 +32823,9 @@
     "info": {
      "prom": 7.05,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.56091,
      "resonanz_da": true,
-     "rmse_norm": 0.103,
+     "rmse_norm": 0.112,
      "gt_band": [
       3.42685,
       3.6262
@@ -32496,7 +32838,7 @@
     "f_GHz": 46.9506,
     "fenster": [
      2.93275,
-     3.73275
+     3.46243
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32509,9 +32851,9 @@
     "info": {
      "prom": 7.59,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.52968,
      "resonanz_da": true,
-     "rmse_norm": 0.097,
+     "rmse_norm": 0.103,
      "gt_band": [
       3.42685,
       3.6262
@@ -32523,8 +32865,8 @@
     "i": 940,
     "f_GHz": 47.0006,
     "fenster": [
-     2.70785,
-     3.50785
+     2.73609,
+     3.36849
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32537,9 +32879,9 @@
     "info": {
      "prom": 7.14,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.6324,
      "resonanz_da": true,
-     "rmse_norm": 0.115,
+     "rmse_norm": 0.116,
      "gt_band": [
       3.42685,
       3.6262
@@ -32552,7 +32894,7 @@
     "f_GHz": 47.0506,
     "fenster": [
      2.9248,
-     3.7248
+     3.45962
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32565,9 +32907,9 @@
     "info": {
      "prom": 7.31,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.53482,
      "resonanz_da": true,
-     "rmse_norm": 0.093,
+     "rmse_norm": 0.097,
      "gt_band": [
       3.42685,
       3.6262
@@ -32580,7 +32922,7 @@
     "f_GHz": 47.1006,
     "fenster": [
      2.9224,
-     3.7224
+     3.44817
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32593,9 +32935,9 @@
     "info": {
      "prom": 7.88,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.52577,
      "resonanz_da": true,
-     "rmse_norm": 0.098,
+     "rmse_norm": 0.107,
      "gt_band": [
       3.42685,
       3.6262
@@ -32608,7 +32950,7 @@
     "f_GHz": 47.1506,
     "fenster": [
      2.9248,
-     3.7248
+     3.44283
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32621,9 +32963,9 @@
     "info": {
      "prom": 6.96,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.51803,
      "resonanz_da": true,
-     "rmse_norm": 0.102,
+     "rmse_norm": 0.108,
      "gt_band": [
       3.42685,
       3.6262
@@ -32636,7 +32978,7 @@
     "f_GHz": 47.2006,
     "fenster": [
      2.935,
-     3.735
+     3.46323
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32649,9 +32991,9 @@
     "info": {
      "prom": 7.27,
      "b_peak": 4.1159,
-     "breite": 0.8,
+     "breite": 0.52823,
      "resonanz_da": true,
-     "rmse_norm": 0.096,
+     "rmse_norm": 0.099,
      "gt_band": [
       3.42685,
       3.6262
@@ -32692,7 +33034,7 @@
     "f_GHz": 47.6505,
     "fenster": [
      2.92365,
-     3.72365
+     3.52157
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32705,9 +33047,9 @@
     "info": {
      "prom": 6.72,
      "b_peak": 4.1159,
-     "breite": 0.8,
+     "breite": 0.59792,
      "resonanz_da": true,
-     "rmse_norm": 0.082,
+     "rmse_norm": 0.089,
      "gt_band": [
       3.4446,
       3.643
@@ -32720,7 +33062,7 @@
     "f_GHz": 47.7005,
     "fenster": [
      2.9065,
-     3.7065
+     3.5221
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32733,9 +33075,9 @@
     "info": {
      "prom": 6.22,
      "b_peak": 4.1177,
-     "breite": 0.8,
+     "breite": 0.6156,
      "resonanz_da": true,
-     "rmse_norm": 0.088,
+     "rmse_norm": 0.097,
      "gt_band": [
       3.4446,
       3.643
@@ -32776,7 +33118,7 @@
     "f_GHz": 47.8004,
     "fenster": [
      2.8712,
-     3.6712
+     3.50892
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -32789,9 +33131,9 @@
     "info": {
      "prom": 6.85,
      "b_peak": 4.11675,
-     "breite": 0.8,
+     "breite": 0.63772,
      "resonanz_da": true,
-     "rmse_norm": 0.095,
+     "rmse_norm": 0.102,
      "gt_band": [
       3.46135,
       3.66045
@@ -32972,6 +33314,32 @@
     }
    },
    {
+    "i": 963,
+    "f_GHz": 48.1504,
+    "fenster": [
+     3.63773,
+     4.00695
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 6.53,
+     "b_peak": 4.11675,
+     "breite": 0.36922,
+     "resonanz_da": true,
+     "rmse_norm": 0.115,
+     "gt_band": [
+      3.46135,
+      3.66045
+     ],
+     "fwhm": 1.3732
+    }
+   },
+   {
     "i": 964,
     "f_GHz": 48.2004,
     "fenster": [
@@ -33032,7 +33400,7 @@
     "f_GHz": 48.3003,
     "fenster": [
      2.9248,
-     3.7248
+     3.52023
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -33045,9 +33413,9 @@
     "info": {
      "prom": 6.28,
      "b_peak": 4.1177,
-     "breite": 0.8,
+     "breite": 0.59543,
      "resonanz_da": true,
-     "rmse_norm": 0.1,
+     "rmse_norm": 0.111,
      "gt_band": [
       3.47845,
       3.678
@@ -33084,6 +33452,32 @@
     }
    },
    {
+    "i": 968,
+    "f_GHz": 48.4003,
+    "fenster": [
+     3.64066,
+     4.0111
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 6.09,
+     "b_peak": 4.1177,
+     "breite": 0.37044,
+     "resonanz_da": true,
+     "rmse_norm": 0.115,
+     "gt_band": [
+      3.47845,
+      3.678
+     ],
+     "fwhm": 1.16295
+    }
+   },
+   {
     "i": 970,
     "f_GHz": 48.5003,
     "fenster": [
@@ -33112,6 +33506,34 @@
       3.678
      ],
      "fwhm": 1.1632
+    }
+   },
+   {
+    "i": 971,
+    "f_GHz": 48.5503,
+    "fenster": [
+     3.76434,
+     4.024
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [
+     "MEHRFACHRESONANZ"
+    ],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 5.57,
+     "b_peak": 4.1209,
+     "breite": 0.25966,
+     "resonanz_da": false,
+     "rmse_norm": 0.135,
+     "gt_band": [
+      3.47845,
+      3.678
+     ],
+     "fwhm": 1.5219
     }
    },
    {
@@ -33174,6 +33596,84 @@
       3.678
      ],
      "fwhm": 1.3798
+    }
+   },
+   {
+    "i": 974,
+    "f_GHz": 48.7003,
+    "fenster": [
+     3.74056,
+     4.024
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 6.32,
+     "b_peak": 4.11675,
+     "breite": 0.28344,
+     "resonanz_da": true,
+     "rmse_norm": 0.122,
+     "gt_band": [
+      3.47845,
+      3.678
+     ],
+     "fwhm": 1.16085
+    }
+   },
+   {
+    "i": 975,
+    "f_GHz": 48.7503,
+    "fenster": [
+     3.66308,
+     4.0111
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 6.19,
+     "b_peak": 4.1159,
+     "breite": 0.34802,
+     "resonanz_da": true,
+     "rmse_norm": 0.136,
+     "gt_band": [
+      3.47845,
+      3.678
+     ],
+     "fwhm": 1.15635
+    }
+   },
+   {
+    "i": 978,
+    "f_GHz": 48.9002,
+    "fenster": [
+     3.69502,
+     4.0228
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 5.47,
+     "b_peak": 4.11675,
+     "breite": 0.32778,
+     "resonanz_da": false,
+     "rmse_norm": 0.132,
+     "gt_band": [
+      3.49625,
+      3.6953
+     ],
+     "fwhm": 1.7214
     }
    },
    {
@@ -33684,16 +34184,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 929,
-   "WINDOW_FLAGGED": 40,
+   "OK": 935,
+   "WINDOW_FLAGGED": 34,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 32
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 44,
-   "FENSTER_ZU_ENG": 2,
-   "FENSTER_ZU_WEIT": 6
+   "MEHRFACHRESONANZ": 35,
+   "FENSTER_ZU_ENG": 4
   },
   "probleme": []
  },
@@ -33736,8 +34235,8 @@
   "n_resonanzen": 800,
   "hat_gt": false,
   "zaehler": {
-   "OK": 731,
-   "WINDOW_FLAGGED": 6,
+   "OK": 737,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 63
   },
@@ -33760,7 +34259,7 @@
   "klasse_zaehler": {},
   "morph_zaehler": {
    "FENSTER_ZU_ENG": 5,
-   "MEHRFACHRESONANZ": 27
+   "MEHRFACHRESONANZ": 5
   },
   "probleme": []
  },
@@ -33771,8 +34270,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 194,
-   "WINDOW_FLAGGED": 69,
+   "OK": 195,
+   "WINDOW_FLAGGED": 68,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 738
   },
@@ -33783,8 +34282,8 @@
    }
   },
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 5,
-   "MEHRFACHRESONANZ": 76
+   "FENSTER_ZU_ENG": 14,
+   "MEHRFACHRESONANZ": 36
   },
   "probleme": [
    {
@@ -33940,8 +34439,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 903,
-   "WINDOW_FLAGGED": 74,
+   "OK": 912,
+   "WINDOW_FLAGGED": 65,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 24
   },
@@ -33959,15 +34458,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 554,
-   "WINDOW_FLAGGED": 78,
+   "OK": 573,
+   "WINDOW_FLAGGED": 59,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 369
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "FENSTER_ZU_ENG": 2,
-   "MEHRFACHRESONANZ": 239
+   "MEHRFACHRESONANZ": 58
   },
   "probleme": []
  },
@@ -33978,15 +34477,13 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 105,
-   "WINDOW_FLAGGED": 1,
+   "OK": 106,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 895
   },
   "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 12
-  },
+  "morph_zaehler": {},
   "probleme": []
  },
  "Gratings/CoFe-GratingsSi(275µm)-2GHz/2023-JUL-04-Linescan-2D-map-oop--5K_5.18deg-2nd.tdms": {
@@ -33996,8 +34493,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 939,
-   "WINDOW_FLAGGED": 53,
+   "OK": 945,
+   "WINDOW_FLAGGED": 47,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 9
   },
@@ -34030,15 +34527,13 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 92,
-   "WINDOW_FLAGGED": 3,
+   "OK": 94,
+   "WINDOW_FLAGGED": 1,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 906
   },
   "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 7
-  },
+  "morph_zaehler": {},
   "probleme": []
  },
  "Gratings/CoFe-Gratings-SiO2-900nm/2023-MAY-08-Linescan-2D-map-oop--5K_77.74deg.tdms": {
@@ -34066,15 +34561,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 475,
-   "WINDOW_FLAGGED": 177,
+   "OK": 509,
+   "WINDOW_FLAGGED": 143,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 349
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "FENSTER_ZU_ENG": 5,
-   "MEHRFACHRESONANZ": 268
+   "MEHRFACHRESONANZ": 140
   },
   "probleme": []
  },
@@ -34101,8 +34596,8 @@
   "n_resonanzen": 800,
   "hat_gt": false,
   "zaehler": {
-   "OK": 624,
-   "WINDOW_FLAGGED": 5,
+   "OK": 629,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 171
   },
@@ -34117,8 +34612,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 926,
-   "WINDOW_FLAGGED": 62,
+   "OK": 941,
+   "WINDOW_FLAGGED": 47,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 13
   },
@@ -34136,14 +34631,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 481,
-   "WINDOW_FLAGGED": 51,
+   "OK": 519,
+   "WINDOW_FLAGGED": 13,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 469
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 10
+   "FENSTER_ZU_ENG": 8,
+   "MEHRFACHRESONANZ": 4
   },
   "probleme": []
  },
@@ -34154,14 +34650,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 877,
-   "WINDOW_FLAGGED": 62,
+   "OK": 890,
+   "WINDOW_FLAGGED": 49,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 62
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 16
+   "MEHRFACHRESONANZ": 15
   },
   "probleme": []
  },
@@ -34172,8 +34668,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 957,
-   "WINDOW_FLAGGED": 38,
+   "OK": 968,
+   "WINDOW_FLAGGED": 27,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 6
   },
@@ -34207,8 +34703,8 @@
   "n_resonanzen": 920,
   "hat_gt": false,
   "zaehler": {
-   "OK": 570,
-   "WINDOW_FLAGGED": 8,
+   "OK": 575,
+   "WINDOW_FLAGGED": 3,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 342
   },
@@ -34218,164 +34714,8 @@
  },
  "Gratings/CoFe-GratingsSi(275µm)-1GHz/2023-JUN-30-Linescan-2D-map-ip--5K_95.441deg.tdms": {
   "datei": "Gratings/CoFe-GratingsSi(275µm)-1GHz/2023-JUN-30-Linescan-2D-map-ip--5K_95.441deg.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": true,
-  "zaehler": {
-   "OK": 352,
-   "WINDOW_FLAGGED": 588,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 61
-  },
-  "klasse_zaehler": {
-   "FENSTER_LEER": {
-    "flagged": 5,
-    "fail": 0
-   }
-  },
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 92,
-   "FENSTER_ZU_WEIT": 26,
-   "FENSTER_ZU_ENG": 3
-  },
-  "probleme": [
-   {
-    "i": 923,
-    "f_GHz": 46.1508,
-    "fenster": [
-     -0.79089,
-     -0.75731
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
-     "B_res am Fensterrand",
-     "alpha unphysikalisch"
-    ],
-    "info": {
-     "prom": 10.67,
-     "b_peak": -0.2349,
-     "breite": 0.03357,
-     "resonanz_da": true,
-     "rmse_norm": 0.01,
-     "fwhm": 0.5651
-    }
-   },
-   {
-    "i": 958,
-    "f_GHz": 47.9004,
-    "fenster": [
-     -0.7123,
-     -0.5811
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "alpha an Grenze",
-     "B_res am Fensterrand",
-     "alpha unphysikalisch",
-     "B_res-Unsicherheit zu gross"
-    ],
-    "info": {
-     "prom": 10.54,
-     "b_peak": -0.2349,
-     "breite": 0.1312,
-     "resonanz_da": true,
-     "rmse_norm": 0.038,
-     "fwhm": 0.01119
-    }
-   },
-   {
-    "i": 960,
-    "f_GHz": 48.0004,
-    "fenster": [
-     -0.68175,
-     -0.62135
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
-     "B_res am Fensterrand",
-     "alpha unphysikalisch"
-    ],
-    "info": {
-     "prom": 10.13,
-     "b_peak": -0.2349,
-     "breite": 0.0604,
-     "resonanz_da": true,
-     "rmse_norm": 0.005,
-     "fwhm": 0.01119
-    }
-   },
-   {
-    "i": 967,
-    "f_GHz": 48.3503,
-    "fenster": [
-     -0.76885,
-     -0.54505
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "alpha an Grenze",
-     "B_res am Fensterrand",
-     "alpha unphysikalisch",
-     "B_res-Unsicherheit zu gross"
-    ],
-    "info": {
-     "prom": 10.53,
-     "b_peak": -0.2349,
-     "breite": 0.2238,
-     "resonanz_da": true,
-     "rmse_norm": 0.187,
-     "fwhm": 0.01119
-    }
-   },
-   {
-    "i": 968,
-    "f_GHz": 48.4003,
-    "fenster": [
-     -0.7586,
-     -0.5348
-    ],
-    "klassen": [
-     "FENSTER_LEER"
-    ],
-    "morph": [],
-    "status": "WINDOW_FLAGGED",
-    "gruende": [
-     "alpha an Grenze",
-     "phi an Grenze",
-     "alpha unphysikalisch",
-     "B_res-Unsicherheit zu gross"
-    ],
-    "info": {
-     "prom": 11.45,
-     "b_peak": -0.2349,
-     "breite": 0.2238,
-     "resonanz_da": true,
-     "rmse_norm": 0.122,
-     "fwhm": 0.01119
-    }
-   }
-  ]
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.1
  },
  "Gratings/CoFe-GratingsSi-1GHz/2023-JUN-16-Linescan-2D-map-oop--10K_129.14deg-sorted.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-1GHz/2023-JUN-16-Linescan-2D-map-oop--10K_129.14deg-sorted.tdms",
@@ -34400,15 +34740,16 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 775,
-   "WINDOW_FLAGGED": 52,
+   "OK": 781,
+   "WINDOW_FLAGGED": 46,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 174
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 70,
-   "FENSTER_ZU_WEIT": 2
+   "MEHRFACHRESONANZ": 24,
+   "FENSTER_ZU_WEIT": 2,
+   "FENSTER_ZU_ENG": 1
   },
   "probleme": []
  },
@@ -34419,8 +34760,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 745,
-   "WINDOW_FLAGGED": 150,
+   "OK": 750,
+   "WINDOW_FLAGGED": 145,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 106
   },
@@ -34431,8 +34772,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 164,
-   "FENSTER_ZU_ENG": 78
+   "MEHRFACHRESONANZ": 119,
+   "FENSTER_ZU_ENG": 103
   },
   "probleme": [
    {
@@ -36238,14 +36579,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 520,
-   "WINDOW_FLAGGED": 363,
+   "OK": 521,
+   "WINDOW_FLAGGED": 362,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 118
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 82,
+   "MEHRFACHRESONANZ": 79,
    "FENSTER_ZU_WEIT": 1
   },
   "probleme": []
@@ -36253,17 +36594,17 @@
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_157.03deg-2.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhand"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg-test.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorha"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Gratings/CoFe-GratingsSi-200nm/2023-MAY-16-Linescan-2D-map-oop--5K_67.03deg.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "Gratings/CoFe-GratingsSi-200nm/2023-MAY-15-Linescan-2D-map-oop--5K_67.03deg.tdms": {
   "datei": "Gratings/CoFe-GratingsSi-200nm/2023-MAY-15-Linescan-2D-map-oop--5K_67.03deg.tdms",
@@ -36272,8 +36613,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 490,
-   "WINDOW_FLAGGED": 415,
+   "OK": 495,
+   "WINDOW_FLAGGED": 410,
    "WINDOW_FAIL": 22,
    "KEIN_ZIEL": 74
   },
@@ -36284,7 +36625,7 @@
    }
   },
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 12,
+   "FENSTER_ZU_ENG": 15,
    "MEHRFACHRESONANZ": 26,
    "FENSTER_ZU_WEIT": 1
   },
@@ -43691,7 +44032,7 @@
     "f_GHz": 40.6519,
     "fenster": [
      2.79527,
-     3.02559
+     2.98752
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -43702,9 +44043,9 @@
     "info": {
      "prom": 6.66,
      "b_peak": 3.5276,
-     "breite": 0.23032,
+     "breite": 0.19226,
      "resonanz_da": true,
-     "rmse_norm": 0.182,
+     "rmse_norm": 0.176,
      "gt_band": [
       3.2516,
       3.44905
@@ -44242,7 +44583,7 @@
     "f_GHz": 41.6017,
     "fenster": [
      2.90814,
-     3.13846
+     3.13711
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -44253,7 +44594,7 @@
     "info": {
      "prom": 6.39,
      "b_peak": 3.5276,
-     "breite": 0.23032,
+     "breite": 0.22897,
      "resonanz_da": true,
      "rmse_norm": 0.147,
      "gt_band": [
@@ -44954,8 +45295,8 @@
     "i": 857,
     "f_GHz": 42.8514,
     "fenster": [
-     2.82365,
-     2.89125
+     2.83199,
+     2.88052
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -44966,9 +45307,9 @@
     "info": {
      "prom": 7.32,
      "b_peak": 3.4107,
-     "breite": 0.0676,
+     "breite": 0.04854,
      "resonanz_da": true,
-     "rmse_norm": 0.147,
+     "rmse_norm": 0.119,
      "gt_band": [
       3.3271,
       3.5253
@@ -45034,7 +45375,7 @@
     "i": 860,
     "f_GHz": 43.0014,
     "fenster": [
-     2.82172,
+     2.84518,
      3.05204
     ],
     "klassen": [
@@ -45046,9 +45387,9 @@
     "info": {
      "prom": 6.57,
      "b_peak": 3.4158,
-     "breite": 0.23032,
+     "breite": 0.20687,
      "resonanz_da": true,
-     "rmse_norm": 0.157,
+     "rmse_norm": 0.152,
      "gt_band": [
       3.33355,
       3.531
@@ -45348,8 +45689,8 @@
     "i": 871,
     "f_GHz": 43.5513,
     "fenster": [
-     3.02584,
-     3.25616
+     3.13014,
+     3.20173
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -45360,9 +45701,9 @@
     "info": {
      "prom": 5.76,
      "b_peak": 3.5276,
-     "breite": 0.23032,
+     "breite": 0.0716,
      "resonanz_da": false,
-     "rmse_norm": 0.149,
+     "rmse_norm": 0.159,
      "gt_band": [
       3.35085,
       3.5495
@@ -45968,8 +46309,8 @@
     "i": 924,
     "f_GHz": 46.2008,
     "fenster": [
-     3.05917,
-     3.28949
+     3.06706,
+     3.26268
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -45980,9 +46321,9 @@
     "info": {
      "prom": 9.19,
      "b_peak": 3.5216,
-     "breite": 0.23032,
+     "breite": 0.19562,
      "resonanz_da": true,
-     "rmse_norm": 0.128,
+     "rmse_norm": 0.126,
      "gt_band": [
       3.4415,
       3.6388
@@ -46091,7 +46432,6 @@
     "morph": [],
     "status": "WINDOW_FLAGGED",
     "gruende": [
-     "keine Unsicherheiten",
      "alpha an Grenze",
      "alpha unphysikalisch"
     ],
@@ -48259,8 +48599,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 481,
-   "WINDOW_FLAGGED": 261,
+   "OK": 483,
+   "WINDOW_FLAGGED": 259,
    "WINDOW_FAIL": 3,
    "KEIN_ZIEL": 256
   },
@@ -48272,8 +48612,8 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 22,
-   "FENSTER_ZU_ENG": 1,
-   "FENSTER_ZU_WEIT": 34
+   "FENSTER_ZU_ENG": 5,
+   "FENSTER_ZU_WEIT": 28
   },
   "probleme": [
    {
@@ -48502,8 +48842,8 @@
     "i": 322,
     "f_GHz": 16.1068,
     "fenster": [
-     2.81296,
-     2.90176
+     2.82657,
+     2.86112
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -48514,9 +48854,9 @@
     "info": {
      "prom": 10.29,
      "b_peak": 2.4777,
-     "breite": 0.0888,
+     "breite": 0.03455,
      "resonanz_da": true,
-     "rmse_norm": 0.176,
+     "rmse_norm": 0.157,
      "fwhm": 1.94365
     }
    },
@@ -48546,8 +48886,8 @@
     "i": 324,
     "f_GHz": 16.2068,
     "fenster": [
-     2.68612,
-     2.78292
+     2.70363,
+     2.77831
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -48558,9 +48898,9 @@
     "info": {
      "prom": 11.38,
      "b_peak": 2.4843,
-     "breite": 0.0968,
+     "breite": 0.07467,
      "resonanz_da": true,
-     "rmse_norm": 0.178,
+     "rmse_norm": 0.118,
      "fwhm": 1.94105
     }
    }
@@ -48573,8 +48913,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 891,
-   "WINDOW_FLAGGED": 86,
+   "OK": 905,
+   "WINDOW_FLAGGED": 72,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 24
   },
@@ -54009,8 +54349,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 266,
-   "WINDOW_FLAGGED": 430,
+   "OK": 267,
+   "WINDOW_FLAGGED": 429,
    "WINDOW_FAIL": 19,
    "KEIN_ZIEL": 286
   },
@@ -54022,7 +54362,7 @@
   },
   "morph_zaehler": {
    "FENSTER_ZU_WEIT": 105,
-   "MEHRFACHRESONANZ": 115,
+   "MEHRFACHRESONANZ": 110,
    "FENSTER_ZU_ENG": 17
   },
   "probleme": [
@@ -54030,8 +54370,8 @@
     "i": 715,
     "f_GHz": 35.7529,
     "fenster": [
-     0.4279,
-     0.5188
+     0.45744,
+     0.51668
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -54042,7 +54382,7 @@
     "info": {
      "prom": 12.27,
      "b_peak": -0.4975,
-     "breite": 0.0909,
+     "breite": 0.05923,
      "resonanz_da": true,
      "rmse_norm": 0.011,
      "fwhm": 1.00725
@@ -54052,8 +54392,8 @@
     "i": 716,
     "f_GHz": 35.8028,
     "fenster": [
-     0.4279,
-     0.5188
+     0.45858,
+     0.51803
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -54064,7 +54404,7 @@
     "info": {
      "prom": 11.03,
      "b_peak": -0.4975,
-     "breite": 0.0909,
+     "breite": 0.05945,
      "resonanz_da": true,
      "rmse_norm": 0.014,
      "fwhm": 1.01355
@@ -54074,8 +54414,8 @@
     "i": 717,
     "f_GHz": 35.8528,
     "fenster": [
-     0.4273,
-     0.5188
+     0.46033,
+     0.51874
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -54086,9 +54426,9 @@
     "info": {
      "prom": 14.26,
      "b_peak": -0.50085,
-     "breite": 0.0915,
+     "breite": 0.0584,
      "resonanz_da": true,
-     "rmse_norm": 0.01,
+     "rmse_norm": 0.009,
      "fwhm": 1.0164
     }
    },
@@ -54096,7 +54436,7 @@
     "i": 718,
     "f_GHz": 35.9028,
     "fenster": [
-     0.4301,
+     0.4611,
      0.5188
     ],
     "klassen": [
@@ -54108,9 +54448,9 @@
     "info": {
      "prom": 13.49,
      "b_peak": -0.50085,
-     "breite": 0.0887,
+     "breite": 0.0577,
      "resonanz_da": true,
-     "rmse_norm": 0.013,
+     "rmse_norm": 0.012,
      "fwhm": 1.0187
     }
    },
@@ -54118,7 +54458,7 @@
     "i": 719,
     "f_GHz": 35.9528,
     "fenster": [
-     0.4349,
+     0.46246,
      0.5188
     ],
     "klassen": [
@@ -54130,9 +54470,9 @@
     "info": {
      "prom": 13.96,
      "b_peak": -0.50365,
-     "breite": 0.0839,
+     "breite": 0.05634,
      "resonanz_da": true,
-     "rmse_norm": 0.009,
+     "rmse_norm": 0.008,
      "fwhm": 1.02135
     }
    },
@@ -54140,7 +54480,7 @@
     "i": 720,
     "f_GHz": 36.0028,
     "fenster": [
-     0.43825,
+     0.46423,
      0.5188
     ],
     "klassen": [
@@ -54152,9 +54492,9 @@
     "info": {
      "prom": 15.28,
      "b_peak": -0.50365,
-     "breite": 0.08055,
+     "breite": 0.05457,
      "resonanz_da": true,
-     "rmse_norm": 0.012,
+     "rmse_norm": 0.011,
      "fwhm": 1.0248
     }
    },
@@ -54162,7 +54502,7 @@
     "i": 721,
     "f_GHz": 36.0528,
     "fenster": [
-     0.43325,
+     0.46489,
      0.5188
     ],
     "klassen": [
@@ -54174,9 +54514,9 @@
     "info": {
      "prom": 14.15,
      "b_peak": -0.50635,
-     "breite": 0.08555,
+     "breite": 0.05391,
      "resonanz_da": true,
-     "rmse_norm": 0.008,
+     "rmse_norm": 0.007,
      "fwhm": 1.0248
     }
    },
@@ -54184,7 +54524,7 @@
     "i": 722,
     "f_GHz": 36.1028,
     "fenster": [
-     0.4361,
+     0.46605,
      0.5188
     ],
     "klassen": [
@@ -54196,9 +54536,9 @@
     "info": {
      "prom": 13.98,
      "b_peak": -0.50635,
-     "breite": 0.0827,
+     "breite": 0.05275,
      "resonanz_da": true,
-     "rmse_norm": 0.01,
+     "rmse_norm": 0.009,
      "fwhm": 1.0276
     }
    },
@@ -54206,7 +54546,7 @@
     "i": 723,
     "f_GHz": 36.1528,
     "fenster": [
-     0.4473,
+     0.46685,
      0.5188
     ],
     "klassen": [
@@ -54218,7 +54558,7 @@
     "info": {
      "prom": 14.14,
      "b_peak": -0.50635,
-     "breite": 0.0715,
+     "breite": 0.05195,
      "resonanz_da": true,
      "rmse_norm": 0.007,
      "fwhm": 1.0332
@@ -54228,7 +54568,7 @@
     "i": 724,
     "f_GHz": 36.2028,
     "fenster": [
-     0.4329,
+     0.46814,
      0.5188
     ],
     "klassen": [
@@ -54240,9 +54580,9 @@
     "info": {
      "prom": 13.82,
      "b_peak": -0.5092,
-     "breite": 0.0859,
+     "breite": 0.05066,
      "resonanz_da": true,
-     "rmse_norm": 0.009,
+     "rmse_norm": 0.008,
      "fwhm": 1.0332
     }
    },
@@ -54250,7 +54590,7 @@
     "i": 725,
     "f_GHz": 36.2527,
     "fenster": [
-     0.44905,
+     0.47,
      0.5188
     ],
     "klassen": [
@@ -54262,9 +54602,9 @@
     "info": {
      "prom": 13.48,
      "b_peak": -0.5092,
-     "breite": 0.06975,
+     "breite": 0.0488,
      "resonanz_da": true,
-     "rmse_norm": 0.009,
+     "rmse_norm": 0.008,
      "fwhm": 1.03535
     }
    },
@@ -54272,7 +54612,7 @@
     "i": 726,
     "f_GHz": 36.3027,
     "fenster": [
-     0.43985,
+     0.4705,
      0.5188
     ],
     "klassen": [
@@ -54284,9 +54624,9 @@
     "info": {
      "prom": 12.44,
      "b_peak": -0.51185,
-     "breite": 0.07895,
+     "breite": 0.0483,
      "resonanz_da": true,
-     "rmse_norm": 0.01,
+     "rmse_norm": 0.008,
      "fwhm": 1.03885
     }
    },
@@ -54294,7 +54634,7 @@
     "i": 727,
     "f_GHz": 36.3527,
     "fenster": [
-     0.4434,
+     0.4713,
      0.5188
     ],
     "klassen": [
@@ -54306,9 +54646,9 @@
     "info": {
      "prom": 13.29,
      "b_peak": -0.51185,
-     "breite": 0.0754,
+     "breite": 0.0475,
      "resonanz_da": true,
-     "rmse_norm": 0.01,
+     "rmse_norm": 0.008,
      "fwhm": 1.03885
     }
    },
@@ -54316,7 +54656,7 @@
     "i": 728,
     "f_GHz": 36.4027,
     "fenster": [
-     0.4548,
+     0.47183,
      0.5188
     ],
     "klassen": [
@@ -54328,9 +54668,9 @@
     "info": {
      "prom": 13.18,
      "b_peak": -0.51465,
-     "breite": 0.064,
+     "breite": 0.04697,
      "resonanz_da": true,
-     "rmse_norm": 0.009,
+     "rmse_norm": 0.007,
      "fwhm": 1.0417
     }
    },
@@ -54338,7 +54678,7 @@
     "i": 729,
     "f_GHz": 36.4527,
     "fenster": [
-     0.441,
+     0.47369,
      0.5188
     ],
     "klassen": [
@@ -54350,9 +54690,9 @@
     "info": {
      "prom": 13.12,
      "b_peak": -0.51465,
-     "breite": 0.0778,
+     "breite": 0.04511,
      "resonanz_da": true,
-     "rmse_norm": 0.012,
+     "rmse_norm": 0.011,
      "fwhm": 1.0417
     }
    },
@@ -54360,7 +54700,7 @@
     "i": 730,
     "f_GHz": 36.5027,
     "fenster": [
-     0.4556,
+     0.47561,
      0.5188
     ],
     "klassen": [
@@ -54372,9 +54712,9 @@
     "info": {
      "prom": 12.46,
      "b_peak": -0.51655,
-     "breite": 0.0632,
+     "breite": 0.04319,
      "resonanz_da": true,
-     "rmse_norm": 0.01,
+     "rmse_norm": 0.009,
      "fwhm": 1.0417
     }
    },
@@ -54382,7 +54722,7 @@
     "i": 731,
     "f_GHz": 36.5527,
     "fenster": [
-     0.4408,
+     0.4765,
      0.5188
     ],
     "klassen": [
@@ -54394,7 +54734,7 @@
     "info": {
      "prom": 12.64,
      "b_peak": -0.51655,
-     "breite": 0.078,
+     "breite": 0.0423,
      "resonanz_da": true,
      "rmse_norm": 0.015,
      "fwhm": 1.0447
@@ -54404,7 +54744,7 @@
     "i": 732,
     "f_GHz": 36.6027,
     "fenster": [
-     0.4573,
+     0.47801,
      0.5188
     ],
     "klassen": [
@@ -54416,7 +54756,7 @@
     "info": {
      "prom": 12.95,
      "b_peak": -0.51655,
-     "breite": 0.0615,
+     "breite": 0.04079,
      "resonanz_da": true,
      "rmse_norm": 0.01,
      "fwhm": 1.0447
@@ -54706,16 +55046,15 @@
     "morph": [],
     "status": "WINDOW_FLAGGED",
     "gruende": [
-     "keine Konvergenz",
-     "keine Unsicherheiten",
-     "alpha an Grenze"
+     "alpha an Grenze",
+     "B_res-Unsicherheit zu gross"
     ],
     "info": {
      "prom": 16.24,
      "b_peak": -0.53495,
      "breite": 0.03408,
      "resonanz_da": true,
-     "rmse_norm": 0.226,
+     "rmse_norm": 0.277,
      "fwhm": 1.0619
     }
    },
@@ -55010,7 +55349,7 @@
   "klasse_zaehler": {},
   "morph_zaehler": {
    "FENSTER_ZU_ENG": 68,
-   "MEHRFACHRESONANZ": 4
+   "MEHRFACHRESONANZ": 1
   },
   "probleme": []
  },
@@ -55065,7 +55404,7 @@
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 103,
    "FENSTER_ZU_ENG": 70,
-   "FENSTER_ZU_WEIT": 34
+   "FENSTER_ZU_WEIT": 33
   },
   "probleme": []
  },
@@ -55083,8 +55422,8 @@
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 11,
-   "FENSTER_ZU_ENG": 3
+   "MEHRFACHRESONANZ": 10,
+   "FENSTER_ZU_ENG": 2
   },
   "probleme": []
  },
@@ -55132,8 +55471,8 @@
   "n_resonanzen": 90,
   "hat_gt": false,
   "zaehler": {
-   "OK": 89,
-   "WINDOW_FLAGGED": 1,
+   "OK": 90,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -55167,8 +55506,8 @@
   "n_resonanzen": 90,
   "hat_gt": false,
   "zaehler": {
-   "OK": 89,
-   "WINDOW_FLAGGED": 1,
+   "OK": 90,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -55183,8 +55522,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 993,
-   "WINDOW_FLAGGED": 8,
+   "OK": 1001,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -55265,8 +55604,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 926,
-   "WINDOW_FLAGGED": 35,
+   "OK": 934,
+   "WINDOW_FLAGGED": 27,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 40
   },
@@ -55284,8 +55623,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 897,
-   "WINDOW_FLAGGED": 61,
+   "OK": 909,
+   "WINDOW_FLAGGED": 49,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 43
   },
@@ -55367,8 +55706,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 455,
-   "WINDOW_FLAGGED": 492,
+   "OK": 456,
+   "WINDOW_FLAGGED": 491,
    "WINDOW_FAIL": 8,
    "KEIN_ZIEL": 46
   },
@@ -55868,7 +56207,7 @@
     "i": 601,
     "f_GHz": 31.247,
     "fenster": [
-     4.2802,
+     4.28638,
      4.4494
     ],
     "klassen": [
@@ -55880,7 +56219,7 @@
     "info": {
      "prom": 20.1,
      "b_peak": 3.41075,
-     "breite": 0.1692,
+     "breite": 0.16302,
      "resonanz_da": true,
      "rmse_norm": 0.157,
      "fwhm": 0.0978
@@ -55915,7 +56254,7 @@
     "i": 621,
     "f_GHz": 32.187,
     "fenster": [
-     4.26,
+     4.27139,
      4.4494
     ],
     "klassen": [
@@ -55927,7 +56266,7 @@
     "info": {
      "prom": 17.0,
      "b_peak": 3.4518,
-     "breite": 0.1894,
+     "breite": 0.17801,
      "resonanz_da": true,
      "rmse_norm": 0.2,
      "fwhm": 0.0978
@@ -55988,7 +56327,7 @@
  "Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop--290K-56.5deg_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Set.Angle"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "MBE-CoFe-Si/Co50Fe50-Si/2024-DEC-04-Linescan-2D-map-oop--5K_-37.4deg.tdms": {
   "datei": "MBE-CoFe-Si/Co50Fe50-Si/2024-DEC-04-Linescan-2D-map-oop--5K_-37.4deg.tdms",
@@ -55997,8 +56336,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 855,
-   "WINDOW_FLAGGED": 146,
+   "OK": 868,
+   "WINDOW_FLAGGED": 133,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -56010,8 +56349,7 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 113,
-   "FENSTER_ZU_ENG": 48,
-   "FENSTER_ZU_WEIT": 1
+   "FENSTER_ZU_ENG": 48
   },
   "probleme": [
    {
@@ -56095,8 +56433,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 873,
-   "WINDOW_FLAGGED": 127,
+   "OK": 880,
+   "WINDOW_FLAGGED": 120,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 1
   },
@@ -56108,8 +56446,7 @@
   },
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 78,
-   "FENSTER_ZU_ENG": 6,
-   "FENSTER_ZU_WEIT": 15
+   "FENSTER_ZU_ENG": 6
   },
   "probleme": [
    {
@@ -57409,7 +57746,7 @@
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Re"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "MBE-CoFe-Si/Co75Fe25-Si/2024-DEC-03-Linescan-2D-map-oop--5K_-37.4deg.tdms": {
   "datei": "MBE-CoFe-Si/Co75Fe25-Si/2024-DEC-03-Linescan-2D-map-oop--5K_-37.4deg.tdms",
@@ -57418,15 +57755,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 760,
-   "WINDOW_FLAGGED": 237,
-   "WINDOW_FAIL": 4,
+   "OK": 768,
+   "WINDOW_FLAGGED": 228,
+   "WINDOW_FAIL": 5,
    "KEIN_ZIEL": 0
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 174,
-    "fail": 4
+    "fail": 5
    }
   },
   "morph_zaehler": {},
@@ -61367,7 +61704,7 @@
     "i": 212,
     "f_GHz": 12.964,
     "fenster": [
-     4.15043,
+     4.22326,
      4.29317
     ],
     "klassen": [
@@ -61379,9 +61716,9 @@
     "info": {
      "prom": 38.0,
      "b_peak": 2.6635,
-     "breite": 0.14275,
+     "breite": 0.06991,
      "resonanz_da": true,
-     "rmse_norm": 0.16,
+     "rmse_norm": 0.165,
      "fwhm": 1.78975
     }
    },
@@ -61705,6 +62042,28 @@
     }
    },
    {
+    "i": 228,
+    "f_GHz": 13.716,
+    "fenster": [
+     3.31559,
+     3.52228
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 87.48,
+     "b_peak": 2.6875,
+     "breite": 0.20668,
+     "resonanz_da": true,
+     "rmse_norm": 0.148,
+     "fwhm": 0.01415
+    }
+   },
+   {
     "i": 232,
     "f_GHz": 13.904,
     "fenster": [
@@ -61733,7 +62092,7 @@
     "f_GHz": 13.951,
     "fenster": [
      2.99158,
-     3.08758
+     3.07972
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -61744,9 +62103,9 @@
     "info": {
      "prom": 93.77,
      "b_peak": 2.69635,
-     "breite": 0.096,
+     "breite": 0.08814,
      "resonanz_da": true,
-     "rmse_norm": 0.169,
+     "rmse_norm": 0.168,
      "fwhm": 0.012
     }
    },
@@ -61754,8 +62113,8 @@
     "i": 234,
     "f_GHz": 13.998,
     "fenster": [
-     2.93443,
-     3.03323
+     2.96089,
+     3.02391
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -61766,9 +62125,9 @@
     "info": {
      "prom": 94.95,
      "b_peak": 2.698,
-     "breite": 0.0988,
+     "breite": 0.06302,
      "resonanz_da": true,
-     "rmse_norm": 0.163,
+     "rmse_norm": 0.173,
      "fwhm": 0.01235
     }
    },
@@ -61806,32 +62165,31 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 174,
-   "WINDOW_FLAGGED": 1,
+   "OK": 175,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 826
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 1,
-   "MEHRFACHRESONANZ": 4
+   "FENSTER_ZU_ENG": 5
   },
   "probleme": []
  },
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz-rotate_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Read.ZNA'"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms": {
   "datei": "Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms",
   "status_datei": "NICHT_FMR",
-  "grund": "Unbekanntes TDMS-Format in '/home/ibrahim/Dokumente/bbFMR/testdata/Py-on-Sapphire/Linescan-2D-map-oop-rotate-2.7T-1-30GHz_flush.tdms': weder 'Read.PNAX' noch 'ZVB' gefunden. Vorhandene Gruppen: ['Rea"
+  "grund": "Kein Mapping-Profil passt (kein FMR-Layout)"
  },
  "MBE-CoFe-Si/Co75Fe25-Si/90° rotated/2024-DEC-05-Linescan-2D-map-oop-rotated-5K_-0.2deg.tdms": {
   "datei": "MBE-CoFe-Si/Co75Fe25-Si/90° rotated/2024-DEC-05-Linescan-2D-map-oop-rotated-5K_-0.2deg.tdms",
@@ -61840,8 +62198,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 640,
-   "WINDOW_FLAGGED": 309,
+   "OK": 644,
+   "WINDOW_FLAGGED": 305,
    "WINDOW_FAIL": 51,
    "KEIN_ZIEL": 1
   },
@@ -61852,8 +62210,8 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 7,
-   "FENSTER_ZU_ENG": 1
+   "MEHRFACHRESONANZ": 3,
+   "FENSTER_ZU_ENG": 2
   },
   "probleme": [
    {
@@ -64962,8 +65320,8 @@
     "i": 271,
     "f_GHz": 13.5573,
     "fenster": [
-     4.19483,
-     4.33243
+     4.24443,
+     4.29103
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -64974,9 +65332,9 @@
     "info": {
      "prom": 29.79,
      "b_peak": 2.6871,
-     "breite": 0.1376,
+     "breite": 0.0466,
      "resonanz_da": true,
-     "rmse_norm": 0.164,
+     "rmse_norm": 0.136,
      "fwhm": 1.79805
     }
    },
@@ -65937,8 +66295,8 @@
     "i": 310,
     "f_GHz": 15.5069,
     "fenster": [
-     4.1023,
-     4.2399
+     4.10739,
+     4.22887
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -65949,9 +66307,9 @@
     "info": {
      "prom": 26.54,
      "b_peak": 2.7536,
-     "breite": 0.1376,
+     "breite": 0.12149,
      "resonanz_da": true,
-     "rmse_norm": 0.152,
+     "rmse_norm": 0.163,
      "fwhm": 1.7343
     }
    },
@@ -66611,7 +66969,7 @@
     "f_GHz": 16.8066,
     "fenster": [
      4.12852,
-     4.26612
+     4.25968
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -66622,9 +66980,9 @@
     "info": {
      "prom": 22.87,
      "b_peak": 2.7937,
-     "breite": 0.1376,
+     "breite": 0.13115,
      "resonanz_da": true,
-     "rmse_norm": 0.145,
+     "rmse_norm": 0.146,
      "fwhm": 1.68855
     }
    },
@@ -67037,8 +67395,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 988,
-   "WINDOW_FLAGGED": 13,
+   "OK": 1001,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -67053,15 +67411,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 853,
-   "WINDOW_FLAGGED": 13,
+   "OK": 862,
+   "WINDOW_FLAGGED": 4,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 135
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 47,
-   "FENSTER_ZU_WEIT": 9,
+   "MEHRFACHRESONANZ": 45,
    "FENSTER_ZU_ENG": 1
   },
   "probleme": []
@@ -67113,7 +67470,7 @@
   "klasse_zaehler": {},
   "morph_zaehler": {
    "FENSTER_ZU_ENG": 51,
-   "MEHRFACHRESONANZ": 107
+   "MEHRFACHRESONANZ": 106
   },
   "probleme": []
  },
@@ -67222,14 +67579,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 534,
-   "WINDOW_FLAGGED": 1,
+   "OK": 535,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 466
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 3
+   "FENSTER_ZU_ENG": 4
   },
   "probleme": []
  },
@@ -67240,8 +67597,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 0,
-   "WINDOW_FLAGGED": 817,
+   "OK": 2,
+   "WINDOW_FLAGGED": 815,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 184
   },
@@ -67254,17 +67611,17 @@
  "YIG disc 800µm thick/2025-NOV-04-Linescan-2D-map-oop-rotated-300K_0.5deg-slow.tdms": {
   "datei": "YIG disc 800µm thick/2025-NOV-04-Linescan-2D-map-oop-rotated-300K_0.5deg-slow.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.3
+  "dauer_s": 90.2
  },
  "YIG disc 800µm thick/2025-NOV-04-Linescan-2D-map-oop-rotated-300K_0.5deg-slow_flush.tdms": {
   "datei": "YIG disc 800µm thick/2025-NOV-04-Linescan-2D-map-oop-rotated-300K_0.5deg-slow_flush.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.4
+  "dauer_s": 90.2
  },
  "YIG disc 800µm thick/2025-NOV-05-Linescan-2D-map-oop-rotated-5K_1.4deg.tdms": {
   "datei": "YIG disc 800µm thick/2025-NOV-05-Linescan-2D-map-oop-rotated-5K_1.4deg.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "dauer_s": 90.1
  },
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-ip--100K-188.899deg.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-ip--100K-188.899deg.tdms",
@@ -67273,15 +67630,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 119,
-   "WINDOW_FLAGGED": 783,
+   "OK": 128,
+   "WINDOW_FLAGGED": 774,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 99
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 1,
-   "FENSTER_ZU_ENG": 2
+   "MEHRFACHRESONANZ": 1
   },
   "probleme": []
  },
@@ -67292,8 +67648,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 733,
-   "WINDOW_FLAGGED": 71,
+   "OK": 800,
+   "WINDOW_FLAGGED": 4,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 197
   },
@@ -67310,8 +67666,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 451,
-   "WINDOW_FLAGGED": 522,
+   "OK": 477,
+   "WINDOW_FLAGGED": 496,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 28
   },
@@ -67347,8 +67703,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 359,
-   "WINDOW_FLAGGED": 622,
+   "OK": 378,
+   "WINDOW_FLAGGED": 603,
    "WINDOW_FAIL": 1,
    "KEIN_ZIEL": 19
   },
@@ -67364,8 +67720,8 @@
     "i": 22,
     "f_GHz": 0.2958,
     "fenster": [
-     0.2364,
-     0.2508
+     0.2393,
+     0.24352
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -67376,9 +67732,9 @@
     "info": {
      "prom": 16.54,
      "b_peak": 0.19735,
-     "breite": 0.0144,
+     "breite": 0.00422,
      "resonanz_da": true,
-     "rmse_norm": 0.194,
+     "rmse_norm": 0.181,
      "fwhm": 0.0022
     }
    },
@@ -67440,14 +67796,14 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 441,
-   "WINDOW_FLAGGED": 334,
+   "OK": 470,
+   "WINDOW_FLAGGED": 305,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 226
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 15,
+   "MEHRFACHRESONANZ": 2,
    "FENSTER_ZU_ENG": 4
   },
   "probleme": []
@@ -67459,8 +67815,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 352,
-   "WINDOW_FLAGGED": 626,
+   "OK": 383,
+   "WINDOW_FLAGGED": 595,
    "WINDOW_FAIL": 4,
    "KEIN_ZIEL": 19
   },
@@ -67470,9 +67826,7 @@
     "fail": 4
    }
   },
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 1
-  },
+  "morph_zaehler": {},
   "probleme": [
    {
     "i": 21,
@@ -67645,8 +67999,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 861,
-   "WINDOW_FLAGGED": 120,
+   "OK": 915,
+   "WINDOW_FLAGGED": 66,
    "WINDOW_FAIL": 2,
    "KEIN_ZIEL": 18
   },
@@ -67657,7 +68011,7 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 68
+   "MEHRFACHRESONANZ": 46
   },
   "probleme": [
    {
@@ -67710,8 +68064,8 @@
     "i": 21,
     "f_GHz": 0.2618,
     "fenster": [
-     0.29015,
-     0.31135
+     0.29846,
+     0.30274
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -67722,9 +68076,9 @@
     "info": {
      "prom": 15.67,
      "b_peak": 0.22515,
-     "breite": 0.0212,
+     "breite": 0.00427,
      "resonanz_da": true,
-     "rmse_norm": 0.165,
+     "rmse_norm": 0.147,
      "fwhm": 0.003
     }
    },
@@ -68118,7 +68472,7 @@
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 69
+   "MEHRFACHRESONANZ": 65
   },
   "probleme": [
    {
@@ -68727,8 +69081,8 @@
     "i": 91,
     "f_GHz": 1.1921,
     "fenster": [
-     0.39877,
-     0.42843
+     0.4083,
+     0.41275
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -68739,9 +69093,9 @@
     "info": {
      "prom": 16.89,
      "b_peak": 0.5439,
-     "breite": 0.02966,
+     "breite": 0.00445,
      "resonanz_da": true,
-     "rmse_norm": 0.172,
+     "rmse_norm": 0.218,
      "fwhm": 0.00045
     }
    },
@@ -68847,7 +69201,7 @@
     "f_GHz": 1.283,
     "fenster": [
      0.48457,
-     0.51423
+     0.49421
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -68858,9 +69212,9 @@
     "info": {
      "prom": 17.68,
      "b_peak": 0.5439,
-     "breite": 0.02966,
+     "breite": 0.00964,
      "resonanz_da": true,
-     "rmse_norm": 0.172,
+     "rmse_norm": 0.16,
      "fwhm": 0.00045
     }
    },
@@ -69080,7 +69434,7 @@
     "i": 142,
     "f_GHz": 1.8546,
     "fenster": [
-     0.56085,
+     0.56178,
      0.56805
     ],
     "klassen": [
@@ -69092,9 +69446,9 @@
     "info": {
      "prom": 18.93,
      "b_peak": 0.5439,
-     "breite": 0.0072,
+     "breite": 0.00627,
      "resonanz_da": true,
-     "rmse_norm": 0.174,
+     "rmse_norm": 0.153,
      "fwhm": 0.00045
     }
    },
@@ -69149,7 +69503,7 @@
     "i": 149,
     "f_GHz": 1.9455,
     "fenster": [
-     0.55875,
+     0.56223,
      0.57195
     ],
     "klassen": [
@@ -69161,9 +69515,9 @@
     "info": {
      "prom": 17.65,
      "b_peak": 0.5439,
-     "breite": 0.0132,
+     "breite": 0.00972,
      "resonanz_da": true,
-     "rmse_norm": 0.182,
+     "rmse_norm": 0.204,
      "fwhm": 0.00045
     }
    },
@@ -69193,8 +69547,8 @@
     "i": 156,
     "f_GHz": 2.0364,
     "fenster": [
-     0.55715,
-     0.57355
+     0.56793,
+     0.57238
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69205,9 +69559,9 @@
     "info": {
      "prom": 19.7,
      "b_peak": 0.5439,
-     "breite": 0.0164,
+     "breite": 0.00445,
      "resonanz_da": true,
-     "rmse_norm": 0.181,
+     "rmse_norm": 0.068,
      "fwhm": 0.00045
     }
    },
@@ -69550,8 +69904,8 @@
   "n_resonanzen": 940,
   "hat_gt": false,
   "zaehler": {
-   "OK": 521,
-   "WINDOW_FLAGGED": 8,
+   "OK": 529,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 411
   },
@@ -69566,15 +69920,15 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 795,
-   "WINDOW_FLAGGED": 165,
+   "OK": 844,
+   "WINDOW_FLAGGED": 116,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 41
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
    "MEHRFACHRESONANZ": 12,
-   "FENSTER_ZU_ENG": 2
+   "FENSTER_ZU_ENG": 3
   },
   "probleme": []
  },
@@ -69586,27 +69940,27 @@
   "hat_gt": false,
   "zaehler": {
    "OK": 492,
-   "WINDOW_FLAGGED": 459,
-   "WINDOW_FAIL": 16,
+   "WINDOW_FLAGGED": 455,
+   "WINDOW_FAIL": 20,
    "KEIN_ZIEL": 34
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 30,
-    "fail": 16
+    "fail": 20
    }
   },
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 441,
-   "FENSTER_ZU_ENG": 36
+   "MEHRFACHRESONANZ": 403,
+   "FENSTER_ZU_ENG": 37
   },
   "probleme": [
    {
     "i": 216,
     "f_GHz": 2.8158,
     "fenster": [
-     0.2778,
-     0.3358
+     0.2899,
+     0.32138
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69617,9 +69971,9 @@
     "info": {
      "prom": 17.38,
      "b_peak": 0.5439,
-     "breite": 0.058,
+     "breite": 0.03148,
      "resonanz_da": true,
-     "rmse_norm": 0.052,
+     "rmse_norm": 0.025,
      "fwhm": 0.00145
     }
    },
@@ -69627,8 +69981,8 @@
     "i": 218,
     "f_GHz": 2.8418,
     "fenster": [
-     0.27885,
-     0.33645
+     0.29139,
+     0.32192
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69639,9 +69993,9 @@
     "info": {
      "prom": 18.65,
      "b_peak": 0.5439,
-     "breite": 0.0576,
+     "breite": 0.03053,
      "resonanz_da": true,
-     "rmse_norm": 0.052,
+     "rmse_norm": 0.028,
      "fwhm": 0.00145
     }
    },
@@ -69649,8 +70003,8 @@
     "i": 228,
     "f_GHz": 2.9717,
     "fenster": [
-     0.28145,
-     0.34225
+     0.29427,
+     0.3281
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69661,9 +70015,9 @@
     "info": {
      "prom": 17.35,
      "b_peak": 0.5439,
-     "breite": 0.0608,
+     "breite": 0.03383,
      "resonanz_da": true,
-     "rmse_norm": 0.055,
+     "rmse_norm": 0.034,
      "fwhm": 0.00145
     }
    },
@@ -69671,8 +70025,8 @@
     "i": 254,
     "f_GHz": 3.3095,
     "fenster": [
-     0.2839,
-     0.3651
+     0.29508,
+     0.34931
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69683,9 +70037,9 @@
     "info": {
      "prom": 17.29,
      "b_peak": 0.5439,
-     "breite": 0.0812,
+     "breite": 0.05423,
      "resonanz_da": true,
-     "rmse_norm": 0.06,
+     "rmse_norm": 0.065,
      "fwhm": 0.00145
     }
    },
@@ -69693,8 +70047,8 @@
     "i": 263,
     "f_GHz": 3.4264,
     "fenster": [
-     0.29065,
-     0.36665
+     0.29979,
+     0.353
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69705,9 +70059,9 @@
     "info": {
      "prom": 17.5,
      "b_peak": 0.5439,
-     "breite": 0.076,
+     "breite": 0.05321,
      "resonanz_da": true,
-     "rmse_norm": 0.064,
+     "rmse_norm": 0.066,
      "fwhm": 0.00145
     }
    },
@@ -69715,8 +70069,8 @@
     "i": 265,
     "f_GHz": 3.4524,
     "fenster": [
-     0.29115,
-     0.36675
+     0.30047,
+     0.35406
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69727,9 +70081,9 @@
     "info": {
      "prom": 16.79,
      "b_peak": 0.5439,
-     "breite": 0.0756,
+     "breite": 0.05359,
      "resonanz_da": true,
-     "rmse_norm": 0.069,
+     "rmse_norm": 0.066,
      "fwhm": 0.00145
     }
    },
@@ -69737,8 +70091,8 @@
     "i": 266,
     "f_GHz": 3.4653,
     "fenster": [
-     0.2898,
-     0.3706
+     0.29913,
+     0.35628
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69749,7 +70103,7 @@
     "info": {
      "prom": 17.25,
      "b_peak": 0.5439,
-     "breite": 0.0808,
+     "breite": 0.05715,
      "resonanz_da": true,
      "rmse_norm": 0.057,
      "fwhm": 0.00145
@@ -69759,8 +70113,8 @@
     "i": 272,
     "f_GHz": 3.5433,
     "fenster": [
-     0.2931,
-     0.3719
+     0.30305,
+     0.35799
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69771,9 +70125,9 @@
     "info": {
      "prom": 17.2,
      "b_peak": 0.5439,
-     "breite": 0.0788,
+     "breite": 0.05494,
      "resonanz_da": true,
-     "rmse_norm": 0.071,
+     "rmse_norm": 0.074,
      "fwhm": 0.00145
     }
    },
@@ -69781,8 +70135,8 @@
     "i": 274,
     "f_GHz": 3.5693,
     "fenster": [
-     0.29485,
-     0.37085
+     0.30309,
+     0.35951
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69793,9 +70147,9 @@
     "info": {
      "prom": 16.65,
      "b_peak": 0.5439,
-     "breite": 0.076,
+     "breite": 0.05642,
      "resonanz_da": true,
-     "rmse_norm": 0.063,
+     "rmse_norm": 0.06,
      "fwhm": 0.00145
     }
    },
@@ -69803,8 +70157,8 @@
     "i": 282,
     "f_GHz": 3.6732,
     "fenster": [
-     0.2955,
-     0.3791
+     0.30321,
+     0.36679
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69815,9 +70169,9 @@
     "info": {
      "prom": 15.73,
      "b_peak": 0.5439,
-     "breite": 0.0836,
+     "breite": 0.06358,
      "resonanz_da": true,
-     "rmse_norm": 0.066,
+     "rmse_norm": 0.07,
      "fwhm": 0.00145
     }
    },
@@ -69825,8 +70179,8 @@
     "i": 286,
     "f_GHz": 3.7251,
     "fenster": [
-     0.2967,
-     0.3815
+     0.30425,
+     0.36947
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69837,9 +70191,9 @@
     "info": {
      "prom": 15.83,
      "b_peak": 0.5439,
-     "breite": 0.0848,
+     "breite": 0.06521,
      "resonanz_da": true,
-     "rmse_norm": 0.047,
+     "rmse_norm": 0.05,
      "fwhm": 0.00145
     }
    },
@@ -69847,8 +70201,8 @@
     "i": 290,
     "f_GHz": 3.7771,
     "fenster": [
-     0.29805,
-     0.38365
+     0.3062,
+     0.37118
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69859,9 +70213,9 @@
     "info": {
      "prom": 15.52,
      "b_peak": 0.5439,
-     "breite": 0.0856,
+     "breite": 0.06498,
      "resonanz_da": true,
-     "rmse_norm": 0.073,
+     "rmse_norm": 0.078,
      "fwhm": 0.00145
     }
    },
@@ -69869,8 +70223,8 @@
     "i": 292,
     "f_GHz": 3.8031,
     "fenster": [
-     0.3001,
-     0.3829
+     0.30721,
+     0.37186
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69881,9 +70235,9 @@
     "info": {
      "prom": 14.94,
      "b_peak": 0.5439,
-     "breite": 0.0828,
+     "breite": 0.06464,
      "resonanz_da": true,
-     "rmse_norm": 0.056,
+     "rmse_norm": 0.06,
      "fwhm": 0.00145
     }
    },
@@ -69891,8 +70245,8 @@
     "i": 294,
     "f_GHz": 3.8291,
     "fenster": [
-     0.2984,
-     0.3868
+     0.30669,
+     0.37405
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69903,9 +70257,9 @@
     "info": {
      "prom": 15.08,
      "b_peak": 0.5439,
-     "breite": 0.0884,
+     "breite": 0.06736,
      "resonanz_da": true,
-     "rmse_norm": 0.047,
+     "rmse_norm": 0.052,
      "fwhm": 0.00145
     }
    },
@@ -69913,8 +70267,8 @@
     "i": 295,
     "f_GHz": 3.842,
     "fenster": [
-     0.2989,
-     0.3869
+     0.30764,
+     0.37398
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69925,9 +70279,9 @@
     "info": {
      "prom": 14.85,
      "b_peak": 0.5439,
-     "breite": 0.088,
+     "breite": 0.06634,
      "resonanz_da": true,
-     "rmse_norm": 0.05,
+     "rmse_norm": 0.054,
      "fwhm": 0.00145
     }
    },
@@ -69983,8 +70337,8 @@
     "i": 301,
     "f_GHz": 3.92,
     "fenster": [
-     0.30395,
-     0.38715
+     0.30879,
+     0.37791
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -69995,9 +70349,9 @@
     "info": {
      "prom": 14.44,
      "b_peak": 0.5439,
-     "breite": 0.0832,
+     "breite": 0.06912,
      "resonanz_da": true,
-     "rmse_norm": 0.051,
+     "rmse_norm": 0.054,
      "fwhm": 0.00145
     }
    },
@@ -70672,6 +71026,94 @@
      "rmse_norm": 0.047,
      "fwhm": 0.00145
     }
+   },
+   {
+    "i": 391,
+    "f_GHz": 5.0891,
+    "fenster": [
+     0.3466,
+     0.42583
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 13.72,
+     "b_peak": 0.5439,
+     "breite": 0.07923,
+     "resonanz_da": true,
+     "rmse_norm": 0.068,
+     "fwhm": 0.00145
+    }
+   },
+   {
+    "i": 393,
+    "f_GHz": 5.1151,
+    "fenster": [
+     0.34758,
+     0.42713
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 13.32,
+     "b_peak": 0.5439,
+     "breite": 0.07955,
+     "resonanz_da": true,
+     "rmse_norm": 0.049,
+     "fwhm": 0.00145
+    }
+   },
+   {
+    "i": 395,
+    "f_GHz": 5.141,
+    "fenster": [
+     0.34866,
+     0.42839
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 12.38,
+     "b_peak": 0.5439,
+     "breite": 0.07973,
+     "resonanz_da": true,
+     "rmse_norm": 0.046,
+     "fwhm": 0.00145
+    }
+   },
+   {
+    "i": 397,
+    "f_GHz": 5.167,
+    "fenster": [
+     0.3493,
+     0.42969
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 12.56,
+     "b_peak": 0.5439,
+     "breite": 0.08039,
+     "resonanz_da": true,
+     "rmse_norm": 0.048,
+     "fwhm": 0.00145
+    }
    }
   ]
  },
@@ -70682,8 +71124,8 @@
   "n_resonanzen": 94,
   "hat_gt": false,
   "zaehler": {
-   "OK": 88,
-   "WINDOW_FLAGGED": 6,
+   "OK": 94,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 0
   },
@@ -70693,27 +71135,13 @@
  },
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-ip--20K-2nd-part.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-ip--20K-2nd-part.tdms",
-  "status_datei": "OK",
-  "format": "unsortiert",
-  "n_resonanzen": 1001,
-  "hat_gt": false,
-  "zaehler": {
-   "OK": 388,
-   "WINDOW_FLAGGED": 1,
-   "WINDOW_FAIL": 0,
-   "KEIN_ZIEL": 612
-  },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "MEHRFACHRESONANZ": 1,
-   "FENSTER_ZU_ENG": 1
-  },
-  "probleme": []
+  "status_datei": "TIMEOUT",
+  "dauer_s": 90.1
  },
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-ip--20K.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-ip--20K.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.3
+  "dauer_s": 90.1
  },
  "YIG(2um)-GGG-YIG(2um)/2023-APR-19-Linescan-2D-map-oop--5K_-3.475deg.tdms": {
   "datei": "YIG(2um)-GGG-YIG(2um)/2023-APR-19-Linescan-2D-map-oop--5K_-3.475deg.tdms",
@@ -70722,8 +71150,8 @@
   "n_resonanzen": 1001,
   "hat_gt": true,
   "zaehler": {
-   "OK": 927,
-   "WINDOW_FLAGGED": 72,
+   "OK": 978,
+   "WINDOW_FLAGGED": 21,
    "WINDOW_FAIL": 1,
    "KEIN_ZIEL": 1
   },
@@ -70941,8 +71369,8 @@
     "i": 18,
     "f_GHz": 0.9098,
     "fenster": [
-     0.51188,
-     0.56908
+     0.54978,
+     0.56402
     ],
     "klassen": [
      "FENSTER_LEER"
@@ -70953,9 +71381,9 @@
     "info": {
      "prom": 116.76,
      "b_peak": 0.24305,
-     "breite": 0.0572,
+     "breite": 0.01424,
      "resonanz_da": true,
-     "rmse_norm": 0.163,
+     "rmse_norm": 0.177,
      "fwhm": 0.00715
     }
    },
@@ -70989,7 +71417,7 @@
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--150K_flush.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--150K_flush.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "dauer_s": 90.1
  },
  "YIG(2um)-GGG-YIG(2um)/2023-APR-20-Linescan-2D-map-ip--5K_86.525deg.tdms": {
   "datei": "YIG(2um)-GGG-YIG(2um)/2023-APR-20-Linescan-2D-map-ip--5K_86.525deg.tdms",
@@ -70998,16 +71426,16 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 769,
-   "WINDOW_FLAGGED": 45,
+   "OK": 792,
+   "WINDOW_FLAGGED": 22,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 187
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "MEHRFACHRESONANZ": 14,
+   "MEHRFACHRESONANZ": 9,
    "FENSTER_ZU_WEIT": 1,
-   "FENSTER_ZU_ENG": 8
+   "FENSTER_ZU_ENG": 7
   },
   "probleme": []
  },
@@ -71018,17 +71446,132 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 871,
-   "WINDOW_FLAGGED": 18,
-   "WINDOW_FAIL": 0,
+   "OK": 884,
+   "WINDOW_FLAGGED": 0,
+   "WINDOW_FAIL": 5,
    "KEIN_ZIEL": 112
   },
-  "klasse_zaehler": {},
-  "morph_zaehler": {
-   "FENSTER_ZU_ENG": 2,
-   "MEHRFACHRESONANZ": 3
+  "klasse_zaehler": {
+   "FENSTER_LEER": {
+    "flagged": 0,
+    "fail": 5
+   }
   },
-  "probleme": []
+  "morph_zaehler": {
+   "FENSTER_ZU_ENG": 2
+  },
+  "probleme": [
+   {
+    "i": 83,
+    "f_GHz": 4.1592,
+    "fenster": [
+     0.05517,
+     0.06385
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 11.43,
+     "b_peak": 0.0743,
+     "breite": 0.00868,
+     "resonanz_da": true,
+     "rmse_norm": 0.014,
+     "fwhm": 0.06045
+    }
+   },
+   {
+    "i": 84,
+    "f_GHz": 4.2092,
+    "fenster": [
+     0.05661,
+     0.06529
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 12.69,
+     "b_peak": 0.0743,
+     "breite": 0.00868,
+     "resonanz_da": true,
+     "rmse_norm": 0.031,
+     "fwhm": 0.05095
+    }
+   },
+   {
+    "i": 85,
+    "f_GHz": 4.2591,
+    "fenster": [
+     0.058,
+     0.06669
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 14.54,
+     "b_peak": 0.0743,
+     "breite": 0.00868,
+     "resonanz_da": true,
+     "rmse_norm": 0.019,
+     "fwhm": 0.0468
+    }
+   },
+   {
+    "i": 86,
+    "f_GHz": 4.3091,
+    "fenster": [
+     0.05947,
+     0.06815
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 18.88,
+     "b_peak": 0.0743,
+     "breite": 0.00868,
+     "resonanz_da": true,
+     "rmse_norm": 0.014,
+     "fwhm": 0.0397
+    }
+   },
+   {
+    "i": 87,
+    "f_GHz": 4.3591,
+    "fenster": [
+     0.06093,
+     0.06961
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 21.14,
+     "b_peak": 0.0743,
+     "breite": 0.00868,
+     "resonanz_da": true,
+     "rmse_norm": 0.024,
+     "fwhm": 0.03485
+    }
+   }
+  ]
  },
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--5K-98.899deg.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--5K-98.899deg.tdms",
@@ -71037,8 +71580,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 529,
-   "WINDOW_FLAGGED": 18,
+   "OK": 547,
+   "WINDOW_FLAGGED": 0,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 454
   },
@@ -71053,21 +71596,65 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 874,
-   "WINDOW_FLAGGED": 31,
-   "WINDOW_FAIL": 1,
+   "OK": 903,
+   "WINDOW_FLAGGED": 0,
+   "WINDOW_FAIL": 3,
    "KEIN_ZIEL": 95
   },
   "klasse_zaehler": {
    "FENSTER_LEER": {
     "flagged": 0,
-    "fail": 1
+    "fail": 3
    }
   },
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 11
+   "FENSTER_ZU_ENG": 7
   },
   "probleme": [
+   {
+    "i": 74,
+    "f_GHz": 3.7093,
+    "fenster": [
+     0.05867,
+     0.06735
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 10.29,
+     "b_peak": 0.07475,
+     "breite": 0.00867,
+     "resonanz_da": true,
+     "rmse_norm": 0.018,
+     "fwhm": 0.03735
+    }
+   },
+   {
+    "i": 75,
+    "f_GHz": 3.7593,
+    "fenster": [
+     0.0601,
+     0.06877
+    ],
+    "klassen": [
+     "FENSTER_LEER"
+    ],
+    "morph": [],
+    "status": "WINDOW_FAIL",
+    "gruende": [],
+    "info": {
+     "prom": 12.66,
+     "b_peak": 0.07475,
+     "breite": 0.00867,
+     "resonanz_da": true,
+     "rmse_norm": 0.02,
+     "fwhm": 0.03275
+    }
+   },
    {
     "i": 76,
     "f_GHz": 3.8092,
@@ -71099,21 +71686,36 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 262,
-   "WINDOW_FLAGGED": 56,
+   "OK": 279,
+   "WINDOW_FLAGGED": 39,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 683
   },
   "klasse_zaehler": {},
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 2
+   "FENSTER_ZU_ENG": 5
   },
   "probleme": []
  },
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--50K-98.899deg_flush.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--50K-98.899deg_flush.tdms",
-  "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "status_datei": "OK",
+  "format": "unsortiert",
+  "n_resonanzen": 1001,
+  "hat_gt": false,
+  "zaehler": {
+   "OK": 483,
+   "WINDOW_FLAGGED": 273,
+   "WINDOW_FAIL": 0,
+   "KEIN_ZIEL": 245
+  },
+  "klasse_zaehler": {},
+  "morph_zaehler": {
+   "MEHRFACHRESONANZ": 53,
+   "FENSTER_ZU_WEIT": 4,
+   "FENSTER_ZU_ENG": 6
+  },
+  "probleme": []
  },
  "YIG(2um)-GGG-YIG(2um)/2023-APR-26-Linescan-2D-map-oop--300K.tdms": {
   "datei": "YIG(2um)-GGG-YIG(2um)/2023-APR-26-Linescan-2D-map-oop--300K.tdms",
@@ -71122,8 +71724,8 @@
   "n_resonanzen": 1001,
   "hat_gt": false,
   "zaehler": {
-   "OK": 534,
-   "WINDOW_FLAGGED": 104,
+   "OK": 566,
+   "WINDOW_FLAGGED": 72,
    "WINDOW_FAIL": 0,
    "KEIN_ZIEL": 363
   },
@@ -71134,7 +71736,7 @@
    }
   },
   "morph_zaehler": {
-   "FENSTER_ZU_ENG": 7
+   "FENSTER_ZU_ENG": 18
   },
   "probleme": [
    {
@@ -71218,11 +71820,11 @@
  "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--5K-98.899deg_flush.tdms": {
   "datei": "YIG(200nm)-GGG(500um)/Linescan-2D-map-oop--5K-98.899deg_flush.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.1
+  "dauer_s": 90.2
  },
  "YIG(2um)-GGG-YIG(2um)/2023-APR-24-Linescan-2D-map-ip-lowfreq.tdms": {
   "datei": "YIG(2um)-GGG-YIG(2um)/2023-APR-24-Linescan-2D-map-ip-lowfreq.tdms",
   "status_datei": "TIMEOUT",
-  "dauer_s": 90.2
+  "dauer_s": 90.0
  }
 }

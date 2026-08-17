@@ -104,8 +104,12 @@ def schaetze_startwerte(
     omega: float,
     gamma: float,
     B_res_vorgabe: float | None = None,
+    alpha_max: float = 0.1,
 ) -> Startwerte:
     """Schaetzt Startwerte aus den Daten (Basis fuer AutoWindows).
+
+    ``alpha_max``: obere Schranke, auf die der alpha-Startwert begrenzt wird
+    (identisch mit der harten Fit-Schranke, siehe :mod:`polderfit.fit.kriterien`).
 
     * ``B_res``  aus dem Magnituden-Extremum (Peak ODER Dip), bzw. Vorgabe.
     * ``alpha``  aus der Halbwertsbreite (FWHM) der Magnitude.
@@ -177,7 +181,7 @@ def schaetze_startwerte(
     # folgt fuer den Startwert:  alpha = gamma*fwhm / (2*sqrt(3)*omega).
     alpha = float(gamma * fwhm / (2.0 * np.sqrt(3.0) * omega))
     # Auf den physikalisch plausiblen Bereich begrenzen (vgl. polderfit.fit.kriterien).
-    alpha = float(np.clip(alpha, 1e-5, 0.1))
+    alpha = float(np.clip(alpha, 1e-5, alpha_max))
 
     # Amplituden-Startwert auf die tatsaechliche chi-Skala umrechnen, damit
     # A*|chi| ~ gemessene Amplitude (chi traegt grosse Vorfaktoren in sich).

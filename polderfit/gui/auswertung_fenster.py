@@ -152,6 +152,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self._punkt_dh = np.array(dh)
 
         geometrie = self.geo_combo.currentText()
+        self._gewichtet = getattr(p, "gewichtet", True) if p is not None else True
         self._info = None
         fehler_text = ""
         if self._punkt_indizes.size >= 3:
@@ -160,7 +161,8 @@ class AuswertungsFenster(QtWidgets.QDialog):
                     self._info = auswertung_kittel_llg(
                         stapel.ergebnisse_aktiv(), geometrie=geometrie,
                         gamma_fest=p.gamma_fest, gamma_start=p.gamma,
-                        r2_min=p.r2_min)
+                        r2_min=p.r2_min,
+                        gewichtet=getattr(p, "gewichtet", True))
                 else:
                     self._info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(),
                                                        geometrie=geometrie)
@@ -212,8 +214,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             zeilen.append(f"<p style='color:#C0392B'>{fehler_text}</p>")
         else:
             kit, llg = self._info["kittel"], self._info["llg"]
-            g_err = (kit["g_faktor"] * kit["gamma_err"] / kit["gamma"]
-                     if kit["gamma"] else float("nan"))
+            g_err = kit.get("g_faktor_err", float("nan"))
 
             def w(wert, err, faktor=1.0, fmt=".4f"):
                 if err is None or not np.isfinite(err):
@@ -231,8 +232,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
                           f"<li>α = {w(llg['alpha'], llg['alpha_err'], fmt='.3e')}</li>"
                           f"<li>µ₀H<sub>inh</sub> = {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT</li>"
                           f"<li>R² = {llg['R2']:.5f}</li></ul>")
+            modus = ("gewichtet, w = 1/u²" if getattr(self, "_gewichtet", True)
+                     else "ungewichtet")
             zeilen.append("<p style='color:#6B6657;font-size:11px'>Fehler: 1σ aus der "
-                          "Kovarianz des jeweiligen Fits.</p>")
+                          f"Kovarianz des jeweiligen Fits. Kittel-/LLG-Fit {modus} "
+                          "(umschaltbar: Strg+P).</p>")
         self.param_text.setHtml("".join(zeilen))
 
     # --- Punkt-Entfernen ------------------------------------------------------
@@ -322,10 +326,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
         parameter = []
         if self._info is not None:
             kit, llg = self._info["kittel"], self._info["llg"]
-            g_err = (kit["g_faktor"] * kit["gamma_err"] / kit["gamma"]
-                     if kit["gamma"] else np.nan)
+            g_err = kit.get("g_faktor_err", np.nan)
             parameter = [
                 ("Geometrie", self._info["geometrie"], "", ""),
+                ("Gewichtung", "w=1/u² (GUM)" if getattr(self, "_gewichtet", True)
+                 else "ungewichtet", "", ""),
                 ("mu0_Meff", kit["mu0Meff"], kit["mu0Meff_err"], "T"),
                 ("g_faktor", kit["g_faktor"], g_err, ""),
                 ("gamma", kit["gamma"], kit["gamma_err"], "rad/(s*T)"),
@@ -348,9 +353,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         verwendet = set(int(i) for i in self._punkt_indizes)
         zeilen = []
         for i, e in enumerate(stapel.ergebnisse):
-            gamma = stapel.gamma
-            dh_err = (2.0 * (2.0 * np.pi * e.frequenz) * e.alpha_err / gamma
-                      if np.isfinite(e.alpha_err) else np.nan)
+            dh_err = getattr(e, "dH_err", np.nan)
             zeilen.append({
                 "frequenz_Hz": e.frequenz,
                 "B_res_T": e.B_res, "B_res_err_T": e.B_res_err,

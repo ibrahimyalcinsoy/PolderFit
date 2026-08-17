@@ -8,6 +8,7 @@ theme:
   highlightjs: true
 nav:
   - Start: index.md
+  - "Schnellreferenz: Größen · Formeln · Quellen": referenz.md
   - Installation und Start: installation.md
   - Die Messdaten (TDMS): datenformate.md
   - Kanal-Mapping und Profile: kanal-mapping.md
@@ -22,6 +23,11 @@ nav:
   - Parameter und Feineinstellung: tuning.md
   - Fehlerdiagnose: troubleshooting.md
   - Robustheitsprüfung über reale Messdaten: test-harness.md
+# Die Schnellreferenz verlinkt Original-PDFs im (gitignorierten) Ordner
+# Dokumente/ – ausserhalb des docs-Baums, daher keine Warnung dafuer.
+validation:
+  links:
+    not_found: info
 markdown_extensions:
   - admonition
   - attr_list

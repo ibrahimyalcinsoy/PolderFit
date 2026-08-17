@@ -8,10 +8,12 @@ in `polderfit/fit/batch.py`.
 
 ```python
 def fitte_alle(datensatz, gamma=GAMMA_STANDARD, breite_faktor=8.0,
-               r2_schwelle=0.9, fortschritt=None, zentren=None) -> StapelErgebnis:
+               r2_schwelle=0.9, fortschritt=None, zentren=None,
+               auswahl=None, alpha_erwartet=0.01,
+               alpha_max=ALPHA_MAX, nachfenster_faktor=2.5) -> StapelErgebnis:
 ```
 
-Der Ablauf gliedert sich in zwei Phasen:
+Der Ablauf gliedert sich in zwei Phasen (plus einen optionalen Nachfit):
 
 1. **Globale Fensterbestimmung.** Für den gesamten Datensatz werden die
    Resonanzfenster ermittelt. Standardmäßig geschieht dies durch `auto_fenster_alle`
@@ -26,11 +28,21 @@ Der Ablauf gliedert sich in zwei Phasen:
 ```python
 fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)   # Phase 1
 for i, ls in enumerate(datensatz.linescans):                   # Phase 2
-    unten, oben = fenster[i]
-    beschnitten = schneide_band(ls, unten, oben)
-    ergebnis = fitte_linescan(beschnitten, gamma)
-    # Ergebnis und beschnittener Linescan werden im StapelErgebnis abgelegt
+    ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
+        ls, fenster[i], gamma, alpha_max=alpha_max,
+        nachfenster_faktor=nachfenster_faktor)
+    # verwendet = ggf. auf B_res ± faktor*dH verengtes Fenster (2. Durchgang)
 ```
+
+**Zweiter Durchgang (`nachfenster_faktor`, Standard 2.5):** Nach dem Fit auf dem
+breiten Detektionsfenster wird einmal auf `B_res ± faktor·µ₀ΔH` (aus dem ersten
+Ergebnis) nachgefittet; das Ergebnis wird nur übernommen, wenn der Nachfit
+erfolgreich und nicht problematisch ist. Das Fenster wird dabei nie erweitert und
+enthält mindestens 12 Messpunkte. Hintergrund: Auf sehr breiten Fenstern passt der
+lineare Untergrund bei strukturiertem Hintergrund nicht mehr, und µ₀ΔH fällt
+systematisch zu klein aus (Benchmark gegen das LabVIEW-FTF, `benchmark_ftf/`).
+`nachfenster_faktor=0` schaltet den Durchgang ab. `alpha_max` ist die harte
+obere α-Schranke der Einzelfits (Standard 0.1).
 
 Das Resultat ist ein `StapelErgebnis` mit den Listen `fenster` (Bandgrenzen),
 `zugeschnitten` (beschnittene Linescans) und `ergebnisse` (Fitergebnisse je

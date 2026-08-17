@@ -19,7 +19,8 @@ from pathlib import Path
 
 import numpy as np
 
-from ..fit.batch import Ausschlusszone, StapelErgebnis
+from ..fit.batch import NACHFENSTER_FAKTOR_STANDARD, Ausschlusszone, StapelErgebnis
+from ..fit.kriterien import ALPHA_MAX
 from ..physik.konstanten import GAMMA_STANDARD
 
 
@@ -45,6 +46,8 @@ def speichere_sitzung(stapel: StapelErgebnis, pfad: str) -> None:
         "auswertungsauswahl": meta.get("auswertungsauswahl"),
         "gamma": stapel.gamma,
         "r2_schwelle": stapel.r2_schwelle,
+        "alpha_max": stapel.alpha_max,
+        "nachfenster_faktor": stapel.nachfenster_faktor,
         "fenster": [[float(u), float(o)] for (u, o) in stapel.fenster],
         "ausschlusszonen": [z.als_dict() for z in stapel.ausschlusszonen],
         "ausreisser": [int(i) for i in stapel.ausreisser],
@@ -87,6 +90,9 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> Stapel
         datensatz=datensatz,
         gamma=float(daten.get("gamma", GAMMA_STANDARD)),
         r2_schwelle=float(daten.get("r2_schwelle", 0.9)),
+        alpha_max=float(daten.get("alpha_max", ALPHA_MAX)),
+        nachfenster_faktor=float(daten.get("nachfenster_faktor",
+                                           NACHFENSTER_FAKTOR_STANDARD)),
         fenster=fenster,
         ausschlusszonen=[Ausschlusszone.aus_dict(z)
                          for z in daten.get("ausschlusszonen", [])],

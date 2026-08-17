@@ -52,8 +52,8 @@ Die maßgeblichen Konstanten (`polderfit/fit/kriterien.py`):
 | Konstante | Wert | Bedeutung |
 |---|---|---|
 | `ALPHA_MIN` | `1e-5` | untere harte Fit-Schranke der Dämpfung |
-| `ALPHA_MAX` | `0.1` | obere harte Fit-Schranke der Dämpfung |
-| `ALPHA_PLAUSIBEL_MAX` | `0.05` | Dämpfung darüber gilt als unphysikalisch |
+| `ALPHA_MAX` | `0.1` | obere harte Fit-Schranke der Dämpfung (Standard; per Parameter `alpha_max` bzw. GUI „α-Obergrenze" anhebbar) |
+| `ALPHA_PLAUSIBEL_MAX` | `0.05` | Dämpfung darüber gilt als unphysikalisch; bei angehobener Schranke wandert die Grenze mit (halbe Schranke, `alpha_plausibel_max`) |
 | `PHI_MIN`, `PHI_MAX` | `∓2π` | Schranken des Phasenwinkels |
 | `GRENZ_NAEHE_REL` | `0.01` | „an Schranke", wenn innerhalb 1 % des Schrankenabstands |
 | `RMSE_NORM_SCHWELLE` | `0.35` | normiertes Residuum darüber → problematisch |

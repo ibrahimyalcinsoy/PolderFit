@@ -28,12 +28,14 @@ from ..physik.kittel_llg import (
 
 
 def _gute_ergebnisse(ergebnisse: list[FitErgebnis], r2_min: float):
-    """Liefert (f, B_res, mu0dH, T) nur fuer nicht-problematische Einzelfits.
+    """Liefert (f, B_res, mu0dH, T, B_res_err, mu0dH_err) nur fuer
+    nicht-problematische Einzelfits.
 
     ``r2_min`` bleibt als zusaetzliche, sekundaere Schranke erhalten; primaer
-    zaehlt die Mehrkriterien-Einstufung (``not e.problematisch``).
+    zaehlt die Mehrkriterien-Einstufung (``not e.problematisch``). Die
+    1σ-Unsicherheiten dienen der GUM-konformen Gewichtung der Kittel-/LLG-Fits.
     """
-    f, b, dh, t = [], [], [], []
+    f, b, dh, t, b_err, dh_err = [], [], [], [], [], []
     for e in ergebnisse:
         gut = (
             e.erfolg
@@ -46,7 +48,10 @@ def _gute_ergebnisse(ergebnisse: list[FitErgebnis], r2_min: float):
             b.append(e.B_res)
             dh.append(e.dH)
             t.append(e.temperatur if e.temperatur is not None else np.nan)
-    return (np.array(f), np.array(b), np.array(dh), np.array(t))
+            b_err.append(e.B_res_err)
+            dh_err.append(getattr(e, "dH_err", np.nan))
+    return (np.array(f), np.array(b), np.array(dh), np.array(t),
+            np.array(b_err), np.array(dh_err))
 
 
 def auswertung_kittel_llg(
@@ -55,22 +60,32 @@ def auswertung_kittel_llg(
     gamma_fest: bool = False,
     gamma_start: float = GAMMA_STANDARD,
     r2_min: float = 0.9,
+    gewichtet: bool = True,
 ) -> dict:
     """Fuehrt Kittel- und LLG-Fit ueber alle (guten) Einzelfits durch.
 
     ``geometrie`` ist ``"oop"`` oder ``"ip"``. Rueckgabe enthaelt die Kittel-
     und Linienbreiten-Parameter sowie die verwendeten Datenpunkte.
+    ``gewichtet=True`` (Standard) gewichtet beide Fits mit den
+    1σ-Unsicherheiten der Einzelfits (w = 1/u², GUM/ABW Abschn. 6.3);
+    ``False`` rechnet die klassische ungewichtete Ausgleichsrechnung
+    (in der GUI umschaltbar: Physikalische Parameter, Strg+P). Die
+    Unsicherheit des uebernommenen ``gamma`` geht stets in ``alpha_err`` ein.
     """
-    f, b, dh, _t = _gute_ergebnisse(ergebnisse, r2_min)
+    f, b, dh, _t, b_err, dh_err = _gute_ergebnisse(ergebnisse, r2_min)
     if f.size < 3:
         raise ValueError("Zu wenige gute Einzelfits fuer die uebergreifende Auswertung.")
+    if not gewichtet:
+        b_err = dh_err = None
 
     if geometrie == "ip":
-        kittel = fit_kittel_ip(f, b, gamma_start=gamma_start)
+        kittel = fit_kittel_ip(f, b, gamma_start=gamma_start, B_res_err=b_err)
     else:
-        kittel = fit_kittel_oop(f, b, gamma_fest=gamma_fest, gamma_start=gamma_start)
+        kittel = fit_kittel_oop(f, b, gamma_fest=gamma_fest, gamma_start=gamma_start,
+                                B_res_err=b_err)
 
-    llg = fit_linienbreite(f, dh, gamma=kittel["gamma"])
+    llg = fit_linienbreite(f, dh, gamma=kittel["gamma"],
+                           gamma_err=kittel["gamma_err"], mu0dH_err=dh_err)
     return {
         "geometrie": geometrie,
         "kittel": kittel,
@@ -87,6 +102,7 @@ def plot_resonanz_vs_frequenz(
     gamma_fest: bool = False,
     r2_min: float = 0.9,
     ax=None,
+    gewichtet: bool = True,
 ):
     """Kittel-Dispersionsplot: Feld (x) gegen Frequenz (y), wie im Farbplot.
 
@@ -95,7 +111,8 @@ def plot_resonanz_vs_frequenz(
     """
     import matplotlib.pyplot as plt
 
-    info = auswertung_kittel_llg(ergebnisse, geometrie, gamma_fest, r2_min=r2_min)
+    info = auswertung_kittel_llg(ergebnisse, geometrie, gamma_fest, r2_min=r2_min,
+                                 gewichtet=gewichtet)
     f, b = info["frequenz_Hz"], info["B_res_T"]
     kit = info["kittel"]
 
@@ -123,6 +140,7 @@ def plot_linienbreite(
     gamma: float = GAMMA_STANDARD,
     r2_min: float = 0.9,
     ax=None,
+    gewichtet: bool = True,
 ):
     """Plot Linienbreite mu0*DeltaH ueber dem Resonanzfeld inkl. LLG-Fit.
 
@@ -133,8 +151,9 @@ def plot_linienbreite(
     """
     import matplotlib.pyplot as plt
 
-    f, b, dh, _t = _gute_ergebnisse(ergebnisse, r2_min)
-    llg = fit_linienbreite(f, dh, gamma=gamma)
+    f, b, dh, _t, _b_err, dh_err = _gute_ergebnisse(ergebnisse, r2_min)
+    llg = fit_linienbreite(f, dh, gamma=gamma,
+                           mu0dH_err=dh_err if gewichtet else None)
 
     fig = ax.figure if ax is not None else plt.figure(figsize=(6, 4.5))
     ax = ax or fig.add_subplot(111)
@@ -158,7 +177,7 @@ def plot_resonanz_vs_temperatur(ergebnisse: list[FitErgebnis], r2_min: float = 0
     """Plot Resonanzfeld vs. Temperatur (sofern Temperaturdaten vorhanden)."""
     import matplotlib.pyplot as plt
 
-    f, b, _dh, t = _gute_ergebnisse(ergebnisse, r2_min)
+    f, b, _dh, t, _b_err, _dh_err = _gute_ergebnisse(ergebnisse, r2_min)
     gueltig = np.isfinite(t)
     fig = ax.figure if ax is not None else plt.figure(figsize=(6, 4.5))
     ax = ax or fig.add_subplot(111)

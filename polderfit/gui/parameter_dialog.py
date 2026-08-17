@@ -15,6 +15,8 @@ from dataclasses import dataclass, replace
 
 from PySide6 import QtWidgets
 
+from ..fit.batch import NACHFENSTER_FAKTOR_STANDARD
+from ..fit.kriterien import ALPHA_MAX
 from ..physik.konstanten import G_FAKTOR_STANDARD, gamma_aus_g
 
 #: Waehlbare Kittel-Geometrien.
@@ -39,6 +41,15 @@ class PhysikParameter:
     r2_min: float = 0.9
     #: Erwartete Daempfung alpha fuer die Fensterbreite bei "Resonanz vorgeben".
     alpha_erwartet: float = 0.01
+    #: Kittel-/LLG-Fits mit den 1-sigma-Einzelunsicherheiten gewichten
+    #: (GUM/ABW: w = 1/u^2). ``False`` = ungewichtete Ausgleichsrechnung.
+    gewichtet: bool = True
+    #: Harte obere Schranke der Gilbert-Daempfung im Einzelfit. Standard 0.1;
+    #: fuer sehr breite Resonanzen (z. B. FeCr2S4, alpha ~ 0.2-0.5) anheben.
+    alpha_max: float = ALPHA_MAX
+    #: Zweiter Fit-Durchgang: Fitfenster = B_res +/- Faktor * Linienbreite des
+    #: ersten Durchgangs (0 = aus). Macht die Linienbreite fensterunabhaengig.
+    nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD
 
     @property
     def gamma(self) -> float:
@@ -50,7 +61,9 @@ class PhysikParameter:
         return (f"g={self.g_faktor:.4f} (γ={self.gamma:.4e} rad/(s·T)){fest}, "
                 f"Geometrie {self.geometrie}, Fensterfaktor {self.breite_faktor:g}, "
                 f"R²-Schwelle {self.r2_schwelle:g}, R²-Min (Kittel) {self.r2_min:g}, "
-                f"α erwartet {self.alpha_erwartet:g}")
+                f"α erwartet {self.alpha_erwartet:g}, α max {self.alpha_max:g}, "
+                f"Nachfenster ±{self.nachfenster_faktor:g}·ΔH, "
+                f"Kittel/LLG {'gewichtet' if self.gewichtet else 'ungewichtet'}")
 
 
 class ParameterDialog(QtWidgets.QDialog):
@@ -141,6 +154,46 @@ class ParameterDialog(QtWidgets.QDialog):
             "(ΔB = 2ωα/γ) beim Auto-Fit mit vorgegebener Resonanz.")
         form.addRow("Erwartetes α (Vorgabe-Fenster):", self.alpha_spin)
 
+        self.alpha_max_spin = QtWidgets.QDoubleSpinBox()
+        self.alpha_max_spin.setRange(0.001, 2.0)
+        self.alpha_max_spin.setDecimals(3)
+        self.alpha_max_spin.setSingleStep(0.05)
+        self.alpha_max_spin.setValue(parameter.alpha_max)
+        self.alpha_max_spin.setToolTip(
+            "Harte obere Schranke der Gilbert-Daempfung α im Einzelfit.\n"
+            "Standard 0.1 (Metalle/Granate). Fuer sehr breite Resonanzen\n"
+            "(z. B. FeCr2S4 mit α ≈ 0.2–0.5) anheben – sonst klemmt der Fit\n"
+            "an der Schranke ('alpha an Grenze'). Die Plausibilitaetsgrenze\n"
+            "('alpha unphysikalisch') liegt bei der Haelfte dieser Schranke.")
+        form.addRow("α-Obergrenze (Einzelfit):", self.alpha_max_spin)
+
+        self.nachfenster_spin = QtWidgets.QDoubleSpinBox()
+        self.nachfenster_spin.setRange(0.0, 10.0)
+        self.nachfenster_spin.setDecimals(1)
+        self.nachfenster_spin.setSingleStep(0.5)
+        self.nachfenster_spin.setSpecialValueText("aus")
+        self.nachfenster_spin.setValue(parameter.nachfenster_faktor)
+        self.nachfenster_spin.setToolTip(
+            "Zweiter Fit-Durchgang (Auto-/Bereichs-Fit): Fitfenster =\n"
+            "B_res ± Faktor × ΔH aus dem ersten Durchgang; uebernommen nur,\n"
+            "wenn der Nachfit unproblematisch ist. Bis ≈ ±3 ΔH ist die\n"
+            "Linienbreite fensterunabhaengig; auf dem breiten Detektions-\n"
+            "fenster (Faktor 8) faellt sie bei strukturiertem Untergrund\n"
+            "systematisch 5–15 % zu klein aus (Benchmark gegen LabVIEW-FTF).\n"
+            "0 = aus (nur ein Durchgang auf dem Detektionsfenster).")
+        form.addRow("Nachfenster (± ΔH-Vielfache):", self.nachfenster_spin)
+
+        self.gewicht_combo = QtWidgets.QComboBox()
+        self.gewicht_combo.addItems(["gewichtet (GUM, w = 1/u²)", "ungewichtet"])
+        self.gewicht_combo.setCurrentIndex(0 if parameter.gewichtet else 1)
+        self.gewicht_combo.setToolTip(
+            "Kittel-/LLG-Fits: Gewichtung der Punkte mit den 1σ-Unsicherheiten\n"
+            "der Einzelfits (w = 1/u², ABW Abschn. 6.3). Gewichtet betont die\n"
+            "praezisesten Punkte; ungewichtet behandelt alle Punkte gleich.\n"
+            "Weichen beide Ergebnisse stark voneinander ab, tragen Modell-\n"
+            "abweichungen (nicht Rauschen) die Streuung.")
+        form.addRow("Kittel-/LLG-Gewichtung:", self.gewicht_combo)
+
         lay.addLayout(form)
 
         knoepfe = QtWidgets.QDialogButtonBox(
@@ -168,6 +221,9 @@ class ParameterDialog(QtWidgets.QDialog):
         self.r2_spin.setValue(standard.r2_schwelle)
         self.r2min_spin.setValue(standard.r2_min)
         self.alpha_spin.setValue(standard.alpha_erwartet)
+        self.alpha_max_spin.setValue(standard.alpha_max)
+        self.nachfenster_spin.setValue(standard.nachfenster_faktor)
+        self.gewicht_combo.setCurrentIndex(0 if standard.gewichtet else 1)
 
     def parameter(self) -> PhysikParameter:
         """Liefert die eingestellten Parameter als neue Datenklasse."""
@@ -180,4 +236,7 @@ class ParameterDialog(QtWidgets.QDialog):
             r2_schwelle=float(self.r2_spin.value()),
             r2_min=float(self.r2min_spin.value()),
             alpha_erwartet=float(self.alpha_spin.value()),
+            alpha_max=float(self.alpha_max_spin.value()),
+            nachfenster_faktor=float(self.nachfenster_spin.value()),
+            gewichtet=self.gewicht_combo.currentIndex() == 0,
         )

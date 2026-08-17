@@ -37,6 +37,8 @@ class FitErgebnis:
     alpha: float = np.nan
     alpha_err: float = np.nan
     dH: float = np.nan          # mu0*DeltaH (Tesla)
+    dH_err: float = np.nan      # 1-sigma von dH; dH = 2*omega*alpha/gamma ist
+                                # linear in alpha -> dH_err = 2*omega*alpha_err/gamma
     A: float = np.nan
     A_err: float = np.nan
     phi: float = np.nan
@@ -79,6 +81,7 @@ class FitErgebnis:
             "alpha": self.alpha,
             "alpha_err": self.alpha_err,
             "mu0_dH_T": self.dH,
+            "mu0_dH_err_T": self.dH_err,
             "A": self.A,
             "A_err": self.A_err,
             "phi_rad": self.phi,
@@ -179,6 +182,7 @@ def fitte_linescan(
     gamma: float = GAMMA_STANDARD,
     startwerte: Startwerte | None = None,
     B_res_vorgabe: float | None = None,
+    alpha_max: float = ALPHA_MAX,
 ) -> FitErgebnis:
     """Fittet einen (i. d. R. bereits zugeschnittenen) Linescan.
 
@@ -186,7 +190,13 @@ def fitte_linescan(
     sie aus den Daten geschaetzt. ``B_res_vorgabe`` setzt nur das Resonanzfeld.
     Schranken sind physikalisch begrenzt (siehe :mod:`polderfit.fit.kriterien`);
     insbesondere MUSS ``B_res`` innerhalb des ausgeschnittenen Feldfensters liegen.
+    ``alpha_max`` ist die harte obere alpha-Schranke (Standard ``ALPHA_MAX`` =
+    0.1; fuer sehr breite Resonanzen wie FeCr2S4 mit alpha ~ 0.2-0.5 anhebbar –
+    Benchmark gegen das LabVIEW-FTF: auf gleichem Fenster identische Ergebnisse,
+    sobald die Schranke nicht mehr greift).
     """
+    if not np.isfinite(alpha_max) or alpha_max <= ALPHA_MIN:
+        alpha_max = ALPHA_MAX
     omega = 2.0 * np.pi * linescan.frequenz
     B = linescan.feld
     s21 = linescan.s21
@@ -194,21 +204,22 @@ def fitte_linescan(
     B_min, B_max = float(B.min()), float(B.max())
 
     if startwerte is None:
-        startwerte = schaetze_startwerte(B, s21, omega, gamma, B_res_vorgabe)
+        startwerte = schaetze_startwerte(B, s21, omega, gamma, B_res_vorgabe,
+                                         alpha_max=alpha_max)
 
     sw = startwerte
     temperatur = linescan.temperatur_mittel()
 
     # Startwerte in die Schranken zwingen (kein Start exakt auf einer Grenze).
     b_res_start = float(np.clip(sw.B_res, B_min, B_max))
-    alpha_start = float(np.clip(sw.alpha, ALPHA_MIN * 1.1, ALPHA_MAX * 0.9))
+    alpha_start = float(np.clip(sw.alpha, ALPHA_MIN * 1.1, alpha_max * 0.9))
     phi_start = float(np.clip(sw.phi, PHI_MIN + 1e-6, PHI_MAX - 1e-6))
 
     def _minimiere(phi_wert: float):
         params = Parameters()
         # B_res MUSS im Feldfenster liegen (Defekt 1).
         params.add("B_res", value=b_res_start, min=B_min, max=B_max)
-        params.add("alpha", value=alpha_start, min=ALPHA_MIN, max=ALPHA_MAX)
+        params.add("alpha", value=alpha_start, min=ALPHA_MIN, max=alpha_max)
         params.add("A", value=sw.A)
         params.add("phi", value=phi_wert, min=PHI_MIN, max=PHI_MAX)
         params.add("off_re", value=sw.off_re)
@@ -232,7 +243,7 @@ def fitte_linescan(
             B_fenster_min=B_min, B_fenster_max=B_max, kovarianz_ok=False,
             feld=B, temperatur=temperatur,
         )
-        erg.problematisch, erg.problem_gruende = bewerte_fit(erg)
+        erg.problematisch, erg.problem_gruende = bewerte_fit(erg, alpha_max=alpha_max)
         return erg
 
     # phi-Nebenminimum-Ausweg: Der phi-Startwert aus der Schaetzung kann um pi
@@ -274,6 +285,7 @@ def fitte_linescan(
         B_res=float(p["B_res"].value), B_res_err=_err("B_res"),
         alpha=float(p["alpha"].value), alpha_err=_err("alpha"),
         dH=2.0 * omega * float(p["alpha"].value) / gamma,
+        dH_err=2.0 * omega * _err("alpha") / gamma,
         A=float(p["A"].value), A_err=_err("A"),
         phi=float(p["phi"].value), phi_err=_err("phi"),
         off_re=float(p["off_re"].value), off_im=float(p["off_im"].value),
@@ -284,5 +296,5 @@ def fitte_linescan(
         feld=B, fitkurve=kurve, temperatur=temperatur,
         **masse,
     )
-    erg.problematisch, erg.problem_gruende = bewerte_fit(erg)
+    erg.problematisch, erg.problem_gruende = bewerte_fit(erg, alpha_max=alpha_max)
     return erg

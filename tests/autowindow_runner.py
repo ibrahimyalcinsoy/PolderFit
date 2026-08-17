@@ -334,7 +334,9 @@ def verarbeite_datei(pfad_str, schluessel, gt_pfad_str, ergebnis_q):
         try:
             ds = lade_tdms(pfad_str)
         except ValueError as exc:
-            if "Unbekanntes TDMS-Format" in str(exc):
+            # "Unbekanntes TDMS-Format" (alt) bzw. MappingErforderlich (seit dem
+            # Kanal-Mapping): kein bekanntes FMR-Layout -> kein Testziel.
+            if "Unbekanntes TDMS-Format" in str(exc) or "Kein Mapping-Profil" in str(exc):
                 ergebnis_q.put({"datei": name, "status_datei": "NICHT_FMR",
                                 "grund": str(exc)[:200]})
                 return

@@ -1,5 +1,12 @@
 # PolderFit – Auswertung breitbandiger FMR-Messungen
 
+!!! tip "Nur nachschlagen statt lesen?"
+    Die **[Schnellreferenz](referenz.md)** zeigt alle Größen mit Einheiten,
+    die Kernformeln und jede Fundstelle als anklickbaren Quellenverweis
+    (Dokument + Seite) — z. B. „Welche Einheit hat α?“ oder „Wo steht die
+    Linienbreiten-Formel bei Müller?“. Die Kapitel darunter sind die
+    Vertiefung; für den Alltag genügt die Referenz.
+
 PolderFit dient der quantitativen Auswertung breitbandiger ferromagnetischer
 Resonanzmessungen (bbFMR, *broadband ferromagnetic resonance*). Die Dokumentation
 beschreibt den Aufbau des Programms, die zugrunde liegenden physikalischen Modelle,

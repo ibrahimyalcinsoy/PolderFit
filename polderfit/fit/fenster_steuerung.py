@@ -21,7 +21,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .autowindows import auto_fenster_intervalle
-from .batch import Ausschlusszone, StapelErgebnis, fitte_neu
+from .batch import Ausschlusszone, StapelErgebnis, fitte_neu, nachfenster
 
 #: Gueltige Modi fuer das Ueberschreib-Verhalten beim Neu-Fitten.
 MODI = ("ueberschreiben", "ergaenzen")
@@ -283,12 +283,30 @@ def _fitte_mit_intervallen(
         if grenzen is None:  # zu wenige Messpunkte im Intervall
             uebersprungen.append(i)
             continue
-        ergebnis = fitte_neu(stapel, i, feld_unten=grenzen[0], feld_oben=grenzen[1])
+        ergebnis = _fitte_neu_mit_nachfenster(stapel, i, grenzen[0], grenzen[1])
         neu_gefittet.append(i)
         if fortschritt is not None:
             fortschritt(k + 1, len(reihenfolge), ergebnis)
 
     return neu_gefittet, sorted(uebersprungen)
+
+
+def _fitte_neu_mit_nachfenster(stapel: StapelErgebnis, i: int,
+                               unten: float, oben: float):
+    """``fitte_neu`` mit anschliessendem zweiten Durchgang auf
+    ``B_res +/- stapel.nachfenster_faktor * dH`` (wie im Auto-Fit, siehe
+    :func:`polderfit.fit.batch.fitte_mit_nachfenster`). Faellt der Nachfit
+    problematisch aus, wird das Ergebnis des ersten Durchgangs deterministisch
+    wiederhergestellt."""
+    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben)
+    eng = nachfenster(stapel.datensatz.linescans[i], ergebnis, (unten, oben),
+                      stapel.nachfenster_faktor)
+    if eng is None:
+        return ergebnis
+    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1])
+    if zweites.erfolg and not zweites.problematisch:
+        return zweites
+    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben)
 
 
 @dataclass

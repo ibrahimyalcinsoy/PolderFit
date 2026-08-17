@@ -21,6 +21,8 @@ Mehrere Größen lassen sich direkt beim Aufruf übergeben, ohne den Quelltext z
 | `breite_faktor` | `8.0` | Skaliert die Fensterbreite relativ zur geschätzten Linienbreite |
 | `r2_schwelle` | `0.9` | Schwelle für nachgelagerte R²-Auswertungen |
 | `zentren` | `None` | vorgegebene Fenstermitten `B_res(f)`; überspringt die Auto-Detektion |
+| `alpha_max` | `0.1` | harte obere α-Schranke der Einzelfits; für sehr breite Resonanzen (α ≈ 0.2–0.5) anheben |
+| `nachfenster_faktor` | `2.5` | zweiter Fit-Durchgang auf `B_res ± faktor·µ₀ΔH`; `0` = aus (siehe [Ablauf](pipeline.md)) |
 
 Der Wert `gamma` legt **nicht** das Ergebnis fest: Er dient im Einzelfit nur der
 Startwert- und Fensterschätzung. Das Resonanzfeld `B_res` jeder Frequenz ist ein

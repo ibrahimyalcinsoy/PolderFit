@@ -152,7 +152,21 @@ vom Nutzer wählbaren Größen (Konvention wie oben: Felder als µ₀H in Tesla,
 | R²-Schwelle (Einzelfit) | sekundäres Gütemaß der Problem-Einstufung | 0.9 |
 | R²-Minimum (Kittel/LLG) | Punktauswahl der übergreifenden Auswertung | 0.9 |
 | erwartetes α | Fensterbreite (ΔB = 2ωα/γ) beim Auto-Fit mit vorgegebener Resonanz | 0.01 |
+| α-Obergrenze (Einzelfit) | harte obere Fitschranke für α; für sehr breite Resonanzen (z. B. FeCr₂S₄, α ≈ 0.2–0.5) anheben. Die Plausibilitätsgrenze („alpha unphysikalisch") liegt bei der Hälfte | 0.1 |
+| Nachfenster (± ΔH-Vielfache) | zweiter Fit-Durchgang auf B_res ± Faktor·µ₀ΔH des ersten Durchgangs (Auto- und Bereichs-Fit); wird nur übernommen, wenn der Nachfit unproblematisch ist. 0 = aus | 2.5 |
 
 Änderungen wirken ab dem nächsten (Auto-/Nach-)Fit; die Kittel/LLG-Auswertung
 und der Excel-Export rechnen sofort mit den neuen Werten. „Standardwerte"
 setzt alles zurück.
+
+!!! note "Warum ein zweiter Fit-Durchgang?"
+    Das Detektionsfenster der Automatik ist bewusst breit (≈ ±7 Linienbreiten).
+    Auf so breiten Fenstern passt der lineare Untergrund des Modells bei
+    strukturiertem Hintergrund (Ripple, Nachbarsignale) nicht mehr, und die
+    Linienbreite fällt systematisch 5–15 % zu klein aus. Bis ≈ ±3 Linienbreiten
+    ist µ₀ΔH fensterunabhängig. Der Benchmark gegen das LabVIEW-Tool FTF
+    (`benchmark_ftf/BERICHT.md`) zeigt: mit dem Nachfenster stimmen ΔH je
+    Frequenz auf < 1 % und g, µ₀M_eff, µ₀H_u, α, µ₀ΔH₀ innerhalb 1σ überein.
+
+Der Kittel-ip-Fit ist unter (µ₀M_eff, µ₀H_u) → (−µ₀M_eff, µ₀H_u + µ₀M_eff) exakt
+entartet; PolderFit liefert daher immer den Ast µ₀M_eff ≥ 0.

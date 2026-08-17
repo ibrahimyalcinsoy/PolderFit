@@ -1217,6 +1217,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             # bleiben, bis neu gefittet wird.
             self.stapel.gamma = parameter.gamma
             self.stapel.r2_schwelle = parameter.r2_schwelle
+            self.stapel.alpha_max = parameter.alpha_max
+            self.stapel.nachfenster_faktor = parameter.nachfenster_faktor
             self._log("Hinweis: bestehende Einzelfits bleiben unveraendert - "
                       "neue Parameter wirken ab dem naechsten (Auto-/Nach-)Fit; "
                       "die Kittel/LLG-Auswertung rechnet sofort neu.", "info")
@@ -1271,7 +1273,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               breite_faktor=physik.breite_faktor,
                               r2_schwelle=physik.r2_schwelle,
                               fortschritt=fortschritt, auswahl=auswahl,
-                              alpha_erwartet=physik.alpha_erwartet)
+                              alpha_erwartet=physik.alpha_erwartet,
+                              alpha_max=physik.alpha_max,
+                              nachfenster_faktor=physik.nachfenster_faktor)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
@@ -1325,7 +1329,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               r2_schwelle=physik.r2_schwelle,
                               fortschritt=fortschritt, zentren=zentren,
                               auswahl=auswahl,
-                              alpha_erwartet=physik.alpha_erwartet)
+                              alpha_erwartet=physik.alpha_erwartet,
+                              alpha_max=physik.alpha_max,
+                              nachfenster_faktor=physik.nachfenster_faktor)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
@@ -1532,9 +1538,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             info = auswertung_kittel_llg(self.stapel.ergebnisse_aktiv(),
                                          geometrie=p.geometrie,
                                          gamma_fest=p.gamma_fest,
-                                         gamma_start=p.gamma, r2_min=p.r2_min)
+                                         gamma_start=p.gamma, r2_min=p.r2_min,
+                                         gewichtet=p.gewichtet)
             global_param = {**{f"kittel_{k}": v for k, v in info["kittel"].items()},
-                            **{f"llg_{k}": v for k, v in info["llg"].items()}}
+                            **{f"llg_{k}": v for k, v in info["llg"].items()},
+                            "gewichtung": "w=1/u^2 (GUM)" if p.gewichtet else "ungewichtet"}
         except Exception:
             pass
         exportiere_excel(self.stapel.ergebnisse, pfad, global_param,

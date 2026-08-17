@@ -68,8 +68,25 @@ def an_grenze(wert: float, unten: float, oben: float, rel: float = GRENZ_NAEHE_R
     return (wert <= unten + rel * spanne) or (wert >= oben - rel * spanne)
 
 
-def bewerte_fit(erg) -> tuple[bool, list[str]]:
+def alpha_plausibel_max(alpha_max: float = ALPHA_MAX) -> float:
+    """Plausibilitaetsgrenze fuer alpha zur eingestellten harten Schranke.
+
+    Standard: ``ALPHA_PLAUSIBEL_MAX`` (0.05) bei ``ALPHA_MAX`` (0.1). Wird die
+    harte Schranke vom Nutzer angehoben (sehr breite Resonanzen, z. B.
+    FeCr2S4 mit alpha ~ 0.2-0.5), wandert die Plausibilitaetsgrenze im selben
+    Verhaeltnis mit (halbe Schranke), damit solche Fits nicht pauschal als
+    "alpha unphysikalisch" markiert werden.
+    """
+    if not np.isfinite(alpha_max) or alpha_max <= 0:
+        return ALPHA_PLAUSIBEL_MAX
+    return ALPHA_PLAUSIBEL_MAX * (alpha_max / ALPHA_MAX)
+
+
+def bewerte_fit(erg, alpha_max: float = ALPHA_MAX) -> tuple[bool, list[str]]:
     """Stuft ein :class:`FitErgebnis` ein und liefert ``(problematisch, gruende)``.
+
+    ``alpha_max`` ist die im Fit verwendete harte alpha-Schranke (Kriterien b
+    und d beziehen sich darauf; Standard ``ALPHA_MAX``).
 
     Ein Fit ist problematisch, wenn EINE der folgenden Bedingungen zutrifft:
 
@@ -94,7 +111,7 @@ def bewerte_fit(erg) -> tuple[bool, list[str]]:
             gruende.append("keine Unsicherheiten")
 
     # (b) Parameter an Schranke
-    if an_grenze(erg.alpha, ALPHA_MIN, ALPHA_MAX):
+    if an_grenze(erg.alpha, ALPHA_MIN, alpha_max):
         gruende.append("alpha an Grenze")
     if an_grenze(erg.phi, PHI_MIN, PHI_MAX):
         gruende.append("phi an Grenze")
@@ -108,7 +125,7 @@ def bewerte_fit(erg) -> tuple[bool, list[str]]:
         gruende.append("B_res ausserhalb Fenster")
 
     # (d) alpha unphysikalisch
-    if np.isfinite(erg.alpha) and erg.alpha > ALPHA_PLAUSIBEL_MAX:
+    if np.isfinite(erg.alpha) and erg.alpha > alpha_plausibel_max(alpha_max):
         gruende.append("alpha unphysikalisch")
 
     # (a) Residuum (primaer: normiertes Residuum, skalenfrei)

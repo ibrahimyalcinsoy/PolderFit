@@ -18,7 +18,24 @@ from ..physik.konstanten import GAMMA_STANDARD
 from ..physik.fitmodell import Startwerte
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
+from .kriterien import ALPHA_MAX
 from .linescan_fit import FitErgebnis, fitte_linescan
+
+#: Standard des zweiten Fit-Durchgangs: Fitfenster = B_res +/- Faktor * mu0*dH
+#: (Linienbreite aus dem ersten Durchgang). 0 schaltet den Durchgang ab.
+#:
+#: Hintergrund (Benchmark gegen das LabVIEW-FTF, CoFe-Datensaetze): Das
+#: Auto-Fenster der Detektion ist bewusst breit (Faktor 8 auf die Magnituden-
+#: FWHM, d. h. ~ +/-7 Linienbreiten). Auf so breiten Fenstern passt der lineare
+#: Untergrund bei strukturiertem Hintergrund (Ripple, Nachbarsignale) nicht
+#: mehr, und die Linienbreite kommt systematisch 5-15 % zu klein heraus. Bis
+#: etwa +/-3 Linienbreiten liegt dH auf einem Plateau (fensterunabhaengig);
+#: dort landet auch das FTF mit von Hand gewaehlten Fenstern. Der zweite
+#: Durchgang engt deshalb um das erste Fitergebnis herum ein und uebernimmt das
+#: Ergebnis nur, wenn der Nachfit nicht problematisch ist.
+NACHFENSTER_FAKTOR_STANDARD: float = 2.5
+#: Mindestanzahl Messpunkte im verengten Fenster (sonst bleibt der 1. Durchgang).
+NACHFENSTER_MIN_PUNKTE: int = 12
 
 
 @dataclass
@@ -92,6 +109,10 @@ class StapelErgebnis:
     datensatz: Messdatensatz
     gamma: float = GAMMA_STANDARD
     r2_schwelle: float = 0.9
+    #: Harte obere alpha-Schranke der Einzelfits (auch fuer alle Nachfits).
+    alpha_max: float = ALPHA_MAX
+    #: Faktor des zweiten Fit-Durchgangs (Fenster = B_res +/- Faktor*dH); 0 = aus.
+    nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD
     fenster: list[tuple[float, float]] = field(default_factory=list)
     ergebnisse: list[FitErgebnis] = field(default_factory=list)
     zugeschnitten: list[Linescan] = field(default_factory=list)
@@ -149,6 +170,63 @@ class StapelErgebnis:
         return [e.fitkurve for e in self.ergebnisse]
 
 
+def nachfenster(linescan: Linescan, ergebnis: FitErgebnis, fenster: tuple[float, float],
+                faktor: float) -> tuple[float, float] | None:
+    """Verengtes Fitfenster ``B_res +/- faktor*dH`` fuer den zweiten Durchgang.
+
+    Liefert ``None``, wenn kein zweiter Durchgang sinnvoll ist (Faktor 0, erster
+    Fit problematisch/ohne Linienbreite, oder das verengte Fenster waere nicht
+    enger als das bestehende). Das Fenster wird nur verengt, nie erweitert
+    (Schnitt mit ``fenster``), und unterschreitet nie ``NACHFENSTER_MIN_PUNKTE``
+    Messpunkte bzw. 6 Feldschritte Halbbreite.
+    """
+    if not faktor or faktor <= 0:
+        return None
+    if ergebnis.problematisch or not ergebnis.erfolg:
+        return None
+    if not (np.isfinite(ergebnis.B_res) and np.isfinite(ergebnis.dH) and ergebnis.dH > 0):
+        return None
+    B = np.asarray(linescan.feld, dtype=float)
+    if B.size < 2:
+        return None
+    spacing = float(np.ptp(B)) / B.size
+    halb = max(faktor * float(ergebnis.dH), 6.0 * spacing)
+    unten = max(float(ergebnis.B_res) - halb, float(fenster[0]))
+    oben = min(float(ergebnis.B_res) + halb, float(fenster[1]))
+    if oben - unten >= (fenster[1] - fenster[0]) * (1.0 - 1e-9):
+        return None  # nicht enger als bisher
+    if np.count_nonzero((B >= unten) & (B <= oben)) < NACHFENSTER_MIN_PUNKTE:
+        return None
+    return unten, oben
+
+
+def fitte_mit_nachfenster(
+    linescan: Linescan,
+    fenster: tuple[float, float],
+    gamma: float,
+    alpha_max: float = ALPHA_MAX,
+    nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
+) -> tuple[FitErgebnis, Linescan, tuple[float, float]]:
+    """Einzelfit in ``fenster``, dann verengter zweiter Durchgang (siehe
+    :data:`NACHFENSTER_FAKTOR_STANDARD`).
+
+    Liefert ``(ergebnis, beschnittener_linescan, verwendetes_fenster)``. Der
+    zweite Durchgang wird nur uebernommen, wenn er erfolgreich und nicht
+    problematisch ist – sonst bleibt der erste Durchgang bestehen.
+    """
+    unten, oben = fenster
+    beschnitten = schneide_band(linescan, unten, oben)
+    ergebnis = fitte_linescan(beschnitten, gamma, alpha_max=alpha_max)
+    eng = nachfenster(linescan, ergebnis, (unten, oben), nachfenster_faktor)
+    if eng is None:
+        return ergebnis, beschnitten, (unten, oben)
+    beschnitten2 = schneide_band(linescan, eng[0], eng[1])
+    ergebnis2 = fitte_linescan(beschnitten2, gamma, alpha_max=alpha_max)
+    if ergebnis2.erfolg and not ergebnis2.problematisch:
+        return ergebnis2, beschnitten2, eng
+    return ergebnis, beschnitten, (unten, oben)
+
+
 def fitte_alle(
     datensatz: Messdatensatz,
     gamma: float = GAMMA_STANDARD,
@@ -158,6 +236,8 @@ def fitte_alle(
     zentren=None,
     auswahl: Auswertungsauswahl | None = None,
     alpha_erwartet: float = 0.01,
+    alpha_max: float = ALPHA_MAX,
+    nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -168,6 +248,9 @@ def fitte_alle(
     (:class:`polderfit.fit.auswahl.Auswertungsauswahl`) – der Stapel arbeitet dann
     auf dem reduzierten Datensatz; ``zentren`` (auf den vollen Datensatz
     bezogen) wird deckungsgleich mit reduziert.
+    ``alpha_max``: harte obere alpha-Schranke der Einzelfits.
+    ``nachfenster_faktor``: zweiter Fit-Durchgang auf ``B_res +/- Faktor*dH``
+    (siehe :data:`NACHFENSTER_FAKTOR_STANDARD`; 0 = nur ein Durchgang).
     """
     if auswahl is not None and not auswahl.ist_neutral:
         datensatz, indizes = auswahl.reduziere(datensatz)
@@ -181,12 +264,14 @@ def fitte_alle(
         fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=fenster,
+        alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
     )
     n = len(datensatz.linescans)
     for i, ls in enumerate(datensatz.linescans):
-        unten, oben = fenster[i]
-        beschnitten = schneide_band(ls, unten, oben)
-        ergebnis = fitte_linescan(beschnitten, gamma)
+        ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
+            ls, fenster[i], gamma, alpha_max=alpha_max,
+            nachfenster_faktor=nachfenster_faktor)
+        stapel.fenster[i] = verwendet
         stapel.zugeschnitten.append(beschnitten)
         stapel.ergebnisse.append(ergebnis)
         if fortschritt is not None:
@@ -221,6 +306,7 @@ def fitte_neu(
         beschnitten = ohne_ausschlusszonen(beschnitten, stapel.ausschlusszonen)
     ergebnis = fitte_linescan(
         beschnitten, stapel.gamma, startwerte=startwerte, B_res_vorgabe=B_res_vorgabe,
+        alpha_max=stapel.alpha_max,
     )
     ergebnis.nachbearbeitet = True
     stapel.zugeschnitten[index] = beschnitten

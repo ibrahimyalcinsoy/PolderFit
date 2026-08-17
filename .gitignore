@@ -34,3 +34,6 @@ dist/
 
 # MkDocs-Build
 /site/
+
+# FTF-Benchmark: Kopien fremder Messdaten vom Gruppenlaufwerk – nicht versionieren
+/benchmark_ftf/data/

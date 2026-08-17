@@ -1,0 +1,254 @@
+{
+ "name": "fecr2s4_50K",
+ "tdms": "2026-APR-14-colormap-50K_0dBm-111-axis-aligned_6T-2.5\u00b0-x-axis-rotation-sorted.tdms",
+ "geometrie_ftf": "oop",
+ "n_linescans": 85,
+ "t_fit_s": 13.931918382644653,
+ "statistik": {
+  "n_zugeordnet": 85,
+  "n_pf_problematisch": 83,
+  "n_ftf_fehlgeschlagen": 0,
+  "n_beide_ok": 2,
+  "dB_T": {
+   "n": 2,
+   "median": 0.599107560875924,
+   "mean": 0.599107560875924,
+   "std": 0.0035596497436363173,
+   "p16": 0.5966869990502512,
+   "p84": 0.6015281227015967,
+   "max_abs": 0.6026672106195603,
+   "anteil_abs_le_1": 1.0,
+   "anteil_abs_le_2": 1.0,
+   "anteil_abs_le_3": 1.0
+  },
+  "z_B": {
+   "n": 2,
+   "median": 30.74353884725239,
+   "mean": 30.74353884725239,
+   "std": 9.097823657267101,
+   "p16": 24.557018760310758,
+   "p84": 36.930058934194015,
+   "max_abs": 39.84136250451949,
+   "anteil_abs_le_1": 0.0,
+   "anteil_abs_le_2": 0.0,
+   "anteil_abs_le_3": 0.0
+  },
+  "dB_in_dH": {
+   "n": 2,
+   "median": 0.2887731839342952,
+   "mean": 0.2887731839342952,
+   "std": 0.05160528025662034,
+   "p16": 0.2536815933597934,
+   "p84": 0.323864774508797,
+   "max_abs": 0.34037846419091555,
+   "anteil_abs_le_1": 1.0,
+   "anteil_abs_le_2": 1.0,
+   "anteil_abs_le_3": 1.0
+  },
+  "ddH_T": {
+   "n": 2,
+   "median": -2.1122340902497654,
+   "mean": -2.1122340902497654,
+   "std": 0.3673322856826853,
+   "p16": -2.3620200445139914,
+   "p84": -1.8624481359855394,
+   "max_abs": 2.4795663759324507,
+   "anteil_abs_le_1": 0.0,
+   "anteil_abs_le_2": 0.5,
+   "anteil_abs_le_3": 1.0
+  },
+  "rel_dH": {
+   "n": 2,
+   "median": -0.9865315862599054,
+   "mean": -0.9865315862599054,
+   "std": 0.01074669362406544,
+   "p16": -0.9938393379242699,
+   "p84": -0.979223834595541,
+   "max_abs": 0.9972782798839709,
+   "anteil_abs_le_1": 1.0,
+   "anteil_abs_le_2": 1.0,
+   "anteil_abs_le_3": 1.0
+  },
+  "z_dH": {
+   "n": 2,
+   "median": -51.44602675646772,
+   "mean": -51.44602675646772,
+   "std": 6.9197579430134155,
+   "p16": -56.151462157716836,
+   "p84": -46.7405913552186,
+   "max_abs": 58.36578469948113,
+   "anteil_abs_le_1": 0.0,
+   "anteil_abs_le_2": 0.0,
+   "anteil_abs_le_3": 0.0
+  },
+  "problem_statistik_pf": {
+   "alpha unphysikalisch": 81,
+   "alpha an Grenze": 80,
+   "B_res am Fensterrand": 46,
+   "phi an Grenze": 7,
+   "B_res-Unsicherheit zu gross": 6,
+   "keine Unsicherheiten": 3
+  }
+ },
+ "kittel": {
+  "pf_gewichtet": {
+   "fehler": "ValueError('Zu wenige gute Einzelfits fuer die uebergreifende Auswertung.')"
+  },
+  "pf_ungewichtet": {
+   "fehler": "ValueError('Zu wenige gute Einzelfits fuer die uebergreifende Auswertung.')"
+  },
+  "pf_fitter_auf_ftf": {
+   "quelle": "PF-Fitter auf FTF-Punkte (ungewichtet)",
+   "g": 1.8177624850337273,
+   "g_err": 0.018892733867258222,
+   "mu0Meff": 1.9151869785551792,
+   "mu0Meff_err": 0.017746944516462655,
+   "alpha": 0.4377220952121776,
+   "alpha_err": 0.013306285164322704,
+   "mu0Hinh": -0.1563634339229339,
+   "mu0Hinh_err": 0.04270303384093269,
+   "n_punkte": 85
+  },
+  "pf_fitter_auf_ftf_schnitt": {
+   "quelle": "PF-Fitter auf FTF-Punkte (Schnittmenge, ungew.)",
+   "g": 2.374292003033247,
+   "g_err": Infinity,
+   "mu0Meff": 2.5647147577254024,
+   "mu0Meff_err": Infinity,
+   "alpha": 4.69715826945313,
+   "alpha_err": Infinity,
+   "mu0Hinh": -16.65403773660129,
+   "mu0Hinh_err": Infinity,
+   "n_punkte": 2
+  },
+  "pf_schnitt": {
+   "quelle": "PF-Punkte (Schnittmenge, ungew.)",
+   "g": 2.1892845775313896,
+   "g_err": Infinity,
+   "mu0Meff": 2.994713526076174,
+   "mu0Meff_err": Infinity,
+   "alpha": 0.3106801744269851,
+   "alpha_err": Infinity,
+   "mu0Hinh": -1.3153640800004966,
+   "mu0Hinh_err": Infinity,
+   "n_punkte": 2
+  },
+  "ftf": {
+   "g": 1.80160962,
+   "g_err": 0.0187248507,
+   "mu0Meff": -1.90112441,
+   "mu0Meff_err": 0.0178936257,
+   "alpha": 0.433832289,
+   "alpha_err": 0.0123932821,
+   "mu0Hinh": -0.156363046,
+   "mu0Hinh_err": 0.0427030341,
+   "g_llg": 1.80160962,
+   "geometrie": "oop",
+   "quelle": "FTF"
+  }
+ },
+ "kittel_vergleich_zu_ftf": {
+  "pf_fitter_auf_ftf": {
+   "g": {
+    "pf": 1.8177624850337273,
+    "pf_err": 0.018892733867258222,
+    "ftf": 1.80160962,
+    "ftf_err": 0.0187248507,
+    "z": 0.6072525276562003,
+    "rel": 0.00896579639363119
+   },
+   "mu0Meff": {
+    "pf": 1.9151869785551792,
+    "pf_err": 0.017746944516462655,
+    "ftf": -1.90112441,
+    "ftf_err": 0.0178936257,
+    "z": 151.42949689482523,
+    "rel": 2.0073969743806397
+   },
+   "alpha": {
+    "pf": 0.4377220952121776,
+    "pf_err": 0.013306285164322704,
+    "ftf": 0.433832289,
+    "ftf_err": 0.0123932821,
+    "z": 0.21391599776597137,
+    "rel": 0.008966151922771254
+   },
+   "mu0Hinh": {
+    "pf": -0.1563634339229339,
+    "pf_err": 0.04270303384093269,
+    "ftf": -0.156363046,
+    "ftf_err": 0.0427030341,
+    "z": -6.423499962992786e-06,
+    "rel": -2.4809118510428875e-06
+   }
+  },
+  "pf_fitter_auf_ftf_schnitt": {
+   "g": {
+    "pf": 2.374292003033247,
+    "pf_err": Infinity,
+    "ftf": 1.80160962,
+    "ftf_err": 0.0187248507,
+    "z": 0.0,
+    "rel": 0.31787262716395076
+   },
+   "mu0Meff": {
+    "pf": 2.5647147577254024,
+    "pf_err": Infinity,
+    "ftf": -1.90112441,
+    "ftf_err": 0.0178936257,
+    "z": 0.0,
+    "rel": 2.3490515109031724
+   },
+   "alpha": {
+    "pf": 4.69715826945313,
+    "pf_err": Infinity,
+    "ftf": 0.433832289,
+    "ftf_err": 0.0123932821,
+    "z": 0.0,
+    "rel": 9.82712925835986
+   },
+   "mu0Hinh": {
+    "pf": -16.65403773660129,
+    "pf_err": Infinity,
+    "ftf": -0.156363046,
+    "ftf_err": 0.0427030341,
+    "z": -0.0,
+    "rel": -105.50878300619246
+   }
+  },
+  "pf_schnitt": {
+   "g": {
+    "pf": 2.1892845775313896,
+    "pf_err": Infinity,
+    "ftf": 1.80160962,
+    "ftf_err": 0.0187248507,
+    "z": 0.0,
+    "rel": 0.21518255299468794
+   },
+   "mu0Meff": {
+    "pf": 2.994713526076174,
+    "pf_err": Infinity,
+    "ftf": -1.90112441,
+    "ftf_err": 0.0178936257,
+    "z": 0.0,
+    "rel": 2.575232799244408
+   },
+   "alpha": {
+    "pf": 0.3106801744269851,
+    "pf_err": Infinity,
+    "ftf": 0.433832289,
+    "ftf_err": 0.0123932821,
+    "z": -0.0,
+    "rel": -0.2838703289164696
+   },
+   "mu0Hinh": {
+    "pf": -1.3153640800004966,
+    "pf_err": Infinity,
+    "ftf": -0.156363046,
+    "ftf_err": 0.0427030341,
+    "z": -0.0,
+    "rel": -7.4122439006496235
+   }
+  }
+ }
+}

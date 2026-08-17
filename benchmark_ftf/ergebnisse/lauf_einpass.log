@@ -1,0 +1,103 @@
+Optionen: {'alpha_max': 0.1, 'nachfenster_faktor': 0.0, 'suffix': '_einpass'}
+
+=== cofe_gratings_ip_5K_einpass  (ip-parallel-colormap-5K-sorted-2.tdms)  Geometrie(FTF)=ip
+  PolderFit: 1061 Fits in 8.4s, 0 problematisch
+  Zuordnung: 1061 Frequenzen, beide ok: 1061, PF problematisch: 0, FTF fehlgeschlagen: 0
+  B_res: median dB = +0.718 mT (p16..p84 -1.818..+3.410), |z|<=2: 62%, dB/dH median +0.015
+  dH   : median rel = -14.2% (p16..p84 -20.6..-4.5), |z|<=2: 32%
+  pf_gewichtet              : g=2.0494±0.0116, Meff=2.0972±0.0413 T, Hu=+167.49±1.94 mT, alpha=1.109e-02±2.1e-04, dH0=+13.58±0.50 mT  (n=1061)
+  pf_ungewichtet            : g=2.1442±0.0126, Meff=1.7754±0.0403 T, Hu=+183.87±2.44 mT, alpha=1.194e-02±2.1e-04, dH0=+12.92±0.51 mT  (n=1061)
+  pf_fitter_auf_ftf         : g=2.1692±0.0083, Meff=1.7094±0.0260 T, Hu=+186.84±1.66 mT, alpha=1.159e-02±3.7e-04, dH0=+20.73±0.91 mT  (n=1061)
+  pf_schnitt                : g=2.1442±0.0126, Meff=1.7754±0.0403 T, Hu=+183.87±2.44 mT, alpha=1.194e-02±2.1e-04, dH0=+12.92±0.51 mT  (n=1061)
+  FTF                       : g=2.1585±0.0080, Meff=1.7422±0.0251 T, Hu=+184.96±1.51 mT, alpha=1.153e-02±3.6e-04, dH0=+20.73±0.91 mT
+
+=== cofe_wm_ip_290K_1_einpass  (2024-JUN-28-CoFe-ip-colormap-290K_0dBm-sorted-1st-part.tdms)  Geometrie(FTF)=ip
+  PolderFit: 70 Fits in 0.6s, 0 problematisch
+  Zuordnung: 70 Frequenzen, beide ok: 70, PF problematisch: 0, FTF fehlgeschlagen: 0
+  B_res: median dB = +0.114 mT (p16..p84 -0.156..+0.662), |z|<=2: 49%, dB/dH median +0.005
+  dH   : median rel = -5.9% (p16..p84 -9.0..-0.9), |z|<=2: 27%
+  pf_gewichtet              : g=2.0973±0.0025, Meff=2.2726±0.0081 T, Hu=+2.96±0.24 mT, alpha=5.661e-03±2.1e-04, dH0=+1.62±0.40 mT  (n=70)
+  pf_ungewichtet            : g=2.1025±0.0020, Meff=2.2550±0.0078 T, Hu=+3.36±0.39 mT, alpha=6.417e-03±1.4e-04, dH0=+0.53±0.42 mT  (n=70)
+  pf_fitter_auf_ftf         : g=2.1044±0.0028, Meff=2.2529±0.0107 T, Hu=+2.96±0.53 mT, alpha=7.375e-03±2.0e-04, dH0=-1.01±0.61 mT  (n=70)
+  pf_schnitt                : g=2.1025±0.0020, Meff=2.2550±0.0078 T, Hu=+3.36±0.39 mT, alpha=6.417e-03±1.4e-04, dH0=+0.53±0.42 mT  (n=70)
+  FTF                       : g=2.1053±0.0026, Meff=2.2492±0.0098 T, Hu=+3.14±0.43 mT, alpha=7.378e-03±2.0e-04, dH0=-1.01±0.61 mT
+
+=== cofe_wm_ip_290K_2_einpass  (2024-JUN-28-CoFe-ip-colormap-290K_0dBm-sorted-2-2nd-part.tdms)  Geometrie(FTF)=ip
+  PolderFit: 21 Fits in 0.1s, 0 problematisch
+  Zuordnung: 21 Frequenzen, beide ok: 21, PF problematisch: 0, FTF fehlgeschlagen: 0
+  B_res: median dB = -0.114 mT (p16..p84 -0.153..-0.065), |z|<=2: 29%, dB/dH median -0.013
+  dH   : median rel = -2.6% (p16..p84 -4.0..-2.0), |z|<=2: 10%
+  pf_gewichtet              : g=1.9346±0.0148, Meff=2.7594±0.0451 T, Hu=-0.86±0.04 mT, alpha=5.238e-03±2.6e-04, dH0=+2.94±0.26 mT  (n=21)
+  pf_ungewichtet            : g=1.9319±0.0177, Meff=2.7682±0.0540 T, Hu=-0.89±0.05 mT, alpha=5.270e-03±2.7e-04, dH0=+2.96±0.26 mT  (n=21)
+  pf_fitter_auf_ftf         : g=1.9674±0.0206, Meff=2.6607±0.0596 T, Hu=-0.87±0.06 mT, alpha=5.201e-03±2.8e-04, dH0=+3.34±0.27 mT  (n=21)
+  pf_schnitt                : g=1.9319±0.0177, Meff=2.7682±0.0540 T, Hu=-0.89±0.05 mT, alpha=5.270e-03±2.7e-04, dH0=+2.96±0.26 mT  (n=21)
+  FTF                       : g=4.0000±205075666.0000, Meff=0.5081±0.0096 T, Hu=+5.45±1.10 mT, alpha=1.057e-02±5.7e-04, dH0=+3.34±0.27 mT
+
+=== cofe_wm_ip_5K_1_einpass  (2024-JUN-30-CoFe-ip-colormap-5K_0dBm-sorted-1st-part.tdms)  Geometrie(FTF)=ip
+  PolderFit: 71 Fits in 0.5s, 0 problematisch
+  Zuordnung: 71 Frequenzen, beide ok: 71, PF problematisch: 0, FTF fehlgeschlagen: 0
+  B_res: median dB = +0.036 mT (p16..p84 -0.236..+0.600), |z|<=2: 86%, dB/dH median +0.002
+  dH   : median rel = -6.8% (p16..p84 -10.2..-1.6), |z|<=2: 39%
+  pf_gewichtet              : g=2.1043±0.0024, Meff=2.3067±0.0083 T, Hu=+5.38±0.31 mT, alpha=6.230e-03±2.0e-04, dH0=+2.08±0.44 mT  (n=71)
+  pf_ungewichtet            : g=2.1016±0.0023, Meff=2.3175±0.0090 T, Hu=+4.91±0.42 mT, alpha=6.676e-03±1.3e-04, dH0=+1.65±0.41 mT  (n=71)
+  pf_fitter_auf_ftf         : g=2.1041±0.0027, Meff=2.3131±0.0104 T, Hu=+4.50±0.48 mT, alpha=7.854e-03±1.9e-04, dH0=-0.13±0.59 mT  (n=71)
+  pf_schnitt                : g=2.1016±0.0023, Meff=2.3175±0.0090 T, Hu=+4.91±0.42 mT, alpha=6.676e-03±1.3e-04, dH0=+1.65±0.41 mT  (n=71)
+  FTF                       : g=2.1048±0.0026, Meff=2.3104±0.0097 T, Hu=+4.62±0.40 mT, alpha=7.857e-03±1.9e-04, dH0=-0.13±0.59 mT
+
+=== cofe_wm_ip_5K_2_einpass  (2024-JUN-30-CoFe-ip-colormap-5K_0dBm-sorted-2nd-part.tdms)  Geometrie(FTF)=ip
+  PolderFit: 21 Fits in 0.2s, 7 problematisch
+  Zuordnung: 13 Frequenzen, beide ok: 13, PF problematisch: 0, FTF fehlgeschlagen: 0
+  B_res: median dB = +0.088 mT (p16..p84 -0.109..+0.139), |z|<=2: 92%, dB/dH median +0.008
+  dH   : median rel = -1.2% (p16..p84 -2.2..+0.5), |z|<=2: 100%
+  pf_gewichtet              : g=2.0567±0.1520, Meff=2.4825±0.4053 T, Hu=+0.81±0.87 mT, alpha=3.717e-03±5.2e-04, dH0=+6.90±0.49 mT  (n=14)
+  pf_ungewichtet            : g=2.8975±0.2344, Meff=1.1080±0.2212 T, Hu=+7.88±1.92 mT, alpha=6.713e-03±1.1e-03, dH0=+5.67±0.71 mT  (n=14)
+  pf_fitter_auf_ftf         : g=1.9922±0.1146, Meff=2.6639±0.3342 T, Hu=+0.47±0.55 mT, alpha=4.112e-03±4.8e-04, dH0=+6.39±0.48 mT  (n=13)
+  pf_schnitt                : g=2.5941±0.2648, Meff=1.4536±0.3494 T, Hu=+5.05±1.92 mT, alpha=6.051e-03±1.2e-03, dH0=+5.63±0.84 mT  (n=13)
+  FTF                       : g=4.0000±89948471.2000, Meff=0.4552±0.0112 T, Hu=+18.71±2.01 mT, alpha=8.255e-03±8.5e-04, dH0=+6.39±0.48 mT
+
+=== fecr2s4_100K_einpass  (2026-APR-15-colormap-100K_0dBm-111-axis-aligned_6T-2.5°-x-axis-rotation-sorted.tdms)  Geometrie(FTF)=oop
+  PolderFit: 97 Fits in 15.7s, 91 problematisch
+  Zuordnung: 90 Frequenzen, beide ok: 6, PF problematisch: 84, FTF fehlgeschlagen: 0
+  B_res: median dB = -566.883 mT (p16..p84 -624.961..-537.223), |z|<=2: 0%, dB/dH median -1.218
+  dH   : median rel = -99.1% (p16..p84 -99.3..-97.9), |z|<=2: 0%
+  pf_gewichtet              : g=1.8181±0.1570, Meff=-0.3121±0.1046 T, alpha=4.342e-03±1.9e-03, dH0=-6.60±4.61 mT  (n=6)
+  pf_ungewichtet            : g=2.0045±0.2360, Meff=-0.2008±0.1508 T, alpha=4.073e-03±3.4e-03, dH0=-2.61±8.52 mT  (n=6)
+  pf_fitter_auf_ftf         : g=1.7616±0.0065, Meff=0.2059±0.0063 T, alpha=2.185e-01±3.7e-03, dH0=-36.95±12.26 mT  (n=90)
+  pf_schnitt                : g=2.0045±0.2360, Meff=-0.2008±0.1508 T, alpha=4.073e-03±3.4e-03, dH0=-2.61±8.52 mT  (n=6)
+  FTF                       : g=1.7595±0.0065, Meff=-0.2040±0.0063 T, alpha=2.183e-01±3.6e-03, dH0=-36.95±12.26 mT
+
+=== fecr2s4_2K_einpass  (2026-APR-09-colormap-2K_0dBm-111-axis-aligned_3T-6T-5°-misalignment-sorted.tdms)  Geometrie(FTF)=oop
+  PolderFit: 429 Fits in 37.6s, 425 problematisch
+  popt, pcov = curve_fit(modell, f, mu0dH, p0=p0, sigma=sigma)
+  s = np.sqrt(np.nan_to_num(ea, nan=0.0) ** 2 + np.nan_to_num(eb, nan=0.0) ** 2)
+  Zuordnung: 245 Frequenzen, beide ok: 3, PF problematisch: 242, FTF fehlgeschlagen: 0
+  B_res: median dB = -45.512 mT (p16..p84 -56.798..-41.660), |z|<=2: 33%, dB/dH median -0.167
+  dH   : median rel = -95.7% (p16..p84 -96.3..-94.4), |z|<=2: 0%
+  pf_gewichtet              : g=4.1521±0.8219, Meff=5.0748±0.1381 T, alpha=3.836e-02±1.0e-02, dH0=-38.12±9.46 mT  (n=4)
+  pf_ungewichtet            : g=4.0665±0.7457, Meff=5.0592±0.1324 T, alpha=3.801e-02±9.5e-03, dH0=-38.93±9.41 mT  (n=4)
+  pf_fitter_auf_ftf         : g=12.0777±1.6240, Meff=5.5966±0.0328 T, alpha=7.634e-01±inf, dH0=+0.00±inf mT  (n=245)
+  pf_schnitt                : g=3.4706±0.1731, Meff=4.9209±0.0438 T, alpha=3.327e-02±9.5e-03, dH0=-40.49±16.45 mT  (n=3)
+  FTF                       : g=4.0000±1427634060.0000, Meff=-5.0568±0.0022 T, alpha=7.868e-01±2.2e-02, dH0=-851.98±32.43 mT
+
+=== fecr2s4_50K_einpass  (2026-APR-14-colormap-50K_0dBm-111-axis-aligned_6T-2.5°-x-axis-rotation-sorted.tdms)  Geometrie(FTF)=oop
+  PolderFit: 85 Fits in 14.9s, 83 problematisch
+  popt, pcov = curve_fit(modell, f, B_res, p0=p0, sigma=sigma)
+  Zuordnung: 85 Frequenzen, beide ok: 2, PF problematisch: 83, FTF fehlgeschlagen: 0
+  B_res: median dB = +600.418 mT (p16..p84 +589.311..+611.525), |z|<=2: 0%, dB/dH median +0.288
+  dH   : median rel = -98.0% (p16..p84 -98.8..-97.2), |z|<=2: 0%
+  pf_gewichtet: FEHLER ValueError('Zu wenige gute Einzelfits fuer die uebergreifende Auswertung.')
+  pf_ungewichtet: FEHLER ValueError('Zu wenige gute Einzelfits fuer die uebergreifende Auswertung.')
+  pf_fitter_auf_ftf         : g=1.8178±0.0189, Meff=1.9152±0.0177 T, alpha=4.377e-01±1.3e-02, dH0=-156.36±42.70 mT  (n=85)
+  pf_schnitt                : g=1.7109±inf, Meff=2.3891±inf T, alpha=-1.441e-01±inf, dH0=+839.35±inf mT  (n=2)
+  FTF                       : g=1.8016±0.0187, Meff=-1.9011±0.0179 T, alpha=4.338e-01±1.2e-02, dH0=-156.36±42.70 mT
+
+=== yig_konstanz_ip_50K_einpass  (2024-OCT-28-YIG_Konstanz_180nm_CM-IP-1.8T_50K_0dBm_symm_r0.01_2-Kit-pos-j10_dH0.1.tdms)  Geometrie(FTF)=ip
+  PolderFit: 367 Fits in 2.7s, 0 problematisch
+  Zuordnung: 367 Frequenzen, beide ok: 367, PF problematisch: 0, FTF fehlgeschlagen: 0
+  B_res: median dB = -0.182 mT (p16..p84 -0.540..+0.155), |z|<=2: 100%, dB/dH median -0.010
+  dH   : median rel = +0.9% (p16..p84 -2.1..+3.9), |z|<=2: 100%
+  pf_gewichtet              : g=2.0011±0.0003, Meff=0.1284±0.0023 T, Hu=-2.94±0.94 mT, alpha=1.878e-03±5.4e-05, dH0=+16.17±0.11 mT  (n=367)
+  pf_ungewichtet            : g=2.0009±0.0003, Meff=0.1314±0.0021 T, Hu=-4.20±0.84 mT, alpha=1.894e-03±5.2e-05, dH0=+16.07±0.11 mT  (n=367)
+  pf_fitter_auf_ftf         : g=2.0006±0.0003, Meff=0.1320±0.0019 T, Hu=-4.51±0.73 mT, alpha=1.584e-03±4.6e-05, dH0=+16.52±0.10 mT  (n=367)
+  pf_schnitt                : g=2.0009±0.0003, Meff=0.1314±0.0021 T, Hu=-4.20±0.84 mT, alpha=1.894e-03±5.2e-05, dH0=+16.07±0.11 mT  (n=367)
+  FTF                       : g=2.0006±0.0003, Meff=0.1319±0.0018 T, Hu=-4.48±0.71 mT, alpha=1.584e-03±4.6e-05, dH0=+16.52±0.10 mT
