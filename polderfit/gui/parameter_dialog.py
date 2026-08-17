@@ -42,8 +42,9 @@ class PhysikParameter:
     #: Erwartete Daempfung alpha fuer die Fensterbreite bei "Resonanz vorgeben".
     alpha_erwartet: float = 0.01
     #: Kittel-/LLG-Fits mit den 1-sigma-Einzelunsicherheiten gewichten
-    #: (GUM/ABW: w = 1/u^2). ``False`` = ungewichtete Ausgleichsrechnung.
-    gewichtet: bool = True
+    #: (GUM/ABW: w = 1/u^2). Standard ``False`` = ungewichtete Ausgleichsrechnung
+    #: (wie das LabVIEW-FTF; Benchmark-Ergebnis) – Gewichtung ist optional.
+    gewichtet: bool = False
     #: Harte obere Schranke der Gilbert-Daempfung im Einzelfit. Standard 0.1;
     #: fuer sehr breite Resonanzen (z. B. FeCr2S4, alpha ~ 0.2-0.5) anheben.
     alpha_max: float = ALPHA_MAX
@@ -184,12 +185,13 @@ class ParameterDialog(QtWidgets.QDialog):
         form.addRow("Nachfenster (± ΔH-Vielfache):", self.nachfenster_spin)
 
         self.gewicht_combo = QtWidgets.QComboBox()
-        self.gewicht_combo.addItems(["gewichtet (GUM, w = 1/u²)", "ungewichtet"])
-        self.gewicht_combo.setCurrentIndex(0 if parameter.gewichtet else 1)
+        self.gewicht_combo.addItems(["ungewichtet (Standard)", "gewichtet (GUM, w = 1/u²)"])
+        self.gewicht_combo.setCurrentIndex(1 if parameter.gewichtet else 0)
         self.gewicht_combo.setToolTip(
-            "Kittel-/LLG-Fits: Gewichtung der Punkte mit den 1σ-Unsicherheiten\n"
-            "der Einzelfits (w = 1/u², ABW Abschn. 6.3). Gewichtet betont die\n"
-            "praezisesten Punkte; ungewichtet behandelt alle Punkte gleich.\n"
+            "Kittel-/LLG-Fits: ungewichtet (Standard, alle Punkte gleich – wie\n"
+            "das LabVIEW-FTF) oder optional gewichtet mit den 1σ-Unsicherheiten\n"
+            "der Einzelfits (w = 1/u², ABW Abschn. 6.3; betont die praezisesten\n"
+            "Punkte, wenige Punkte koennen dominieren).\n"
             "Weichen beide Ergebnisse stark voneinander ab, tragen Modell-\n"
             "abweichungen (nicht Rauschen) die Streuung.")
         form.addRow("Kittel-/LLG-Gewichtung:", self.gewicht_combo)
@@ -223,7 +225,7 @@ class ParameterDialog(QtWidgets.QDialog):
         self.alpha_spin.setValue(standard.alpha_erwartet)
         self.alpha_max_spin.setValue(standard.alpha_max)
         self.nachfenster_spin.setValue(standard.nachfenster_faktor)
-        self.gewicht_combo.setCurrentIndex(0 if standard.gewichtet else 1)
+        self.gewicht_combo.setCurrentIndex(1 if standard.gewichtet else 0)
 
     def parameter(self) -> PhysikParameter:
         """Liefert die eingestellten Parameter als neue Datenklasse."""
@@ -238,5 +240,5 @@ class ParameterDialog(QtWidgets.QDialog):
             alpha_erwartet=float(self.alpha_spin.value()),
             alpha_max=float(self.alpha_max_spin.value()),
             nachfenster_faktor=float(self.nachfenster_spin.value()),
-            gewichtet=self.gewicht_combo.currentIndex() == 0,
+            gewichtet=self.gewicht_combo.currentIndex() == 1,
         )

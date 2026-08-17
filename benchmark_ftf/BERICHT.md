@@ -42,11 +42,12 @@ aus Kittel/LLG) kritisch vergleichen. Stichprobenartig, Schwerpunkt CoFe
   FeCr₂S₄ 2 K: α = 0,79, ΔH₀ = −0,85 T). Ein FTF-Ordner enthält 6 identische
   Parameterdateien (Kopierfehler). Und: FTFs oop-„M eff" hat das *umgekehrte
   Vorzeichen* zu µ₀M_eff in PolderFit (FTF: B_res = ω/γ − M).
-* **Diskussionspunkt (nicht geändert):** PolderFits GUI-Standard „Kittel/LLG
-  gewichtet (1/u²)" weicht bei CoFe teils um mehrere σ vom FTF (ungewichtet)
-  ab und liegt einmal 5 % daneben (g = 2,03 vs. 2,16), weil wenige Punkte mit
-  winzigen formalen Fehlern dominieren; ungewichtet trifft das FTF überall.
-  Empfehlung: Standard auf „ungewichtet" umstellen oder die Gewichte deckeln.
+* **Gewichtung:** Der (zwischenzeitliche) GUI-Standard „Kittel/LLG gewichtet
+  (1/u²)" wich bei CoFe teils um mehrere σ vom FTF (ungewichtet) ab und lag
+  einmal 5 % daneben (g = 2,03 vs. 2,16), weil wenige Punkte mit winzigen
+  formalen Fehlern dominieren; ungewichtet trifft das FTF überall.
+  **Entschieden:** Standard ist „ungewichtet" (wie vorher/FTF), Gewichtung
+  bleibt als Option wählbar.
 
 ---
 
@@ -147,7 +148,7 @@ Vollständige Tabellen: `ergebnisse/tabellen_final.md`. Auszug (α in 10⁻³, H
 |---|---|---|---|---|---|
 | FTF (LabVIEW) | 2.1053 ± 0.0026 | 2.2492 ± 0.0098 | 3.14 ± 0.43 | 7.378 ± 0.199 | −1.01 ± 0.61 |
 | PolderFit, ungewichtet | 2.1054 ± 0.0025 | 2.2496 ± 0.0096 | 3.05 ± 0.47 | 7.338 ± 0.187 | −0.92 ± 0.57 |
-| PolderFit, gewichtet (GUI-Standard) | 2.1008 ± 0.0039 | 2.2623 ± 0.0124 | 3.01 ± 0.31 | 5.971 ± 0.289 | 1.40 ± 0.54 |
+| PolderFit, gewichtet (Option) | 2.1008 ± 0.0039 | 2.2623 ± 0.0124 | 3.01 ± 0.31 | 5.971 ± 0.289 | 1.40 ± 0.54 |
 | PF-Fitter auf FTF-Punkten | 2.1044 ± 0.0028 | 2.2529 ± 0.0107 | 2.96 ± 0.53 | 7.375 ± 0.200 | −1.01 ± 0.61 |
 | *alter Stand, ungewichtet* | 2.1025 ± 0.0020 | 2.2550 ± 0.0078 | 3.36 ± 0.39 | 6.417 ± 0.14 | 0.53 ± 0.42 |
 
@@ -157,7 +158,7 @@ Vollständige Tabellen: `ergebnisse/tabellen_final.md`. Auszug (α in 10⁻³, H
 |---|---|---|---|---|---|
 | FTF (LabVIEW) | 2.1048 ± 0.0026 | 2.3104 ± 0.0097 | 4.62 ± 0.40 | 7.857 ± 0.192 | −0.13 ± 0.59 |
 | PolderFit, ungewichtet | 2.1065 ± 0.0026 | 2.3049 ± 0.0103 | 4.76 ± 0.48 | 7.818 ± 0.192 | −0.06 ± 0.59 |
-| PolderFit, gewichtet (GUI-Standard) | 2.1142 ± 0.0036 | 2.2756 ± 0.0128 | 6.02 ± 0.48 | 8.119 ± 0.270 | −1.18 ± 0.64 |
+| PolderFit, gewichtet (Option) | 2.1142 ± 0.0036 | 2.2756 ± 0.0128 | 6.02 ± 0.48 | 8.119 ± 0.270 | −1.18 ± 0.64 |
 | PF-Fitter auf FTF-Punkten | 2.1041 ± 0.0027 | 2.3131 ± 0.0104 | 4.50 ± 0.48 | 7.854 ± 0.192 | −0.13 ± 0.59 |
 | *alter Stand, ungewichtet* | 2.1016 ± 0.0023 | 2.3175 ± 0.0090 | 4.91 ± 0.42 | 6.676 ± 0.13 | 1.65 ± 0.41 |
 
@@ -167,7 +168,7 @@ Vollständige Tabellen: `ergebnisse/tabellen_final.md`. Auszug (α in 10⁻³, H
 |---|---|---|---|---|---|
 | FTF (LabVIEW) | 2.1585 ± 0.0080 | 1.7422 ± 0.0251 | 184.96 ± 1.51 | 11.532 ± 0.365 | 20.73 ± 0.91 |
 | PolderFit, ungewichtet | 2.1111 ± 0.0123 | 1.8861 ± 0.0408 | 177.40 ± 2.24 | 9.717 ± 0.19 | 18.89 ± 0.47 |
-| PolderFit, gewichtet (GUI-Standard) | 2.0295 ± 0.0109 | 2.1695 ± 0.0391 | 164.46 ± 1.63 | 9.258 ± 0.18 | 18.69 ± 0.42 |
+| PolderFit, gewichtet (Option) | 2.0295 ± 0.0109 | 2.1695 ± 0.0391 | 164.46 ± 1.63 | 9.258 ± 0.18 | 18.69 ± 0.42 |
 | PF-Fitter auf FTF-Punkten | 2.1692 ± 0.0083 | 1.7094 ± 0.0260 | 186.84 ± 1.66 | 11.589 ± 0.37 | 20.73 ± 0.91 |
 
 **yig_konstanz_ip_50K** (ip)
@@ -317,11 +318,12 @@ Fits nicht nachgefittet werden.
 
 ## 6. Empfehlungen / offene Punkte
 
-1. **Kittel/LLG-Gewichtung:** Standard „gewichtet (1/u²)" liefert bei CoFe
-   Werte, die mehrere σ vom ungewichteten Fit (= FTF) abweichen (290 K: α 5,97
-   vs. 7,34 · 10⁻³; Gitter: g 2,03 vs. 2,11/2,16). Die formalen Einzelfehler sind
-   viel kleiner als die Punktstreuung, wenige Punkte dominieren. Vorschlag:
-   Standard „ungewichtet" oder Gewichte deckeln (z. B. σ_i ≥ Median σ / 3).
+1. **Kittel/LLG-Gewichtung:** „gewichtet (1/u²)" liefert bei CoFe Werte, die
+   mehrere σ vom ungewichteten Fit (= FTF) abweichen (290 K: α 5,97 vs.
+   7,34 · 10⁻³; Gitter: g 2,03 vs. 2,11/2,16). Die formalen Einzelfehler sind
+   viel kleiner als die Punktstreuung, wenige Punkte dominieren. Standard ist
+   daher „ungewichtet" (Gewichtung optional); wer gewichtet, sollte die Gewichte
+   deckeln (z. B. σ_i ≥ Median σ / 3).
 2. **Sehr breite Linien (ΔH ≳ 0,3 T):** Fenster-Automatik erweitern
    (`_HALB_MAX` und Untergrund-Grad an die geschätzte Linienbreite koppeln);
    bis dahin: „α-Obergrenze" anheben + Bereichs-Fit mit manuellem Fenster.

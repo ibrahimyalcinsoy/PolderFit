@@ -152,7 +152,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self._punkt_dh = np.array(dh)
 
         geometrie = self.geo_combo.currentText()
-        self._gewichtet = getattr(p, "gewichtet", True) if p is not None else True
+        self._gewichtet = getattr(p, "gewichtet", False) if p is not None else False
         self._info = None
         fehler_text = ""
         if self._punkt_indizes.size >= 3:
@@ -162,7 +162,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
                         stapel.ergebnisse_aktiv(), geometrie=geometrie,
                         gamma_fest=p.gamma_fest, gamma_start=p.gamma,
                         r2_min=p.r2_min,
-                        gewichtet=getattr(p, "gewichtet", True))
+                        gewichtet=getattr(p, "gewichtet", False))
                 else:
                     self._info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(),
                                                        geometrie=geometrie)
@@ -232,7 +232,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
                           f"<li>α = {w(llg['alpha'], llg['alpha_err'], fmt='.3e')}</li>"
                           f"<li>µ₀H<sub>inh</sub> = {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT</li>"
                           f"<li>R² = {llg['R2']:.5f}</li></ul>")
-            modus = ("gewichtet, w = 1/u²" if getattr(self, "_gewichtet", True)
+            modus = ("gewichtet, w = 1/u²" if getattr(self, "_gewichtet", False)
                      else "ungewichtet")
             zeilen.append("<p style='color:#6B6657;font-size:11px'>Fehler: 1σ aus der "
                           f"Kovarianz des jeweiligen Fits. Kittel-/LLG-Fit {modus} "
@@ -329,7 +329,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             g_err = kit.get("g_faktor_err", np.nan)
             parameter = [
                 ("Geometrie", self._info["geometrie"], "", ""),
-                ("Gewichtung", "w=1/u² (GUM)" if getattr(self, "_gewichtet", True)
+                ("Gewichtung", "w=1/u² (GUM)" if getattr(self, "_gewichtet", False)
                  else "ungewichtet", "", ""),
                 ("mu0_Meff", kit["mu0Meff"], kit["mu0Meff_err"], "T"),
                 ("g_faktor", kit["g_faktor"], g_err, ""),

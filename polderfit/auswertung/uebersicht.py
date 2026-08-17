@@ -60,16 +60,19 @@ def auswertung_kittel_llg(
     gamma_fest: bool = False,
     gamma_start: float = GAMMA_STANDARD,
     r2_min: float = 0.9,
-    gewichtet: bool = True,
+    gewichtet: bool = False,
 ) -> dict:
     """Fuehrt Kittel- und LLG-Fit ueber alle (guten) Einzelfits durch.
 
     ``geometrie`` ist ``"oop"`` oder ``"ip"``. Rueckgabe enthaelt die Kittel-
     und Linienbreiten-Parameter sowie die verwendeten Datenpunkte.
-    ``gewichtet=True`` (Standard) gewichtet beide Fits mit den
-    1σ-Unsicherheiten der Einzelfits (w = 1/u², GUM/ABW Abschn. 6.3);
-    ``False`` rechnet die klassische ungewichtete Ausgleichsrechnung
-    (in der GUI umschaltbar: Physikalische Parameter, Strg+P). Die
+    ``gewichtet=False`` (Standard) rechnet die klassische ungewichtete
+    Ausgleichsrechnung (wie das LabVIEW-FTF; Benchmark: trifft dessen Werte
+    ueberall innerhalb 1σ). ``True`` gewichtet beide Fits mit den
+    1σ-Unsicherheiten der Einzelfits (w = 1/u², GUM/ABW Abschn. 6.3) – optional,
+    in der GUI umschaltbar (Physikalische Parameter, Strg+P); die formalen
+    Einzelfehler sind oft viel kleiner als die Punktstreuung, dann dominieren
+    wenige Punkte. Die
     Unsicherheit des uebernommenen ``gamma`` geht stets in ``alpha_err`` ein.
     """
     f, b, dh, _t, b_err, dh_err = _gute_ergebnisse(ergebnisse, r2_min)
@@ -102,7 +105,7 @@ def plot_resonanz_vs_frequenz(
     gamma_fest: bool = False,
     r2_min: float = 0.9,
     ax=None,
-    gewichtet: bool = True,
+    gewichtet: bool = False,
 ):
     """Kittel-Dispersionsplot: Feld (x) gegen Frequenz (y), wie im Farbplot.
 
@@ -140,7 +143,7 @@ def plot_linienbreite(
     gamma: float = GAMMA_STANDARD,
     r2_min: float = 0.9,
     ax=None,
-    gewichtet: bool = True,
+    gewichtet: bool = False,
 ):
     """Plot Linienbreite mu0*DeltaH ueber dem Resonanzfeld inkl. LLG-Fit.
 

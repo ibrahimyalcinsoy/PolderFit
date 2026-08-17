@@ -21,7 +21,7 @@ for d in alle:
     k = d["kittel"]
     print(f"\n**{d['name']}** (Kittel-Geometrie laut FTF: {d['geometrie_ftf']})\n")
     print("| Quelle | n Punkte | g | µ₀M_eff [T] | µ₀H_u [mT] | α [10⁻³] | µ₀ΔH₀ [mT] |"); print("|---|---|---|---|---|---|---|")
-    for key, lab in (("ftf", "FTF (LabVIEW)"), ("pf_ungewichtet", "PolderFit, ungewichtet"), ("pf_gewichtet", "PolderFit, gewichtet (GUI-Standard)"), ("pf_fitter_auf_ftf", "PolderFit-Kittel/LLG-Fitter auf den FTF-Punkten")):
+    for key, lab in (("ftf", "FTF (LabVIEW)"), ("pf_ungewichtet", "PolderFit, ungewichtet"), ("pf_gewichtet", "PolderFit, gewichtet (Option)"), ("pf_fitter_auf_ftf", "PolderFit-Kittel/LLG-Fitter auf den FTF-Punkten")):
         v = k.get(key, {})
         if "fehler" in v:
             print(f"| {lab} | – | Fehler ({v['fehler'][:60]}) | | | | |"); continue

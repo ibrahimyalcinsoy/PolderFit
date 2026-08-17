@@ -152,6 +152,7 @@ vom Nutzer wählbaren Größen (Konvention wie oben: Felder als µ₀H in Tesla,
 | R²-Schwelle (Einzelfit) | sekundäres Gütemaß der Problem-Einstufung | 0.9 |
 | R²-Minimum (Kittel/LLG) | Punktauswahl der übergreifenden Auswertung | 0.9 |
 | erwartetes α | Fensterbreite (ΔB = 2ωα/γ) beim Auto-Fit mit vorgegebener Resonanz | 0.01 |
+| Kittel-/LLG-Gewichtung | ungewichtet (alle Punkte gleich, wie das LabVIEW-FTF) oder optional gewichtet mit den 1σ-Einzelunsicherheiten (w = 1/u², GUM/ABW) | ungewichtet |
 | α-Obergrenze (Einzelfit) | harte obere Fitschranke für α; für sehr breite Resonanzen (z. B. FeCr₂S₄, α ≈ 0.2–0.5) anheben. Die Plausibilitätsgrenze („alpha unphysikalisch") liegt bei der Hälfte | 0.1 |
 | Nachfenster (± ΔH-Vielfache) | zweiter Fit-Durchgang auf B_res ± Faktor·µ₀ΔH des ersten Durchgangs (Auto- und Bereichs-Fit); wird nur übernommen, wenn der Nachfit unproblematisch ist. 0 = aus | 2.5 |
 
