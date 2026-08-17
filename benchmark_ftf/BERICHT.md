@@ -53,6 +53,18 @@ aus Kittel/LLG) kritisch vergleichen. Stichprobenartig, Schwerpunkt CoFe
 
 ## 1. Datenauswahl
 
+!!! warning "Einordnung (Hinweis des Betreuers, 2026-08-17)"
+    Gefittet werden sollen vorrangig **Linescan-Messungen** (Feldsweep bei
+    fester Frequenz, „Linescan-2D-map…"). Alle hier benutzten FTF-Referenzen
+    sind dagegen **umsortierte Colormaps** (Frequenzsweeps bei festem Feld,
+    per `Sort-linescan-by-frequency-and-set-range.py` in Feldschnitte
+    umsortiert; Dateinamen „…colormap…-sorted"). Echte Linescan-Messungen mit
+    FTF-Auswertung wurden auf dem Laufwerk (Weber, Grammer, Mayer, bis Tiefe 3)
+    nicht gefunden. Die Aussage „Modelle äquivalent auf gleichem Fenster" gilt
+    unabhängig vom Messmodus (gleiche Rohpunkte, gleicher Fit); die
+    Fenster-/Untergrund-Befunde sollten aber auf einer echten Linescan-Messung
+    nachgeprüft werden, sobald dafür eine FTF-Auswertung vorliegt.
+
 Auf dem Laufwerk existieren 821 Ordner „…(FTF)". Vollständig ausgewertet
 (Suszeptibilitätsfit **und** Kittel/LLG) und mit der zugehörigen TDMS-Rohdatei
 daneben – ausgewählt wurden 9 Datensätze:
