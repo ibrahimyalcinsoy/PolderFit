@@ -1,6 +1,6 @@
 # PolderFit – Breitband-FMR-Auswertung
 
-Programmname stets mit Version: `PolderFit V<Version>` (Quelle: `version` in `pyproject.toml`, im Code `polderfit.PROGRAMMNAME`).
+Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) → Anzeige `PolderFit V<Version>` (`polderfit.PROGRAMMNAME`).
 
 **Zweck:** TDMS-Messdaten (bbFMR) → je Frequenz Resonanzfeld `B_res` und Linienbreite `µ0ΔH` (mit 1σ) → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
 

@@ -1,33 +1,22 @@
 # PolderFit – Auswertung breitbandiger FMR-Messungen
 
-Programmname stets mit Version: `PolderFit V<Version>` (Quelle: `version` in `pyproject.toml`; im Code `polderfit.PROGRAMMNAME`).
-
 TDMS-Messdaten (bbFMR) → je Frequenz `B_res`, `µ0ΔH` (±1σ) → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
 Konvention: Felder als `µ0H` in T; Plots x = Feld, y = Frequenz.
 
-**Dokumentation:** <https://ibrahimyalcinsoy.github.io/PolderFit/> (Quellen in `docs/`, lokal `mkdocs serve`).
+**Dokumentation:** <https://ibrahimyalcinsoy.github.io/PolderFit/>
 
 ## Schnellstart
 
 ```bash
-git clone https://github.com/ibrahimyalcinsoy/PolderFit.git && cd PolderFit
-python -m venv .venv && source .venv/bin/activate     # Windows (cmd): call .venv\Scripts\activate
 pip install -e ".[gui]"
-polderfit                                             # oder: python -m polderfit.app
+polderfit
 ```
 
-Aktualisieren: `git pull && pip install -e ".[gui]"`. Windows-Details: [INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md).
+(Im geklonten Ordner, Python ≥ 3.11; empfohlen in einer venv. Windows-Details: [INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md).)
 
-```python
-from polderfit.io.tdms_laden import lade_tdms
-from polderfit.fit.batch import fitte_alle
-stapel = fitte_alle(lade_tdms("Messung.tdms"))   # AutoWindow + Fit + Nachfenster + Bewertung
-```
+## Name und Version
 
-## Stolperstellen
-
-- PowerShell „running scripts is disabled“: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` oder `cmd`.
-- Debian 12 „Qt platform plugin xcb“: `sudo apt install -y libxcb-cursor0`.
+Beides steht nur in `pyproject.toml`: `[tool.polderfit] name = "PolderFit"` und `[project] version = "0.1.0"` → Anzeigename `PolderFit V0.1.0` (Fenstertitel, Hilfe, Projektdatei; im Code `polderfit.PROGRAMMNAME`). Umbenennen oder Versionssprung = diese Zeilen ändern.
 
 ## Struktur
 
@@ -38,7 +27,7 @@ stapel = fitte_alle(lade_tdms("Messung.tdms"))   # AutoWindow + Fit + Nachfenste
 | `polderfit/fit` | AutoWindow, Einzelfit, Stapel/Nachfenster, Kriterien, Nachfit-Werkzeuge |
 | `polderfit/auswertung`, `polderfit/persistenz` | Kittel/LLG-Plots, Excel/CSV, Projekt-JSON |
 | `polderfit/gui` | PySide6-Oberfläche |
-| `tests/` | pytest-Suite, Robustheits-Harness (`autowindow_runner.py`) |
+| `tests/` | pytest-Suite, Robustheits-Harness |
 | `benchmark_ftf/` | Vergleich mit dem LabVIEW-FTF (`BERICHT.md`) |
 
 Tests: `python -m pytest -q`.

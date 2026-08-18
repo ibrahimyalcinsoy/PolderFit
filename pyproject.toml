@@ -31,5 +31,9 @@ polderfit = "polderfit.app:main"
 include = ["polderfit*"]
 
 
+[tool.polderfit]
+# Anzeigename des Programms; Fenstertitel etc. = "<name> V<version>" (version: siehe [project]).
+name = "PolderFit"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

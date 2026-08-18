@@ -13,21 +13,26 @@ Das Paket gliedert sich in klar getrennte Schichten:
 
 
 
-def _version_ermitteln() -> str:
-    """Versionsnummer aus EINER Quelle: ``pyproject.toml`` (Feld ``version``).
-
-    Reihenfolge: (1) ``pyproject.toml`` neben dem Paket (Entwicklungs-Checkout,
-    immer aktuell), (2) installierte Paket-Metadaten, (3) ``"0.0.0"``.
-    Ein Versionssprung erfordert damit nur das Aendern von ``pyproject.toml``;
-    Programmname, Fenstertitel, Hilfe und Projektdateien folgen automatisch.
-    """
+def _pyproject() -> dict:
+    """``pyproject.toml`` neben dem Paket (Entwicklungs-Checkout) oder ``{}``."""
     from pathlib import Path
-    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    pfad = Path(__file__).resolve().parent.parent / "pyproject.toml"
     try:
         import tomllib
-        with open(pyproject, "rb") as fh:
-            return str(tomllib.load(fh)["project"]["version"])
-    except Exception:  # keine Datei / kein Checkout
+        with open(pfad, "rb") as fh:
+            return tomllib.load(fh)
+    except Exception:
+        return {}
+
+
+_PYPROJECT = _pyproject()
+
+
+def _version_ermitteln() -> str:
+    """Version aus ``pyproject.toml`` ([project] version), sonst Paket-Metadaten, sonst 0.0.0."""
+    try:
+        return str(_PYPROJECT["project"]["version"])
+    except KeyError:
         pass
     try:
         from importlib.metadata import version
@@ -36,9 +41,12 @@ def _version_ermitteln() -> str:
         return "0.0.0"
 
 
-#: Versionsnummer (siehe :func:`_version_ermitteln`).
+#: Versionsnummer – EINE Quelle: ``pyproject.toml``.
 __version__: str = _version_ermitteln()
 
-#: Anzeigename des Programms; folgt stets der aktuellen Version,
-#: z. B. ``"PolderFit V0.1.0"``. Ueberall zu verwenden, wo der Name erscheint.
-PROGRAMMNAME: str = f"PolderFit V{__version__}"
+#: Anzeigename ohne Version – EINE Quelle: ``pyproject.toml`` ``[tool.polderfit] name``.
+NAME: str = str(_PYPROJECT.get("tool", {}).get("polderfit", {}).get("name", "PolderFit"))
+
+#: Vollstaendiger Programmname, z. B. ``"PolderFit V0.1.0"``. Umbenennen oder
+#: Versionssprung = nur ``pyproject.toml`` aendern; alle Anzeigen folgen.
+PROGRAMMNAME: str = f"{NAME} V{__version__}"

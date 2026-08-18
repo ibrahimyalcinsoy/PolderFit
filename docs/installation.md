@@ -1,12 +1,10 @@
 # Installation und Start
 
 ```bash
-git clone https://github.com/ibrahimyalcinsoy/PolderFit.git && cd PolderFit
-python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
-pip install -e ".[gui]"        # + ".[test]" für pytest
-polderfit                      # GUI;  python -m polderfit.app gleichbedeutend
-python -m pytest -q            # Tests
+pip install -e ".[gui]"     # im geklonten Ordner, Python >= 3.11 (venv empfohlen)
+polderfit                   # GUI
 ```
+Tests: `pip install -e ".[test]"` und `python -m pytest -q`.
 
 Skript ohne GUI:
 
@@ -19,4 +17,4 @@ stapel = fitte_alle(ds)                       # AutoWindow + Fit + Nachfenster +
 info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(), geometrie="ip")
 ```
 
-Versionssprung: nur `version` in `pyproject.toml` ändern → Name/Titel/Hilfe/Projektdatei folgen.
+Name und Version nur in `pyproject.toml`: `[tool.polderfit] name`, `[project] version` → Anzeige `PolderFit V0.1.0` überall.
