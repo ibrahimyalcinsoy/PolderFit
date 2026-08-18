@@ -46,6 +46,7 @@ def test_bereichs_fit_meldet_rechteck_statt_zoom(app):
     from polderfit.gui.matrix_ansicht import MatrixAnsicht
     ansicht = MatrixAnsicht()
     ansicht.zeige(_mini_datensatz())
+    ansicht.setze_zoom_aktiv(True)
     xlim_vorher = ansicht.ax.get_xlim()
 
     empfangen = {}

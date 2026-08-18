@@ -82,6 +82,7 @@ def test_ausreisser_klick_trifft_naechsten_punkt(app):
 
 def test_ausreisser_kasten_trifft_gruppe_ohne_zoom(app):
     ansicht, ds, bres = _ansicht_mit_overlay()
+    ansicht.setze_zoom_aktiv(True)   # Zoom eingeschaltet: Kasten darf im Modus trotzdem NICHT zoomen
     getroffen = []
     ansicht.setze_ausreisser_modus(True, gewaehlt=getroffen.extend)
     xlim_vorher = ansicht.ax.get_xlim()

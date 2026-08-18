@@ -171,6 +171,12 @@ def test_matrix_zoom_wheel_box_doppelklick(app):
     m.zeige(_mini_datensatz(10))
     x0, x1 = m.ax.get_xlim()
 
+    # Standard: Zoom AUS -> Mausrad aendert nichts.
+    assert m.zoom_aktiv() is False
+    m._on_scroll(_ev(m.ax, step=1, xdata=3.0, ydata=27.0))
+    assert m.ax.get_xlim() == (x0, x1)
+    m.setze_zoom_aktiv(True)
+
     # Mausrad rein -> sichtbarer Bereich schrumpft, Callback meldet "gezoomt".
     m._on_scroll(_ev(m.ax, step=1, xdata=3.0, ydata=27.0))
     nx0, nx1 = m.ax.get_xlim()
@@ -320,3 +326,15 @@ def test_aktivitaet_erscheint_nur_waehrend_des_jobs(app):
     assert w.aktivitaet_dock.isHidden()          # danach wieder zu
     # Unten angedockt (nimmt dem Farbplot keine Breite weg).
     assert w.dockWidgetArea(w.aktivitaet_dock) == QtCore.Qt.BottomDockWidgetArea
+
+
+def test_zoom_umschalter_im_ansicht_menue(app):
+    """Ansicht -> Zoom: Standard aus; Umschalten wirkt auf die Matrix-Ansicht."""
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    assert w.akt_zoom.isCheckable() and not w.akt_zoom.isChecked()
+    assert w.matrix.zoom_aktiv() is False
+    w.akt_zoom.setChecked(True)
+    assert w.matrix.zoom_aktiv() is True
+    w.akt_zoom.setChecked(False)
+    assert w.matrix.zoom_aktiv() is False

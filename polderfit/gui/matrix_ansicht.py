@@ -10,7 +10,8 @@ Bedienung:
 
 * **Klicken** – springt zur naechstgelegenen Frequenz (laedt sofort deren Fit),
 * **Aufziehen (Kaestchen)** – zoomt auf den markierten Bereich,
-* **Mausrad** – rein/raus zoomen (zentriert auf den Cursor),
+* **Mausrad** – rein/raus zoomen (zentriert auf den Cursor); Kaestchen- und
+  Rad-Zoom sind nur aktiv, wenn im Menue *Ansicht -> Zoom* eingeschaltet,
 * **Umschalt + Mausrad** – eine Frequenz hoch/runter,
 * **Doppelklick** – Zoom zuruecksetzen (ganze Messung),
 * **Pfeiltasten** ``hoch/runter`` (bzw. ``links/rechts``), ``Bild hoch/runter``
@@ -101,6 +102,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_bres = None
         self._res_problem = None
         self._problemfits_ausblenden = False
+        #: Zoom per Mausrad/Kaestchen nur, wenn eingeschaltet (Menue Ansicht -> Zoom);
+        #: Standard AUS, weil der Rad-Zoom als zu empfindlich empfunden wurde.
+        self._zoom_aktiv: bool = False
         # Maus-/Box-Zustand.
         self._press_xy = None
         self._box_aktiv = False
@@ -464,6 +468,15 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         return int(np.argmin(np.abs(self._freq_achse / 1e9 - ydata)))
 
     # --- Zoom --------------------------------------------------------------
+    def setze_zoom_aktiv(self, aktiv: bool) -> None:
+        """Mausrad-/Kaestchen-Zoom ein-/ausschalten (Doppelklick/Tasten +,-,0 bleiben)."""
+        self._zoom_aktiv = bool(aktiv)
+        if not self._zoom_aktiv and self._modus is None:
+            self.unsetCursor()
+
+    def zoom_aktiv(self) -> bool:
+        return self._zoom_aktiv
+
     def _melde_zoom(self) -> None:
         if self.zoom_geaendert is not None:
             self.zoom_geaendert(self.ax.get_xlim(), self.ax.get_ylim(), self._ist_gezoomt())
@@ -839,6 +852,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self.setCursor(QtCore.Qt.OpenHandCursor)   # Griff in Reichweite
             return
         if self._press_xy is not None:
+            if self._modus is None and not self._zoom_aktiv:
+                return                       # kein Zoom-Kaestchen: Klick waehlt nur die Frequenz
             x0, y0 = self._press_xy
             if not self._box_aktiv:
                 sx, sy = self._schwelle()
@@ -854,7 +869,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         """Cursor ausserhalb von Drags: Modus-Cursor halten, sonst Standard."""
         if self._modus is not None:
             self.setCursor(_MODUS_CURSOR[self._modus])
-        elif ausserhalb:
+        elif ausserhalb or not self._zoom_aktiv:
             self.unsetCursor()
         else:
             self.setCursor(QtCore.Qt.CrossCursor)  # Hinweis: Kästchen aufziehbar
@@ -902,7 +917,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         modifier = getattr(event, "key", None) or ""
         if "shift" in modifier:
             self._waehle_index(self._aktueller_index + (1 if event.step > 0 else -1))
-        else:
+        elif self._zoom_aktiv:
             self._zoom(event, _ZOOM_REIN if event.step > 0 else _ZOOM_RAUS)
 
     def _on_key(self, event):

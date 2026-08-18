@@ -354,6 +354,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # setChecked mit unveraendertem Wert loest kein toggled aus -> keine Schleife).
         self.chk_vollbereich.toggled.connect(self.akt_vollbereich.setChecked)
         self.akt_vollbereich.toggled.connect(self.chk_vollbereich.setChecked)
+        self.akt_zoom = A("Zoom (Mausrad / Kästchen)", self)
+        self.akt_zoom.setCheckable(True)
+        self.akt_zoom.setChecked(False)
+        self.akt_zoom.setToolTip(
+            "Zoom in der Übersicht per Mausrad und aufgezogenem Kästchen ein-/ausschalten "
+            "(Standard aus). Doppelklick setzt den Zoom zurück; Tasten +/-/0 wirken immer.")
+        self.akt_zoom.toggled.connect(self.matrix.setze_zoom_aktiv)
         self.akt_problemfits = A("Problemfits ausblenden", self)
         self.akt_problemfits.setCheckable(True)
         self.akt_problemfits.setToolTip(
@@ -444,6 +451,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.funktionen_menue.addAction(self.akt_physik)
 
         m_ansicht = mb.addMenu("&Ansicht")
+        m_ansicht.addAction(self.akt_zoom)
         m_ansicht.addAction(self.akt_vollbereich)
         m_ansicht.addAction(self.akt_problemfits)
         m_ansicht.addSeparator()
@@ -1892,8 +1900,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         <h3>Übersicht – Navigation &amp; Zoom</h3>
         <ul>
           <li><b>Klicken</b>: Frequenz wählen → der zugehörige Fit wird geladen.</li>
-          <li><b>Kästchen ziehen</b>: auf den markierten Bereich zoomen.</li>
-          <li><b>Mausrad</b>: rein/raus zoomen · <b>Doppelklick</b>: Zoom zurücksetzen.</li>
+          <li><b>Zoom</b> ist standardmäßig aus – einschalten unter <i>Ansicht → Zoom (Mausrad / Kästchen)</i>.
+              Dann: <b>Kästchen ziehen</b> zoomt auf den Bereich, <b>Mausrad</b> rein/raus.
+              <b>Doppelklick</b>: Zoom zurücksetzen (immer).</li>
           <li><b>Umschalt+Mausrad</b> oder <b>↑/↓</b> (Pos1/Ende, Bild↑/↓): Frequenz wechseln.</li>
           <li>Beim Zoomen erscheint der <b>Navigator</b> – er zeigt die Position in der
               Gesamtmessung (Klick verschiebt den Ausschnitt).</li>

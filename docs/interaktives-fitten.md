@@ -1,6 +1,6 @@
 # Interaktives Fitten
 
-Ein Modus zurzeit (Modus-Manager), aktiver Modus farblich + Statusleiste, `Esc` bricht ab. Alles rückgängig: `Strg+Z` / `Strg+Umschalt+Z` (50 Schritte).
+Ein Modus zurzeit (Modus-Manager), aktiver Modus farblich + Statusleiste, `Esc` bricht ab. Zoom (Mausrad/Kästchen) ist standardmäßig **aus**: *Ansicht → Zoom (Mausrad / Kästchen)*; Doppelklick setzt zurück, Tasten `+`/`-`/`0` wirken immer. Alles rückgängig: `Strg+Z` / `Strg+Umschalt+Z` (50 Schritte).
 
 | Werkzeug | Aufruf | Wirkung |
 |---|---|---|
