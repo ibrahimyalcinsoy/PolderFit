@@ -1,60 +1,15 @@
-# Auswertungsauswahl: Bereiche und Frequenzauswahl
+# Auswertungsauswahl (Bereiche, Jumper)
 
-Vor **jeder** Stapelauswertung (Auto-Fit sowie Auto-Fit mit vorgegebener
-Resonanz) fragt PolderFit den Auswertungsbereich ab — Dialog
-„Auswertungsbereich & Jumper" (`polderfit/gui/auswahl_dialog.py`, Kernlogik in
-`polderfit/fit/auswahl.py`). Die zuletzt benutzte Auswahl ist vorbelegt; mit den
-Standardwerten wird der gesamte Datensatz ausgewertet.
-
-## Nur jeden n-ten Messpunkt („Jumper")
-
-Getrennt einstellbar für beide Achsen:
+Vor jedem Auto-Fit: Dialog „Auswertungsbereich & Jumper“ (`fit/auswahl.py`).
 
 | Einstellung | Wirkung |
 |---|---|
-| **Frequenzachse — jeder n-te Linescan** | Es wird nur jeder n-te Frequenz-Linescan gefittet (z. B. n = 10, 20, 30). Beschleunigt die Auswertung großer Maps entsprechend. |
-| **Feldachse — jeder n-te Punkt** | Innerhalb jedes Linescans geht nur jeder n-te Feldpunkt in Fenstersuche und Fit. |
+| jeder n-te Linescan / jeder n-te Feldpunkt | Unterabtastung (Tempo) |
+| Frequenz von/bis, Feld von/bis | Bereich |
+| Frequenz-Ausschlüsse `3-5; 10.2-11` (GHz) | Bänder auslassen (z. B. feldparalleler Abschnitt bei oop-Dünnschichten) |
 
-## Auszuwertender Bereich
-
-* **Frequenz von/bis** und **Feld von/bis** grenzen die Auswertung ein
-  (volle Spanne = keine Einschränkung).
-* **Frequenz-Ausschlüsse**: Bänder, die *nicht* ausgewertet werden — als
-  Text `3-5; 10.2-11` (GHz, mehrere mit `;`). Typischer Fall: der zur
-  Feldachse parallele Abschnitt bei 3–5 GHz in Out-of-plane-Dünnschicht-
-  Messungen.
-
-Reihenfolge der Anwendung: zuerst Bereichsfenster und Ausschlüsse, dann jeder n-te
-der verbleibenden Linescans. So bleibt die Schrittweite auch neben einem
-Ausschlussband konstant.
-
-Die Zusammenfassung im Dialog zeigt fortlaufend, wie viele Linescans und Feldpunkte
-übrig bleiben; bei leerer Auswahl, weniger als 4 Feldpunkten oder unlesbaren
-Ausschluss-Angaben ist „Auswertung starten" gesperrt.
-
-## Was intern passiert
-
-Die Auswahl erzeugt einen **reduzierten** `Messdatensatz`; AutoWindows, Fits,
-Kittel/LLG und Export arbeiten unverändert darauf. Nachvollziehbarkeit über
-`meta`:
+Reihenfolge: Bereich/Ausschlüsse → dann jeder n-te. Ergebnis: reduzierter `Messdatensatz` (`meta["quell_indizes"]`, `meta["auswertungsauswahl"]`); Farbplot zeigt weiter die volle Messung.
 
 ```python
-from polderfit.fit import Auswertungsauswahl, fitte_alle
-
-auswahl = Auswertungsauswahl(
-    n_frequenz=10, n_feld=2,
-    frequenz_ausschluss=[(3e9, 5e9)],       # Hz
-    feld_min_t=2.0, feld_max_t=4.5,
-)
-stapel = fitte_alle(datensatz, auswahl=auswahl)
-stapel.datensatz.meta["quell_indizes"]        # welche Original-Linescans
-stapel.datensatz.meta["auswertungsauswahl"]   # die Auswahl (JSON-faehig)
+stapel = fitte_alle(ds, auswahl=Auswertungsauswahl(n_frequenz=10, frequenz_ausschluss=[(3e9,5e9)], feld_min_t=2.0))
 ```
-
-Ein Dispersions-Seed (`zentren`) wird deckungsgleich mitreduziert.
-
-Der **Farbplot zeigt weiterhin die volle Messung**; die Zuordnung zwischen
-Übersicht und (eventuell reduziertem) Fit-Stapel läuft wertbasiert über die
-Frequenz — ein Klick springt zum wertmäßig nächstgelegenen Fit. Ein erneuter
-Auto-Fit startet immer wieder vom vollen Datensatz, die Auswahl ist also
-jederzeit revidierbar.

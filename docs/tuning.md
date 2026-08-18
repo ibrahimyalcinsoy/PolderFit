@@ -1,96 +1,25 @@
 # Parameter und Feineinstellung
 
-Dieses Kapitel führt die einstellbaren Parameter der Auswertung an einer Stelle
-zusammen und beschreibt ihre Wirkung. Es richtet sich an Anwenderinnen und Anwender,
-die das Verhalten an eigene Proben oder Messbedingungen anpassen möchten.
-
-!!! warning "Grundsatz"
-    Die Parameter sind physikalisch begründet voreingestellt. Anpassungen sollten
-    gezielt und nachvollziehbar erfolgen. Insbesondere dürfen die Bewertungsschwellen
-    (siehe [Bewertung der Fits](bewertung.md)) nicht so verändert werden, dass
-    schlechte Fenster als unauffällig durchgehen.
-
-## Aufrufparameter
-
-Mehrere Größen lassen sich direkt beim Aufruf übergeben, ohne den Quelltext zu
-ändern (`fitte_alle` in `polderfit/fit/batch.py`):
-
-| Parameter | Standard | Wirkung |
+| `fitte_alle(...)` | Standard | Wirkung |
 |---|---|---|
-| `gamma` | `GAMMA_STANDARD` | gyromagnetisches Verhältnis (`g = 2`), nur Startwert für die Fensterschätzung; siehe Hinweis unten |
-| `breite_faktor` | `8.0` | Skaliert die Fensterbreite relativ zur geschätzten Linienbreite |
-| `r2_schwelle` | `0.9` | Schwelle für nachgelagerte R²-Auswertungen |
-| `zentren` | `None` | vorgegebene Fenstermitten `B_res(f)`; überspringt die Auto-Detektion |
-| `alpha_max` | `0.1` | harte obere α-Schranke der Einzelfits; für sehr breite Resonanzen (α ≈ 0.2–0.5) anheben |
-| `nachfenster_faktor` | `2.5` | zweiter Fit-Durchgang auf `B_res ± faktor·µ₀ΔH`; `0` = aus (siehe [Ablauf](pipeline.md)) |
+| `gamma` | g = 2 | nur Startwert/Fenster; `B_res`, `µ0ΔH` unabhängig davon |
+| `breite_faktor` | 8.0 | Detektionsfenster = Faktor × FWHM |
+| `alpha_max` | 0.1 | harte α-Schranke (breite Linien: anheben) |
+| `nachfenster_faktor` | 2.5 | 2. Durchgang `B_res ± k·ΔH`; 0 = aus |
+| `zentren` | None | vorgegebene Fenstermitten |
+| `alpha_erwartet` | 0.01 | Fensterbreite bei vorgegebener Dispersion |
 
-Der Wert `gamma` legt **nicht** das Ergebnis fest: Er dient im Einzelfit nur der
-Startwert- und Fensterschätzung. Das Resonanzfeld `B_res` jeder Frequenz ist ein
-freier Fitparameter und hängt nicht vom vorgegebenen `gamma` ab. Der g-Faktor (und
-damit das tatsächliche gyromagnetische Verhältnis) wird erst in der übergreifenden
-Kittel-Auswertung aus der Dispersion `B_res(f)` bestimmt. Ein anderer `gamma`-Wert
-verschiebt daher weder `B_res` noch die Linienbreite `μ0ΔH`.
+| Konstante (`autowindows.py`) | Standard | Anpassung |
+|---|---|---|
+| `_HALB_MAX` | 0.4 T | schmale Linien ↓, breite ↑ |
+| `_PROMINENZ_MIN` | 4.0 | verrauscht ↑, schwach ↓ |
+| `fenster_punkte` (Trasse) | 31 | größer = glatter/träger |
 
-Beispiel für ein engeres beziehungsweise weiteres Fenster:
+Bewertungsschwellen: `RMSE_NORM_SCHWELLE` 0.35, `ALPHA_PLAUSIBEL_MAX` 0.05, `B_RES_REL_UNSICHERHEIT_MAX` 0.02 ([Bewertung](bewertung.md)).
 
-```python
-from polderfit.fit.batch import fitte_alle
-stapel = fitte_alle(datensatz, breite_faktor=5.0)   # engere Fenster
-```
-
-## Parameter des AutoWindow
-
-Die folgenden Konstanten in `polderfit/fit/autowindows.py` steuern die
-Fensterbestimmung:
-
-| Konstante | Standard | Wirkung | Anpassung |
-|---|---|---|---|
-| `_HALB_MAX` | `0.4` T | obere Grenze der halben Fensterbreite | verkleinern bei generell schmalen Resonanzen; vergrößern bei sehr breiten |
-| `_PROMINENZ_MIN` | `4.0` | Mindest-Prominenz, ab der ein Kandidat als verlässlich gilt | erhöhen bei verrauschten Daten (strengere Auswahl); senken bei sehr schwachen Resonanzen |
-
-Weitere wirksame Größen sind innerhalb der Funktionen festgelegt:
-
-- **Fenster der gleitenden Geraden** (`_glatte_lokale_trasse`, Argument
-  `fenster_punkte`, Standard 31). Ein größeres Fenster glättet stärker und ist
-  robuster gegen Ausreißer, folgt aber einer rasch wandernden Dispersion träger.
-- **Konsistenztoleranz und Suchradius** in `auto_fenster_alle` (`tol`). Sie
-  bestimmen, ab welchem Abstand ein lokaler Kandidat als mit der Trasse inkonsistent
-  gilt und in welchem Umkreis die Verfeinerung einen Peak sucht. Der Wert ist an den
-  Punktabstand gekoppelt.
-
-## Parameter des Fits
-
-In `polderfit/fit/linescan_fit.py` und `polderfit/physik/fitmodell.py`:
-
-- Die Parameterschranken (`B_res` im Fenster, `alpha`, `phi`) ergeben sich aus den
-  Konstanten in `polderfit/fit/kriterien.py` (siehe unten).
-- Die Startwertschätzung (`schaetze_startwerte`) ist datengetrieben; bei
-  systematisch schwieriger Konvergenz können einzelne Linescans mit expliziten
-  Startwerten über `fitte_neu` erneut angepasst werden.
-
-## Bewertungsschwellen
-
-Die Schwellwerte der Einstufung sind in `polderfit/fit/kriterien.py` zusammengefasst und
-im Kapitel [Bewertung der Fits](bewertung.md) tabelliert. Die für die Praxis
-relevantesten:
-
-- `RMSE_NORM_SCHWELLE` (`0.35`) – Grenze des normierten Residuums. Senken für eine
-  strengere, Erhöhen für eine nachsichtigere Einstufung.
-- `ALPHA_PLAUSIBEL_MAX` (`0.05`) – obere Plausibilitätsgrenze der Dämpfung.
-- `B_RES_REL_UNSICHERHEIT_MAX` (`0.02`) – maximale relative Unsicherheit des
-  Resonanzfeldes.
-
-## Empfehlungen nach Probentyp
-
-- **Schmale Resonanzen, geringe Dämpfung** (z. B. YIG): `_HALB_MAX` gegebenenfalls
-  reduzieren; die Einstufung „alpha an Grenze" ist hier zu erwarten, sofern die
-  Dämpfung an die untere Schranke stößt, und kein Hinweis auf einen Fehler.
-- **Verrauschte oder schwache Signale** (z. B. nahe In-plane): `_PROMINENZ_MIN`
-  erhöhen, um Fehldetektionen an Störfeatures zu vermeiden; bei nicht
-  lokalisierbarer Resonanz ist eine manuelle Dispersionsvorgabe (`zentren` /
-  `fenster_aus_trasse`) vorzuziehen.
-- **Periodische Untergrundstruktur** (z. B. Gitter-Proben): der feldstationäre
-  Untergrundabzug greift automatisch bei unsortierten Daten; bei verbleibenden
-  Fehlplatzierungen empfiehlt sich die manuelle Dispersionsvorgabe.
-- **Sehr hochauflösende Feld-Sweeps**: Die Rechenzeit des Fits steigt mit der
-  Punktzahl je Linescan stark an (siehe [Troubleshooting](troubleshooting.md#timeout)).
+| Probentyp | Empfehlung |
+|---|---|
+| schmal (YIG) | `_HALB_MAX` ↓; „alpha an Grenze“ unten erwartbar |
+| schwach/verrauscht (nahe ip) | `_PROMINENZ_MIN` ↑ oder Dispersion vorgeben |
+| Gitter/periodischer Untergrund | Stationärabzug greift (unsortiert); sonst Dispersion vorgeben |
+| sehr breit (FeCr₂S₄, α ≈ 0,2–0,8) | `alpha_max` ↑ + manuelle Fenster (Automatik nicht ausgelegt) |
