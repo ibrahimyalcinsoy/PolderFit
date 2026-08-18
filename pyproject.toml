@@ -30,8 +30,6 @@ polderfit = "polderfit.app:main"
 [tool.setuptools.packages.find]
 include = ["polderfit*"]
 
-[tool.setuptools.package-data]
-"polderfit.gui" = ["assets/*.svg"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

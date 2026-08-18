@@ -14,6 +14,8 @@ weiterhin akzeptiert).
 
 from __future__ import annotations
 
+from .. import PROGRAMMNAME
+
 import json
 from pathlib import Path
 
@@ -39,6 +41,7 @@ def speichere_sitzung(stapel: StapelErgebnis, pfad: str) -> None:
     meta = stapel.datensatz.meta
     daten = {
         "polderfit_projekt_version": 2,
+        "programm": PROGRAMMNAME,
         "quelle": stapel.datensatz.quelle,
         "format_typ": stapel.datensatz.format_typ,
         "zuordnung": meta.get("zuordnung"),

@@ -1,6 +1,8 @@
 # PolderFit – Auswertung breitbandiger FMR-Messungen
 
-<img src="polderfit/gui/assets/polderfit.svg" alt="PolderFit-Logo" width="110" align="right"/>
+
+Der Programmname trägt stets die aktuelle Versionsnummer (`PolderFit V<Version>`,
+einzige Quelle: `version` in `pyproject.toml`; im Code `polderfit.PROGRAMMNAME`).
 
 PolderFit ist eine grafische Anwendung zur Auswertung breitbandiger ferromagnetischer
 Resonanzmessungen (bbFMR). Sie liest die Messdaten im TDMS-Format ein, bestimmt je Frequenz

@@ -67,9 +67,7 @@ from .verarbeitung_panel import VerarbeitungPanel
 from .trace_panel import TracePanel
 from .arbeiter import Arbeiter
 from .stil import PolderFit_QSS
-
-#: Pfad zum PolderFit-App-Icon (SVG, skaliert verlustfrei).
-ICON_PFAD = str(Path(__file__).resolve().parent / "assets" / "polderfit.svg")
+from .. import PROGRAMMNAME
 
 #: Quellcode-Repository (im Hilfe-Dialog verlinkt).
 REPO_URL = "https://github.com/ibrahimyalcinsoy/PolderFit"
@@ -90,18 +88,12 @@ _MODUS_TEXTE = {
 }
 
 
-def app_icon() -> QtGui.QIcon:
-    """Liefert das PolderFit-App-Icon (leeres QIcon, falls die Datei fehlt)."""
-    return QtGui.QIcon(ICON_PFAD)
-
-
 class Hauptfenster(QtWidgets.QMainWindow):
     """Zentrales Anwendungsfenster."""
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PolderFit – Breitband-FMR-Auswertung")
-        self.setWindowIcon(app_icon())
+        self.setWindowTitle(f"{PROGRAMMNAME} – Breitband-FMR-Auswertung")
         self.resize(1400, 860)
 
         self.stapel: StapelErgebnis | None = None
@@ -184,7 +176,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         esc.activated.connect(self.matrix.beende_modus)
 
         self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden (Strg+O).")
-        self._log("PolderFit bereit. Bitte eine TDMS-Datei laden.", "info")
+        self._log(f"{PROGRAMMNAME} bereit. Bitte eine TDMS-Datei laden.", "info")
 
     # --- Aufbau ------------------------------------------------------------
     def _baue_oberflaeche(self):
@@ -415,12 +407,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """
         mb = self.menuBar()
 
-        # Klickbares PolderFit-Logo ganz links -> oeffnet die Hilfe.
+        # Klickbarer Programmname (mit Version) ganz links -> oeffnet die Hilfe.
         self.btn_logo = QtWidgets.QToolButton()
-        self.btn_logo.setIcon(app_icon())
-        self.btn_logo.setIconSize(QtCore.QSize(22, 22))
-        self.btn_logo.setText(" PolderFit")
-        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.btn_logo.setText(f" {PROGRAMMNAME}")
+        self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.btn_logo.setAutoRaise(True)
         self.btn_logo.setToolTip("Bedienung & Infos")
         self.btn_logo.setStyleSheet(
@@ -1824,17 +1814,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _baue_hilfe_dialog(self) -> QtWidgets.QDialog:
         """Hilfe-Dialog: Bedienung und Repository-Link."""
         dlg = QtWidgets.QDialog(self)
-        dlg.setWindowTitle("PolderFit – Hilfe & Infos")
-        dlg.setWindowIcon(app_icon())
+        dlg.setWindowTitle(f"{PROGRAMMNAME} – Hilfe & Infos")
         dlg.resize(660, 580)
         lay = QtWidgets.QVBoxLayout(dlg)
 
         kopf = QtWidgets.QHBoxLayout()
-        logo = QtWidgets.QLabel()
-        logo.setPixmap(app_icon().pixmap(56, 56))
-        kopf.addWidget(logo)
         titel = QtWidgets.QLabel(
-            "<b style='font-size:16px'>PolderFit</b><br>"
+            f"<b style='font-size:16px'>{PROGRAMMNAME}</b><br>"
             "Breitband-FMR-Auswertung")
         titel.setTextFormat(QtCore.Qt.RichText)
         kopf.addWidget(titel, 1)
@@ -1858,7 +1844,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _hilfe_html() -> str:
         return f"""
         <html><body style="font-size:12px; line-height:1.45">
-        <p><b>PolderFit</b> wertet Breitband-FMR-Messungen (bbFMR) aus: TDMS-Dateien einlesen,
+        <p><b>{PROGRAMMNAME}</b> wertet Breitband-FMR-Messungen (bbFMR) aus: TDMS-Dateien einlesen,
         je Frequenz das Resonanzsignal fitten und daraus die Materialparameter bestimmen.
         Die Karte lässt sich auch <b>allein zur Datenansicht</b> nutzen (Verarbeitung:
         derivative divide, divide slice, … – ganz ohne Fit).</p>
@@ -1949,8 +1935,7 @@ def starte_gui(argv=None):
         os.environ["QT_LOGGING_RULES"] = f"{bestehend};{regel}".strip(";")
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv or sys.argv)
-    app.setApplicationName("PolderFit")
-    app.setWindowIcon(app_icon())
+    app.setApplicationName(PROGRAMMNAME)
     app.setStyleSheet(PolderFit_QSS)
     fenster = Hauptfenster()
     # Farbplot in voller Breite: maximiert starten.

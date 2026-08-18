@@ -37,3 +37,6 @@ dist/
 
 # FTF-Benchmark: Kopien fremder Messdaten vom Gruppenlaufwerk – nicht versionieren
 /benchmark_ftf/data/
+
+# Privates Handbuch (LaTeX/PDF) – nicht veroeffentlichen
+/handbuch/

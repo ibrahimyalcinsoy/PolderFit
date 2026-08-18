@@ -11,4 +11,34 @@ Das Paket gliedert sich in klar getrennte Schichten:
 * :mod:`polderfit.gui`        – interaktive PySide6-Oberflaeche
 """
 
-__version__ = "0.1.0"
+
+
+def _version_ermitteln() -> str:
+    """Versionsnummer aus EINER Quelle: ``pyproject.toml`` (Feld ``version``).
+
+    Reihenfolge: (1) ``pyproject.toml`` neben dem Paket (Entwicklungs-Checkout,
+    immer aktuell), (2) installierte Paket-Metadaten, (3) ``"0.0.0"``.
+    Ein Versionssprung erfordert damit nur das Aendern von ``pyproject.toml``;
+    Programmname, Fenstertitel, Hilfe und Projektdateien folgen automatisch.
+    """
+    from pathlib import Path
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    try:
+        import tomllib
+        with open(pyproject, "rb") as fh:
+            return str(tomllib.load(fh)["project"]["version"])
+    except Exception:  # keine Datei / kein Checkout
+        pass
+    try:
+        from importlib.metadata import version
+        return version("polderfit")
+    except Exception:
+        return "0.0.0"
+
+
+#: Versionsnummer (siehe :func:`_version_ermitteln`).
+__version__: str = _version_ermitteln()
+
+#: Anzeigename des Programms; folgt stets der aktuellen Version,
+#: z. B. ``"PolderFit V0.1.0"``. Ueberall zu verwenden, wo der Name erscheint.
+PROGRAMMNAME: str = f"PolderFit V{__version__}"
