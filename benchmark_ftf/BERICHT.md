@@ -15,7 +15,7 @@
 
 Abbildungen (`ergebnisse/*.png`): Feld auf der x-Achse, Frequenz auf der y-Achse.
 
-> **Einfacher Vergleich ohne Statistik** (PolderFit minus FTF je Frequenz, nur Werte und Differenzen, schöne Plots): `VERGLEICH_EINFACH.md` – erzeugt mit `python benchmark_ftf/einfacher_vergleich.py` (Abbildungen, CSV und PDF unter `ergebnisse/einfach/`).
+> **Einfacher Vergleich ohne Statistik** (PolderFit minus FTF je Frequenz, nur Werte und Differenzen, schöne Plots): eigener Ordner `einfacher_vergleich_2026-08-25/` (Bericht `VERGLEICH_EINFACH.md`, Abbildungen, CSV, PDF) – erzeugt mit `python benchmark_ftf/einfacher_vergleich.py`; unabhängig von den älteren Ergebnissen unter `ergebnisse/`.
 
 **Ziel:** Bereits mit dem FTF („fiddling together FMR", P. Louis / M. Weiler,
 LabVIEW) ausgewertete bbFMR-Datensätze vom Gruppenlaufwerk

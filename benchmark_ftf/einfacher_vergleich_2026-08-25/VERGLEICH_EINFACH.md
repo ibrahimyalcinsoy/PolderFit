@@ -4,7 +4,7 @@ Je Frequenz werden die Einzelfit-Werte beider Programme direkt verglichen: **Pol
 
 PolderFit lief mit den Standardwerten der Oberfläche (Auto-Fit; zweiter Fit-Durchgang auf ±2,5 Linienbreiten; Dämpfung α im Fit bis 0,1 erlaubt, bei FeCr₂S₄ bis 1,0). Alle Abbildungen wie in der Oberfläche: **Feld auf der x-Achse, Frequenz auf der y-Achse** bzw. als obere Zusatzachse. Hinweis: Die FTF-Referenzen stammen aus umsortierten Frequenz-Sweeps (siehe `BERICHT.md`, Abschnitt 1).
 
-Abbildungen: `ergebnisse/einfach/<Kürzel>.png` (je Messung), `uebersicht.png`, `kittel_llg.png`; alles zusammen in `ergebnisse/einfach/Vergleich_PolderFit_FTF.pdf`; Werte je Frequenz in `ergebnisse/einfach/<Kürzel>.csv`. Kürzel ↔ Messung: Tabelle am Ende.
+Dieser Ordner ist eigenständig (unabhängig von den älteren, ausführlichen Ergebnissen unter `../ergebnisse/`): `<Kürzel>.png` (je Messung), `uebersicht.png`, `kittel_llg.png`, alles zusammen in `Vergleich_PolderFit_FTF.pdf`; Werte je Frequenz in `<Kürzel>.csv`, Kennzahlen in `kennzahlen.json`. Erzeugt mit `python benchmark_ftf/einfacher_vergleich.py`. Kürzel ↔ Messung: Tabelle am Ende.
 
 ## Begriffe
 
@@ -32,7 +32,7 @@ Abbildungen: `ergebnisse/einfach/<Kürzel>.png` (je Messung), `uebersicht.png`, 
 | FeCr₂S₄-Kristall, 50 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt) | 11 von 85 (PF problematisch 74, FTF ohne Ergebnis 0) | -36.882 mT | 0 % | -106.719 mT (-7.3 %) | 9 % | 27 % |
 | YIG-Schicht (180 nm), 50 K, Feld in der Ebene | 367 von 367 (PF problematisch 0, FTF ohne Ergebnis 0) | -0.175 mT | 99 % | +0.190 mT (+1.0 %) | 91 % | 100 % |
 
-![Übersicht](ergebnisse/einfach/uebersicht.png)
+![Übersicht](uebersicht.png)
 
 ## Kittel/LLG-Parameter
 
@@ -50,45 +50,45 @@ PolderFit ungewichtet (Standard). FTF-„M eff“ bei senkrechtem Feld ist in di
 | FeCr₂S₄-Kristall, 50 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt) | 1.7670 / 1.8016 (-0.0347) | 1.8408 / 1.9011 (-0.0603) | – | 2.00e-01 / 4.34e-01 (-53.9 %) | 308.67 / -156.36 (+465.03) |
 | YIG-Schicht (180 nm), 50 K, Feld in der Ebene | 2.0010 / 2.0006 (+0.0004) | 0.1303 / 0.1319 (-0.0016) | -3.75 / -4.48 (+0.73) | 1.78e-03 / 1.58e-03 (+12.6 %) | 16.36 / 16.52 (-0.16) |
 
-![Kittel/LLG](ergebnisse/einfach/kittel_llg.png)
+![Kittel/LLG](kittel_llg.png)
 
 ## Abbildungen je Messung
 
 ### CoFe mit Gitterstruktur (138 nm), 5 K, Feld in der Ebene
 
-![cofe_gratings_ip_5K](ergebnisse/einfach/cofe_gratings_ip_5K.png)
+![cofe_gratings_ip_5K](cofe_gratings_ip_5K.png)
 
 ### CoFe-Schicht, 290 K, Feld in der Ebene, 20–66 GHz
 
-![cofe_wm_ip_290K_1](ergebnisse/einfach/cofe_wm_ip_290K_1.png)
+![cofe_wm_ip_290K_1](cofe_wm_ip_290K_1.png)
 
 ### CoFe-Schicht, 290 K, Feld in der Ebene, 6–19 GHz
 
-![cofe_wm_ip_290K_2](ergebnisse/einfach/cofe_wm_ip_290K_2.png)
+![cofe_wm_ip_290K_2](cofe_wm_ip_290K_2.png)
 
 ### CoFe-Schicht, 5 K, Feld in der Ebene, 20–66 GHz
 
-![cofe_wm_ip_5K_1](ergebnisse/einfach/cofe_wm_ip_5K_1.png)
+![cofe_wm_ip_5K_1](cofe_wm_ip_5K_1.png)
 
 ### CoFe-Schicht, 5 K, Feld in der Ebene, 6–19 GHz
 
-![cofe_wm_ip_5K_2](ergebnisse/einfach/cofe_wm_ip_5K_2.png)
+![cofe_wm_ip_5K_2](cofe_wm_ip_5K_2.png)
 
 ### FeCr₂S₄-Kristall, 100 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt)
 
-![fecr2s4_100K](ergebnisse/einfach/fecr2s4_100K.png)
+![fecr2s4_100K](fecr2s4_100K.png)
 
 ### FeCr₂S₄-Kristall, 2 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt)
 
-![fecr2s4_2K](ergebnisse/einfach/fecr2s4_2K.png)
+![fecr2s4_2K](fecr2s4_2K.png)
 
 ### FeCr₂S₄-Kristall, 50 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt)
 
-![fecr2s4_50K](ergebnisse/einfach/fecr2s4_50K.png)
+![fecr2s4_50K](fecr2s4_50K.png)
 
 ### YIG-Schicht (180 nm), 50 K, Feld in der Ebene
 
-![yig_konstanz_ip_50K](ergebnisse/einfach/yig_konstanz_ip_50K.png)
+![yig_konstanz_ip_50K](yig_konstanz_ip_50K.png)
 
 ## Kürzel der Ordner und Dateien
 

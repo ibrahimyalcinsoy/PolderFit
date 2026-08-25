@@ -19,12 +19,13 @@ Darstellung wie in der PolderFit-GUI: **Feld auf der x-Achse, Frequenz auf der
 y-Achse** (Dispersion); Differenzen werden ueber dem Resonanzfeld aufgetragen,
 die zugehoerige Frequenz steht als obere Zusatzachse daran.
 
-Ausgabe (``benchmark_ftf/ergebnisse/einfach/``): je Messung ein PNG mit vier
-Teilbildern und eine CSV-Tabelle, dazu ``uebersicht.png`` (alle Datensaetze),
-``kittel_llg.png``, der Bericht ``VERGLEICH_EINFACH.md`` (Ordner ``benchmark_ftf``)
-und ``Vergleich_PolderFit_FTF.pdf`` (alle Abbildungen).
+Ausgabe: ein EIGENSTAENDIGER, datierter Ordner ``benchmark_ftf/einfacher_vergleich_<Datum>/``
+(unabhaengig von den aelteren, ausfuehrlichen Ergebnissen unter ``ergebnisse/``) mit
+je Messung einem PNG (vier Teilbilder) und einer CSV-Tabelle, dazu ``uebersicht.png``
+(alle Messungen), ``kittel_llg.png``, ``kennzahlen.json``, dem Bericht
+``VERGLEICH_EINFACH.md`` und ``Vergleich_PolderFit_FTF.pdf`` (alle Abbildungen).
 
-Aufruf:  python benchmark_ftf/einfacher_vergleich.py [name ...]
+Aufruf:  python benchmark_ftf/einfacher_vergleich.py [--ordner PFAD] [name ...]
 """
 
 from __future__ import annotations
@@ -56,9 +57,9 @@ from polderfit.io.tdms_laden import lade_tdms  # noqa: E402
 from polderfit.physik.konstanten import GAMMA_STANDARD  # noqa: E402
 
 DATA = HIER / "data"
-OUT = HIER / "ergebnisse" / "einfach"
-OUT.mkdir(parents=True, exist_ok=True)
-BERICHT = HIER / "VERGLEICH_EINFACH.md"
+#: Eigener, datierter Ergebnisordner (per ``--ordner`` ueberschreibbar).
+OUT = HIER / f"einfacher_vergleich_{date.today().isoformat()}"
+BERICHT = OUT / "VERGLEICH_EINFACH.md"
 
 # Farben wie in der GUI (DIN EN 60073-Semantik: gruen = PolderFit-Ergebnis,
 # neutral dunkelblau = Differenz); FTF in Dunkelorange (Serienfarbe, keine Statusbedeutung).
@@ -391,9 +392,11 @@ def schreibe_bericht(alle: list[dict]) -> None:
              "Alle Abbildungen wie in der Oberfläche: **Feld auf der x-Achse, Frequenz auf der "
              "y-Achse** bzw. als obere Zusatzachse. Hinweis: Die FTF-Referenzen stammen aus "
              "umsortierten Frequenz-Sweeps (siehe `BERICHT.md`, Abschnitt 1).\n")
-    z.append("Abbildungen: `ergebnisse/einfach/<Kürzel>.png` (je Messung), `uebersicht.png`, "
-             "`kittel_llg.png`; alles zusammen in `ergebnisse/einfach/Vergleich_PolderFit_FTF.pdf`; "
-             "Werte je Frequenz in `ergebnisse/einfach/<Kürzel>.csv`. Kürzel ↔ Messung: Tabelle am Ende.\n")
+    z.append("Dieser Ordner ist eigenständig (unabhängig von den älteren, ausführlichen Ergebnissen "
+             "unter `../ergebnisse/`): `<Kürzel>.png` (je Messung), `uebersicht.png`, `kittel_llg.png`, "
+             "alles zusammen in `Vergleich_PolderFit_FTF.pdf`; Werte je Frequenz in `<Kürzel>.csv`, "
+             "Kennzahlen in `kennzahlen.json`. Erzeugt mit `python benchmark_ftf/einfacher_vergleich.py`. "
+             "Kürzel ↔ Messung: Tabelle am Ende.\n")
     z.append("## Begriffe\n")
     z.append("| Begriff | Bedeutung |\n|---|---|\n"
              "| Resonanzfeld B_res | Feld µ₀H (Tesla), bei dem die Resonanz liegt – je Frequenz ein Wert |\n"
@@ -419,7 +422,7 @@ def schreibe_bericht(alle: list[dict]) -> None:
                  f"| {k['median_dB_mT']:+.3f} mT | {k['anteil_dB_unter_1mT']*100:.0f} % "
                  f"| {k['median_ddH_mT']:+.3f} mT ({k['median_ddH_prozent']:+.1f} %) "
                  f"| {k['anteil_ddH_unter_5prozent']*100:.0f} % | {k['anteil_ddH_unter_10prozent']*100:.0f} % |")
-    z.append("\n![Übersicht](ergebnisse/einfach/uebersicht.png)\n")
+    z.append("\n![Übersicht](uebersicht.png)\n")
     z.append("## Kittel/LLG-Parameter\n")
     z.append("PolderFit ungewichtet (Standard). FTF-„M eff“ bei senkrechtem Feld ist in die "
              "PolderFit-Konvention umgerechnet (Vorzeichen; FTF: B_res = ω/γ − M). FeCr₂S₄: die "
@@ -447,13 +450,13 @@ def schreibe_bericht(alle: list[dict]) -> None:
                  f"| {paar(pf['mu0Hu_mT'], ft['mu0Hu_mT'], '.2f')} "
                  f"| {paar(pf['alpha'], ft['alpha'], '.2e', rel=True)} "
                  f"| {paar(pf['mu0dH0_mT'], ft['mu0dH0_mT'], '.2f')} |")
-    z.append("\n![Kittel/LLG](ergebnisse/einfach/kittel_llg.png)\n")
+    z.append("\n![Kittel/LLG](kittel_llg.png)\n")
     z.append("## Abbildungen je Messung\n")
     for k in alle:
         if "fehler" in k:
             continue
         z.append(f"### {k['beschreibung']}\n")
-        z.append(f"![{k['name']}](ergebnisse/einfach/{k['name']}.png)\n")
+        z.append(f"![{k['name']}]({k['name']}.png)\n")
     z.append("## Kürzel der Ordner und Dateien\n")
     z.append("| Kürzel (Ordner/Datei) | Messung |\n|---|---|")
     for k in alle:
@@ -462,7 +465,17 @@ def schreibe_bericht(alle: list[dict]) -> None:
 
 
 def main(argv):
-    namen = argv[1:] or sorted(p.name for p in DATA.iterdir() if p.is_dir())
+    global OUT, BERICHT
+    rest = []
+    it = iter(argv[1:])
+    for a in it:
+        if a == "--ordner":
+            OUT = Path(next(it)).resolve()
+            BERICHT = OUT / "VERGLEICH_EINFACH.md"
+        else:
+            rest.append(a)
+    OUT.mkdir(parents=True, exist_ok=True)
+    namen = rest or sorted(p.name for p in DATA.iterdir() if p.is_dir())
     alle = []
     for n in namen:
         try:
