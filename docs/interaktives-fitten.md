@@ -11,7 +11,7 @@ Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, `
 | Ausschlusszone | Panel, Rechteck | Punkte aus allen (Nach-)Fits; schraffiert; einzeln entfernbar |
 | Bewertung | `Strg+1/2/3`, `Strg+I`, Panel-Knöpfe | gut bestätigen / problematisch / automatisch / ignorieren ([Bewertung](bewertung.md)) |
 
-Jeder manuelle Nachfit gilt als **vom Nutzer bestätigt** (grün mit blauem Rand, geht in Kittel/LLG ein) – abschaltbar unter `Strg+P`; das Kriterienergebnis bleibt als `problematisch_auto` erhalten. Punkt im Farbplot überfahren → Tooltip mit f, B_res, µ0ΔH (mT), α, R², Status.
+Ein gezielter Eingriff an **einer** Frequenz (Grenzen ziehen, „Nochmal fitten“) gilt als **vom Nutzer bestätigt** (grün mit blauem Rand, geht in Kittel/LLG ein) – abschaltbar unter `Strg+P`; Bereichs- und Grenzgeraden-Fits über viele Frequenzen bewerten die Kriterien (`auto`). Das Kriterienergebnis bleibt stets als `problematisch_auto` erhalten. Punkt im Farbplot überfahren → Tooltip mit f, B_res, µ0ΔH (mT), α, R², Status. Angezeigt werden nur Werte (keine Residuen-/Unsicherheitskennzahlen; diese stehen im Export).
 
 Fenstersuche aller Nachfit-Werkzeuge = wie Auto-Fit (Residuen auf vollen Linescans, Stationärabzug, lokale Trasse), nur auf das Feldintervall beschränkt. Mehrere Resonanzen je Linescan: `n_moden` ([Physik und Fit](physik-und-fit.md)).
 

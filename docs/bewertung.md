@@ -19,7 +19,7 @@ Nur unproblematische Fits gehen in Kittel/LLG (`_gute_ergebnisse`). Schwellen ni
 
 ## Nutzer-Bewertung und Status-Farben
 
-`FitErgebnis.bewertung` ∈ `auto` (Kriterien entscheiden) · `bestaetigt` (gilt als gut) · `verworfen` (gilt als problematisch); `problematisch` ist der wirksame Zustand, `problematisch_auto` das reine Kriterienergebnis (beides im Export). Manuelle Nachfits (Grenzen ziehen, Bereich/Grenzgeraden, Nochmal fitten) werden standardmäßig `bestaetigt` (`nachfit_bestaetigen`, Strg+P); Zonen-Nachrechnungen und Projekt-Wiederherstellung nicht. `setze_bewertung` liefert eine Kopie (Undo-sicher).
+`FitErgebnis.bewertung` ∈ `auto` (Kriterien entscheiden) · `bestaetigt` (gilt als gut) · `verworfen` (gilt als problematisch); `problematisch` ist der wirksame Zustand, `problematisch_auto` das reine Kriterienergebnis (beides im Export). Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) werden standardmäßig `bestaetigt` (`nachfit_bestaetigen`, Strg+P); Bereichs-/Grenzgeraden-Fits über viele Frequenzen, Zonen-Nachrechnungen und Projekt-Wiederherstellung bleiben `auto`. `setze_bewertung` liefert eine Kopie (Undo-sicher).
 
 Farben und Formen nach DIN EN 60073 / ISO 3864 (`gui/farben.py`); Form als zweites Merkmal (DIN EN ISO 9241-125):
 
@@ -29,7 +29,7 @@ Farben und Formen nach DIN EN 60073 / ISO 3864 (`gui/farben.py`); Form als zweit
 | `bestaetigt` | grün, blauer Rand | ● | vom Nutzer als gut bestätigt |
 | `problem` | gelb | ▲ | Kriterien verletzt oder vom Nutzer verworfen – prüfen |
 | `fehler` | rot | ✕ | keine Konvergenz / kein Ergebnis |
-| `ignoriert` | grau | ○ | Ausreißer (nur mit *Ansicht → Ignorierte anzeigen*) oder nicht gefittet |
+| `ignoriert` | grau, dunkler Rand | ● | Ausreißer (nur mit *Ansicht → Ignorierte anzeigen*) oder nicht gefittet |
 | Nebenmode | grün | ◇ | weitere Resonanz bei `n_moden > 1` |
 
 Blau kennzeichnet aktive Modi, Auswahl und Bedienzustände; gelb Warnungen im Protokoll, rot Fehler.

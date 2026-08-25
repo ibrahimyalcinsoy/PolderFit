@@ -358,10 +358,11 @@ def fitte_neu(
 
     ``bestaetigen``: das Ergebnis als "gut - vom Nutzer bestaetigt" bewerten
     (nur wenn der Fit ein Ergebnis liefert). ``None`` = Stapel-Einstellung
-    ``nachfit_bestaetigen`` (Standard an: jeder manuelle Eingriff gilt als
-    Freigabe des Nutzers; die Kriterien bleiben in ``problematisch_auto``
-    einsehbar). Zonen-Nachrechnungen und das Wiederherstellen einer Sitzung
-    uebergeben ``False``. ``n_moden``: Anzahl Resonanzen fuer diesen Fit
+    ``nachfit_bestaetigen`` (Standard an: ein gezielter Eingriff an EINER
+    Frequenz - Grenzen ziehen, Nochmal fitten - gilt als Freigabe des Nutzers;
+    die Kriterien bleiben in ``problematisch_auto`` einsehbar). Bereichs-/
+    Grenzgeraden-Fits ueber viele Frequenzen, Zonen-Nachrechnungen und das
+    Wiederherstellen einer Sitzung uebergeben ``False``. ``n_moden``: Anzahl Resonanzen fuer diesen Fit
     (``None`` = Stapel-Einstellung).
     """
     ls = stapel.datensatz.linescans[index]

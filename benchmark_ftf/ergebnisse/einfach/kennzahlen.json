@@ -1,0 +1,317 @@
+[
+ {
+  "name": "cofe_gratings_ip_5K",
+  "beschreibung": "CoFe-Gitter 138 nm, ip, 5 K",
+  "geometrie": "ip",
+  "n_pf": 1061,
+  "n_zugeordnet": 1061,
+  "n_beide_ok": 1061,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 4.030947923660278,
+  "median_dB_mT": 0.7527462965633003,
+  "max_abs_dB_mT": 9.556536780966574,
+  "anteil_dB_unter_1mT": 0.2563619227144204,
+  "median_ddH_mT": -5.226837262725525,
+  "median_ddH_prozent": -10.628707363289308,
+  "anteil_ddH_unter_5prozent": 0.2412818096135721,
+  "anteil_ddH_unter_10prozent": 0.48633364750235625,
+  "kittel": {
+   "PF": {
+    "g": 2.111125991146418,
+    "mu0Meff_T": 1.8861477769860957,
+    "mu0Hu_mT": 177.3974685276602,
+    "alpha": 0.009716997532815474,
+    "mu0dH0_mT": 18.892877957127457,
+    "n": 1061
+   },
+   "FTF": {
+    "g": 2.1585042,
+    "mu0Meff_T": 1.74217163,
+    "mu0Hu_mT": 184.95613,
+    "alpha": 0.0115318901,
+    "mu0dH0_mT": 20.7279883
+   }
+  }
+ },
+ {
+  "name": "cofe_wm_ip_290K_1",
+  "beschreibung": "CoFe, ip, 290 K, 20–66 GHz",
+  "geometrie": "ip",
+  "n_pf": 70,
+  "n_zugeordnet": 70,
+  "n_beide_ok": 70,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 0.33333659172058105,
+  "median_dB_mT": -0.03568452166552438,
+  "max_abs_dB_mT": 0.6013504956932092,
+  "anteil_dB_unter_1mT": 1.0,
+  "median_ddH_mT": 0.008770081257980067,
+  "median_ddH_prozent": 0.05404646746936864,
+  "anteil_ddH_unter_5prozent": 1.0,
+  "anteil_ddH_unter_10prozent": 1.0,
+  "kittel": {
+   "PF": {
+    "g": 2.1054323040561447,
+    "mu0Meff_T": 2.2496080126301212,
+    "mu0Hu_mT": 3.0529775207290086,
+    "alpha": 0.0073375994052961545,
+    "mu0dH0_mT": -0.9211197647378897,
+    "n": 70
+   },
+   "FTF": {
+    "g": 2.10532412,
+    "mu0Meff_T": 2.24918492,
+    "mu0Hu_mT": 3.13970621,
+    "alpha": 0.00737832984,
+    "mu0dH0_mT": -1.00529952
+   }
+  }
+ },
+ {
+  "name": "cofe_wm_ip_290K_2",
+  "beschreibung": "CoFe, ip, 290 K, 6–19 GHz",
+  "geometrie": "ip",
+  "n_pf": 21,
+  "n_zugeordnet": 21,
+  "n_beide_ok": 21,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 0.09774398803710938,
+  "median_dB_mT": -0.025465296421070538,
+  "max_abs_dB_mT": 0.09137303042343337,
+  "anteil_dB_unter_1mT": 1.0,
+  "median_ddH_mT": 0.007111841698820953,
+  "median_ddH_prozent": 0.07767486130688575,
+  "anteil_ddH_unter_5prozent": 0.9523809523809523,
+  "anteil_ddH_unter_10prozent": 1.0,
+  "kittel": {
+   "PF": {
+    "g": 1.938051902520855,
+    "mu0Meff_T": 2.748556623963728,
+    "mu0Hu_mT": -0.9404474774289145,
+    "alpha": 0.005207410718752693,
+    "mu0dH0_mT": 3.252547035378752,
+    "n": 21
+   },
+   "FTF": {
+    "g": 4.0,
+    "mu0Meff_T": 0.50813056,
+    "mu0Hu_mT": 5.44696408,
+    "alpha": 0.0105749346,
+    "mu0dH0_mT": 3.34171823
+   }
+  }
+ },
+ {
+  "name": "cofe_wm_ip_5K_1",
+  "beschreibung": "CoFe, ip, 5 K, 20–66 GHz",
+  "geometrie": "ip",
+  "n_pf": 71,
+  "n_zugeordnet": 71,
+  "n_beide_ok": 71,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 0.3240652084350586,
+  "median_dB_mT": -0.031036079958357554,
+  "max_abs_dB_mT": 0.5859654388253865,
+  "anteil_dB_unter_1mT": 1.0,
+  "median_ddH_mT": -0.038699913841396594,
+  "median_ddH_prozent": -0.2369297868605276,
+  "anteil_ddH_unter_5prozent": 1.0,
+  "anteil_ddH_unter_10prozent": 1.0,
+  "kittel": {
+   "PF": {
+    "g": 2.1064730262107325,
+    "mu0Meff_T": 2.3049250055407096,
+    "mu0Hu_mT": 4.758174133014799,
+    "alpha": 0.007817583519115275,
+    "mu0dH0_mT": -0.06171074398951786,
+    "n": 71
+   },
+   "FTF": {
+    "g": 2.10476498,
+    "mu0Meff_T": 2.31039637,
+    "mu0Hu_mT": 4.62420578,
+    "alpha": 0.0078566639,
+    "mu0dH0_mT": -0.13410233300000002
+   }
+  }
+ },
+ {
+  "name": "cofe_wm_ip_5K_2",
+  "beschreibung": "CoFe, ip, 5 K, 6–19 GHz",
+  "geometrie": "ip",
+  "n_pf": 21,
+  "n_zugeordnet": 13,
+  "n_beide_ok": 13,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 0.11229252815246582,
+  "median_dB_mT": 0.2496290757831865,
+  "max_abs_dB_mT": 1.8914537057068623,
+  "anteil_dB_unter_1mT": 0.9230769230769231,
+  "median_ddH_mT": -0.08064026895897491,
+  "median_ddH_prozent": -0.7027590167626719,
+  "anteil_ddH_unter_5prozent": 0.9230769230769231,
+  "anteil_ddH_unter_10prozent": 0.9230769230769231,
+  "kittel": {
+   "PF": {
+    "g": 2.2565670292436817,
+    "mu0Meff_T": 2.007959440677936,
+    "mu0Hu_mT": 2.435581234989246,
+    "alpha": 0.0054971218113041365,
+    "mu0dH0_mT": 5.463473941949766,
+    "n": 14
+   },
+   "FTF": {
+    "g": 4.0,
+    "mu0Meff_T": 0.45519834,
+    "mu0Hu_mT": 18.7122586,
+    "alpha": 0.00825527229,
+    "mu0dH0_mT": 6.39483343
+   }
+  }
+ },
+ {
+  "name": "fecr2s4_100K",
+  "beschreibung": "FeCr₂S₄, oop, 100 K (α-Obergrenze 1,0)",
+  "geometrie": "oop",
+  "n_pf": 97,
+  "n_zugeordnet": 90,
+  "n_beide_ok": 44,
+  "n_pf_problematisch": 46,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 5.161237478256226,
+  "median_dB_mT": -15.60095391410188,
+  "max_abs_dB_mT": 94.58882437267624,
+  "anteil_dB_unter_1mT": 0.0,
+  "median_ddH_mT": 32.61659642135504,
+  "median_ddH_prozent": 5.0689109476660015,
+  "anteil_ddH_unter_5prozent": 0.4090909090909091,
+  "anteil_ddH_unter_10prozent": 0.6590909090909091,
+  "kittel": {
+   "PF": {
+    "g": 1.7399566118721566,
+    "mu0Meff_T": 0.16802517979961687,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.20892756694155154,
+    "mu0dH0_mT": 15.046850473476827,
+    "n": 46
+   },
+   "FTF": {
+    "g": 1.75949013,
+    "mu0Meff_T": 0.204036824,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.218264349,
+    "mu0dH0_mT": -36.9547967
+   }
+  }
+ },
+ {
+  "name": "fecr2s4_2K",
+  "beschreibung": "FeCr₂S₄, oop, 2 K (α-Obergrenze 1,0)",
+  "geometrie": "oop",
+  "n_pf": 429,
+  "n_zugeordnet": 245,
+  "n_beide_ok": 194,
+  "n_pf_problematisch": 42,
+  "n_ftf_ohne_ergebnis": 10,
+  "t_fit_s": 13.610225915908813,
+  "median_dB_mT": 37.23932181321388,
+  "max_abs_dB_mT": 522.3096369570568,
+  "anteil_dB_unter_1mT": 0.005154639175257732,
+  "median_ddH_mT": -3.0230365878572343,
+  "median_ddH_prozent": -0.9855532445002652,
+  "anteil_ddH_unter_5prozent": 0.14948453608247422,
+  "anteil_ddH_unter_10prozent": 0.25773195876288657,
+  "kittel": {
+   "PF": {
+    "g": 5.75973366979038,
+    "mu0Meff_T": 5.293420981542375,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.4952041125067512,
+    "mu0dH0_mT": -157.89678741405885,
+    "n": 379
+   },
+   "FTF": {
+    "g": 4.0,
+    "mu0Meff_T": 5.05679989,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.78681186,
+    "mu0dH0_mT": -851.9847609999999
+   }
+  }
+ },
+ {
+  "name": "fecr2s4_50K",
+  "beschreibung": "FeCr₂S₄, oop, 50 K (α-Obergrenze 1,0)",
+  "geometrie": "oop",
+  "n_pf": 85,
+  "n_zugeordnet": 85,
+  "n_beide_ok": 11,
+  "n_pf_problematisch": 74,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 12.225873231887817,
+  "median_dB_mT": -36.88197288520145,
+  "max_abs_dB_mT": 218.40232781586798,
+  "anteil_dB_unter_1mT": 0.0,
+  "median_ddH_mT": -106.71914874116442,
+  "median_ddH_prozent": -7.321541423516208,
+  "anteil_ddH_unter_5prozent": 0.09090909090909091,
+  "anteil_ddH_unter_10prozent": 0.2727272727272727,
+  "kittel": {
+   "PF": {
+    "g": 1.766959445268608,
+    "mu0Meff_T": 1.8407912994605038,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.20007079511605677,
+    "mu0dH0_mT": 308.6650083986742,
+    "n": 11
+   },
+   "FTF": {
+    "g": 1.80160962,
+    "mu0Meff_T": 1.90112441,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.433832289,
+    "mu0dH0_mT": -156.363046
+   }
+  }
+ },
+ {
+  "name": "yig_konstanz_ip_50K",
+  "beschreibung": "YIG 180 nm, ip, 50 K",
+  "geometrie": "ip",
+  "n_pf": 367,
+  "n_zugeordnet": 367,
+  "n_beide_ok": 367,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 0,
+  "t_fit_s": 1.2526824474334717,
+  "median_dB_mT": -0.17512603027713958,
+  "max_abs_dB_mT": 1.530350728774943,
+  "anteil_dB_unter_1mT": 0.989100817438692,
+  "median_ddH_mT": 0.18984898670159822,
+  "median_ddH_prozent": 0.975427942775957,
+  "anteil_ddH_unter_5prozent": 0.9073569482288828,
+  "anteil_ddH_unter_10prozent": 1.0,
+  "kittel": {
+   "PF": {
+    "g": 2.001011202729244,
+    "mu0Meff_T": 0.13027076709255886,
+    "mu0Hu_mT": -3.7498317510266395,
+    "alpha": 0.0017840485085820778,
+    "mu0dH0_mT": 16.36114544848083,
+    "n": 367
+   },
+   "FTF": {
+    "g": 2.00061793,
+    "mu0Meff_T": 0.131905818,
+    "mu0Hu_mT": -4.47983863,
+    "alpha": 0.00158380326,
+    "mu0dH0_mT": 16.5198985
+   }
+  }
+ }
+]

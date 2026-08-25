@@ -244,18 +244,27 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         rechts = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(rechts)
-        layout.addWidget(self.fitansicht)
+        layout.setContentsMargins(6, 4, 6, 4)
+        layout.setSpacing(4)
+        layout.addWidget(self.fitansicht, 1)
 
-        knopfreihe = QtWidgets.QHBoxLayout()
+        # Bedienelemente in einem Raster (drei kurze Zeilen statt einer langen -
+        # auf kleinen Bildschirmen wurden die Knoepfe sonst abgeschnitten).
+        steuer = QtWidgets.QGridLayout()
+        steuer.setHorizontalSpacing(6)
+        steuer.setVerticalSpacing(4)
         self.btn_zurueck = QtWidgets.QPushButton("◀ Zurück")
         self.btn_weiter = QtWidgets.QPushButton("Weiter ▶")
-        self.btn_neu = QtWidgets.QPushButton("Nochmal fitten")
+        self.btn_naechstes_problem = QtWidgets.QPushButton("Problemfit ▶")
+        self.btn_naechstes_problem.setToolTip("Zum nächsten gelb/rot markierten Fit springen.")
+        self.btn_neu = QtWidgets.QPushButton("Neu fitten")
         self.btn_neu.setToolTip(
             "Diese Frequenz mit dem aktuellen Fenster neu fitten (mit der\n"
-            "rechts gewählten Anzahl Resonanzen). Gilt danach als vom Nutzer bestätigt.")
+            "gewählten Anzahl Resonanzen). Gilt danach als vom Nutzer bestätigt.")
         self.spin_moden = RuhigeSpinBox()
         self.spin_moden.setRange(1, 6)
-        self.spin_moden.setPrefix("Resonanzen: ")
+        self.spin_moden.setPrefix("Res.: ")
+        self.spin_moden.setSuffix(" ×")
         self.spin_moden.setValue(max(1, int(self._physik.n_moden)))
         self.spin_moden.setToolTip(
             "Anzahl simultan gefitteter Resonanzen für 'Nochmal fitten' und\n"
@@ -264,52 +273,56 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_hauptmode.setToolTip(
             "Bei mehreren Resonanzen: die nächste Mode zur Hauptmode machen\n"
             "(B_res/ΔH/α für Kittel/LLG und Export).")
+        self.btn_hauptmode.setToolTip(
+            "Bei mehreren Resonanzen: die nächste Mode zur Hauptmode machen\n"
+            "(B_res/ΔH/α für Kittel/LLG und Export).")
         self.btn_hauptmode.clicked.connect(self._hauptmode_wechseln)
-        self.btn_naechstes_problem = QtWidgets.QPushButton("Nächster Problemfit")
-        self.btn_zurueck.clicked.connect(lambda: self._navigiere(-1))
-        self.btn_weiter.clicked.connect(lambda: self._navigiere(+1))
-        self.btn_neu.clicked.connect(self._neu_fitten)
-        self.btn_naechstes_problem.clicked.connect(self._naechster_problemfit)
-        for b in (self.btn_zurueck, self.btn_weiter, self.btn_neu, self.spin_moden,
-                  self.btn_hauptmode, self.btn_naechstes_problem):
-            knopfreihe.addWidget(b)
         # Vollbereich-Umschalter direkt am Linescan-Panel (gespiegelt mit der
         # Menue-Aktion akt_vollbereich; Verbindung in _baue_aktionen).
         self.chk_vollbereich = QtWidgets.QCheckBox("ganzer Feldsweep")
         self.chk_vollbereich.setToolTip(
             "Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
-        knopfreihe.addWidget(self.chk_vollbereich)
-        layout.addLayout(knopfreihe)
-
-        # Bewertungszeile: Status-Anzeige + Umbewerten (Strg+1/2/3, Strg+I).
-        bewertung = QtWidgets.QHBoxLayout()
-        bewertung.addWidget(QtWidgets.QLabel("Bewertung:"))
+        self.btn_zurueck.clicked.connect(lambda: self._navigiere(-1))
+        self.btn_weiter.clicked.connect(lambda: self._navigiere(+1))
+        self.btn_neu.clicked.connect(self._neu_fitten)
+        self.btn_naechstes_problem.clicked.connect(self._naechster_problemfit)
+        for b in (self.btn_zurueck, self.btn_weiter, self.btn_naechstes_problem, self.btn_neu,
+                  self.btn_hauptmode, self.spin_moden):
+            b.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+            b.setMinimumWidth(60)
+        # Drei Spalten: passt auch bei 430 px Panelbreite ohne abgeschnittene Texte.
+        steuer.addWidget(self.btn_zurueck, 0, 0)
+        steuer.addWidget(self.btn_weiter, 0, 1)
+        steuer.addWidget(self.btn_naechstes_problem, 0, 2)
+        steuer.addWidget(self.btn_neu, 1, 0)
+        steuer.addWidget(self.spin_moden, 1, 1)
+        steuer.addWidget(self.btn_hauptmode, 1, 2)
+        # Bewertungszeile: Status-Chip (Farbe wie im Farbplot) + Auswahlliste
+        # (Strg+1/2/3, Strg+I).
         self.status_label = QtWidgets.QLabel("–")
         self.status_label.setObjectName("status_ignoriert")
+        self.status_label.setAlignment(QtCore.Qt.AlignCenter)
         self.status_label.setToolTip(
             "Wirksamer Status dieses Fits (Farbe/Form wie im Farbplot).")
-        bewertung.addWidget(self.status_label)
-        bewertung.addStretch(1)
-        self.btn_gut = QtWidgets.QPushButton("✓ gut")
-        self.btn_gut.setObjectName("gut")
-        self.btn_gut.setToolTip("Als guten Fit bestätigen (grün, blauer Rand) – Strg+1.")
-        self.btn_gut.clicked.connect(lambda: self._bewerte_aktuellen("bestaetigt"))
-        self.btn_problem = QtWidgets.QPushButton("⚠ problematisch")
-        self.btn_problem.setObjectName("problem")
-        self.btn_problem.setToolTip("Als problematisch markieren (gelb) – Strg+2.")
-        self.btn_problem.clicked.connect(lambda: self._bewerte_aktuellen("verworfen"))
-        self.btn_auto = QtWidgets.QPushButton("automatisch")
-        self.btn_auto.setToolTip("Bewertung den Kriterien überlassen – Strg+3.")
-        self.btn_auto.clicked.connect(lambda: self._bewerte_aktuellen("auto"))
-        self.btn_ignorieren = QtWidgets.QPushButton("ignorieren")
-        self.btn_ignorieren.setObjectName("ignorieren")
-        self.btn_ignorieren.setToolTip(
-            "Punkt aus Darstellung und Kittel/LLG nehmen (grau, Ausreißer) bzw.\n"
-            "wieder aufnehmen – Strg+I.")
-        self.btn_ignorieren.clicked.connect(lambda: self._bewerte_aktuellen("ignorieren"))
-        for b in (self.btn_gut, self.btn_problem, self.btn_auto, self.btn_ignorieren):
-            bewertung.addWidget(b)
-        layout.addLayout(bewertung)
+        steuer.addWidget(self.status_label, 2, 0)
+        self.bewertung_combo = QtWidgets.QComboBox()
+        for text, art in (("gut bestätigen", "bestaetigt"),
+                          ("problematisch", "verworfen"),
+                          ("automatisch (Kriterien)", "auto"),
+                          ("ignorieren (Ausreißer)", "ignorieren")):
+            self.bewertung_combo.addItem(text, art)
+        self.bewertung_combo.setToolTip(
+            "Bewertung dieses Fits setzen: gut bestätigen (Strg+1), problematisch (Strg+2),\n"
+            "automatisch nach Kriterien (Strg+3), ignorieren/wieder aufnehmen (Strg+I).")
+        self.bewertung_combo.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                           QtWidgets.QSizePolicy.Fixed)
+        self._bewertung_blockiert = False
+        self.bewertung_combo.activated.connect(self._bewertung_gewaehlt)
+        steuer.addWidget(self.bewertung_combo, 2, 1, 1, 2)
+        steuer.addWidget(self.chk_vollbereich, 3, 0, 1, 3)
+        for spalte in range(3):
+            steuer.setColumnStretch(spalte, 1)
+        layout.addLayout(steuer)
 
         self.label_info = QtWidgets.QLabel("—")
         self.label_info.setWordWrap(True)
@@ -326,7 +339,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             | QtWidgets.QDockWidget.DockWidgetFloatable
             | QtWidgets.QDockWidget.DockWidgetClosable
         )
-        rechts.setMinimumWidth(480)
+        rechts.setMinimumWidth(430)
         dock.setWidget(rechts)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
         dock.setVisible(False)  # erscheint mit dem ersten Fit / Klick in die Karte
@@ -1299,8 +1312,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                        self.akt_einst_laden, self.akt_einst_reset):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
-                      self.btn_naechstes_problem, self.btn_hauptmode, self.btn_gut,
-                      self.btn_problem, self.btn_auto, self.btn_ignorieren):
+                      self.btn_naechstes_problem, self.btn_hauptmode, self.bewertung_combo):
             knopf.setEnabled(an)
 
     # --- Job-Steuerung (Hintergrund-Thread) -------------------------------
@@ -1671,7 +1683,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         zeilen = [f"<b>f = {e.frequenz/1e9:.3f} GHz</b>",
                   f"B_res = {e.B_res:.4f} T ({e.B_res_mT:.1f} mT)",
                   f"µ₀ΔH = {e.dH_mT:.2f} mT &nbsp; α = {e.alpha:.2e}",
-                  f"R² = {e.R2:.4f} &nbsp; rmse/Hub = {e.rmse_norm:.3f}",
+                  f"R² = {e.R2:.4f}",
                   f"Status: {F.STATUS_TEXTE.get(status, status)}"]
         if e.problem_gruende and status not in ("gut", "bestaetigt"):
             zeilen.append("Gründe: " + ", ".join(e.problem_gruende))
@@ -1717,23 +1729,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
         # enthalten als die angezeigte Matrix.
         self.matrix.markiere_frequenz_wert(e.frequenz)
-        self.status_label.setText(F.STATUS_TEXTE.get(status, status))
+        self.status_label.setText(F.STATUS_KURZ.get(status, status))
+        self.status_label.setToolTip(F.STATUS_TEXTE.get(status, status))
         self.status_label.setObjectName(f"status_{status}")
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
         self.btn_hauptmode.setEnabled(e.gefittet and e.n_moden > 1)
+        # Auswahlliste auf den wirksamen Zustand stellen (ohne Rueckruf).
+        art = "ignorieren" if status == "ignoriert" and self.stapel.ist_ausreisser(i) else e.bewertung
+        self._bewertung_blockiert = True
+        idx = self.bewertung_combo.findData(art)
+        if idx >= 0:
+            self.bewertung_combo.setCurrentIndex(idx)
+        self._bewertung_blockiert = False
         punkte_im_fenster = int(np.count_nonzero((voll.feld >= unten) & (voll.feld <= oben)))
         if not e.gefittet:
             text = (f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
                     f"noch nicht gefittet – grüne Grenzen ziehen oder „Nochmal fitten“ "
                     f"fittet diese Frequenz │ Fenster {punkte_im_fenster} Pkt")
         else:
-            eins_minus_r2 = (1.0 - e.R2) if np.isfinite(e.R2) else float("nan")
             text = (
                 f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
                 f"B_res={e.B_res:.4f} T ({e.B_res_mT:.1f} mT) │ µ₀ΔH={e.dH_mT:.2f} mT │ "
-                f"α={e.alpha:.2e} │ R²={e.R2:.4f} (1−R²={eins_minus_r2:.1e}) │ "
-                f"rmse/Hub={e.rmse_norm:.3f} │ Fenster {punkte_im_fenster} Pkt │ "
+                f"α={e.alpha:.2e} │ R²={e.R2:.4f} │ Fenster {punkte_im_fenster} Pkt │ "
                 f"{e.problem_text}")
         self.label_info.setText(text)
         self.statusBar().showMessage(text)
@@ -1759,8 +1777,22 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._zeige_aktuellen()
 
     # --- Bewertung ----------------------------------------------------------------
+    def _bewertung_gewaehlt(self, index: int) -> None:
+        """Auswahlliste im Linescan-Panel: gewaehlte Bewertung anwenden."""
+        if self._bewertung_blockiert:
+            return
+        art = self.bewertung_combo.itemData(index)
+        st = self.stapel
+        if art == "ignorieren" and st is not None and st.ist_ausreisser(self.aktueller_index):
+            return  # schon ignoriert
+        self._bewerte_aktuellen(art)
+
     def _bewerte_aktuellen(self, art: str) -> None:
-        """Bewertung des aktuellen Fits setzen (gut/problematisch/auto/ignorieren)."""
+        """Bewertung des aktuellen Fits setzen (gut/problematisch/auto/ignorieren).
+
+        ``"ignorieren"`` schaltet den Ausreisser-Status um (Strg+I). Jede andere
+        Bewertung nimmt einen ignorierten Punkt zuerst wieder auf.
+        """
         st = self.stapel
         if not st or not st.ergebnisse or self._job_laeuft:
             return
@@ -1779,6 +1811,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not e.gefittet:
             self._log("Bewertung: diese Frequenz ist noch nicht gefittet.", "warn")
             return
+        if st.ist_ausreisser(i):
+            self._ausreisser_wieder_aufnehmen([i])
         vorher = self._fit_zustand([i])
         neu = st.bewerte(i, art)
         nachher = self._fit_zustand([i])
@@ -1855,7 +1889,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._log(f"Neu gefittet f={erg.frequenz/1e9:.2f} GHz "
                   f"[{unten:.3f}–{oben:.3f} T] → "
                   f"{'⚠ ' + erg.problem_text if erg.problematisch else '✓ ' + erg.problem_text}"
-                  f" · µ₀ΔH={erg.dH_mT:.2f} mT, R²={erg.R2:.4f}",
+                  f" · B_res={erg.B_res:.4f} T, µ₀ΔH={erg.dH_mT:.2f} mT, R²={erg.R2:.4f}",
                   "warn" if erg.problematisch else "ok")
 
     def _neu_fitten(self):
@@ -2614,8 +2648,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
               <span style="color:{F.TEXT_GRUEN}"><b>grün ●</b> gut</span> (blauer Rand = vom Nutzer
               bestätigt), <span style="color:{F.TEXT_GELB}"><b>gelb ▲</b> problematisch</span>
               (prüfen), <span style="color:{F.TEXT_ROT}"><b>rot ✕</b> Fit fehlgeschlagen</span>,
-              <span style="color:{F.TEXT_GRAU}"><b>grau ○</b> ignoriert</span>. Jeder manuelle
-              Nachfit gilt als bestätigt (abschaltbar, Strg+P). Umbewerten: Strg+1 gut, Strg+2
+              <span style="color:{F.TEXT_GRAU}"><b>grau ●</b> ignoriert</span>. Ein gezielter
+              Eingriff an einer Frequenz (Grenzen ziehen, „Nochmal fitten“) gilt als bestätigt
+              (abschaltbar, Strg+P); Bereichs-/Grenzgeraden-Fits über viele Frequenzen bewerten
+              die Kriterien. Umbewerten: Auswahlliste im Linescan-Panel oder Strg+1 gut, Strg+2
               problematisch, Strg+3 automatisch, Strg+I ignorieren; Punkt im Farbplot
               überfahren zeigt f, B_res, µ₀ΔH in mT, α, R² und Status.</li>
           <li><b>Ausreißer markieren</b> (Strg+M) – Punkte anklicken oder per Kasten

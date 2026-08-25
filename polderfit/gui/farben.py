@@ -69,13 +69,15 @@ INAKTIV = "#A6ABB3"
 
 # --- Statusklassen der Fits ----------------------------------------------------
 #: Status -> (Fuellfarbe, Randfarbe). Bedeutung: siehe Modulkopf.
+#: Randfarbe dunkel: Auf der hellen Resonanzlinie (Viridis gelb/gruen) sind
+#: helle Raender unsichtbar - ein dunkler Rand hebt jeden Marker vom Grund ab.
 STATUS_FARBEN = {
-    "gut": (SIGNAL_GRUEN, "#FFFFFF"),
+    "gut": (SIGNAL_GRUEN, "#0B2E14"),
     "bestaetigt": (SIGNAL_GRUEN, SIGNAL_BLAU),
     "problem": (SIGNAL_GELB, "#1F2328"),
-    "fehler": (SIGNAL_ROT, "#FFFFFF"),
-    "ignoriert": (NEUTRAL_GRAU, "#FFFFFF"),
-    "nebenmode": ("none", SIGNAL_GRUEN),
+    "fehler": (SIGNAL_ROT, "#3A0008"),
+    "ignoriert": (NEUTRAL_GRAU, "#1F2328"),
+    "nebenmode": ("none", "#0B2E14"),
 }
 #: Status -> Matplotlib-Marker (Form als zweites Unterscheidungsmerkmal).
 STATUS_MARKER = {
@@ -94,6 +96,16 @@ STATUS_TEXTE = {
     "fehler": "Fit fehlgeschlagen",
     "ignoriert": "ignoriert (Ausreißer)",
     "nebenmode": "weitere Resonanz (Nebenmode)",
+}
+
+#: Kurztexte mit Symbol (Status-Chip im Linescan-Panel).
+STATUS_KURZ = {
+    "gut": "● gut",
+    "bestaetigt": "● gut, bestätigt",
+    "problem": "▲ problematisch",
+    "fehler": "✕ fehlgeschlagen",
+    "ignoriert": "● ignoriert",
+    "nebenmode": "◇ Nebenmode",
 }
 
 #: Farben des Aktivitaetsprotokolls je Meldungsart (gleiche Semantik).

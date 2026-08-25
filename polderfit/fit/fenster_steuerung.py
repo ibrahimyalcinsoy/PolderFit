@@ -301,15 +301,19 @@ def _fitte_neu_mit_nachfenster(stapel: StapelErgebnis, i: int,
     :func:`polderfit.fit.batch.fitte_mit_nachfenster`). Faellt der Nachfit
     problematisch aus, wird das Ergebnis des ersten Durchgangs deterministisch
     wiederhergestellt."""
-    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben)
+    # Bereichs-/Grenzgeraden-Fits rechnen viele Frequenzen auf einmal - das ist
+    # keine Einzelfreigabe durch den Nutzer: die Kriterien entscheiden (Bewertung
+    # "auto"). Bestaetigt wird nur ein gezielter Eingriff an EINER Frequenz
+    # (Grenzen ziehen, Nochmal fitten) oder die explizite Bewertung.
+    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=False)
     eng = nachfenster(stapel.datensatz.linescans[i], ergebnis, (unten, oben),
                       stapel.nachfenster_faktor)
     if eng is None:
         return ergebnis
-    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1])
+    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1], bestaetigen=False)
     if zweites.erfolg and not zweites.problematisch:
         return zweites
-    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben)
+    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=False)
 
 
 @dataclass

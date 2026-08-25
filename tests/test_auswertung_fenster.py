@@ -91,7 +91,7 @@ def test_auswertungsfenster_rechnet_und_zeigt_fehler(app):
     assert abs(kit["mu0Meff"] - MU0MEFF) < 1e-3
     # Parameter samt Fehlern im Textfeld.
     text = w.param_text.toPlainText()
-    assert "±" in text and "α" in text
+    assert "α" in text and "im Export" in text   # nur Werte, keine Statistik in der Anzeige
     # Achsen: Feld auf x in beiden Plots.
     assert "H_{res}" in w.ax_disp.get_xlabel()
     assert "H_{res}" in w.ax_lb.get_xlabel()

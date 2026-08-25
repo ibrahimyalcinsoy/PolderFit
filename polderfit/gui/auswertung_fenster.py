@@ -222,9 +222,9 @@ class AuswertungsFenster(QtWidgets.QDialog):
             g_err = kit.get("g_faktor_err", float("nan"))
 
             def w(wert, err, faktor=1.0, fmt=".4f"):
-                if err is None or not np.isfinite(err):
-                    return f"{wert*faktor:{fmt}}"
-                return f"{wert*faktor:{fmt}} ± {err*faktor:{fmt}}"
+                # Nur der Wert - Unsicherheiten stehen im Export (Nutzerwunsch: keine
+                # Statistik in der Anzeige).
+                return f"{wert*faktor:{fmt}}"
 
             zeilen.append("<h3>Kittel</h3><ul>"
                           f"<li>µ₀M<sub>eff</sub> = {w(kit['mu0Meff'], kit['mu0Meff_err'])} T "
@@ -233,7 +233,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             if "mu0Hu" in kit:
                 zeilen.append(f"<li>µ₀H<sub>u</sub> = {w(kit['mu0Hu'], kit['mu0Hu_err'])} T "
                               f"= {w(kit['mu0Hu'], kit['mu0Hu_err'], 1e3, '.2f')} mT</li>")
-            zeilen.append(f"<li>γ = {kit['gamma']:.4e} ± {kit['gamma_err']:.1e} rad/(s·T)</li>"
+            zeilen.append(f"<li>γ = {kit['gamma']:.4e} rad/(s·T)</li>"
                           f"<li>R² = {kit['R2']:.5f}</li></ul>")
             zeilen.append("<h3>LLG (Dämpfung)</h3><ul>"
                           f"<li>α = {w(llg['alpha'], llg['alpha_err'], fmt='.3e')}</li>"
@@ -241,11 +241,10 @@ class AuswertungsFenster(QtWidgets.QDialog):
                           f"{w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT "
                           f"= {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1.0, '.5f')} T</li>"
                           f"<li>R² = {llg['R2']:.5f}</li></ul>")
-            modus = ("gewichtet, w = 1/u²" if getattr(self, "_gewichtet", False)
-                     else "ungewichtet")
-            zeilen.append("<p style='color:#6B6657;font-size:11px'>Fehler: 1σ aus der "
-                          f"Kovarianz des jeweiligen Fits. Kittel-/LLG-Fit {modus} "
-                          "(umschaltbar: Strg+P).</p>")
+            modus = ("gewichtet" if getattr(self, "_gewichtet", False) else "ungewichtet")
+            zeilen.append(f"<p style='color:{F.TEXT_SCHWACH};font-size:11px'>Kittel-/LLG-Fit "
+                          f"{modus} (umschaltbar: Strg+P). Unsicherheiten der Parameter: "
+                          "im Export.</p>")
         self.param_text.setHtml("".join(zeilen))
 
     # --- Punkt-Entfernen ------------------------------------------------------

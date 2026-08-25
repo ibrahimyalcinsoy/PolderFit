@@ -30,6 +30,6 @@ Beides steht nur in `pyproject.toml`: `[tool.polderfit] name = "PolderFit"` und 
 | `polderfit/auswertung`, `polderfit/persistenz` | Kittel/LLG-Plots, Excel/CSV, Projekt-JSON |
 | `polderfit/gui` | PySide6-Oberfläche (Farben: `farben.py`) |
 | `tests/` | pytest-Suite, Robustheits-Harness |
-| `benchmark_ftf/` | Vergleich mit dem LabVIEW-FTF (`BERICHT.md`) |
+| `benchmark_ftf/` | Vergleich mit dem LabVIEW-FTF: `VERGLEICH_EINFACH.md` (PolderFit minus FTF je Frequenz, ohne Statistik) und `BERICHT.md` (ausführlich) |
 
 Tests: `python -m pytest -q`.

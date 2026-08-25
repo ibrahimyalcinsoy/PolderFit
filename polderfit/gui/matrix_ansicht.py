@@ -533,17 +533,18 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             fuell, rand = F.STATUS_FARBEN[klasse]
             marker = F.STATUS_MARKER[klasse]
             if klasse == "ignoriert":
-                self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, mfc="none",
-                             mec=fuell, ms=5, mew=1.0, ls="", label=_STATUS_LABEL[klasse])
+                # Grau gefuellt mit dunklem Rand: auf jedem Untergrund erkennbar.
+                self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
+                             mec=rand, ms=6, mew=0.9, ls="", label=_STATUS_LABEL[klasse])
             elif klasse == "bestaetigt":
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
-                             mec=rand, ms=5.5, mew=1.3, ls="", label=_STATUS_LABEL[klasse])
+                             mec=rand, ms=6.5, mew=1.6, ls="", label=_STATUS_LABEL[klasse])
             elif klasse == "fehler":
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
-                             mec=rand, ms=6, mew=0.6, ls="", label=_STATUS_LABEL[klasse])
+                             mec=rand, ms=7, mew=0.8, ls="", label=_STATUS_LABEL[klasse])
             else:
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
-                             mec=rand, ms=5 if klasse == "gut" else 6, mew=0.7, ls="",
+                             mec=rand, ms=6 if klasse == "gut" else 7, mew=0.9, ls="",
                              label=_STATUS_LABEL[klasse])
         if self._nebenmoden_anzeigen and self._res_nebenmoden:
             fuell, rand = F.STATUS_FARBEN["nebenmode"]
@@ -553,7 +554,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 maske = sichtbar & np.isfinite(moden_b)
                 if maske.any():
                     self.ax.plot(moden_b[maske], f_ghz[maske], F.STATUS_MARKER["nebenmode"],
-                                 mfc="none", mec=rand, ms=5.5, mew=1.2, ls="",
+                                 mfc="#FFFFFF", mec=rand, ms=6, mew=1.3, ls="",
                                  label="_resonanz_nebenmode")
         self.draw_idle()
 

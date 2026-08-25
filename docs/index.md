@@ -29,4 +29,4 @@ Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`
 
 ![Kittel/LLG](abb/abb_kittel_llg.png)
 
-Nachschlagen: [Schnellreferenz](referenz.md). Vergleich mit dem LabVIEW-FTF: `benchmark_ftf/BERICHT.md`.
+Nachschlagen: [Schnellreferenz](referenz.md). Vergleich mit dem LabVIEW-FTF: `benchmark_ftf/VERGLEICH_EINFACH.md` (einfach: PolderFit minus FTF je Frequenz) und `benchmark_ftf/BERICHT.md` (ausführlich).

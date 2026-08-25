@@ -1,5 +1,7 @@
 # Benchmark PolderFit gegen das LabVIEW-Tool „FTF" (Stand 2026-08-17)
 
+> **Einfacher Vergleich ohne Statistik** (PolderFit minus FTF je Frequenz, nur Werte und Differenzen, schöne Plots): `VERGLEICH_EINFACH.md` – erzeugt mit `python benchmark_ftf/einfacher_vergleich.py` (Abbildungen, CSV und PDF unter `ergebnisse/einfach/`).
+
 **Ziel:** Bereits mit dem FTF („fiddling together FMR", P. Louis / M. Weiler,
 LabVIEW) ausgewertete bbFMR-Datensätze vom Gruppenlaufwerk
 (`smb://badwwmi-119-cha.wmi.badw.de/users`) mit PolderFit neu auswerten und die

@@ -252,7 +252,8 @@ def test_grenzgeraden_fit_ohne_autofit():
     assert st.index_gefittet() == erwartet
     for i in erwartet:
         e = st.ergebnisse[i]
-        assert e.gefittet and e.bewertung == "bestaetigt"
+        # Bulk-Fit ueber viele Frequenzen: Kriterien bewerten (keine Nutzer-Freigabe).
+        assert e.gefittet and e.bewertung == "auto" and e.nachbearbeitet
         assert abs(e.B_res - (0.62 + 0.02 * i)) < 5e-3
     for i in uebersprungen:
         assert not st.ergebnisse[i].gefittet
@@ -351,6 +352,7 @@ def test_projekt_v3_bewertung_geraden_platzhalter(tmp_path):
     assert gefittet and len(gefittet) < 6
     st.bewerte(gefittet[0], "verworfen")
     st.bewerte(gefittet[1], "auto")
+    st.bewerte(gefittet[2], "bestaetigt")
     physik = PhysikParameter(g_faktor=2.05).als_dict()
     pfad = tmp_path / "p.json"
     speichere_sitzung(st, str(pfad), physik=physik,
@@ -417,6 +419,20 @@ def test_hauptfenster_vollbild_layout_und_modi_ohne_autofit(app, monkeypatch, tm
     assert w.status_label.objectName() == "status_ignoriert"
     w._bewerte_aktuellen("ignorieren")
     assert not w.stapel.ist_ausreisser(w.aktueller_index)
+    # Auswahlliste spiegelt den Zustand und setzt ihn.
+    assert w.bewertung_combo.currentData() == "bestaetigt"
+    w.bewertung_combo.setCurrentIndex(w.bewertung_combo.findData("verworfen"))
+    w._bewertung_gewaehlt(w.bewertung_combo.currentIndex())
+    assert w.stapel.ergebnisse[w.aktueller_index].bewertung == "verworfen"
+    w.bewertung_combo.setCurrentIndex(w.bewertung_combo.findData("ignorieren"))
+    w._bewertung_gewaehlt(w.bewertung_combo.currentIndex())
+    assert w.stapel.ist_ausreisser(w.aktueller_index)
+    w.bewertung_combo.setCurrentIndex(w.bewertung_combo.findData("auto"))
+    w._bewertung_gewaehlt(w.bewertung_combo.currentIndex())
+    assert not w.stapel.ist_ausreisser(w.aktueller_index)
+    assert w.stapel.ergebnisse[w.aktueller_index].bewertung == "auto"
+    # Keine Statistik-Kennzahlen in der Anzeige.
+    assert "rmse" not in w.label_info.text() and "1−R²" not in w.label_info.text()
     # Layout-Reset behaelt Daten und Fits.
     w._layout_zuruecksetzen()
     assert w.stapel.index_gefittet() == [w.aktueller_index]

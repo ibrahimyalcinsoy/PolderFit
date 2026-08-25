@@ -61,8 +61,9 @@ class PhysikParameter:
     #: Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard;
     #: 2 = Doppel-Dip, z. B. nanostrukturiertes CoFe).
     n_moden: int = 1
-    #: Manuelle Nachfits (Grenzen ziehen, Bereich/Grenzgeraden, Nochmal fitten)
-    #: automatisch als "gut – vom Nutzer bestaetigt" bewerten.
+    #: Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) automatisch als
+    #: "gut – vom Nutzer bestaetigt" bewerten (Bereichs-/Grenzgeraden-Fits ueber
+    #: viele Frequenzen nicht - dort entscheiden die Kriterien).
     nachfit_bestaetigen: bool = True
 
     @property

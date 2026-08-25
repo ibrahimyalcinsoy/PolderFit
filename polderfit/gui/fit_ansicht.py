@@ -154,16 +154,17 @@ class FitAnsicht(FigureCanvasQTAgg):
             self._griffe_unten.append(gu)
             self._griffe_oben.append(go)
 
-        titel = f"f = {linescan.frequenz/1e9:.3f} GHz"
+        # Zwei explizite Zeilen: tight_layout misst mehrzeilige Titel korrekt,
+        # ein automatischer Umbruch (wrap) wuerde in die Achse hineinragen.
+        titel = f"{linescan.frequenz/1e9:.3f} GHz"
         if ergebnis is not None and ergebnis.gefittet:
-            titel += (f"   |   B_res = {ergebnis.B_res:.4f} T, "
-                      f"µ₀ΔH = {ergebnis.dH_mT:.2f} mT, "
-                      f"α = {ergebnis.alpha:.2e}, R² = {ergebnis.R2:.4f}")
+            titel += (f" · B_res {ergebnis.B_res:.4f} T ({ergebnis.B_res_mT:.1f} mT)\n"
+                      f"µ₀ΔH {ergebnis.dH_mT:.2f} mT · α {ergebnis.alpha:.2e} · R² {ergebnis.R2:.4f}")
             if ergebnis.n_moden > 1:
-                titel += f"   ({ergebnis.n_moden} Moden)"
+                titel += f" · {ergebnis.n_moden} Moden"
         elif ergebnis is not None:
-            titel += "   |   noch nicht gefittet – Grenzen ziehen fittet diese Frequenz"
-        self.ax_re.set_title(titel, fontsize=9.5, wrap=True)
+            titel += "\nnoch nicht gefittet – Grenzen ziehen fittet diese Frequenz"
+        self.ax_re.set_title(titel, fontsize=9)
         self.ax_re.set_ylabel("Re S21")
         self.ax_im.set_ylabel("Im S21")
         self.ax_im.set_xlabel(r"Feld $\mu_0 H$ (T)")
