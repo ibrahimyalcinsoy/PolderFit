@@ -6,8 +6,11 @@
 | `breite_faktor` | 8.0 | Detektionsfenster = Faktor × FWHM |
 | `alpha_max` | 0.1 | harte α-Schranke (breite Linien: anheben) |
 | `nachfenster_faktor` | 2.5 | 2. Durchgang `B_res ± k·ΔH`; 0 = aus |
-| `zentren` | None | vorgegebene Fenstermitten |
-| `alpha_erwartet` | 0.01 | Fensterbreite bei vorgegebener Dispersion |
+| `alpha_plausibel` | None (= α_max/2) | Grenze „alpha unphysikalisch“ |
+| `n_moden` | 1 | Resonanzen je Linescan (simultan) |
+| `nachfit_bestaetigen` | True | manuelle Nachfits gelten als gut |
+| `zentren` | None | vorgegebene Fenstermitten (Skript-API) |
+| `alpha_erwartet` | 0.01 | Fensterbreite bei vorgegebener Trasse (Skript-API) |
 
 | Konstante (`autowindows.py`) | Standard | Anpassung |
 |---|---|---|
@@ -20,6 +23,7 @@ Bewertungsschwellen: `RMSE_NORM_SCHWELLE` 0.35, `ALPHA_PLAUSIBEL_MAX` 0.05, `B_R
 | Probentyp | Empfehlung |
 |---|---|
 | schmal (YIG) | `_HALB_MAX` ↓; „alpha an Grenze“ unten erwartbar |
-| schwach/verrauscht (nahe ip) | `_PROMINENZ_MIN` ↑ oder Dispersion vorgeben |
-| Gitter/periodischer Untergrund | Stationärabzug greift (unsortiert); sonst Dispersion vorgeben |
-| sehr breit (FeCr₂S₄, α ≈ 0,2–0,8) | `alpha_max` ↑ + manuelle Fenster (Automatik nicht ausgelegt) |
+| schwach/verrauscht (nahe ip) | `_PROMINENZ_MIN` ↑ oder Grenzgeraden um die Mode |
+| Gitter/periodischer Untergrund | Stationärabzug greift (unsortiert); sonst Grenzgeraden/Bereich |
+| sehr breit (FeCr₂S₄, α ≈ 0,2–0,8) | `alpha_max` ↑, `alpha_plausibel` ↑ + manuelle Fenster (Automatik nicht ausgelegt) |
+| Doppel-Dip (nanostrukturiertes CoFe) | `n_moden = 2`; Hauptmode = stärkste Linie, im Panel wechselbar |

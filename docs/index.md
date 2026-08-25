@@ -22,9 +22,10 @@ Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`
 | 2 AutoWindow (Fenster je Frequenz) | `fit/autowindows.py` |
 | 3 Beschnitt | `fit/autowindows.py: schneide_band` |
 | 4 Einzelfit (LM) + Nachfenster `B_res ± 2,5·ΔH` | `fit/linescan_fit.py`, `fit/batch.py` |
-| 5 Bewertung (a)–(f) | `fit/kriterien.py` |
+| 5 Bewertung (a)–(f) + Nutzer-Bewertung | `fit/kriterien.py`, `fit/linescan_fit.py` |
 | 6 Kittel/LLG | `physik/kittel_llg.py`, `auswertung/uebersicht.py` |
-| Export | `persistenz/` |
+| Export, Projekt, Einstellungen, Auto-Sicherung | `persistenz/` |
+| Farben nach DIN EN 60073 | `gui/farben.py` |
 
 ![Kittel/LLG](abb/abb_kittel_llg.png)
 

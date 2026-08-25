@@ -187,9 +187,12 @@ def _fitte_zonen_band(stapel: StapelErgebnis, zone: Ausschlusszone,
         return []
     frequenzen = stapel.datensatz.frequenzen
     betroffen = [int(i) for i in np.flatnonzero(
-        (frequenzen >= zone.frequenz_min) & (frequenzen <= zone.frequenz_max))]
+        (frequenzen >= zone.frequenz_min) & (frequenzen <= zone.frequenz_max))
+        if stapel.ergebnisse[int(i)].gefittet]   # Platzhalter bleiben ungefittet
     for k, i in enumerate(betroffen):
-        ergebnis = fitte_neu(stapel, i)  # bestehendes Fenster, neue Punktmaske
+        # Bestehendes Fenster, neue Punktmaske. Keine Nutzer-Freigabe: die
+        # Zone maskiert nur Punkte, der Nutzer hat den Fit nicht geprueft.
+        ergebnis = fitte_neu(stapel, i, bestaetigen=False)
         if fortschritt is not None:
             fortschritt(k + 1, len(betroffen), ergebnis)
     return betroffen
@@ -361,20 +364,40 @@ def fitte_geraden_bereich(
     breite_faktor: float = 8.0,
     breite_punkte: int | None = None,
     fortschritt=None,
+    frequenz_min: float | None = None,
+    frequenz_max: float | None = None,
+    feld_min: float | None = None,
+    feld_max: float | None = None,
 ) -> tuple[list[int], list[int]]:
     """Fittet alle Linescans im GRUENEN Bereich der Grenzgeraden neu.
 
     Je Frequenz ergibt der Schnitt der gruenen Halbebenen (aller Geraden) mit
     dem Datenbereich ein Feldintervall; leere Intervalle werden uebersprungen.
     Fenstersuche und Fit laufen ueber :func:`_fitte_mit_intervallen` (mit
-    Stationaer-Abzug). Liefert ``(neu_gefittet, uebersprungen)``.
+    Stationaer-Abzug). ``frequenz_min/max`` (Hz) und ``feld_min/max`` (T)
+    schraenken den Bereich zusaetzlich ein ("Frequenz von … bis …").
+    Liefert ``(neu_gefittet, uebersprungen)``. Funktioniert auch auf einem
+    Stapel ohne Auto-Fit (:func:`polderfit.fit.batch.leerer_stapel`).
     """
     if not geraden:
         return [], []
     intervalle: dict[int, tuple[float, float]] = {}
     uebersprungen: list[int] = []
     for i, ls in enumerate(stapel.datensatz.linescans):
+        if frequenz_min is not None and ls.frequenz < frequenz_min:
+            uebersprungen.append(i)
+            continue
+        if frequenz_max is not None and ls.frequenz > frequenz_max:
+            uebersprungen.append(i)
+            continue
         lo, hi = float(ls.feld.min()), float(ls.feld.max())
+        if feld_min is not None:
+            lo = max(lo, float(feld_min))
+        if feld_max is not None:
+            hi = min(hi, float(feld_max))
+        if hi <= lo:
+            uebersprungen.append(i)
+            continue
         erlaubt: tuple[float, float] | None = (lo, hi)
         for gerade in geraden:
             if erlaubt is None:

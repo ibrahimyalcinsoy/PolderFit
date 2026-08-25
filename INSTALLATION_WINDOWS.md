@@ -126,7 +126,9 @@ Python-Umgebung.
 polderfit
 ```
 
-Die grafische Oberfläche von PolderFit öffnet sich. **Fertig!** 🎉
+Die grafische Oberfläche von PolderFit öffnet sich (maximiert). **Fertig!** 🎉
+
+> **Tipps für Windows:** `F11` schaltet den Vollbildmodus ein und aus (`Esc` verlässt ihn), `Strg+Q` beendet, `Ansicht → Fensterlayout zurücksetzen` (`Strg+Umschalt+R`) bringt den Farbplot und die Panels ohne Datenverlust in die Grundstellung. Eigene Voreinstellungen (`Datei → Einstellungen → Als Standard speichern`) und die Auto-Sicherung des Arbeitsstands liegen unter `%APPDATA%\PolderFit`. Bei Bildschirmskalierung 125 %/150 % wird die Oberfläche automatisch mitskaliert.
 
 Falls der Befehl `polderfit` einmal nicht funktioniert, geht alternativ auch:
 
@@ -182,6 +184,8 @@ pip install -e ".[gui]"
 | `.venv\Scripts\activate` bringt einen Fehler | Sicherstellen, dass man sich im Ordner `PolderFit` befindet (`cd %USERPROFILE%\PolderFit`) und Schritt 4 Punkt 1 ausgeführt wurde. |
 | Bei `pip install` bricht der Download ab | Internetverbindung prüfen und den Befehl einfach erneut ausführen. |
 | Fenster der Oberfläche öffnet sich nicht | Prüfen, ob `(.venv)` am Zeilenanfang steht; falls nicht, zuerst `.venv\Scripts\activate` ausführen. |
+| Farbplot oder Panels sehen verschoben/zu schmal aus | `Ansicht → Fensterlayout zurücksetzen` (`Strg+Umschalt+R`). |
+| Arbeitsstand nach Absturz weg | `Datei → Auto-Sicherung wiederherstellen` (letzter Stand, max. 15 s alt). |
 
 Weitergehende Hinweise zur Bedienung und zur Fehlersuche stehen in der
 ausführlichen Dokumentation im Ordner [`docs/`](docs/).

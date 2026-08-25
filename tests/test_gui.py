@@ -67,11 +67,17 @@ def test_menueleiste_haelt_alle_aktionen(app):
     assert {"&Datei", "&Bearbeiten", "Fun&ktionen", "&Ansicht", "&Hilfe"} <= set(menues)
     # Jede Aktion muss in mindestens einem Menue haengen.
     in_menue = {a for m in menues.values() for a in m.actions()}
-    for aktion in (w.akt_laden, w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
-                   w.akt_kittel, w.akt_physik, w.akt_tdms, w.akt_xlsx, w.akt_csv,
-                   w.akt_projekt_speichern, w.akt_projekt_laden, w.akt_vollbereich,
-                   w.akt_problemfits, w.akt_verarbeitung, w.akt_zonen_panel, w.akt_linescan,
-                   w.akt_ausreisser_panel, w.akt_aktivitaet, w.akt_beenden, w.akt_hilfe):
+    for aktion in (w.akt_laden, w.akt_fit, w.akt_gerade, w.akt_zone, w.akt_bereich,
+                   w.akt_ausreisser, w.akt_kittel, w.akt_physik, w.akt_tdms, w.akt_xlsx,
+                   w.akt_csv, w.akt_alles_speichern, w.akt_kittel_export,
+                   w.akt_farbplot_bild, w.akt_matrix_csv, w.akt_spalten,
+                   w.akt_einst_speichern, w.akt_einst_laden, w.akt_einst_standard,
+                   w.akt_einst_reset, w.akt_autosicherung, w.akt_vollbild,
+                   w.akt_layout_reset, w.akt_bew_gut, w.akt_bew_problem, w.akt_bew_auto,
+                   w.akt_bew_ignorieren, w.akt_projekt_speichern, w.akt_projekt_laden,
+                   w.akt_vollbereich, w.akt_problemfits, w.akt_verarbeitung,
+                   w.akt_zonen_panel, w.akt_linescan, w.akt_ausreisser_panel,
+                   w.akt_aktivitaet, w.akt_beenden, w.akt_hilfe):
         assert aktion in in_menue
     # Zonen-Umschalter steuert den (anfangs verborgenen) Zonen-Dock.
     assert w.zonen_dock.isHidden()
@@ -94,15 +100,19 @@ def test_eine_leiste_ohne_redundante_toolbar(app):
     assert w.btn_laden.defaultAction() is w.akt_laden
 
     im_funktionen = set(w.funktionen_menue.actions())
-    for aktion in (w.akt_fit, w.akt_seed, w.akt_bereich, w.akt_ausreisser,
+    for aktion in (w.akt_fit, w.akt_bereich, w.akt_gerade, w.akt_zone, w.akt_ausreisser,
                    w.akt_kittel, w.akt_physik):
         assert aktion in im_funktionen
+    # "Resonanz vorgeben" (Dispersions-Seed) ist entfernt.
+    assert not hasattr(w, "akt_seed")
     # Keine Redundanz: Export/Ansicht haengen NICHT nochmal im Funktionen-Menue.
     assert w.akt_xlsx not in im_funktionen
     assert w.akt_vollbereich not in im_funktionen
     # Interaktive Modi sind checkbar (sichtbarer Aktiv-Zustand).
-    for aktion in (w.akt_seed, w.akt_bereich, w.akt_ausreisser):
+    for aktion in (w.akt_gerade, w.akt_zone, w.akt_bereich, w.akt_ausreisser):
         assert aktion.isCheckable()
+    assert w.akt_vollbild.shortcut().toString() == "F11"
+    assert w.akt_beenden.shortcut().toString() == "Ctrl+Q"   # auch unter Windows belegt
     # Sinnvolle Shortcuts fuer den Laboralltag.
     assert w.akt_kittel.shortcut().toString() == "Ctrl+K"
     assert w.akt_bereich.shortcut().toString() == "Ctrl+B"
@@ -240,19 +250,20 @@ def test_logo_hilfe_und_navigator_sichtbarkeit(app):
     assert w.navigator_dock.isHidden() is True
 
 
-def test_matrix_dispersion_seed(app):
-    """Dispersions-Seed: zwei Klicks in der Übersicht liefern die zwei Resonanzpunkte."""
-    from polderfit.gui.matrix_ansicht import MatrixAnsicht
+def test_matrix_zwei_punkt_modus_gerade(app):
+    """Zwei-Punkt-Modus (Grenzgerade): zwei Klicks liefern die zwei Punkte; kein Seed-Modus mehr."""
+    from polderfit.gui.matrix_ansicht import MODI, MatrixAnsicht
+    assert "seed" not in MODI
     got = {}
     m = MatrixAnsicht()
     m.zeige(_mini_datensatz(10))
-    m.starte_dispersion_seed(lambda p: got.__setitem__("p", p))
+    m.starte_gerade_zeichnen(lambda p: got.__setitem__("p", p))
     m._on_press(_ev(m.ax, xdata=2.0, ydata=10.0))   # erster Punkt
     assert "p" not in got                            # noch nicht fertig
     m._on_press(_ev(m.ax, xdata=3.0, ydata=40.0))   # zweiter Punkt -> Callback
     assert "p" in got and len(got["p"]) == 2
     assert got["p"][0] == (2.0, 10.0) and got["p"][1] == (3.0, 40.0)
-    assert m.modus is None                           # Seed-Modus wieder aus
+    assert m.modus is None                           # Modus wieder aus
 
 
 def test_grenzlinien_interaktion(app):

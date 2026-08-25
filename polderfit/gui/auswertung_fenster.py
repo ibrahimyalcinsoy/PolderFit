@@ -27,7 +27,9 @@ from matplotlib.figure import Figure
 from PySide6 import QtCore, QtWidgets
 
 from ..auswertung.uebersicht import auswertung_kittel_llg
+from ..persistenz.ergebnis_export import kittel_llg_punkte_tabelle, kittel_llg_tabelle
 from ..physik.kittel_llg import kittel_ip, kittel_oop, linienbreite
+from . import farben as F
 
 #: Relative Trefferdistanz (Anteil der Achsenspanne) fuer den Einzelklick.
 _KLICK_TOLERANZ = 0.03
@@ -101,7 +103,10 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.btn_rueckgaengig.clicked.connect(self._rueckgaengig)
         fuss.addWidget(self.btn_rueckgaengig)
         fuss.addStretch(1)
-        self.btn_export = QtWidgets.QPushButton("Exportieren … (Plot + Parameter + Fehler)")
+        self.btn_export = QtWidgets.QPushButton("Exportieren … (Excel + CSV + Plot)")
+        self.btn_export.setToolTip(
+            "Excel (Parameter mit 1σ-Fehlern in T und mT, alle Punkte), CSV der\n"
+            "Punkte (Listendaten) und Plot als PNG + PDF.")
         self.btn_export.clicked.connect(self._exportieren)
         fuss.addWidget(self.btn_export)
         btn_zu = QtWidgets.QPushButton("Schließen")
@@ -172,11 +177,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
             fehler_text = "Zu wenige gute Punkte fuer den Kittel-/LLG-Fit (min. 3)."
 
         # Dispersionsplot: Feld (x) gegen Frequenz (y).
-        self.ax_disp.plot(self._punkt_b, self._punkt_f / 1e9, "o", ms=4,
-                          color="#C0392B", label="Messung")
+        self.ax_disp.plot(self._punkt_b, self._punkt_f / 1e9, "o", ms=4.5,
+                          color=F.SIGNAL_GRUEN, mec="white", mew=0.6, label="verwendete Fits")
         # Linienbreite ueber dem Feld.
-        self.ax_lb.plot(self._punkt_b, self._punkt_dh * 1e3, "o", ms=4,
-                        color="#C0392B", label="Messung")
+        self.ax_lb.plot(self._punkt_b, self._punkt_dh * 1e3, "o", ms=4.5,
+                        color=F.SIGNAL_GRUEN, mec="white", mew=0.6, label="verwendete Fits")
         if self._info is not None:
             kit, llg = self._info["kittel"], self._info["llg"]
             ff = np.linspace(self._punkt_f.min(), self._punkt_f.max(), 400)
@@ -184,13 +189,13 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 bb = kittel_ip(ff, kit["mu0Meff"], kit["mu0Hu"], kit["gamma"])
             else:
                 bb = kittel_oop(ff, kit["mu0Meff"], kit["gamma"])
-            self.ax_disp.plot(bb, ff / 1e9, "-", color="#2B2B28", label="Kittel-Fit")
+            self.ax_disp.plot(bb, ff / 1e9, "-", color=F.TEXT, label="Kittel-Fit")
             reihenfolge = np.argsort(self._punkt_b)
             self.ax_lb.plot(
                 self._punkt_b[reihenfolge],
                 linienbreite(self._punkt_f[reihenfolge], llg["mu0Hinh"],
                              llg["alpha"], llg["gamma"]) * 1e3,
-                "-", color="#2B2B28", label="LLG-Fit")
+                "-", color=F.TEXT, label="LLG-Fit")
         self.ax_disp.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
         self.ax_disp.set_ylabel("Frequenz (GHz)")
         self.ax_disp.set_title(f"Dispersion (Kittel, {geometrie})")
@@ -211,7 +216,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         zeilen = [f"<p><b>Punkte:</b> {self._punkt_indizes.size} verwendet, "
                   f"{n_aus} Ausreißer ausgeschlossen</p>"]
         if self._info is None:
-            zeilen.append(f"<p style='color:#C0392B'>{fehler_text}</p>")
+            zeilen.append(f"<p style='color:{F.TEXT_ROT}'>{fehler_text}</p>")
         else:
             kit, llg = self._info["kittel"], self._info["llg"]
             g_err = kit.get("g_faktor_err", float("nan"))
@@ -222,15 +227,19 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 return f"{wert*faktor:{fmt}} ± {err*faktor:{fmt}}"
 
             zeilen.append("<h3>Kittel</h3><ul>"
-                          f"<li>µ₀M<sub>eff</sub> = {w(kit['mu0Meff'], kit['mu0Meff_err'])} T</li>"
+                          f"<li>µ₀M<sub>eff</sub> = {w(kit['mu0Meff'], kit['mu0Meff_err'])} T "
+                          f"= {w(kit['mu0Meff'], kit['mu0Meff_err'], 1e3, '.1f')} mT</li>"
                           f"<li>g = {w(kit['g_faktor'], g_err, fmt='.4f')}</li>")
             if "mu0Hu" in kit:
-                zeilen.append(f"<li>µ₀H<sub>u</sub> = {w(kit['mu0Hu'], kit['mu0Hu_err'])} T</li>")
+                zeilen.append(f"<li>µ₀H<sub>u</sub> = {w(kit['mu0Hu'], kit['mu0Hu_err'])} T "
+                              f"= {w(kit['mu0Hu'], kit['mu0Hu_err'], 1e3, '.2f')} mT</li>")
             zeilen.append(f"<li>γ = {kit['gamma']:.4e} ± {kit['gamma_err']:.1e} rad/(s·T)</li>"
                           f"<li>R² = {kit['R2']:.5f}</li></ul>")
             zeilen.append("<h3>LLG (Dämpfung)</h3><ul>"
                           f"<li>α = {w(llg['alpha'], llg['alpha_err'], fmt='.3e')}</li>"
-                          f"<li>µ₀H<sub>inh</sub> = {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT</li>"
+                          f"<li>µ₀ΔH<sub>0</sub> (inhomogen) = "
+                          f"{w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT "
+                          f"= {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1.0, '.5f')} T</li>"
                           f"<li>R² = {llg['R2']:.5f}</li></ul>")
             modus = ("gewichtet, w = 1/u²" if getattr(self, "_gewichtet", False)
                      else "ungewichtet")
@@ -271,7 +280,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             if abs(event.xdata - x0) <= xs and abs(event.ydata - y0) <= ys:
                 return
             self._box_patch = ax.add_patch(Rectangle(
-                (x0, y0), 0, 0, facecolor="#E8A31733", edgecolor="#E8A317", lw=1.2))
+                (x0, y0), 0, 0, facecolor=F.SIGNAL_BLAU + "33", edgecolor=F.SIGNAL_BLAU, lw=1.2))
         self._box_patch.set_bounds(min(x0, event.xdata), min(y0, event.ydata),
                                    abs(event.xdata - x0), abs(event.ydata - y0))
         self.canvas.draw_idle()
@@ -309,6 +318,39 @@ class AuswertungsFenster(QtWidgets.QDialog):
             self.aktualisiere()
 
     # --- Export ---------------------------------------------------------------
+    def verwendete_indizes(self) -> list[int]:
+        """Stapel-Indizes der im Kittel-/LLG-Fit verwendeten Punkte."""
+        return [int(i) for i in self._punkt_indizes]
+
+    def exportiere(self, basis: str, csv_deutsch: bool = False) -> list[str]:
+        """Schreibt ``<basis>.xlsx``, ``<basis>_punkte.csv``, ``<basis>.png/.pdf``.
+
+        Liefert die geschriebenen Pfade. Wird auch von "Alles speichern" genutzt.
+        """
+        stapel = self._hole_stapel()
+        if stapel is None or not stapel.ergebnisse:
+            return []
+        geschrieben = []
+        self.figur.savefig(basis + ".png", dpi=300)
+        self.figur.savefig(basis + ".pdf")
+        geschrieben += [basis + ".png", basis + ".pdf"]
+        tab_param = kittel_llg_tabelle(self._info, gewichtet=getattr(self, "_gewichtet", False),
+                                       n_punkte=int(self._punkt_indizes.size),
+                                       n_ausreisser=len(stapel.ausreisser))
+        tab_punkte = kittel_llg_punkte_tabelle(stapel.ergebnisse, stapel.ausreisser,
+                                               self.verwendete_indizes())
+        with pd.ExcelWriter(basis + ".xlsx", engine="openpyxl") as writer:
+            tab_param.to_excel(writer, sheet_name="Parameter", index=False)
+            tab_punkte.to_excel(writer, sheet_name="Punkte", index=False)
+        geschrieben.append(basis + ".xlsx")
+        csv_pfad = basis + "_punkte.csv"
+        if csv_deutsch:
+            tab_punkte.to_csv(csv_pfad, index=False, sep=";", decimal=",", encoding="utf-8-sig")
+        else:
+            tab_punkte.to_csv(csv_pfad, index=False)
+        geschrieben.append(csv_pfad)
+        return geschrieben
+
     def _exportieren(self) -> None:
         stapel = self._hole_stapel()
         if stapel is None or not stapel.ergebnisse:
@@ -319,59 +361,8 @@ class AuswertungsFenster(QtWidgets.QDialog):
         if not pfad:
             return
         basis, _endung = os.path.splitext(pfad)
-        self.figur.savefig(basis + ".png", dpi=300)
-        self.figur.savefig(basis + ".pdf")
-
-        # Blatt 1: physikalische Parameter samt 1σ-Fehlern.
-        parameter = []
-        if self._info is not None:
-            kit, llg = self._info["kittel"], self._info["llg"]
-            g_err = kit.get("g_faktor_err", np.nan)
-            parameter = [
-                ("Geometrie", self._info["geometrie"], "", ""),
-                ("Gewichtung", "w=1/u² (GUM)" if getattr(self, "_gewichtet", False)
-                 else "ungewichtet", "", ""),
-                ("mu0_Meff", kit["mu0Meff"], kit["mu0Meff_err"], "T"),
-                ("g_faktor", kit["g_faktor"], g_err, ""),
-                ("gamma", kit["gamma"], kit["gamma_err"], "rad/(s*T)"),
-            ]
-            if "mu0Hu" in kit:
-                parameter.append(("mu0_Hu", kit["mu0Hu"], kit["mu0Hu_err"], "T"))
-            parameter += [
-                ("R2_kittel", kit["R2"], "", ""),
-                ("alpha", llg["alpha"], llg["alpha_err"], ""),
-                ("mu0_Hinh", llg["mu0Hinh"], llg["mu0Hinh_err"], "T"),
-                ("R2_llg", llg["R2"], "", ""),
-                ("N_punkte", int(self._punkt_indizes.size), "", ""),
-                ("N_ausreisser", len(stapel.ausreisser), "", ""),
-            ]
-        tab_param = pd.DataFrame(parameter,
-                                 columns=["Groesse", "Wert", "Fehler_1sigma", "Einheit"])
-
-        # Blatt 2: alle Punkte mit Einzelfehlern und Kennzeichnung.
-        gesperrt = set(stapel.ausreisser)
-        verwendet = set(int(i) for i in self._punkt_indizes)
-        zeilen = []
-        for i, e in enumerate(stapel.ergebnisse):
-            dh_err = getattr(e, "dH_err", np.nan)
-            zeilen.append({
-                "frequenz_Hz": e.frequenz,
-                "B_res_T": e.B_res, "B_res_err_T": e.B_res_err,
-                "alpha": e.alpha, "alpha_err": e.alpha_err,
-                "mu0_dH_T": e.dH, "mu0_dH_err_T": dh_err,
-                "R2_einzelfit": e.R2,
-                "temperatur_K": e.temperatur if e.temperatur is not None else np.nan,
-                "problematisch": e.problematisch,
-                "ausreisser": i in gesperrt,
-                "im_kittel_fit_verwendet": i in verwendet,
-            })
-        tab_punkte = pd.DataFrame(zeilen).sort_values("frequenz_Hz")
-
-        with pd.ExcelWriter(basis + ".xlsx", engine="openpyxl") as writer:
-            tab_param.to_excel(writer, sheet_name="Parameter", index=False)
-            tab_punkte.to_excel(writer, sheet_name="Punkte", index=False)
-
+        p = self._hole_parameter() if self._hole_parameter is not None else None
+        csv_deutsch = bool(getattr(p, "csv_deutsch", False)) if p is not None else False
+        dateien = self.exportiere(basis, csv_deutsch=csv_deutsch)
         QtWidgets.QMessageBox.information(
-            self, "Export",
-            f"Gespeichert:\n{basis}.xlsx (Parameter + Punkte)\n"
-            f"{basis}.png / {basis}.pdf (Plot)")
+            self, "Export", "Gespeichert:\n" + "\n".join(dateien))

@@ -17,5 +17,5 @@ for i, ls in enumerate(ds.linescans):                               # Phase 2: j
 
 ![Fenster](abb/abb_fenster.png)
 
-`StapelErgebnis`: `fenster`, `zugeschnitten`, `ergebnisse`, `ausschlusszonen`, `ausreisser`; `index_problematisch()`, `problem_statistik()`, `ergebnisse_aktiv()`.
-Nachfit einzeln: `fitte_neu(stapel, index, feld_unten, feld_oben, startwerte, B_res_vorgabe)`.
+`StapelErgebnis`: `fenster`, `zugeschnitten`, `ergebnisse`, `ausschlusszonen`, `ausreisser`, `n_moden`, `alpha_plausibel`, `nachfit_bestaetigen`; `index_problematisch()`, `index_gefittet()`, `problem_statistik()`, `ergebnisse_aktiv()`, `bewerte(i, art)`.
+Nachfit einzeln: `fitte_neu(stapel, index, feld_unten, feld_oben, startwerte, B_res_vorgabe, bestaetigen, n_moden)`. Ohne Auto-Fit: `leerer_stapel(ds)` (Platzhalter je Frequenz, `gefittet=False`).

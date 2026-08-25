@@ -19,7 +19,7 @@ from ..physik.fitmodell import Startwerte
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
 from .kriterien import ALPHA_MAX
-from .linescan_fit import FitErgebnis, fitte_linescan
+from .linescan_fit import FitErgebnis, fitte_linescan, setze_bewertung
 
 #: Standard des zweiten Fit-Durchgangs: Fitfenster = B_res +/- Faktor * mu0*dH
 #: (Linienbreite aus dem ersten Durchgang). 0 schaltet den Durchgang ab.
@@ -113,6 +113,12 @@ class StapelErgebnis:
     alpha_max: float = ALPHA_MAX
     #: Faktor des zweiten Fit-Durchgangs (Fenster = B_res +/- Faktor*dH); 0 = aus.
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD
+    #: Plausibilitaetsgrenze "alpha unphysikalisch" (None = alpha_max/2).
+    alpha_plausibel: float | None = None
+    #: Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard).
+    n_moden: int = 1
+    #: Manuelle Nachfits automatisch als "gut - vom Nutzer bestaetigt" bewerten.
+    nachfit_bestaetigen: bool = True
     fenster: list[tuple[float, float]] = field(default_factory=list)
     ergebnisse: list[FitErgebnis] = field(default_factory=list)
     zugeschnitten: list[Linescan] = field(default_factory=list)
@@ -156,7 +162,18 @@ class StapelErgebnis:
         Stuetzt sich auf die Mehrkriterien-Einstufung (siehe
         :func:`polderfit.fit.kriterien.bewerte_fit`), nicht auf das wertlose R².
         """
-        return [i for i, e in enumerate(self.ergebnisse) if e.problematisch]
+        return [i for i, e in enumerate(self.ergebnisse)
+                if e.problematisch and e.gefittet]
+
+    def index_gefittet(self) -> list[int]:
+        """Indizes mit echtem Fitergebnis (keine Platzhalter)."""
+        return [i for i, e in enumerate(self.ergebnisse) if e.gefittet]
+
+    def bewerte(self, index: int, bewertung: str) -> FitErgebnis:
+        """Setzt die Nutzer-Bewertung des Fits ``index`` (Kopie, Undo-sicher)."""
+        neu = setze_bewertung(self.ergebnisse[index], bewertung)
+        self.ergebnisse[index] = neu
+        return neu
 
     def problem_statistik(self) -> dict[str, int]:
         """Aufschluesselung: wie oft trat welcher Problemgrund auf."""
@@ -206,6 +223,8 @@ def fitte_mit_nachfenster(
     gamma: float,
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
+    alpha_plausibel: float | None = None,
+    n_moden: int = 1,
 ) -> tuple[FitErgebnis, Linescan, tuple[float, float]]:
     """Einzelfit in ``fenster``, dann verengter zweiter Durchgang (siehe
     :data:`NACHFENSTER_FAKTOR_STANDARD`).
@@ -216,12 +235,14 @@ def fitte_mit_nachfenster(
     """
     unten, oben = fenster
     beschnitten = schneide_band(linescan, unten, oben)
-    ergebnis = fitte_linescan(beschnitten, gamma, alpha_max=alpha_max)
+    ergebnis = fitte_linescan(beschnitten, gamma, alpha_max=alpha_max,
+                              alpha_plausibel=alpha_plausibel, n_moden=n_moden)
     eng = nachfenster(linescan, ergebnis, (unten, oben), nachfenster_faktor)
     if eng is None:
         return ergebnis, beschnitten, (unten, oben)
     beschnitten2 = schneide_band(linescan, eng[0], eng[1])
-    ergebnis2 = fitte_linescan(beschnitten2, gamma, alpha_max=alpha_max)
+    ergebnis2 = fitte_linescan(beschnitten2, gamma, alpha_max=alpha_max,
+                               alpha_plausibel=alpha_plausibel, n_moden=n_moden)
     if ergebnis2.erfolg and not ergebnis2.problematisch:
         return ergebnis2, beschnitten2, eng
     return ergebnis, beschnitten, (unten, oben)
@@ -238,6 +259,9 @@ def fitte_alle(
     alpha_erwartet: float = 0.01,
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
+    alpha_plausibel: float | None = None,
+    n_moden: int = 1,
+    nachfit_bestaetigen: bool = True,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -265,17 +289,54 @@ def fitte_alle(
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=fenster,
         alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
+        alpha_plausibel=alpha_plausibel, n_moden=max(1, int(n_moden)),
+        nachfit_bestaetigen=nachfit_bestaetigen,
     )
     n = len(datensatz.linescans)
     for i, ls in enumerate(datensatz.linescans):
         ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
             ls, fenster[i], gamma, alpha_max=alpha_max,
-            nachfenster_faktor=nachfenster_faktor)
+            nachfenster_faktor=nachfenster_faktor, alpha_plausibel=alpha_plausibel,
+            n_moden=stapel.n_moden)
         stapel.fenster[i] = verwendet
         stapel.zugeschnitten.append(beschnitten)
         stapel.ergebnisse.append(ergebnis)
         if fortschritt is not None:
             fortschritt(i, n, ergebnis)
+    return stapel
+
+
+def leerer_stapel(
+    datensatz: Messdatensatz,
+    gamma: float = GAMMA_STANDARD,
+    r2_schwelle: float = 0.9,
+    alpha_max: float = ALPHA_MAX,
+    nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
+    alpha_plausibel: float | None = None,
+    n_moden: int = 1,
+    nachfit_bestaetigen: bool = True,
+) -> StapelErgebnis:
+    """Stapel OHNE Fits: je Frequenz ein Platzhalter und das volle Feldfenster.
+
+    Damit funktionieren alle Nachfit-Werkzeuge (Grenzgeraden, Bereichs-Fit,
+    Grenzen ziehen) auch direkt nach dem Laden - ohne vorherigen Auto-Fit.
+    Nur die vom Nutzer bearbeiteten Frequenzen erhalten ein Ergebnis; der
+    Rest bleibt als "nicht gefittet" unsichtbar und ausserhalb aller
+    Auswertungen.
+    """
+    stapel = StapelErgebnis(
+        datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle,
+        alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
+        alpha_plausibel=alpha_plausibel, n_moden=max(1, int(n_moden)),
+        nachfit_bestaetigen=nachfit_bestaetigen,
+    )
+    for ls in datensatz.linescans:
+        if ls.feld.size:
+            stapel.fenster.append((float(ls.feld.min()), float(ls.feld.max())))
+        else:
+            stapel.fenster.append((0.0, 0.0))
+        stapel.zugeschnitten.append(ls)
+        stapel.ergebnisse.append(FitErgebnis.platzhalter(ls.frequenz, ls.feld))
     return stapel
 
 
@@ -286,12 +347,22 @@ def fitte_neu(
     feld_oben: float | None = None,
     startwerte: Startwerte | None = None,
     B_res_vorgabe: float | None = None,
+    bestaetigen: bool | None = None,
+    n_moden: int | None = None,
 ) -> FitErgebnis:
     """Fittet einen einzelnen Datensatz neu (manuelles Nachfitten).
 
     Optional mit neuen Bandgrenzen, expliziten Startwerten oder nur neuem
     Resonanzfeld. Aktualisiert den Stapel an Position ``index`` und gibt das
     neue Ergebnis zurueck.
+
+    ``bestaetigen``: das Ergebnis als "gut - vom Nutzer bestaetigt" bewerten
+    (nur wenn der Fit ein Ergebnis liefert). ``None`` = Stapel-Einstellung
+    ``nachfit_bestaetigen`` (Standard an: jeder manuelle Eingriff gilt als
+    Freigabe des Nutzers; die Kriterien bleiben in ``problematisch_auto``
+    einsehbar). Zonen-Nachrechnungen und das Wiederherstellen einer Sitzung
+    uebergeben ``False``. ``n_moden``: Anzahl Resonanzen fuer diesen Fit
+    (``None`` = Stapel-Einstellung).
     """
     ls = stapel.datensatz.linescans[index]
     unten, oben = stapel.fenster[index]
@@ -306,9 +377,14 @@ def fitte_neu(
         beschnitten = ohne_ausschlusszonen(beschnitten, stapel.ausschlusszonen)
     ergebnis = fitte_linescan(
         beschnitten, stapel.gamma, startwerte=startwerte, B_res_vorgabe=B_res_vorgabe,
-        alpha_max=stapel.alpha_max,
+        alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
+        n_moden=stapel.n_moden if n_moden is None else max(1, int(n_moden)),
     )
     ergebnis.nachbearbeitet = True
+    if bestaetigen is None:
+        bestaetigen = bool(stapel.nachfit_bestaetigen)
+    if bestaetigen:
+        ergebnis = setze_bewertung(ergebnis, "bestaetigt")
     stapel.zugeschnitten[index] = beschnitten
     stapel.ergebnisse[index] = ergebnis
     return ergebnis

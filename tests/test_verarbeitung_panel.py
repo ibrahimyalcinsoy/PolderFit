@@ -30,6 +30,7 @@ def _mini_datensatz(n_freq=8, n_feld=60):
 
 def test_panel_standard_und_callback(app):
     from polderfit.gui.verarbeitung_panel import VerarbeitungPanel
+    VerarbeitungPanel.VERZOEGERUNG_MS = 0          # Tests: sofort melden (keine Entprellung)
     meldungen = []
     panel = VerarbeitungPanel(geaendert=lambda k, m: meldungen.append((k, m)))
 
@@ -41,6 +42,9 @@ def test_panel_standard_und_callback(app):
 
     panel.grp_divide.setChecked(True)                # Aenderung -> Callback
     assert meldungen and meldungen[-1][0].schritte[0].aktiv is True
+    # Genau EINE Verarbeitung aktiv: derivative-divide wurde abgeschaltet.
+    assert meldungen[-1][0].schritte[1].aktiv is False
+    assert [s.operation for s in meldungen[-1][0].aktive_schritte()] == ["divide_slice"]
 
     panel.dd_delta.setValue(9)
     assert meldungen[-1][0].schritte[1].parameter["delta_n"] == 9

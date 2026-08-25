@@ -2,13 +2,15 @@
 """Interaktives Linescan-Panel: Re und Im gleichzeitig + Fit, verschiebbare Grenzen.
 
 Zeigt fuer die aktuell gewaehlte Frequenz Real- und Imaginaerteil von S21 gegen
-das Feld, ueberlagert die Fitkurve und stellt zwei frei verschiebbare vertikale
-Linien (Bandgrenzen) bereit. Beim Verschieben wird ein Callback ausgeloest, der
-den Datensatz mit den neuen Grenzen neu fitten kann ("rumfitten").
+das Feld, ueberlagert die Fitkurve (bei mehreren Moden zusaetzlich jede Mode
+einzeln) und stellt zwei frei verschiebbare vertikale Linien (Bandgrenzen)
+bereit. Beim Verschieben wird ein Callback ausgeloest, der den Datensatz mit
+den neuen Grenzen neu fittet ("rumfitten").
 
-Die Grenzlinien sind bewusst gut erkennbar gestaltet: dicke gruene Linien mit
-weissem Halo, ein dezent schattiertes Band dazwischen, Griff-Marker am oberen
-Rand sowie Hover-Hervorhebung samt Resize-Cursor.
+Farben nach :mod:`polderfit.gui.farben`: Messdaten in neutralen Serienfarben,
+Fit schwarz, die Resonanzlinie in der Statusfarbe des Fits (gruen = gut, gelb =
+problematisch, rot = fehlgeschlagen), Bandgrenzen gruen (= Fit-Bereich, wie die
+gruene Seite der Grenzgeraden), Band hellblau (Auswahl).
 """
 
 from __future__ import annotations
@@ -21,17 +23,23 @@ from PySide6 import QtCore
 
 from ..fit.linescan_fit import FitErgebnis
 from ..io.datensatz import Linescan
+from . import farben as F
 
 # --- Darstellung der verschiebbaren Bandgrenzen ---------------------------
-GRENZ_FARBE = "#1E9E4A"      # kraeftiges Gruen
+GRENZ_FARBE = F.SIGNAL_GRUEN
 GRENZ_LW = 2.4
 GRENZ_LW_HOVER = 3.6
 GRIFF_MS = 9
 GRIFF_MS_HOVER = 13
-BAND_FARBE = "#E8A317"       # PolderFit-Gold
-BAND_ALPHA = 0.12
+BAND_FARBE = F.SIGNAL_BLAU
+BAND_ALPHA = 0.10
 GREIF_TOLERANZ_REL = 0.03    # Anteil der Feldbreite, in dem eine Linie "gegriffen" wird
 _HALO = [pe.Stroke(linewidth=GRENZ_LW + 2.0, foreground="white"), pe.Normal()]
+#: Serienfarben der Messdaten (neutral, keine Statusbedeutung).
+_FARBE_RE = F.TEXT_BLAU
+_FARBE_IM = "#B35C00"
+_FARBE_FIT = F.TEXT
+_FARBEN_MODEN = ("#6B6F76", "#9A6BB5", "#3C8DAD", "#B08A2E")
 
 
 class FitAnsicht(FigureCanvasQTAgg):
@@ -56,6 +64,7 @@ class FitAnsicht(FigureCanvasQTAgg):
         self._griffe_unten = []
         self._griffe_oben = []
         self._baender = []
+        self._hinweis = None
 
         self.mpl_connect("button_press_event", self._on_press)
         self.mpl_connect("motion_notify_event", self._on_move)
@@ -68,8 +77,14 @@ class FitAnsicht(FigureCanvasQTAgg):
         grenze_unten: float,
         grenze_oben: float,
         ergebnis: FitErgebnis | None = None,
+        status: str | None = None,
     ) -> None:
-        """Stellt einen Linescan samt Bandgrenzen und (optional) Fitkurve dar."""
+        """Stellt einen Linescan samt Bandgrenzen und (optional) Fitkurve dar.
+
+        ``status``: Statusklasse des Fits (:mod:`polderfit.gui.farben`) fuer
+        die Farbe der Resonanzlinie; fehlt sie, wird sie aus dem Ergebnis
+        abgeleitet.
+        """
         self._linescan = linescan
         self._grenze_unten = float(grenze_unten)
         self._grenze_oben = float(grenze_oben)
@@ -81,16 +96,42 @@ class FitAnsicht(FigureCanvasQTAgg):
         self._linien_unten, self._linien_oben = [], []
         self._griffe_unten, self._griffe_oben = [], []
         self._baender = []
+        if self._hinweis is not None:
+            try:
+                self._hinweis.remove()
+            except (ValueError, AttributeError):
+                pass
+            self._hinweis = None
 
         b = linescan.feld
-        self.ax_re.plot(b, linescan.re, ".", ms=3, color="#3B6FB0", label="Re S21 (Messung)")
-        self.ax_im.plot(b, linescan.im, ".", ms=3, color="#D2762B", label="Im S21 (Messung)")
+        self.ax_re.plot(b, linescan.re, ".", ms=3, color=_FARBE_RE, label="Re S21 (Messung)")
+        self.ax_im.plot(b, linescan.im, ".", ms=3, color=_FARBE_IM, label="Im S21 (Messung)")
 
-        if ergebnis is not None and ergebnis.fitkurve is not None and ergebnis.feld is not None:
-            self.ax_re.plot(ergebnis.feld, ergebnis.fitkurve.real, "-", color="#222", lw=1.4, label="Fit Re")
-            self.ax_im.plot(ergebnis.feld, ergebnis.fitkurve.imag, "-", color="#222", lw=1.4, label="Fit Im")
+        gefittet = (ergebnis is not None and ergebnis.fitkurve is not None
+                    and ergebnis.feld is not None)
+        if gefittet:
+            if status is None:
+                status = F.status_von(ergebnis)
+            farbe_res = F.STATUS_FARBEN.get(status, (F.SIGNAL_GRUEN, ""))[0]
+            if farbe_res == "none":
+                farbe_res = F.SIGNAL_GRUEN
+            # Einzelne Moden (nur bei n > 1) als duenne gestrichelte Linien.
+            if ergebnis.n_moden > 1 and ergebnis.fitkurven_moden:
+                for k, kurve in enumerate(ergebnis.fitkurven_moden):
+                    farbe = _FARBEN_MODEN[k % len(_FARBEN_MODEN)]
+                    self.ax_re.plot(ergebnis.feld, kurve.real, "--", color=farbe, lw=0.9,
+                                    label=f"Mode {k + 1}" + (" (Hauptmode)" if k == 0 else ""))
+                    self.ax_im.plot(ergebnis.feld, kurve.imag, "--", color=farbe, lw=0.9)
+                for k, mode in enumerate(ergebnis.moden[1:], start=1):
+                    farbe = _FARBEN_MODEN[k % len(_FARBEN_MODEN)]
+                    for ax in (self.ax_re, self.ax_im):
+                        ax.axvline(mode["B_res"], color=farbe, ls=":", lw=0.9, zorder=2)
+            self.ax_re.plot(ergebnis.feld, ergebnis.fitkurve.real, "-", color=_FARBE_FIT,
+                            lw=1.4, label="Fit Re")
+            self.ax_im.plot(ergebnis.feld, ergebnis.fitkurve.imag, "-", color=_FARBE_FIT,
+                            lw=1.4, label="Fit Im")
             for ax in (self.ax_re, self.ax_im):
-                ax.axvline(ergebnis.B_res, color="#D33", ls="--", lw=0.9, zorder=2)
+                ax.axvline(ergebnis.B_res, color=farbe_res, ls="--", lw=1.2, zorder=2)
 
         for ax in (self.ax_re, self.ax_im):
             span = ax.axvspan(self._grenze_unten, self._grenze_oben,
@@ -114,12 +155,15 @@ class FitAnsicht(FigureCanvasQTAgg):
             self._griffe_oben.append(go)
 
         titel = f"f = {linescan.frequenz/1e9:.3f} GHz"
-        if ergebnis is not None:
-            dh_mt = ergebnis.dH * 1e3 if np.isfinite(ergebnis.dH) else float("nan")
+        if ergebnis is not None and ergebnis.gefittet:
             titel += (f"   |   B_res = {ergebnis.B_res:.4f} T, "
-                      f"ΔH = {dh_mt:.2f} mT, "
-                      f"alpha = {ergebnis.alpha:.2e}, R² = {ergebnis.R2:.4f}")
-        self.ax_re.set_title(titel)
+                      f"µ₀ΔH = {ergebnis.dH_mT:.2f} mT, "
+                      f"α = {ergebnis.alpha:.2e}, R² = {ergebnis.R2:.4f}")
+            if ergebnis.n_moden > 1:
+                titel += f"   ({ergebnis.n_moden} Moden)"
+        elif ergebnis is not None:
+            titel += "   |   noch nicht gefittet – Grenzen ziehen fittet diese Frequenz"
+        self.ax_re.set_title(titel, fontsize=9.5, wrap=True)
         self.ax_re.set_ylabel("Re S21")
         self.ax_im.set_ylabel("Im S21")
         self.ax_im.set_xlabel(r"Feld $\mu_0 H$ (T)")
@@ -130,8 +174,10 @@ class FitAnsicht(FigureCanvasQTAgg):
         self.ax_re.set_xlim(*self._berechne_xlim(b))
         self._tight_layout_sicher()
         # Dezenter Bedienhinweis (nach tight_layout, damit er nicht verschoben wird).
-        self.figur.text(0.995, 0.004, "grüne Linien ziehen, um das Band zu ändern",
-                        ha="right", va="bottom", fontsize=7.5, color=GRENZ_FARBE, alpha=0.85)
+        self._hinweis = self.figur.text(
+            0.995, 0.004, "grüne Linien ziehen, um das Band zu ändern",
+            ha="right", va="bottom", fontsize=7.5, color=GRENZ_FARBE, alpha=0.85)
+        self._hinweis.set_in_layout(False)
         self.draw_idle()
 
     def _tight_layout_sicher(self) -> None:
@@ -140,13 +186,18 @@ class FitAnsicht(FigureCanvasQTAgg):
         Solange das Qt-Widget noch keine Groesse hat, ist die Figur-Transformation
         nicht invertierbar und Matplotlib wirft ``LinAlgError: Singular matrix``.
         Das ist rein ein Layout-Timing-Problem; beim naechsten echten Zeichnen mit
-        gueltiger Groesse greift das Layout ohnehin. Wir ueberspringen es daher hier.
+        gueltiger Groesse greift das Layout ohnehin. Vor jedem Aufruf werden die
+        Raender zurueckgesetzt (kein kumulatives Schrumpfen).
         """
         w, h = self.figur.get_size_inches() * self.figur.dpi
         if w < 1 or h < 1:
             return
+        self.figur.subplots_adjust(left=0.12, right=0.98, top=0.92, bottom=0.12, hspace=0.3)
         try:
-            self.figur.tight_layout()
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                self.figur.tight_layout()
         except (np.linalg.LinAlgError, ValueError):
             pass
 

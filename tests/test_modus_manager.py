@@ -52,10 +52,10 @@ def test_modi_schliessen_sich_gegenseitig_aus(app):
     m = _ansicht()
     m.starte_bereichs_fit(lambda *a: None)
     assert m.modus == "bereich"
-    m.starte_dispersion_seed(lambda p: None)
-    assert m.modus == "seed"           # Bereichs-Fit wurde beendet
+    m.starte_gerade_zeichnen(lambda p: None)
+    assert m.modus == "gerade"         # Bereichs-Fit wurde beendet
     m.setze_ausreisser_modus(True, gewaehlt=lambda i: None)
-    assert m.modus == "ausreisser"     # Seed wurde beendet
+    assert m.modus == "ausreisser"     # Gerade wurde beendet
     m.starte_ausschluss_zeichnen(lambda *a: None)
     assert m.modus == "zone"           # Ausreisser wurde beendet
 
@@ -72,8 +72,7 @@ def test_modi_schliessen_sich_gegenseitig_aus(app):
 
 def test_escape_bricht_jeden_modus_ab(app):
     m = _ansicht()
-    for starten in (lambda: m.starte_dispersion_seed(lambda p: None),
-                    lambda: m.starte_bereichs_fit(lambda *a: None),
+    for starten in (lambda: m.starte_bereichs_fit(lambda *a: None),
                     lambda: m.starte_ausschluss_zeichnen(lambda *a: None),
                     lambda: m.starte_gerade_zeichnen(lambda p: None),
                     lambda: m.setze_ausreisser_modus(True, gewaehlt=lambda i: None)):
@@ -83,17 +82,17 @@ def test_escape_bricht_jeden_modus_ab(app):
         assert m.modus is None
 
 
-def test_seed_halb_gestartet_laesst_sich_abbrechen(app):
-    """Frueherer Bug: nach EINEM Seed-Klick gab es keinen Ausweg mehr."""
+def test_gerade_halb_gestartet_laesst_sich_abbrechen(app):
+    """Frueherer Bug: nach EINEM Klick eines Zwei-Punkt-Modus gab es keinen Ausweg mehr."""
     m = _ansicht()
     punkte = []
-    m.starte_dispersion_seed(punkte.append)
+    m.starte_gerade_zeichnen(punkte.append)
     m._on_press(_ev(m.ax, xdata=2.8, ydata=10.0))   # erster von zwei Klicks
-    assert m.modus == "seed" and not punkte
+    assert m.modus == "gerade" and not punkte
     m._on_key(_ev(m.ax, key="escape"))
     assert m.modus is None
-    assert m._seed_punkte == [] and m._seed_marker == []
-    # Danach ist wieder normale Frequenzwahl aktiv - kein spaeter Seed-Callback.
+    assert m._punkt_liste == [] and m._punkt_marker == []
+    # Danach ist wieder normale Frequenzwahl aktiv - kein spaeter Callback.
     m._on_press(_ev(m.ax, xdata=3.0, ydata=30.0))
     m._on_release(_ev(m.ax, xdata=3.0, ydata=30.0))
     assert not punkte
@@ -103,9 +102,9 @@ def test_moduswechsel_werden_gemeldet(app):
     meldungen = []
     m = _ansicht(meldungen)
     m.starte_bereichs_fit(lambda *a: None)
-    m.starte_dispersion_seed(lambda p: None)
+    m.starte_gerade_zeichnen(lambda p: None)
     m.beende_modus()
-    assert meldungen == ["bereich", "seed", None]
+    assert meldungen == ["bereich", "gerade", None]
 
 
 def test_neuer_datensatz_setzt_modus_zurueck(app):
@@ -170,6 +169,8 @@ def test_hauptfenster_modus_ohne_fits_abgewiesen(app):
     assert w.akt_ausreisser.isChecked() is False
     w.akt_bereich.setChecked(True)
     assert w.akt_bereich.isChecked() is False
-    w.akt_seed.setChecked(True)
-    assert w.akt_seed.isChecked() is False
+    w.akt_gerade.setChecked(True)
+    assert w.akt_gerade.isChecked() is False
+    w.akt_zone.setChecked(True)
+    assert w.akt_zone.isChecked() is False
     assert w.matrix.modus is None

@@ -30,9 +30,9 @@ class AusreisserPanel(QtWidgets.QWidget):
         lay.setSpacing(8)
 
         hinweis = QtWidgets.QLabel(
-            "Fit → „Ausreisser markieren“: Punkte im Farbplot anklicken oder "
-            "per Kasten markieren. Markierte Punkte werden aus Darstellung und "
-            "Kittel-/LLG-Fit ausgenommen.")
+            "Funktionen → „Ausreißer markieren“ (Strg+M): Punkte im Farbplot "
+            "anklicken oder per Kasten markieren. Markierte Punkte gelten als "
+            "„ignoriert“ (grau) und fehlen in Darstellung und Kittel-/LLG-Fit.")
         hinweis.setWordWrap(True)
         lay.addWidget(hinweis)
 

@@ -52,9 +52,10 @@ class ZonenPanel(QtWidgets.QWidget):
         geraden_lay = QtWidgets.QVBoxLayout(grp_geraden)
         hinweis_g = QtWidgets.QLabel(
             "Gerade per zwei Klicks einfügen, an den Endpunkten ziehen "
-            "(verschieben/rotieren). Grüner Saum = wird neu gefittet, "
+            "(verschieben/rotieren). Grüner Saum = wird gefittet, "
             "roter Saum = wird ignoriert; Doppelklick auf die Linie wechselt "
-            "die Seite. Zwei Geraden ergeben ein Band.")
+            "die Seite. Zwei Geraden ergeben ein Band. Funktioniert direkt "
+            "nach dem Laden – ohne Auto-Fit wird nur der grüne Bereich gefittet.")
         hinweis_g.setWordWrap(True)
         geraden_lay.addWidget(hinweis_g)
 
@@ -82,7 +83,11 @@ class ZonenPanel(QtWidgets.QWidget):
         zeile.addWidget(self.btn_gerade_entfernen)
         geraden_lay.addLayout(zeile)
 
-        self.btn_geraden_fit = QtWidgets.QPushButton("Grünen Bereich neu fitten …")
+        self.btn_geraden_fit = QtWidgets.QPushButton("Grünen Bereich fitten …")
+        self.btn_geraden_fit.setToolTip(
+            "Fenstersuche und Fit im grünen Bereich aller Geraden; im Dialog:\n"
+            "Frequenz von … bis …, Feld von … bis …, Modus, Fensterbreite,\n"
+            "Anzahl Resonanzen.")
         self.btn_geraden_fit.clicked.connect(
             lambda: self._cb_geraden_fit and self._cb_geraden_fit())
         geraden_lay.addWidget(self.btn_geraden_fit)
@@ -93,7 +98,7 @@ class ZonenPanel(QtWidgets.QWidget):
         zonen_lay = QtWidgets.QVBoxLayout(grp_zonen)
         hinweis_z = QtWidgets.QLabel(
             "Messpunkte in einer Zone werden aus ALLEN (Nach-)Fits ausgenommen; "
-            "betroffene Linescans fitten sofort neu.")
+            "bereits gefittete Linescans im Band rechnen sofort neu.")
         hinweis_z.setWordWrap(True)
         zonen_lay.addWidget(hinweis_z)
 

@@ -82,11 +82,23 @@ def alpha_plausibel_max(alpha_max: float = ALPHA_MAX) -> float:
     return ALPHA_PLAUSIBEL_MAX * (alpha_max / ALPHA_MAX)
 
 
-def bewerte_fit(erg, alpha_max: float = ALPHA_MAX) -> tuple[bool, list[str]]:
+#: Problemgrund eines noch nicht gefitteten Platzhalters (z. B. Frequenzen
+#: ausserhalb des gruenen Grenzgeraden-Bereichs vor dem ersten Auto-Fit).
+GRUND_NICHT_GEFITTET: str = "nicht gefittet"
+
+
+def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
+                alpha_plausibel: float | None = None) -> tuple[bool, list[str]]:
     """Stuft ein :class:`FitErgebnis` ein und liefert ``(problematisch, gruende)``.
 
     ``alpha_max`` ist die im Fit verwendete harte alpha-Schranke (Kriterien b
-    und d beziehen sich darauf; Standard ``ALPHA_MAX``).
+    und d beziehen sich darauf; Standard ``ALPHA_MAX``). ``alpha_plausibel``
+    (optional, einstellbar ueber die physikalischen Parameter) ersetzt die
+    Standard-Plausibilitaetsgrenze ``alpha_max/2`` fuer Kriterium d - fuer
+    "exotische" Proben mit real breiten Linien (nanostrukturiertes CoFe,
+    FeCr2S4) sonst dauernd "alpha unphysikalisch". Ein Wert ``<= 0``/``None``
+    bedeutet Automatik. Bei mehreren Moden (``erg.moden``) werden die
+    Kriterien b-d fuer JEDE Mode geprueft.
 
     Ein Fit ist problematisch, wenn EINE der folgenden Bedingungen zutrifft:
 
@@ -98,6 +110,11 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX) -> tuple[bool, list[str]]:
     f) relative Parameter-Unsicherheit zu gross.
     """
     gruende: list[str] = []
+    if not getattr(erg, "gefittet", True):
+        return True, [GRUND_NICHT_GEFITTET]
+    plausibel = (float(alpha_plausibel)
+                 if alpha_plausibel is not None and np.isfinite(alpha_plausibel)
+                 and alpha_plausibel > 0 else alpha_plausibel_max(alpha_max))
 
     # (e) Konvergenz / Kovarianz. Fehlende Kovarianz zaehlt nur dann als
     # Problem, wenn der Fit nicht ohnehin exzellent passt (phi-Nebenminimum
@@ -110,23 +127,28 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX) -> tuple[bool, list[str]]:
         if not exzellent:
             gruende.append("keine Unsicherheiten")
 
-    # (b) Parameter an Schranke
-    if an_grenze(erg.alpha, ALPHA_MIN, alpha_max):
-        gruende.append("alpha an Grenze")
-    if an_grenze(erg.phi, PHI_MIN, PHI_MAX):
-        gruende.append("phi an Grenze")
-    if np.isfinite(erg.B_fenster_min) and an_grenze(erg.B_res, erg.B_fenster_min, erg.B_fenster_max):
-        gruende.append("B_res am Fensterrand")
-
-    # (c) B_res ausserhalb des Feldfensters
-    if np.isfinite(erg.B_fenster_min) and (
-        erg.B_res < erg.B_fenster_min or erg.B_res > erg.B_fenster_max
-    ):
-        gruende.append("B_res ausserhalb Fenster")
-
-    # (d) alpha unphysikalisch
-    if np.isfinite(erg.alpha) and erg.alpha > alpha_plausibel_max(alpha_max):
-        gruende.append("alpha unphysikalisch")
+    # Alle Moden pruefen (Hauptmode = die Felder des Ergebnisses selbst).
+    moden = getattr(erg, "moden", None) or []
+    kandidaten = [(erg.alpha, erg.phi, erg.B_res)] + [
+        (m.get("alpha", np.nan), m.get("phi", np.nan), m.get("B_res", np.nan))
+        for m in moden[1:]]
+    for alpha, phi, b_res in kandidaten:
+        # (b) Parameter an Schranke
+        if an_grenze(alpha, ALPHA_MIN, alpha_max):
+            gruende.append("alpha an Grenze")
+        if an_grenze(phi, PHI_MIN, PHI_MAX):
+            gruende.append("phi an Grenze")
+        if np.isfinite(erg.B_fenster_min) and an_grenze(b_res, erg.B_fenster_min,
+                                                        erg.B_fenster_max):
+            gruende.append("B_res am Fensterrand")
+        # (c) B_res ausserhalb des Feldfensters
+        if np.isfinite(erg.B_fenster_min) and np.isfinite(b_res) and (
+            b_res < erg.B_fenster_min or b_res > erg.B_fenster_max
+        ):
+            gruende.append("B_res ausserhalb Fenster")
+        # (d) alpha unphysikalisch
+        if np.isfinite(alpha) and alpha > plausibel:
+            gruende.append("alpha unphysikalisch")
 
     # (a) Residuum (primaer: normiertes Residuum, skalenfrei)
     if (not np.isfinite(erg.rmse_norm)) or erg.rmse_norm > RMSE_NORM_SCHWELLE:

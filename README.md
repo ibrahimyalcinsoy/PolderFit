@@ -12,7 +12,9 @@ pip install -e ".[gui]"
 polderfit
 ```
 
-(Im geklonten Ordner, Python ≥ 3.11; empfohlen in einer venv. Windows-Details: [INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md).)
+(Im geklonten Ordner, Python ≥ 3.11; empfohlen in einer venv. Windows-Details: [INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md). Vollbild `F11`.)
+
+Fitten direkt nach dem Laden: Auto-Fit (`F5`), Grenzgeraden (`Strg+L`) oder Bereich (`Strg+B`) – jeweils mit Frequenz/Feld von … bis …; Fit-Status in Signalfarben (grün gut, gelb prüfen, rot fehlgeschlagen, grau ignoriert; DIN EN 60073); Linienbreite und Resonanzfeld in T **und mT** im Export; mehrere Resonanzen je Linescan (`n_moden`); Einstellungen speichern/laden; Auto-Sicherung.
 
 ## Name und Version
 
@@ -26,7 +28,7 @@ Beides steht nur in `pyproject.toml`: `[tool.polderfit] name = "PolderFit"` und 
 | `polderfit/physik` | Konstanten, Polder-χ, Fitmodell, Kittel/LLG |
 | `polderfit/fit` | AutoWindow, Einzelfit, Stapel/Nachfenster, Kriterien, Nachfit-Werkzeuge |
 | `polderfit/auswertung`, `polderfit/persistenz` | Kittel/LLG-Plots, Excel/CSV, Projekt-JSON |
-| `polderfit/gui` | PySide6-Oberfläche |
+| `polderfit/gui` | PySide6-Oberfläche (Farben: `farben.py`) |
 | `tests/` | pytest-Suite, Robustheits-Harness |
 | `benchmark_ftf/` | Vergleich mit dem LabVIEW-FTF (`BERICHT.md`) |
 

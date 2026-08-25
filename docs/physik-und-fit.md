@@ -25,6 +25,14 @@ S21(B) = A·e^{iφ}·χ_oop(B; B_res, α, ω, γ) + (o_re + i o_im) + (s_re + i 
 
 Optimierer: lmfit `leastsq` (Levenberg–Marquardt/MINPACK), Schranken per MINUIT-Transformation, φ-Neustart um π bei fehlender Kovarianz. Startwerte datengetrieben; `α_start = γ·FWHM(|χ|)/(2√3·ω)`.
 
+**Mehrere Resonanzen je Linescan (`n_moden`, `s21_modell_multi`, `fitte_linescan_multi`)** – z. B. zwei nahe Dips bei nanostrukturiertem CoFe:
+
+```
+S21(B) = Σ_k A_k·e^{iφ_k}·χ_oop(B; B_res,k, α_k, ω, γ) + (o_re + i o_im) + (s_re + i s_im)(B − B_ref)
+```
+
+Gemeinsamer Untergrund; `B_res,k = B_res,k−1 + dB_k` mit `dB_k ≥ 2 Feldschritte` (kein Zusammenfallen/Vertauschen); Startwerte = `n` prominenteste Peaks des untergrundbereinigten Betrags (`scipy.signal.find_peaks`). Die **Hauptmode** (größte Signalhöhe `|A_k|·|χ_k(B_res,k)|`) füllt `B_res`, `α`, `µ0ΔH` (→ Kittel/LLG), alle Moden stehen in `moden` und im Export (`*_2`, `*_3`, …); Hauptmode im Linescan-Panel wechselbar. Für `n = 1` identisch mit dem Ein-Moden-Fit.
+
 ![Fit](abb/abb_linescan_fit.png)
 
 **Kittel / LLG (`kittel_llg.py`, `curve_fit`):**
@@ -39,6 +47,6 @@ Standard **ungewichtet** (wie FTF); Option `w = 1/u²`. `absolute_sigma=False`: 
 
 ![ip-Entartung](abb/abb_ip_entartung.png)
 
-**Einstellbar (Strg+P):** g (Start), γ festhalten, Geometrie oop/ip, Fensterfaktor 8, R²-Schwellen 0,9, erwartetes α 0,01, Gewichtung aus, α-Obergrenze 0,1, Nachfenster 2,5.
+**Einstellbar (Strg+P):** g (Start), γ festhalten, Geometrie oop/ip, Fensterfaktor 8, R²-Schwellen 0,9, Gewichtung aus, α-Obergrenze 0,1, α-Plausibilitätsgrenze (0 = α_max/2), Nachfenster 2,5, Resonanzen je Linescan 1, Nachfits bestätigen an. Speicher-/ladbar als Voreinstellung (Datei → Einstellungen).
 
 Quellen: Müller 2023 Kap. 2; Notebook `Chi_Fit_Functions_and_Inductances_2020-04-06.nb`; Maier-Flaig 2018; Protokoll 2026-05-08; ABW/GUM.

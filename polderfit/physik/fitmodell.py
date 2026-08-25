@@ -17,6 +17,18 @@ mit:
 * ``B_ref``          – Bandmitte (zur Entkopplung von Offset und Steigung).
 
 Re und Im werden simultan gefittet (gestapeltes Residuum).
+
+**Mehrere Resonanzen je Linescan** (z. B. nanostrukturiertes CoFe mit zwei
+nahe beieinander liegenden Dips): :func:`s21_modell_multi` summiert ``n``
+Polder-Linien mit je eigenem ``B_res``, ``alpha``, ``A`` und ``phi`` ueber
+einem GEMEINSAMEN Untergrund (Offset + Gradient)::
+
+    S21(B) = sum_k A_k*exp(i*phi_k) * chi_oop(B; B_res_k, alpha_k, omega, gamma)
+             + (off_re + i*off_im) + (slope_re + i*slope_im) * (B - B_ref)
+
+Die Startwerte der ``n`` Moden liefert :func:`schaetze_startwerte_multi`
+(n prominenteste Peaks des untergrundbereinigten Betrags). Fuer ``n = 1`` ist
+das exakt das Ein-Moden-Modell oben.
 """
 
 from __future__ import annotations
@@ -98,6 +110,33 @@ def residuum(
     return np.concatenate([diff.real, diff.imag])
 
 
+def _untergrund_und_rein(mu0H: np.ndarray, s21_mess: np.ndarray):
+    """Sortiert nach Feld, schaetzt den linearen Untergrund aus den Raendern
+    und liefert ``(B, sig, rein, (slope_re, slope_im, off_re, off_im, B_ref))``
+    mit ``rein`` = untergrundbereinigtes komplexes Signal."""
+    mu0H = np.asarray(mu0H, dtype=float)
+    s21 = np.asarray(s21_mess)
+    # Nach Feld sortieren (Feld kann monoton fallend vorliegen).
+    ordnung = np.argsort(mu0H)
+    B = mu0H[ordnung]
+    sig = s21[ordnung]
+    # Untergrund linear aus den Randbereichen (je 15 % der Punkte) schaetzen.
+    n = B.size
+    rand = max(2, n // 7)
+    idx_rand = np.concatenate([np.arange(rand), np.arange(n - rand, n)])
+    A_design = np.vstack([B[idx_rand], np.ones(idx_rand.size)]).T
+    koeff_re, *_ = np.linalg.lstsq(A_design, sig.real[idx_rand], rcond=None)
+    koeff_im, *_ = np.linalg.lstsq(A_design, sig.imag[idx_rand], rcond=None)
+    slope_re, b_re = koeff_re
+    slope_im, b_im = koeff_im
+    B_ref = float(np.mean(B))
+    off_re = float(slope_re * B_ref + b_re)
+    off_im = float(slope_im * B_ref + b_im)
+    untergrund = (b_re + 1j * b_im) + (slope_re + 1j * slope_im) * B
+    rein = sig - untergrund
+    return B, sig, rein, (float(slope_re), float(slope_im), off_re, off_im, B_ref)
+
+
 def schaetze_startwerte(
     mu0H: np.ndarray,
     s21_mess: np.ndarray,
@@ -124,29 +163,8 @@ def schaetze_startwerte(
     if mu0H.size < 4:
         raise ValueError("Linescan zu kurz fuer eine Startwertschaetzung.")
 
-    # Nach Feld sortieren (Feld kann monoton fallend vorliegen).
-    ordnung = np.argsort(mu0H)
-    B = mu0H[ordnung]
-    sig = s21[ordnung]
-
+    B, sig, rein, (slope_re, slope_im, off_re, off_im, B_ref) = _untergrund_und_rein(mu0H, s21)
     betrag = np.abs(sig)
-
-    # Untergrund linear aus den Randbereichen (je 15 % der Punkte) schaetzen.
-    n = B.size
-    rand = max(2, n // 7)
-    idx_rand = np.concatenate([np.arange(rand), np.arange(n - rand, n)])
-    A_design = np.vstack([B[idx_rand], np.ones(idx_rand.size)]).T
-    koeff_re, *_ = np.linalg.lstsq(A_design, sig.real[idx_rand], rcond=None)
-    koeff_im, *_ = np.linalg.lstsq(A_design, sig.imag[idx_rand], rcond=None)
-    slope_re, b_re = koeff_re
-    slope_im, b_im = koeff_im
-    B_ref = float(np.mean(B))
-    off_re = float(slope_re * B_ref + b_re)
-    off_im = float(slope_im * B_ref + b_im)
-
-    # Untergrundbereinigtes Signal -> Resonanz als groesste Abweichung.
-    untergrund = (b_re + 1j * b_im) + (slope_re + 1j * slope_im) * B
-    rein = sig - untergrund
     betrag_rein = np.abs(rein)
 
     if B_res_vorgabe is not None:
@@ -201,3 +219,153 @@ def schaetze_startwerte(
         B_min=float(B.min()),
         B_max=float(B.max()),
     )
+
+
+# --- Mehrere Resonanzen je Linescan --------------------------------------------
+def s21_modell_multi(
+    mu0H: np.ndarray,
+    moden,
+    off_re: float,
+    off_im: float,
+    slope_re: float,
+    slope_im: float,
+    omega: float,
+    gamma: float,
+    B_ref: float,
+) -> np.ndarray:
+    """Komplexes Modell-S21 mit ``n`` Resonanzen (siehe Modulbeschreibung).
+
+    ``moden`` ist eine Folge von ``(B_res, alpha, A, phi)``-Tupeln.
+    """
+    mu0H = np.asarray(mu0H, dtype=float)
+    summe = np.zeros(mu0H.shape, dtype=complex)
+    for B_res, alpha, A, phi in moden:
+        summe = summe + A * np.exp(1j * phi) * chi_oop(mu0H, B_res, alpha, omega, gamma)
+    untergrund = (off_re + 1j * off_im) + (slope_re + 1j * slope_im) * (mu0H - B_ref)
+    return summe + untergrund
+
+
+def moden_aus_params(params, n_moden: int) -> list[tuple[float, float, float, float]]:
+    """``[(B_res_k, alpha_k, A_k, phi_k)]`` aus (lmfit-)Parametern ``B_res_1`` … ``phi_n``."""
+    return [
+        (float(params[f"B_res_{k}"]), float(params[f"alpha_{k}"]),
+         float(params[f"A_{k}"]), float(params[f"phi_{k}"]))
+        for k in range(1, n_moden + 1)
+    ]
+
+
+def residuum_multi(
+    params,
+    mu0H: np.ndarray,
+    s21_mess: np.ndarray,
+    omega: float,
+    gamma: float,
+    B_ref: float,
+    n_moden: int,
+) -> np.ndarray:
+    """Gestapeltes Residuum (Re, Im) des Mehr-Moden-Modells fuer Least-Squares."""
+    modell = s21_modell_multi(
+        mu0H, moden_aus_params(params, n_moden),
+        float(params["off_re"]), float(params["off_im"]),
+        float(params["slope_re"]), float(params["slope_im"]),
+        omega, gamma, B_ref,
+    )
+    diff = modell - np.asarray(s21_mess)
+    return np.concatenate([diff.real, diff.imag])
+
+
+def _fwhm_lokal(B: np.ndarray, betrag: np.ndarray, i0: int, grund: float) -> float:
+    """Halbwertsbreite des Peaks bei Index ``i0`` (Laufen nach links/rechts, bis
+    der Betrag unter die Haelfte von (Peak - Grund) faellt)."""
+    halb = grund + 0.5 * (float(betrag[i0]) - grund)
+    links = i0
+    while links > 0 and betrag[links - 1] >= halb:
+        links -= 1
+    rechts = i0
+    while rechts < betrag.size - 1 and betrag[rechts + 1] >= halb:
+        rechts += 1
+    breite = float(abs(B[rechts] - B[links]))
+    if breite <= 0.0:
+        schritt = float(np.ptp(B)) / max(B.size - 1, 1)
+        breite = 2.0 * schritt
+    return breite
+
+
+def schaetze_startwerte_multi(
+    mu0H: np.ndarray,
+    s21_mess: np.ndarray,
+    omega: float,
+    gamma: float,
+    n_moden: int,
+    alpha_max: float = 0.1,
+) -> list[Startwerte]:
+    """Startwerte fuer ``n_moden`` Resonanzen in EINEM Linescan.
+
+    Vorgehen: untergrundbereinigter Betrag -> die ``n`` prominentesten lokalen
+    Maxima (``scipy.signal.find_peaks``; reichen die nicht, wird um bereits
+    gefundene Peaks maskiert und das naechste Maximum genommen). Je Peak:
+    ``B_res`` an der Peakposition, ``alpha`` aus der lokalen Halbwertsbreite
+    (Magnitude → Absorption: Faktor sqrt(3), wie im Ein-Moden-Fall), ``phi``
+    aus der Phase am Peak, ``A`` aus der lokalen Hoehe. Die Liste ist nach
+    ``B_res`` aufsteigend sortiert (Fit-Parametrisierung ueber positive
+    Abstaende). Untergrund (Offset/Steigung) ist fuer alle Moden identisch.
+    """
+    from scipy.signal import find_peaks
+
+    n_moden = int(n_moden)
+    if n_moden < 1:
+        raise ValueError("n_moden muss >= 1 sein.")
+    if n_moden == 1:
+        return [schaetze_startwerte(mu0H, s21_mess, omega, gamma, alpha_max=alpha_max)]
+    mu0H = np.asarray(mu0H, dtype=float)
+    if mu0H.size < 4 * n_moden:
+        raise ValueError("Linescan zu kurz fuer die Startwertschaetzung mehrerer Moden.")
+    B, sig, rein, (slope_re, slope_im, off_re, off_im, B_ref) = _untergrund_und_rein(
+        mu0H, np.asarray(s21_mess))
+    betrag_rein = np.abs(rein)
+    grund = float(np.median(betrag_rein))
+    hoehe_max = float(betrag_rein.max() - grund) or 1.0
+
+    # Kandidaten: prominenteste lokale Maxima.
+    gipfel, eigenschaften = find_peaks(betrag_rein, prominence=0.05 * hoehe_max)
+    reihenfolge = np.argsort(-eigenschaften["prominences"]) if gipfel.size else np.array([], int)
+    gewaehlt: list[int] = [int(gipfel[i]) for i in reihenfolge[:n_moden]]
+    # Auffuellen: um gefundene Peaks maskieren, naechstes Maximum nehmen.
+    maske = np.ones(B.size, dtype=bool)
+    for i0 in gewaehlt:
+        fwhm = _fwhm_lokal(B, betrag_rein, i0, grund)
+        maske &= ~((B >= B[i0] - 1.5 * fwhm) & (B <= B[i0] + 1.5 * fwhm))
+    while len(gewaehlt) < n_moden:
+        if not maske.any():
+            # Notloesung: gleichmaessig ueber das Fenster verteilen.
+            fehlend = n_moden - len(gewaehlt)
+            for q in np.linspace(0.25, 0.75, fehlend):
+                gewaehlt.append(int(round(q * (B.size - 1))))
+            break
+        kand = np.where(maske, betrag_rein, -np.inf)
+        i0 = int(np.argmax(kand))
+        gewaehlt.append(i0)
+        fwhm = _fwhm_lokal(B, betrag_rein, i0, grund)
+        maske &= ~((B >= B[i0] - 1.5 * fwhm) & (B <= B[i0] + 1.5 * fwhm))
+
+    gewaehlt = sorted(set(gewaehlt))[:n_moden]
+    while len(gewaehlt) < n_moden:      # Duplikate entfernt -> auffuellen
+        gewaehlt.append(min(B.size - 1, gewaehlt[-1] + max(2, B.size // (2 * n_moden))))
+    starts: list[Startwerte] = []
+    for i0 in gewaehlt:
+        i0 = int(np.clip(i0, 0, B.size - 1))
+        fwhm = max(_fwhm_lokal(B, betrag_rein, i0, grund), 1e-4)
+        alpha = float(gamma * fwhm / (2.0 * np.sqrt(3.0) * omega))
+        alpha = float(np.clip(alpha, 1e-5, alpha_max))
+        B_res = float(B[i0])
+        phi = float(np.angle(rein[i0]) + np.pi / 2.0)
+        amplitude = max(float(betrag_rein[i0]) - grund, 1e-3 * hoehe_max)
+        chi_skala = float(np.max(np.abs(chi_oop(B, B_res, alpha, omega, gamma))))
+        A = amplitude / chi_skala if chi_skala > 0 else amplitude
+        starts.append(Startwerte(
+            B_res=B_res, alpha=alpha, A=A, phi=phi,
+            off_re=off_re, off_im=off_im, slope_re=slope_re, slope_im=slope_im,
+            B_min=float(B.min()), B_max=float(B.max()),
+        ))
+    starts.sort(key=lambda sw: sw.B_res)
+    return starts

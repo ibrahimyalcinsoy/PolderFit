@@ -6,6 +6,13 @@ Resonanzfelder und markiert die aktuell gewaehlte Frequenz mit einer horizontale
 Linie. Ohne geladene Daten erscheint ein leeres, kariertes Koordinatensystem
 (Feld auf der x-, Frequenz auf der y-Achse) als Platzhalter.
 
+Die Resonanzpunkte tragen ihren Status in Farbe UND Form (DIN EN 60073 /
+DIN EN ISO 9241-125, siehe :mod:`polderfit.gui.farben`): gruener Punkt = guter
+Fit (blauer Rand = vom Nutzer bestaetigt), gelbes Dreieck = problematisch,
+rotes Kreuz = Fit fehlgeschlagen, grauer Ring = ignoriert (Ausreisser), gruene
+Raute = weitere Resonanz (Nebenmode). Beim Ueberfahren eines Punkts erscheint
+ein Tooltip mit Frequenz, B_res, Linienbreite in mT, alpha, R² und Status.
+
 Bedienung:
 
 * **Klicken** – springt zur naechstgelegenen Frequenz (laedt sofort deren Fit),
@@ -17,24 +24,33 @@ Bedienung:
 * **Pfeiltasten** ``hoch/runter`` (bzw. ``links/rechts``), ``Bild hoch/runter``
   (10er-Schritt), ``Pos1/Ende`` (erste/letzte Frequenz); ``+/-/0`` zoomen.
 
-Interaktive Modi (Seed, Bereichs-Fit, Ausschlusszone, Ausreisser) laufen ueber
-einen ZENTRALEN Modus-Manager: es ist immer hoechstens EIN Modus aktiv, das
-Starten eines Modus beendet den vorherigen, ``Esc`` bricht jeden Modus ab und
-jede Aenderung wird ueber ``modus_geaendert(name | None)`` gemeldet, damit die
-Werkzeugleiste den aktiven Modus eindeutig anzeigen kann.
+Interaktive Modi (Bereichs-Fit, Ausschlusszone, Ausreisser, Grenzgerade) laufen
+ueber einen ZENTRALEN Modus-Manager: es ist immer hoechstens EIN Modus aktiv,
+das Starten eines Modus beendet den vorherigen, ``Esc`` bricht jeden Modus ab
+und jede Aenderung wird ueber ``modus_geaendert(name | None)`` gemeldet, damit
+die Menueleiste den aktiven Modus eindeutig anzeigen kann.
+
+Layout-Stabilitaet: Das Figure-Layout wird vor JEDEM ``tight_layout`` auf die
+Standardraender zurueckgesetzt und der Bedienhinweis unterhalb der Achse ist
+vom Layout ausgenommen. Ohne diesen Reset schrumpfte die Achse bei jedem
+Neuzeichnen (z. B. Mausrad ueber dem Δn-Feld der Verarbeitung) weiter, bis
+der Farbplot unkenntlich schmal war.
 """
 
 from __future__ import annotations
+
+import warnings
 
 import numpy as np
 import matplotlib.patheffects as pe
 from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-from PySide6 import QtCore
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from ..io.datensatz import Messdatensatz
 from ..verarbeitung import ANZEIGE_MODI, Verarbeitungskette, anzeige_transform
+from . import farben as F
 
 #: Robuste Farbskala: NaN-feste Perzentile gegen Ausreisser (v. a. nach
 #: derivative divide, wo einzelne Punkte um Groessenordnungen herausragen
@@ -49,11 +65,10 @@ _ZOOM_RAUS = 1.25
 _BOX_SCHWELLE_REL = 0.02
 
 #: Alle bekannten Interaktionsmodi (zentrale Verwaltung, exklusiv).
-MODI = ("seed", "bereich", "zone", "ausreisser", "gerade")
+MODI = ("bereich", "zone", "ausreisser", "gerade")
 
 #: Mauszeiger je Modus.
 _MODUS_CURSOR = {
-    "seed": QtCore.Qt.CrossCursor,
     "bereich": QtCore.Qt.CrossCursor,
     "zone": QtCore.Qt.CrossCursor,
     "ausreisser": QtCore.Qt.PointingHandCursor,
@@ -61,16 +76,30 @@ _MODUS_CURSOR = {
 }
 
 #: Modi, die ueber ZWEI Klicks zwei Punkte einsammeln.
-_ZWEI_PUNKT_MODI = ("seed", "gerade")
+_ZWEI_PUNKT_MODI = ("gerade",)
 
 #: Farben der Grenzgeraden-Seiten (gruen = wird neu gefittet, rot = ignoriert).
-_GERADE_GRUEN = "#3FA34D"
-_GERADE_ROT = "#C0392B"
+_GERADE_GRUEN = F.SIGNAL_GRUEN
+_GERADE_ROT = F.SIGNAL_ROT
 #: Breite des Seitensaums in Achsen-Anteilen.
 _GERADE_SAUM = 0.025
 #: Relative Trefferdistanz fuer Endpunkt-Griffe bzw. Doppelklick auf die Linie.
 _GRIFF_TOLERANZ = 0.035
 _LINIEN_TOLERANZ = 0.02
+#: Relative Trefferdistanz fuer Hover-Tooltip / Ausreisser-Klick auf Punkte.
+_PUNKT_TOLERANZ = 0.03
+
+#: Standardraender der Figur (werden vor jedem Layout zurueckgesetzt).
+_RAENDER_STANDARD = dict(left=0.10, right=0.985, top=0.93, bottom=0.14)
+
+#: Reihenfolge und Matplotlib-Label der Statusklassen im Overlay.
+_STATUS_LABEL = {
+    "gut": "_resonanz",
+    "bestaetigt": "_resonanz",
+    "problem": "_resonanz_problem",
+    "fehler": "_resonanz_fehler",
+    "ignoriert": "_resonanz_ignoriert",
+}
 
 
 class MatrixAnsicht(FigureCanvasQTAgg):
@@ -94,6 +123,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._feld_achse = None
         self._kette: Verarbeitungskette | None = None
         self._anzeige_modus: str = "betrag"
+        self._farbskala: str = "viridis"
         self._markierung = None
         self._marker_label = None
         self._aktueller_index = 0
@@ -101,7 +131,13 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_freq = None
         self._res_bres = None
         self._res_problem = None
+        self._res_status = None        # Statusklasse je Punkt (farben.STATUS_*)
+        self._res_info = None          # Tooltip-Text je Punkt
+        self._res_nebenmoden = None    # Liste von (B_res-Array) je weiterer Mode
         self._problemfits_ausblenden = False
+        self._ausreisser_anzeigen = False
+        self._nebenmoden_anzeigen = True
+        self._hover_index = None
         #: Zoom per Mausrad/Kaestchen nur, wenn eingeschaltet (Menue Ansicht -> Zoom);
         #: Standard AUS, weil der Rad-Zoom als zu empfindlich empfunden wurde.
         self._zoom_aktiv: bool = False
@@ -113,9 +149,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # ZENTRALER Modus-Manager: hoechstens ein Modus aktiv (siehe MODI).
         self._modus: str | None = None
         self._modus_cb = None              # fertig(...) bzw. gewaehlt(indizes)
-        # Dispersions-Seed: zwei Klicks auf die Resonanz vorgeben.
-        self._seed_punkte: list[tuple[float, float]] = []
-        self._seed_marker: list = []
+        # Zwei-Punkt-Modi (Grenzgerade): gesammelte Klicks und ihre Marker.
+        self._punkt_liste: list[tuple[float, float]] = []
+        self._punkt_marker: list = []
         # Ausschlusszonen (Anzeige).
         self._zonen: list = []
         self._zonen_patches: list = []
@@ -150,7 +186,6 @@ class MatrixAnsicht(FigureCanvasQTAgg):
 
         ``callback`` haengt vom Modus ab:
 
-        * ``"seed"``     – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
         * ``"gerade"``   – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
         * ``"bereich"``  – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
         * ``"zone"``     – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
@@ -163,10 +198,10 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._modus = name
         self._modus_cb = callback
         if name in _ZWEI_PUNKT_MODI:
-            self._seed_punkte = []
+            self._punkt_liste = []
         self.setCursor(_MODUS_CURSOR[name])
         # Tastaturfokus sicherstellen, damit Esc sofort wirkt (auch wenn der
-        # Modus aus Menue/Toolbar gestartet wurde und der Canvas nie geklickt war).
+        # Modus aus dem Menue gestartet wurde und der Canvas nie geklickt war).
         self.setFocus()
         self._melde_modus()
 
@@ -181,11 +216,11 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         """Setzt allen Modus-Zustand zurueck (ohne Meldung)."""
         self._modus = None
         self._modus_cb = None
-        self._seed_punkte = []
-        for m in self._seed_marker:
+        self._punkt_liste = []
+        for m in self._punkt_marker:
             m.remove()
-        if self._seed_marker:
-            self._seed_marker = []
+        if self._punkt_marker:
+            self._punkt_marker = []
             self.draw_idle()
         self.unsetCursor()
 
@@ -194,10 +229,6 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self.modus_geaendert(self._modus)
 
     # Bequeme Starter (von Hauptfenster/Tests verwendet).
-    def starte_dispersion_seed(self, fertig) -> None:
-        """Seed-Modus: die naechsten zwei Klicks markieren die Resonanz."""
-        self.starte_modus("seed", fertig)
-
     def starte_bereichs_fit(self, fertig) -> None:
         """Bereichs-Fit-Modus: naechstes Rechteck wird als Fit-Bereich gemeldet."""
         self.starte_modus("bereich", fertig)
@@ -236,6 +267,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._extent = (float(feld.min()), float(feld.max()),
                         float(freq.min() / 1e9), float(freq.max() / 1e9))
         self._res_freq = self._res_bres = self._res_problem = None
+        self._res_status = self._res_info = self._res_nebenmoden = None
+        self._res_ausgeschlossen = None
+        self._hover_index = None
         self._press_xy = None
         self._box_aktiv = False
         # Neuer Datensatz: Overlays und Modi des alten verwerfen.
@@ -257,27 +291,47 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._anzeige_modus = anzeige_modus
         if self._Z_komplex is None:
             return
+        self._neu_zeichnen_mit_overlays(kette_alt, modus_alt)
+
+    def _neu_zeichnen_mit_overlays(self, kette_alt=None, modus_alt=None) -> None:
+        """Neu rendern und Zoom, Resonanz-Overlay und Frequenzmarker erhalten."""
         xlim, ylim = self.ax.get_xlim(), self.ax.get_ylim()
         gezoomt = self._ist_gezoomt()
         index = self._aktueller_index
         hatte_marker = self._markierung is not None
-        res = (self._res_freq, self._res_bres, self._res_problem)
         try:
             self._render()
         except ValueError:
             # Unzulaessige Parameter (z. B. Δn > halbes Gitter): alten Zustand
             # behalten; die Berechnung laeuft vor ax.clear(), der Plot ist intakt.
-            self._kette, self._anzeige_modus = kette_alt, modus_alt
+            if kette_alt is not None or modus_alt is not None:
+                self._kette, self._anzeige_modus = kette_alt, modus_alt
             raise
         if gezoomt:
             self.ax.set_xlim(xlim)
             self.ax.set_ylim(ylim)
-        if res[0] is not None:
-            self._res_freq, self._res_bres, self._res_problem = res
+        if self._res_freq is not None:
             self._zeichne_resonanz()
         if hatte_marker and self._freq_achse is not None and len(self._freq_achse):
             self.markiere_frequenz(index)
         self.draw_idle()
+
+    def setze_farbskala(self, name: str) -> None:
+        """Farbskala (Matplotlib-Colormap-Name) des Falschfarbenbilds setzen."""
+        self._farbskala = str(name) or "viridis"
+        if self._Z_komplex is not None:
+            self._neu_zeichnen_mit_overlays()
+
+    def farbskala(self) -> str:
+        return self._farbskala
+
+    def layout_zuruecksetzen(self) -> None:
+        """Zoom und Figur-Layout auf den Auslieferungszustand zuruecksetzen."""
+        if self._Z_komplex is None:
+            self._zeichne_platzhalter()
+            return
+        self._zoom_zuruecksetzen()
+        self._neu_zeichnen_mit_overlays()
 
     def _zeichne_platzhalter(self) -> None:
         """Leeres kariertes Koordinatensystem, solange keine Daten geladen sind."""
@@ -289,21 +343,21 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.ax.set_xticklabels([])
         self.ax.set_yticklabels([])
         self.ax.tick_params(length=0)
-        self.ax.grid(True, which="both", color="#DDD8CA", lw=0.8)
-        self.ax.set_facecolor("#FDFDFB")
+        self.ax.grid(True, which="both", color=F.RAND, lw=0.8)
+        self.ax.set_facecolor("#FCFCFD")
         for kante in self.ax.spines.values():
-            kante.set_color("#C9C3B2")
+            kante.set_color(F.RAND_STARK)
         self.ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
         self.ax.set_ylabel("Frequenz (GHz)")
         self.ax.text(0.5, 0.55, "Keine Messung geladen",
                      transform=self.ax.transAxes, ha="center", va="center",
-                     fontsize=15, fontweight="bold", color="#8A8574")
+                     fontsize=15, fontweight="bold", color=F.TEXT_SCHWACH)
         self.ax.text(0.5, 0.45,
                      "Datei → „TDMS laden …“ (Strg+O) öffnet eine Messung.\n"
                      "Danach lässt sich die Karte allein zur Datenansicht nutzen\n"
                      "(Verarbeitung: derivative divide, divide slice, …).",
                      transform=self.ax.transAxes, ha="center", va="center",
-                     fontsize=10, color="#8A8574")
+                     fontsize=10, color=F.TEXT_SCHWACH)
         self._tight_layout_sicher()
         self.draw_idle()
 
@@ -324,7 +378,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # ax.clear() entsorgt alle Overlay-Artists - Referenzen VOR dem
         # Neuzeichnen verwerfen (remove() auf toten Artists wuerde werfen).
         self._zonen_patches = []
-        self._seed_marker = []
+        self._punkt_marker = []
         self._geraden_artists = []
         self.ax.clear()
         self.ax.grid(False)
@@ -336,23 +390,33 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             vmin, vmax = np.percentile(endlich, _CLIM_PERZENTILE)
             if vmin == vmax:
                 vmin = vmax = None
-        self.ax.imshow(matrix, aspect="auto", origin="lower", cmap="viridis",
-                       extent=list(self._extent), vmin=vmin, vmax=vmax)
+        try:
+            self.ax.imshow(matrix, aspect="auto", origin="lower", cmap=self._farbskala,
+                           extent=list(self._extent), vmin=vmin, vmax=vmax)
+        except ValueError:  # unbekannter Colormap-Name -> Standard
+            self._farbskala = "viridis"
+            self.ax.imshow(matrix, aspect="auto", origin="lower", cmap=self._farbskala,
+                           extent=list(self._extent), vmin=vmin, vmax=vmax)
         self.ax.set_autoscale_on(False)  # Overlays/Marker veraendern den Zoom nicht
         self.ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
         self.ax.set_ylabel("Frequenz (GHz)")
         beschreibung = self._kette.beschreibung() if self._kette is not None else "roh"
         anzeige = ANZEIGE_MODI.get(self._anzeige_modus, self._anzeige_modus)
         if beschreibung == "roh":
-            self.ax.set_title(f"Uebersicht S21 roh · {anzeige}")
+            titel = f"Übersicht S21 roh · {anzeige}"
         else:
-            self.ax.set_title(f"Uebersicht S21: {beschreibung} · {anzeige}", fontsize=10)
-        self.ax.text(
+            titel = f"Übersicht S21: {beschreibung} · {anzeige}"
+        # Titel darf das Layout nie breiter machen als die Achse: umbrechen.
+        self.ax.set_title(titel, fontsize=10, wrap=True)
+        hinweis = self.ax.text(
             0.5, -0.13,
             "klicken = Frequenz · Kästchen ziehen = Zoom · Mausrad = rein/raus · "
-            "Doppelklick = zurück · ↑/↓ · ⇧+Rad",
+            "Doppelklick = zurück · ↑/↓ · ⇧+Rad · Punkt überfahren = Fit-Info",
             transform=self.ax.transAxes, ha="center", va="top",
-            fontsize=7.2, color="#6B6657")
+            fontsize=7.2, color=F.TEXT_SCHWACH)
+        # Vom Layout ausnehmen: sonst wuerde jeder tight_layout-Aufruf die
+        # Achse an die Breite dieses Texts anpassen (Schrumpf-Bug).
+        hinweis.set_in_layout(False)
         if self._zonen:
             self._zeichne_zonen()
         if self._geraden:
@@ -368,57 +432,138 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         """Liefert ``(feld_achse, frequenz_achse)`` des Rohgitters (oder ``(None, None)``)."""
         return self._feld_achse, self._freq_achse
 
+    def verarbeitete_matrix(self):
+        """``(feld_achse, frequenz_achse, matrix)`` der aktuellen Anzeige (nach
+        Verarbeitungskette und Anzeige-Modus) - fuer den Matrix-Export."""
+        if self._matrix is None:
+            return None, None, None
+        return self._feld_achse, self._freq_achse, self._matrix
+
+    def speichere_bild(self, pfad: str, dpi: int = 200) -> None:
+        """Speichert den Farbplot samt Overlays als Bild (PNG/PDF/SVG nach Endung)."""
+        self.figur.savefig(pfad, dpi=dpi, bbox_inches="tight", facecolor="white")
+
     def _tight_layout_sicher(self) -> None:
+        """Layout berechnen, ohne dass die Achse bei wiederholten Aufrufen schrumpft.
+
+        Vor jedem Aufruf werden die Figurraender auf die Standardwerte gesetzt -
+        ``tight_layout`` rechnet dann immer vom gleichen Ausgangszustand aus
+        (``ax.clear()`` setzt die Raender NICHT zurueck; ohne Reset addierte sich
+        jeder Aufruf und der Plot wurde immer schmaler).
+        """
         w, h = self.figur.get_size_inches() * self.figur.dpi
         if w < 1 or h < 1:
             return
+        self.figur.subplots_adjust(**_RAENDER_STANDARD)
         try:
-            self.figur.tight_layout()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                self.figur.tight_layout()
         except (np.linalg.LinAlgError, ValueError):
             pass
+        # Sicherheitsnetz: nie schmaler als ~55 % der Figur (winzige Canvases).
+        pos = self.ax.get_position()
+        if pos.width < 0.55 or pos.height < 0.45:
+            self.figur.subplots_adjust(**_RAENDER_STANDARD)
 
     # --- Resonanz-Overlay --------------------------------------------------
     def aktualisiere_resonanz(self, frequenzen, B_res, problematisch=None,
-                              ausgeschlossen=None) -> None:
-        """Speichert und zeichnet die Resonanzpunkte (gut rot, problematisch grau ×).
+                              ausgeschlossen=None, status=None, info=None,
+                              nebenmoden=None) -> None:
+        """Speichert und zeichnet die Resonanzpunkte nach Statusklasse.
 
-        ``ausgeschlossen`` (bool-Array) blendet Ausreisser komplett aus der
-        Darstellung aus - sie sind nur noch ueber die Ausreisser-Liste
-        einsehbar und wieder aufnehmbar.
+        ``status`` (optional): Klasse je Punkt (``gut``/``bestaetigt``/
+        ``problem``/``fehler``/``ignoriert``, siehe :mod:`polderfit.gui.farben`);
+        fehlt es, wird aus ``problematisch`` abgeleitet. ``ausgeschlossen``
+        (bool-Array) sind Ausreisser - unsichtbar, ausser *Ansicht -> Ausreisser
+        anzeigen* ist an. ``info`` (optional): Tooltip-Text je Punkt.
+        ``nebenmoden``: Liste von ``B_res``-Arrays weiterer Resonanzen (NaN,
+        wo keine).
         """
         if self._datensatz is None:
             return
         self._res_freq = np.asarray(frequenzen, dtype=float)
         self._res_bres = np.asarray(B_res, dtype=float)
-        self._res_problem = (np.zeros(self._res_freq.shape, dtype=bool)
-                             if problematisch is None
+        n = self._res_freq.shape
+        self._res_problem = (np.zeros(n, dtype=bool) if problematisch is None
                              else np.asarray(problematisch, dtype=bool))
-        self._res_ausgeschlossen = (np.zeros(self._res_freq.shape, dtype=bool)
-                                    if ausgeschlossen is None
+        self._res_ausgeschlossen = (np.zeros(n, dtype=bool) if ausgeschlossen is None
                                     else np.asarray(ausgeschlossen, dtype=bool))
+        if status is None:
+            status = np.where(self._res_problem, "problem", "gut")
+        self._res_status = np.asarray(status, dtype=object)
+        self._res_info = list(info) if info is not None else None
+        self._res_nebenmoden = ([np.asarray(m, dtype=float) for m in nebenmoden]
+                                if nebenmoden else None)
+        self._hover_index = None
         self._zeichne_resonanz()
 
     def setze_problemfits_ausblenden(self, an: bool) -> None:
         self._problemfits_ausblenden = bool(an)
         self._zeichne_resonanz()
 
+    def setze_ausreisser_anzeigen(self, an: bool) -> None:
+        """Ignorierte Punkte (Ausreisser) als graue Ringe zeigen statt ausblenden."""
+        self._ausreisser_anzeigen = bool(an)
+        self._zeichne_resonanz()
+
+    def setze_nebenmoden_anzeigen(self, an: bool) -> None:
+        self._nebenmoden_anzeigen = bool(an)
+        self._zeichne_resonanz()
+
+    def _status_sichtbar(self, status: str) -> bool:
+        if status == "ignoriert":
+            return self._ausreisser_anzeigen
+        if status in ("problem", "fehler"):
+            return not self._problemfits_ausblenden
+        return True
+
     def _zeichne_resonanz(self) -> None:
         if self._res_freq is None:
             return
         for ln in list(self.ax.lines):
-            if ln.get_label() in ("_resonanz", "_resonanz_problem"):
+            if str(ln.get_label()).startswith("_resonanz"):
                 ln.remove()
         f_ghz = self._res_freq / 1e9
-        ausgeschlossen = getattr(self, "_res_ausgeschlossen", None)
-        if ausgeschlossen is None:
-            ausgeschlossen = np.zeros(self._res_freq.shape, dtype=bool)
-        gut = ~self._res_problem & ~ausgeschlossen
-        self.ax.plot(self._res_bres[gut], f_ghz[gut], ".", color="red", ms=4, label="_resonanz")
-        problem = self._res_problem & ~ausgeschlossen
-        if not self._problemfits_ausblenden and problem.any():
-            self.ax.plot(self._res_bres[problem], f_ghz[problem],
-                         "x", color="#BBBBBB", ms=4, mew=1.0, label="_resonanz_problem")
+        status = self._status_array()
+        for klasse in ("ignoriert", "fehler", "problem", "gut", "bestaetigt"):
+            maske = (status == klasse) & np.isfinite(self._res_bres)
+            if not maske.any() or not self._status_sichtbar(klasse):
+                continue
+            fuell, rand = F.STATUS_FARBEN[klasse]
+            marker = F.STATUS_MARKER[klasse]
+            if klasse == "ignoriert":
+                self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, mfc="none",
+                             mec=fuell, ms=5, mew=1.0, ls="", label=_STATUS_LABEL[klasse])
+            elif klasse == "bestaetigt":
+                self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
+                             mec=rand, ms=5.5, mew=1.3, ls="", label=_STATUS_LABEL[klasse])
+            elif klasse == "fehler":
+                self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
+                             mec=rand, ms=6, mew=0.6, ls="", label=_STATUS_LABEL[klasse])
+            else:
+                self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
+                             mec=rand, ms=5 if klasse == "gut" else 6, mew=0.7, ls="",
+                             label=_STATUS_LABEL[klasse])
+        if self._nebenmoden_anzeigen and self._res_nebenmoden:
+            fuell, rand = F.STATUS_FARBEN["nebenmode"]
+            sichtbar = np.isin(status, ["gut", "bestaetigt", "problem"]) if \
+                self._problemfits_ausblenden else status != "ignoriert"
+            for moden_b in self._res_nebenmoden:
+                maske = sichtbar & np.isfinite(moden_b)
+                if maske.any():
+                    self.ax.plot(moden_b[maske], f_ghz[maske], F.STATUS_MARKER["nebenmode"],
+                                 mfc="none", mec=rand, ms=5.5, mew=1.2, ls="",
+                                 label="_resonanz_nebenmode")
         self.draw_idle()
+
+    def _status_array(self) -> np.ndarray:
+        """Statusklassen unter Beruecksichtigung der Ausreisser-Maske."""
+        status = (self._res_status.copy() if self._res_status is not None
+                  else np.where(self._res_problem, "problem", "gut").astype(object))
+        if self._res_ausgeschlossen is not None:
+            status[self._res_ausgeschlossen] = "ignoriert"
+        return status
 
     # --- Frequenz-Markierung ----------------------------------------------
     def markiere_frequenz(self, index: int) -> None:
@@ -548,7 +693,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if self._box_patch is None:
             self._box_patch = self.ax.add_patch(Rectangle(
                 (min(x0, x1), min(y0, y1)), abs(x1 - x0), abs(y1 - y0),
-                facecolor="#E8A31733", edgecolor="#E8A317", lw=1.4, zorder=8))
+                facecolor=F.SIGNAL_BLAU + "33", edgecolor=F.SIGNAL_BLAU, lw=1.4, zorder=8))
         else:
             self._box_patch.set_bounds(min(x0, x1), min(y0, y1), abs(x1 - x0), abs(y1 - y0))
         self.draw_idle()
@@ -587,7 +732,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 (zone.feld_min, zone.frequenz_min / 1e9),
                 zone.feld_max - zone.feld_min,
                 (zone.frequenz_max - zone.frequenz_min) / 1e9,
-                facecolor="#00000000", edgecolor="#C0392B", hatch="///",
+                facecolor="#00000000", edgecolor=F.SIGNAL_ROT, hatch="///",
                 lw=1.2, zorder=6, label="_ausschlusszone"))
             self._zonen_patches.append(patch)
         self.draw_idle()
@@ -682,13 +827,13 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                     ecken, closed=True, facecolor=farbe, edgecolor="none",
                     alpha=alpha, zorder=5, label="_gerade_saum"))
                 self._geraden_artists.append(patch)
-            linie = self.ax.plot([x0, x1], [y0, y1], "-", color="#2B2B28",
+            linie = self.ax.plot([x0, x1], [y0, y1], "-", color=F.TEXT,
                                  lw=1.6, zorder=6, label="_gerade")[0]
             linie.set_path_effects(
                 [pe.Stroke(linewidth=3.0, foreground="#FFFFFFAA"), pe.Normal()])
             self._geraden_artists.append(linie)
             griffe = self.ax.plot([p1[0], p2[0]], [p1[1], p2[1]], "s",
-                                  color="#E8A317", mec="white", mew=1.2, ms=9,
+                                  color=F.SIGNAL_BLAU, mec="white", mew=1.2, ms=9,
                                   ls="", zorder=9, label="_gerade_griff")[0]
             self._geraden_artists.append(griffe)
         self.draw_idle()
@@ -743,24 +888,23 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             gerade.b2, gerade.f2 = float(event.xdata), float(event.ydata) * 1e9
         self._zeichne_geraden()
 
-    # --- Ausreisser-Auswahl --------------------------------------------------
+    # --- Punkte finden (Hover / Ausreisser) ----------------------------------
     def _sichtbare_resonanzpunkte(self) -> np.ndarray:
         """Indizes der aktuell im Overlay gezeichneten Resonanzpunkte."""
         if self._res_freq is None:
             return np.array([], dtype=int)
-        ausgeschlossen = (self._res_ausgeschlossen
-                          if self._res_ausgeschlossen is not None
-                          else np.zeros(self._res_freq.shape, dtype=bool))
-        sichtbar = ~ausgeschlossen
-        if self._problemfits_ausblenden:
-            sichtbar &= ~self._res_problem
+        status = self._status_array()
+        sichtbar = np.isfinite(self._res_bres)
+        for klasse in ("gut", "bestaetigt", "problem", "fehler", "ignoriert"):
+            if not self._status_sichtbar(klasse):
+                sichtbar &= status != klasse
         return np.flatnonzero(sichtbar)
 
-    def _ausreisser_klick(self, event) -> None:
-        """Klick im Ausreisser-Modus: naechstgelegenen sichtbaren Punkt melden."""
+    def _naechster_punkt(self, event, toleranz: float = _PUNKT_TOLERANZ):
+        """Index des naechsten sichtbaren Resonanzpunkts (relativ zur Achsenspanne)."""
         kandidaten = self._sichtbare_resonanzpunkte()
         if kandidaten.size == 0 or event.xdata is None or event.ydata is None:
-            return
+            return None
         # Abstand in relativen Achseneinheiten (Feld- und Frequenzspanne
         # unterscheiden sich um Groessenordnungen).
         x0, x1 = self.ax.get_xlim()
@@ -769,8 +913,29 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         dy = (self._res_freq[kandidaten] / 1e9 - event.ydata) / max(abs(y1 - y0), 1e-12)
         abstand = np.hypot(dx, dy)
         naechster = int(np.argmin(abstand))
-        if abstand[naechster] <= 0.03 and self._modus_cb is not None:
-            self._modus_cb([int(kandidaten[naechster])])
+        if abstand[naechster] <= toleranz:
+            return int(kandidaten[naechster])
+        return None
+
+    def _hover(self, event) -> None:
+        """Tooltip mit Fit-Kennzahlen, wenn die Maus ueber einem Punkt steht."""
+        index = self._naechster_punkt(event) if self._res_info is not None else None
+        if index == self._hover_index:
+            return
+        self._hover_index = index
+        try:
+            if index is None:
+                QtWidgets.QToolTip.hideText()
+            else:
+                QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), self._res_info[index], self)
+        except Exception:  # z. B. ohne Fenster/Display – reine Anzeigehilfe
+            pass
+
+    def _ausreisser_klick(self, event) -> None:
+        """Klick im Ausreisser-Modus: naechstgelegenen sichtbaren Punkt melden."""
+        index = self._naechster_punkt(event)
+        if index is not None and self._modus_cb is not None:
+            self._modus_cb([index])
 
     def _ausreisser_kasten(self, x0, y0, x1, y1) -> None:
         """Kasten im Ausreisser-Modus: alle sichtbaren Punkte darin melden."""
@@ -792,17 +957,18 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if fertig is not None:
             fertig(min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
 
-    def _seed_klick(self, event) -> None:
+    def _zwei_punkt_klick(self, event) -> None:
+        """Zwei-Punkt-Modus (Grenzgerade): Klicks sammeln, nach dem zweiten melden."""
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             return
-        self._seed_punkte.append((float(event.xdata), float(event.ydata)))  # (B [T], f [GHz])
-        mk = self.ax.plot([event.xdata], [event.ydata], "P", color="#E8A317",
+        self._punkt_liste.append((float(event.xdata), float(event.ydata)))  # (B [T], f [GHz])
+        mk = self.ax.plot([event.xdata], [event.ydata], "P", color=F.SIGNAL_BLAU,
                           mec="white", mew=1.2, ms=12, zorder=9)[0]
-        self._seed_marker.append(mk)
+        self._punkt_marker.append(mk)
         self.draw_idle()
-        if len(self._seed_punkte) >= 2:
+        if len(self._punkt_liste) >= 2:
             fertig = self._modus_cb
-            punkte = list(self._seed_punkte)
+            punkte = list(self._punkt_liste)
             self.beende_modus()
             if fertig is not None:
                 fertig(punkte)
@@ -812,8 +978,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if event.inaxes != self.ax or self._freq_achse is None:
             return
         self.setFocus()
-        if self._modus in _ZWEI_PUNKT_MODI:   # Seed/Gerade: Klick sammelt Punkte
-            self._seed_klick(event)
+        if self._modus in _ZWEI_PUNKT_MODI:   # Gerade: Klick sammelt Punkte
+            self._zwei_punkt_klick(event)
             return
         if getattr(event, "dblclick", False):
             self._press_xy = None
@@ -846,6 +1012,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             if not self._box_aktiv:
                 self._setze_ruhe_cursor(ausserhalb=True)
+                self._hover(event)
             return
         if self._press_xy is None and self._modus is None \
                 and self._finde_geraden_endpunkt(event) is not None:
@@ -864,6 +1031,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 self._zeichne_box()
             return
         self._setze_ruhe_cursor()
+        if self._modus in (None, "ausreisser"):
+            self._hover(event)
 
     def _setze_ruhe_cursor(self, ausserhalb: bool = False) -> None:
         """Cursor ausserhalb von Drags: Modus-Cursor halten, sonst Standard."""
@@ -910,6 +1079,11 @@ class MatrixAnsicht(FigureCanvasQTAgg):
     def _on_leave(self, event):
         if self._modus is None:
             self.unsetCursor()
+        self._hover_index = None
+        try:
+            QtWidgets.QToolTip.hideText()
+        except Exception:
+            pass
 
     def _on_scroll(self, event):
         if self._freq_achse is None:

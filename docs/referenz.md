@@ -5,8 +5,11 @@
 | α | Gilbert-Dämpfung (Einzelfit je f; global: LLG-Steigung) | – | `alpha`, `llg_alpha` |
 | γ = g·µ_B/ħ | gyromagn. Verhältnis | rad s⁻¹ T⁻¹ | `kittel_gamma` |
 | g | Landé-Faktor | – | `kittel_g_faktor` |
-| µ0H, B_res | Feld / Resonanzfeld | T | `B_res_T` |
-| µ0ΔH = 2ωα/γ | Linienbreite (FWHM χ″) | T | `mu0_dH_T` |
+| µ0H, B_res | Feld / Resonanzfeld | T (auch mT) | `B_res_T`, `B_res_mT` |
+| µ0ΔH = 2ωα/γ | Linienbreite (FWHM χ″) | T (auch mT) | `mu0_dH_T`, `mu0_dH_mT`, `mu0_dH_err_mT` |
+| A·e^{iφ} | komplexe Amplitude | – | `A`, `phi_rad`, `A_komplex_re/im` |
+| Mode k ≥ 2 | weitere Resonanz (`n_moden`) | | `B_res_k_T`, `alpha_k`, `mu0_dH_k_mT` … |
+| Bewertung | auto / bestaetigt / verworfen | | `bewertung`, `problematisch`, `problematisch_auto` |
 | µ0M_eff | eff. Magnetisierung | T | `kittel_mu0Meff` |
 | µ0H_u | Anisotropiefeld (ip) | T | `kittel_mu0Hu` |
 | µ0ΔH_0 | inhomogene Verbreiterung | T | `llg_mu0Hinh` |
@@ -20,6 +23,7 @@
 | µ0ΔH(f) = µ0ΔH_0 + (4π/γ)αf | Müller (2.28) | `fit_linienbreite` |
 | χ_oop | Notebook / Müller (2.20) | `suszeptibilitaet.py` |
 | S21 = A e^{iφ}χ + B + C(B−B_ref) | Maier-Flaig (8) | `s21_modell` |
+| S21 = Σ_k A_k e^{iφ_k}χ_k + B + C(B−B_ref) | Mehr-Moden-Erweiterung | `s21_modell_multi` |
 | d_D S21 = [S(H+ΔH)−S(H−ΔH)]/[S(H)ΔH] | Maier-Flaig (4) | `derivative_divide` |
 | Σ = ŝ²(JᵀJ)⁻¹, ŝ² = χ²/(N−p) | lmfit `scale_covar` | `fitte_linescan` |
 | u(α)/α = √[(u(m)/m)² + (u(γ)/γ)²] | GUM/ABW | `fit_linienbreite` |

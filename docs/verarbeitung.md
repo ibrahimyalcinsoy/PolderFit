@@ -10,6 +10,8 @@ Portiert aus *pybbfmr*, Grundlage Maier-Flaig et al., RSI 89, 076101 (2018). **K
 
 Standard nach dem Laden: derivative divide, Δn = 4, Farbskala 2–98 %-Perzentile. Ränder → NaN (pybbfmr: 0).
 
+Bedienung (Panel *Verarbeitung*): **genau eine** Operation aktiv (Einschalten schaltet die andere ab; „Alles aus“ = Rohdaten), jede Option mit Hover-Erklärung, Farbskala wählbar (Viridis, Grau, Cividis, Magma, Rot-Blau; auch *Ansicht → Farbskala*). Mausrad wirkt in Eingabefeldern nur mit Fokus; Änderungen sind entprellt (150 ms). Das Figur-Layout wird vor jedem Neuzeichnen zurückgesetzt – der frühere Fehler „Farbplot wird bei Δn-Mausrad immer schmaler“ ist damit behoben. Export: *Farbplot als Bild* (PNG/PDF/SVG mit Overlays) und *Farbplot-Matrix als CSV* (verarbeitete Matrix). Kette und Farbskala sind Teil der [Voreinstellungen](ausreisser.md) und der Projektdatei.
+
 ```python
 feld, freq, Z = ds.komplexe_matrix()
 feld, freq, G = derivative_divide(feld, freq, Z, delta_n=4, mitteln=True)
