@@ -40,6 +40,8 @@ from __future__ import annotations
 import html
 import os
 import sys
+import time
+from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
@@ -209,7 +211,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._baue_ausreisser_dock()
         self._baue_trace_dock()
 
-        # Statusleiste: dauerhafte Modus-Anzeige (rechts), sichtbar nur im Modus.
+        # Statusleiste: Job-Anzeige (immer sichtbar, solange etwas laeuft) und
+        # dauerhafte Modus-Anzeige (rechts), sichtbar nur im Modus.
+        self._baue_job_anzeige()
         self.modus_label = QtWidgets.QLabel("")
         self.modus_label.setObjectName("modus_anzeige")
         self.modus_label.setVisible(False)
@@ -750,9 +754,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.protokoll_ansicht.setFont(mono)
         lay.addWidget(self.protokoll_ansicht, 1)
 
+        fuss = QtWidgets.QHBoxLayout()
+        self.btn_abbrechen_dock = QtWidgets.QPushButton("Abbrechen")
+        self.btn_abbrechen_dock.setObjectName("abbrechen")
+        self.btn_abbrechen_dock.setToolTip(
+            "Laufenden Auto-/Bereichs-/Grenzgeraden-Fit geordnet beenden; bisherige "
+            "Ergebnisse bleiben erhalten.")
+        self.btn_abbrechen_dock.clicked.connect(self._job_abbrechen)
+        self.btn_abbrechen_dock.setVisible(False)
+        fuss.addWidget(self.btn_abbrechen_dock)
+        fuss.addStretch(1)
         leeren = QtWidgets.QPushButton("Protokoll leeren")
         leeren.clicked.connect(self.protokoll_ansicht.clear)
-        lay.addWidget(leeren, 0, QtCore.Qt.AlignRight)
+        fuss.addWidget(leeren)
+        lay.addLayout(fuss)
 
         dock.setWidget(inhalt)
         dock.setMinimumWidth(300)
@@ -1125,13 +1140,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def aufgabe(melde):
             def fortschritt(k, n, erg):
-                melde(k, n, self._fortschritt_text(k, n, erg))
+                melde(k, n, self._fortschritt_text(k, n, erg),
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
             return fitte_geraden_bereich(stapel, geraden, modus=modus,
                                          breite_faktor=self._physik.breite_faktor,
                                          breite_punkte=breite,
                                          fortschritt=fortschritt,
                                          frequenz_min=f_von, frequenz_max=f_bis,
-                                         feld_min=b_von, feld_max=b_bis)
+                                         feld_min=b_von, feld_max=b_bis,
+                                         abbruch=melde.abgebrochen)
 
         def bei_fertig(res):
             neu, uebersprungen = res
@@ -1145,7 +1162,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._log(text, "warn" if probleme else "ok")
             self.statusBar().showMessage(text)
 
-        self._starte_job(aufgabe, bei_fertig, "Grenzgeraden-Fit läuft …")
+        self._starte_job(aufgabe, bei_fertig, "Grenzgeraden-Fit läuft …", live="ergaenzen")
 
     @staticmethod
     def _fortschritt_text(k, n, erg) -> str:
@@ -1316,8 +1333,60 @@ class Hauptfenster(QtWidgets.QMainWindow):
             knopf.setEnabled(an)
 
     # --- Job-Steuerung (Hintergrund-Thread) -------------------------------
-    def _starte_job(self, funktion, bei_fertig, titel: str) -> None:
-        """Fuehrt ``funktion(melde)`` im Hintergrund aus; ``bei_fertig(ergebnis)`` danach."""
+    #: Spinner-Bilder der Statusleiste (Zeichen, die jede Systemschrift hat).
+    _SPINNER = ("●○○", "○●○", "○○●", "○●○")
+
+    def _baue_job_anzeige(self) -> None:
+        """Dauerhafte Job-Anzeige in der Statusleiste: Spinner + Text + Balken + Abbrechen.
+
+        Sichtbar nur, solange ein Hintergrund-Job laeuft - unabhaengig vom
+        Aktivitaets-Panel, damit der Nutzer IMMER sieht, dass gearbeitet wird
+        (Phase, Stand, verstrichene Zeit, Restzeit).
+        """
+        self.status_spinner = QtWidgets.QLabel("")
+        self.status_spinner.setObjectName("job_spinner")
+        self.status_job = QtWidgets.QLabel("")
+        self.status_job.setObjectName("job_text")
+        self.status_fortschritt = QtWidgets.QProgressBar()
+        self.status_fortschritt.setFixedWidth(170)
+        self.status_fortschritt.setRange(0, 100)
+        self.status_fortschritt.setValue(0)
+        self.status_fortschritt.setFormat("%p %")
+        self.btn_abbrechen = QtWidgets.QPushButton("Abbrechen")
+        self.btn_abbrechen.setObjectName("abbrechen")
+        self.btn_abbrechen.setToolTip(
+            "Laufenden Fit geordnet beenden – bisherige Ergebnisse bleiben erhalten.")
+        self.btn_abbrechen.clicked.connect(self._job_abbrechen)
+        for w in (self.status_spinner, self.status_job, self.status_fortschritt, self.btn_abbrechen):
+            w.setVisible(False)
+            self.statusBar().addPermanentWidget(w)
+        self._spinner_timer = QtCore.QTimer(self)
+        self._spinner_timer.setInterval(120)
+        self._spinner_timer.timeout.connect(self._spinner_tick)
+        self._spinner_index = 0
+        self._busy_wert = 0
+        self._job_start = 0.0
+        self._phase_start = 0.0
+        self._job_phase = ""
+        self._job_i = 0
+        self._job_n = 0
+        self._job_abgebrochen = False
+        # Live-Vorschau: Frequenz -> (B_res, Status); Zeichnen entprellt.
+        self._live: dict[float, tuple[float, str]] = {}
+        self._live_aktiv = False
+        self._live_timer = QtCore.QTimer(self)
+        self._live_timer.setSingleShot(True)
+        self._live_timer.setInterval(200)
+        self._live_timer.timeout.connect(self._live_zeichnen)
+
+    def _starte_job(self, funktion, bei_fertig, titel: str,
+                    abbrechbar: bool = True, live: str | None = None) -> None:
+        """Fuehrt ``funktion(melde)`` im Hintergrund aus; ``bei_fertig(ergebnis)`` danach.
+
+        ``abbrechbar``: Abbrechen-Knopf anbieten (der Job fragt ``melde.abgebrochen()``
+        ab). ``live``: Live-Vorschau der Fit-Punkte im Farbplot – ``"neu"`` (Auto-Fit:
+        Overlay beginnt leer) oder ``"ergaenzen"`` (Nachfit: bestehende Punkte bleiben).
+        """
         if self._job_laeuft:
             self._log("Es läuft bereits ein Hintergrundprozess – bitte warten.", "warn")
             return
@@ -1326,14 +1395,46 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._job_laeuft = True
         self._job_titel = titel
         self._bei_fertig = bei_fertig
+        self._job_abgebrochen = False
+        self._job_start = self._phase_start = time.monotonic()
+        self._job_phase = ""
+        self._job_i = self._job_n = 0
         self._setze_bedienelemente(False)
         self._setze_aktivitaet(titel)
         self._log(titel, "info")
+        # SOFORT sichtbare Rueckmeldung: Wartecursor, Statusleiste, Banner im Farbplot.
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)
+        self.status_spinner.setVisible(True)
+        self.status_job.setText(titel)
+        self.status_job.setVisible(True)
+        self.status_fortschritt.setValue(0)
+        self.status_fortschritt.setFormat("…")
+        self.status_fortschritt.setVisible(True)
+        self.btn_abbrechen.setVisible(bool(abbrechbar))
+        self.btn_abbrechen.setEnabled(True)
+        self.btn_abbrechen_dock.setVisible(bool(abbrechbar))
+        self.btn_abbrechen_dock.setEnabled(True)
+        self._spinner_timer.start()
+        self.matrix.zeige_hinweis(f"{titel}")
+        self.statusBar().showMessage(f"{titel} – das Programm arbeitet, die Anzeige "
+                                     "aktualisiert sich laufend.")
+        # Live-Vorschau vorbereiten.
+        self._live_aktiv = live is not None
+        self._live = {}
+        if live == "ergaenzen" and self.stapel is not None:
+            for i, e in enumerate(self.stapel.ergebnisse):
+                if e.gefittet and np.isfinite(e.B_res):
+                    self._live[float(e.frequenz)] = (
+                        float(e.B_res), F.status_von(e, ignoriert=self.stapel.ist_ausreisser(i)))
+        elif live == "neu":
+            self.matrix.aktualisiere_resonanz(np.array([]), np.array([]))
         # Aktivitaet nur fuer die Dauer des Jobs einblenden (unten, flach) -
         # war sie schon offen (manuell), bleibt sie es auch danach.
         self._aktivitaet_war_sichtbar = self.aktivitaet_dock.isVisible()
         self._dock_schmal_halten(self.aktivitaet_dock, hoehe=210)
-        self.fortschritt_balken.setRange(0, 0)  # "busy", bis erster Fortschritt kommt
+        self.fortschritt_balken.setRange(0, 100)
+        self.fortschritt_balken.setValue(0)
+        QtWidgets.QApplication.processEvents()  # Anzeige zeichnen, BEVOR gerechnet wird
 
         self._thread = QtCore.QThread(self)
         self._arbeiter = Arbeiter(funktion)
@@ -1344,24 +1445,112 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # via QueuedConnection im GUI-Thread zu.
         self._arbeiter.fortschritt.connect(self._auf_fortschritt)
         self._arbeiter.protokoll.connect(self._auf_protokoll)
+        self._arbeiter.zwischenstand.connect(self._auf_zwischenstand)
+        self._arbeiter.phase.connect(self._auf_phase)
         self._arbeiter.fehler.connect(self._auf_fehler)
         self._arbeiter.fertig.connect(self._auf_fertig)
         self._thread.start()
 
-    def _auf_fortschritt(self, i: int, n: int) -> None:
-        if n <= 0:
-            self.fortschritt_balken.setRange(0, 0)
+    def _job_abbrechen(self) -> None:
+        """Abbruch anfordern; der laufende Job beendet sich nach dem aktuellen Schritt."""
+        if not self._job_laeuft or self._arbeiter is None:
             return
+        self._arbeiter.abbrechen()
+        self._job_abgebrochen = True
+        self.btn_abbrechen.setEnabled(False)
+        self.btn_abbrechen_dock.setEnabled(False)
+        self.status_job.setText(f"{self._job_titel}  – Abbruch angefordert, beende …")
+        self.matrix.zeige_hinweis(f"{self._job_titel}\nAbbruch angefordert – bisherige Ergebnisse bleiben")
+        self._log("Abbruch angefordert – der laufende Schritt wird noch beendet, "
+                  "bisherige Ergebnisse bleiben erhalten.", "warn")
+
+    def _spinner_tick(self) -> None:
+        self._spinner_index = (self._spinner_index + 1) % len(self._SPINNER)
+        self.status_spinner.setText(self._SPINNER[self._spinner_index])
+        if self._job_n <= 0:
+            # Unbestimmter Fortschritt: wandernder Balken (funktioniert auch dort,
+            # wo Qt den "busy"-Modus mit Stylesheet nicht animiert, z. B. Windows).
+            self._busy_wert = (self._busy_wert + 5) % 101
+            self.status_fortschritt.setValue(self._busy_wert)
+            self.fortschritt_balken.setValue(self._busy_wert)
+            sekunden = time.monotonic() - self._job_start
+            self.status_job.setText(f"{self._job_titel}  {sekunden:.0f} s")
+
+    def _auf_phase(self, phase: str) -> None:
+        self._job_phase = phase
+        self._phase_start = time.monotonic()
+        self._job_i = self._job_n = 0
+        self._log(f"  Phase: {phase}", "auto")
+
+    def _auf_fortschritt(self, i: int, n: int) -> None:
+        self._job_i, self._job_n = int(i), int(n)
+        if n <= 0:
+            self.status_fortschritt.setFormat("…")
+            return
+        prozent = int(round(100.0 * i / n))
         self.fortschritt_balken.setRange(0, n)
         self.fortschritt_balken.setValue(i)
-        self._setze_aktivitaet(f"{self._job_titel}   {i}/{n}")
+        self.status_fortschritt.setFormat("%p %")
+        self.status_fortschritt.setValue(prozent)
+        verstrichen = time.monotonic() - self._job_start
+        phase_zeit = time.monotonic() - self._phase_start
+        rest = f" · noch ≈ {phase_zeit / i * (n - i):.0f} s" if i > 0 and i < n else ""
+        phase = f" {self._job_phase}" if self._job_phase else ""
+        text = f"{self._job_titel}{phase}: {i}/{n} ({prozent} %) · {verstrichen:.0f} s{rest}"
+        self.status_job.setText(text)
+        self._setze_aktivitaet(text)
+        if not self._job_abgebrochen:
+            self.matrix.zeige_hinweis(f"{self._job_titel}{phase}: {i}/{n}{rest}")
 
     def _auf_protokoll(self, text: str) -> None:
         art = "warn" if "⚠" in text else ("ok" if "✓" in text else "auto")
         self._log(text, art)
 
+    def _auf_zwischenstand(self, daten) -> None:
+        """Fertiger Einzelfit aus dem Worker: fuer die Live-Vorschau vormerken."""
+        if not self._live_aktiv:
+            return
+        try:
+            frequenz, b_res, status = daten
+        except (TypeError, ValueError):
+            return
+        if b_res is not None and np.isfinite(b_res):
+            self._live[float(frequenz)] = (float(b_res), str(status))
+        elif float(frequenz) in self._live:
+            del self._live[float(frequenz)]
+        if not self._live_timer.isActive():
+            self._live_timer.start()
+
+    def _live_zeichnen(self) -> None:
+        """Live-Vorschau der bisher gefitteten Punkte im Farbplot (entprellt)."""
+        if not self._live_aktiv or self.datensatz_voll is None:
+            return
+        if not self._live:
+            return
+        frequenzen = np.array(sorted(self._live), dtype=float)
+        bres = np.array([self._live[f][0] for f in frequenzen], dtype=float)
+        status = [self._live[f][1] for f in frequenzen]
+        problem = np.array([st_ in ("problem", "fehler") for st_ in status], dtype=bool)
+        ausgeschlossen = np.array([st_ == "ignoriert" for st_ in status], dtype=bool)
+        self.matrix.aktualisiere_resonanz(frequenzen, bres, problem, ausgeschlossen, status=status)
+
+    def _job_anzeige_beenden(self) -> None:
+        """Sichtbare Job-Rueckmeldung zuruecknehmen (vor bei_fertig - das darf Dialoge oeffnen)."""
+        self._spinner_timer.stop()
+        self._live_timer.stop()
+        self._live_aktiv = False
+        self._live = {}
+        while QtWidgets.QApplication.overrideCursor() is not None:
+            QtWidgets.QApplication.restoreOverrideCursor()
+        for w in (self.status_spinner, self.status_job, self.status_fortschritt,
+                  self.btn_abbrechen):
+            w.setVisible(False)
+        self.btn_abbrechen_dock.setVisible(False)
+        self.matrix.zeige_hinweis(None)
+
     def _auf_fertig(self, ergebnis) -> None:
         bei_fertig = self._bei_fertig
+        self._job_anzeige_beenden()
         try:
             if bei_fertig is not None:
                 bei_fertig(ergebnis)
@@ -1370,12 +1559,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._job_aufraeumen()
 
     def _auf_fehler(self, text: str) -> None:
+        self._job_anzeige_beenden()
         erste = text.splitlines()[0] if text else "Unbekannter Fehler"
         self._log("FEHLER: " + erste, "problem")
         QtWidgets.QMessageBox.critical(self, "Fehler", text)
         self._job_aufraeumen()
 
     def _job_aufraeumen(self) -> None:
+        self._job_anzeige_beenden()
         if self._thread is not None:
             self._thread.quit()
             self._thread.wait()
@@ -1392,6 +1583,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # der Farbplot soll das Bild dominieren (Protokoll bleibt erhalten).
         if not self._aktivitaet_war_sichtbar:
             self.aktivitaet_dock.setVisible(False)
+
+    @contextmanager
+    def _beschaeftigt(self, text: str):
+        """Kurze synchrone Arbeiten (Export, Speichern): Wartecursor + Statusmeldung."""
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        self.status_job.setText(text)
+        self.status_job.setVisible(True)
+        self.statusBar().showMessage(text)
+        QtWidgets.QApplication.processEvents()
+        try:
+            yield
+        finally:
+            QtWidgets.QApplication.restoreOverrideCursor()
+            if not self._job_laeuft:
+                self.status_job.setVisible(False)
 
     # --- Laden ---------------------------------------------------------------
     def _laden(self):
@@ -1429,9 +1635,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         zuordnung, layout = dialog.ergebnis()
 
         def aufgabe(melde):
-            melde(0, 0, f"Lade {os.path.basename(pfad)} …")
+            melde(0, 0, f"Lade {os.path.basename(pfad)} … (große Dateien brauchen "
+                        "bis zu einer Minute)", phase="TDMS lesen")
             datensatz = lade_tdms(pfad, zuordnung=zuordnung, layout=layout)
-            melde(0, 0, f"Prüfe Datensatz ({len(datensatz)} Frequenzen) …")
+            melde(0, 0, f"Prüfe Datensatz ({len(datensatz)} Frequenzen) …", phase="Prüfen")
             bericht = pruefe_datensatz(datensatz)
             return (pfad, datensatz, bericht)
 
@@ -1457,7 +1664,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 f"{len(datensatz)} Frequenzen). Daten ansehen (Verarbeitung), "
                 f"Grenzgeraden/Bereich fitten oder Auto-Fit starten.")
 
-        self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …")
+        self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …",
+                         abbrechbar=False)
 
     def _datensatz_uebernehmen(self, datensatz) -> None:
         """Neuer Datensatz: Farbplot fuellen, leeren Stapel anlegen, Werkzeuge freigeben."""
@@ -1596,9 +1804,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             n = len(datensatz.linescans)
             schritt = max(1, n // 50)  # ~50 Protokollzeilen + alle Problemfits
 
+            def fortschritt_fenster(k, total):
+                melde(k, total, "", phase="Fenstersuche")
+
             def fortschritt(i, total, erg):
                 zeige = (i == 0) or (i + 1 == total) or ((i + 1) % schritt == 0) or erg.problematisch
-                melde(i + 1, total, self._fortschritt_text(i + 1, total, erg) if zeige else "")
+                melde(i + 1, total, self._fortschritt_text(i + 1, total, erg) if zeige else "",
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
 
             return fitte_alle(datensatz, gamma=physik.gamma,
                               breite_faktor=physik.breite_faktor,
@@ -1609,19 +1821,28 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               nachfenster_faktor=physik.nachfenster_faktor,
                               alpha_plausibel=physik.alpha_plausibel_wirksam,
                               n_moden=physik.n_moden,
-                              nachfit_bestaetigen=physik.nachfit_bestaetigen)
+                              nachfit_bestaetigen=physik.nachfit_bestaetigen,
+                              fortschritt_fenster=fortschritt_fenster,
+                              abbruch=melde.abgebrochen)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
+            n_fit = len(stapel.index_gefittet())
             n_prob = len(stapel.index_problematisch())
             art = "ok" if n_prob == 0 else "warn"
-            self._log(f"Auto-Fit fertig: {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.", art)
+            if n_fit < len(stapel.ergebnisse):
+                self._log(f"Auto-Fit abgebrochen: {n_fit} von {len(stapel.ergebnisse)} "
+                          f"Frequenzen gefittet, {n_prob} problematisch – der Rest bleibt "
+                          "„nicht gefittet“ (Grenzgeraden/Bereich fitten den Rest bei Bedarf).", "warn")
+            else:
+                self._log(f"Auto-Fit fertig: {n_fit} Fits, {n_prob} problematisch.", art)
             for grund, anzahl in stapel.problem_statistik().items():
                 self._log(f"   • {grund}: {anzahl}", "warn")
             self.statusBar().showMessage(
-                f"Auto-Fit fertig. {len(stapel.ergebnisse)} Fits, {n_prob} problematisch.")
+                f"Auto-Fit {'abgebrochen' if n_fit < len(stapel.ergebnisse) else 'fertig'}. "
+                f"{n_fit} Fits, {n_prob} problematisch.")
 
-        self._starte_job(aufgabe, bei_fertig, "Auto-Fit läuft …")
+        self._starte_job(aufgabe, bei_fertig, "Auto-Fit läuft …", live="neu")
 
     def _bereich_gewaehlt(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
         """Callback nach dem Aufziehen: Optionen abfragen, dann im Bereich neu fitten."""
@@ -1649,11 +1870,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def aufgabe(melde):
             def fortschritt(k, n, erg):
-                melde(k, n, self._fortschritt_text(k, n, erg))
+                melde(k, n, self._fortschritt_text(k, n, erg),
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
             return fitte_bereich(stapel, feld_min, feld_max, f_min, f_max,
                                  breite_faktor=self._physik.breite_faktor,
                                  modus=modus, breite_punkte=breite,
-                                 fortschritt=fortschritt)
+                                 fortschritt=fortschritt, abbruch=melde.abgebrochen)
 
         def bei_fertig(res):
             neu, uebersprungen = res
@@ -1668,7 +1890,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.statusBar().showMessage(text)
 
         self._starte_job(aufgabe, bei_fertig,
-                         f"Bereichs-Fit {f_min/1e9:.1f}–{f_max/1e9:.1f} GHz …")
+                         f"Bereichs-Fit {f_min/1e9:.1f}–{f_max/1e9:.1f} GHz …", live="ergaenzen")
 
     # --- Overlay / Anzeige ---------------------------------------------------
     def _status_liste(self) -> list[str]:
@@ -2036,13 +2258,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if not pfad:
                 return None
         opt = self._export_optionen()
-        exportiere_excel(self.stapel.ergebnisse, pfad, self._global_parameter(),
-                         ausreisser=self.stapel.ausreisser,
-                         spalten=opt.get("spalten") or None,
-                         nur_gefittete=bool(opt.get("nur_gefittete", True)),
-                         verwendet=self._kittel_indizes(),
-                         zusatzblaetter=self._zusatzblaetter() if opt.get("zusatzblaetter", True) else None,
-                         zugeschnitten=self.stapel.zugeschnitten)
+        with self._beschaeftigt(f"Schreibe Excel: {os.path.basename(pfad)} …"):
+            exportiere_excel(self.stapel.ergebnisse, pfad, self._global_parameter(),
+                             ausreisser=self.stapel.ausreisser,
+                             spalten=opt.get("spalten") or None,
+                             nur_gefittete=bool(opt.get("nur_gefittete", True)),
+                             verwendet=self._kittel_indizes(),
+                             zusatzblaetter=self._zusatzblaetter() if opt.get("zusatzblaetter", True) else None,
+                             zugeschnitten=self.stapel.zugeschnitten)
         self.statusBar().showMessage(f"Excel gespeichert: {pfad}")
         self._log(f"Excel gespeichert: {os.path.basename(pfad)}", "ok")
         return pfad
@@ -2091,7 +2314,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 return []
             basis = os.path.splitext(pfad)[0]
         fenster = self._auswertungsfenster_holen()
-        dateien = fenster.exportiere(basis, csv_deutsch=bool(self._export_optionen().get("csv_deutsch")))
+        with self._beschaeftigt("Schreibe Kittel/LLG-Auswertung (Excel, CSV, Plot) …"):
+            dateien = fenster.exportiere(basis, csv_deutsch=bool(self._export_optionen().get("csv_deutsch")))
         self._log("Kittel/LLG exportiert: " + ", ".join(os.path.basename(d) for d in dateien), "ok")
         return dateien
 
@@ -2148,6 +2372,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         basis = os.path.join(ordner, wahl["basis"])
         geschrieben: list[str] = []
         fehler: list[str] = []
+        self._log(f"Alles speichern nach {ordner} …", "info")
         schritte = {
             "projekt": lambda: self._projekt_speichern(basis + ".polderfit-projekt.json"),
             "excel": lambda: self._export_excel(basis + ".xlsx"),
@@ -2162,7 +2387,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         }
         for teil in wahl["teile"]:
             try:
-                res = schritte[teil]()
+                with self._beschaeftigt(f"Alles speichern: {teil} …"):
+                    res = schritte[teil]()
             except Exception as exc:
                 fehler.append(f"{teil}: {exc}")
                 self._log(f"FEHLER beim Speichern ({teil}): {exc}", "problem")
@@ -2217,7 +2443,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                       f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz] aktiv: "
                       f"{len(betroffen)} Linescans neu gefittet.", "ok")
 
-        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone anwenden …")
+        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone anwenden …", abbrechbar=False)
 
     def _zone_entfernen(self, zonen_index: int):
         if not self.stapel or zonen_index >= len(self.stapel.ausschlusszonen):
@@ -2251,7 +2477,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 lambda: self._zonen_zustand_setzen(zonen_nachher, fits_nachher))
             self._log(f"Ausschlusszone entfernt: {len(betroffen)} Linescans neu gefittet.", "ok")
 
-        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …")
+        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …", abbrechbar=False)
 
     # --- Ausreisser-Management -----------------------------------------------
     def _merke_ausreisser_aenderung(self, beschreibung: str,
@@ -2378,7 +2604,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         auswahl_dict = daten.get("auswertungsauswahl")
 
         def aufgabe(melde):
-            melde(0, 0, f"Lade {os.path.basename(quelle)} …")
+            melde(0, 0, f"Lade {os.path.basename(quelle)} …", phase="TDMS lesen")
             if zuordnung is not None:
                 voll = lade_tdms(quelle, zuordnung=zuordnung,
                                  layout=daten.get("format_typ"))
@@ -2388,10 +2614,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if auswahl_dict:
                 auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
                 reduziert, _indizes = auswahl.reduziere(voll)
-            melde(0, 0, "Stelle Fits mit gespeicherten Fenstern wieder her …")
+            melde(0, 0, "Stelle Fits mit gespeicherten Fenstern wieder her …", phase="Fits")
             stapel = stelle_stapel_wieder_her(
                 daten, reduziert,
-                fortschritt=lambda k, n, e: melde(k, n, ""))
+                fortschritt=lambda k, n, e: melde(k, n, "", phase="Fits wiederherstellen"))
             return (voll, stapel)
 
         def bei_fertig(res):
@@ -2437,7 +2663,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.statusBar().showMessage(
                 f"Projekt geladen ({len(stapel.index_gefittet())} Fits).")
 
-        self._starte_job(aufgabe, bei_fertig, f"Lade Projekt {os.path.basename(pfad)} …")
+        self._starte_job(aufgabe, bei_fertig, f"Lade Projekt {os.path.basename(pfad)} …",
+                         abbrechbar=False)
 
     # --- Einstellungen (Voreinstellungen) -------------------------------------
     def _einstellungen_sammeln(self) -> Einstellungen:
@@ -2692,6 +2919,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
           <li>Der Arbeitsstand wird 15 s nach jeder Änderung automatisch gesichert
               (Datei → Auto-Sicherung wiederherstellen). Zoom, Fensterlayout und
               Achsengrößen werden nie gespeichert.</li>
+          <li>Während Auto-Fit, Bereichs-/Grenzgeraden-Fit und Laden zeigt die Statusleiste
+              Phase, Stand, verstrichene und geschätzte Restzeit; die gefitteten Punkte
+              erscheinen sofort im Farbplot. <b>Abbrechen</b> beendet den Fit geordnet –
+              bisherige Ergebnisse bleiben.</li>
         </ul>
 
         <hr>

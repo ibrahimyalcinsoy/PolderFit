@@ -1,5 +1,20 @@
 # Benchmark PolderFit gegen das LabVIEW-Tool „FTF" (Stand 2026-08-17)
 
+**Begriffe in diesem Bericht und in den Dateinamen**
+
+| Begriff / Kürzel | Bedeutung |
+|---|---|
+| FTF | LabVIEW-Auswerteprogramm „fiddling together FMR“ (Referenz) |
+| `gratings` | Probe mit Gitterstruktur (nanostrukturiertes CoFe, 138 nm Streifen) |
+| `_einpass` (Dateiname) | Lauf mit nur **einem** Fit-Durchgang (ohne zweiten Durchgang auf ±2,5 Linienbreiten, „Nachfenster“ = 0) |
+| `alpha_max` / α-Obergrenze | größte im Fit erlaubte Gilbert-Dämpfung α (Standard 0,1; FeCr₂S₄ 1,0) |
+| ip / oop | Magnetfeld in der Schichtebene (in-plane) / senkrecht zur Schicht (out-of-plane) |
+| Nachfenster | zweiter Fit-Durchgang auf dem verengten Fenster B_res ± 2,5·ΔH |
+| z-Score | Differenz geteilt durch die kombinierte Unsicherheit (nur in diesem ausführlichen Bericht; der einfache Vergleich kommt ohne aus) |
+| Linescan / Colormap | Feldsweep bei fester Frequenz / Frequenzsweep bei festem Feld (umsortiert) |
+
+Abbildungen (`ergebnisse/*.png`): Feld auf der x-Achse, Frequenz auf der y-Achse.
+
 > **Einfacher Vergleich ohne Statistik** (PolderFit minus FTF je Frequenz, nur Werte und Differenzen, schöne Plots): `VERGLEICH_EINFACH.md` – erzeugt mit `python benchmark_ftf/einfacher_vergleich.py` (Abbildungen, CSV und PDF unter `ergebnisse/einfach/`).
 
 **Ziel:** Bereits mit dem FTF („fiddling together FMR", P. Louis / M. Weiler,

@@ -3,7 +3,7 @@
  "tdms": "2024-OCT-28-YIG_Konstanz_180nm_CM-IP-1.8T_50K_0dBm_symm_r0.01_2-Kit-pos-j10_dH0.1.tdms",
  "geometrie_ftf": "ip",
  "n_linescans": 367,
- "t_fit_s": 3.9338507652282715,
+ "t_fit_s": 1.2613763809204102,
  "statistik": {
   "n_zugeordnet": 367,
   "n_pf_problematisch": 0,

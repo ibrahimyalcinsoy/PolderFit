@@ -283,44 +283,44 @@ def benchmark_datensatz(ordner: Path) -> dict:
         print(f"  {'FTF':26s}: g={ftf_kit['g']:.4f}±{ftf_kit['g_err']:.4f}, Meff={ftf_kit['mu0Meff']:.4f}±{ftf_kit['mu0Meff_err']:.4f} T{hu}, "
               f"alpha={ftf_kit['alpha']:.3e}±{ftf_kit['alpha_err']:.1e}, dH0={ftf_kit['mu0Hinh']*1e3:+.2f}±{ftf_kit['mu0Hinh_err']*1e3:.2f} mT")
 
-    # --- Plots ---------------------------------------------------------------
+    # --- Plots (Feld auf der x-Achse, Frequenz auf der y-Achse - wie in der GUI) ---
     fig, axs = plt.subplots(2, 2, figsize=(13, 9))
     ax = axs[0, 0]
     ok_ftf = T["ftf_ok"]
     ok_pf = ~T["pf_problem"]
-    ax.errorbar(T["f_GHz"][ok_ftf], T["B_ftf"][ok_ftf], yerr=T["B_ftf_err"][ok_ftf], fmt="s", ms=4, mfc="none",
+    ax.errorbar(T["B_ftf"][ok_ftf], T["f_GHz"][ok_ftf], xerr=T["B_ftf_err"][ok_ftf], fmt="s", ms=4, mfc="none",
                 color="C1", label="FTF (LabVIEW)")
-    ax.errorbar(T["f_GHz"][ok_pf], T["B_pf"][ok_pf], yerr=T["B_pf_err"][ok_pf], fmt=".", ms=5,
+    ax.errorbar(T["B_pf"][ok_pf], T["f_GHz"][ok_pf], xerr=T["B_pf_err"][ok_pf], fmt=".", ms=5,
                 color="C0", label="PolderFit (gut)")
     if (~ok_pf).any():
-        ax.plot(T["f_GHz"][~ok_pf], T["B_pf"][~ok_pf], "x", color="C3", ms=5, label="PolderFit (problematisch)")
-    ax.set_xlabel("f (GHz)"); ax.set_ylabel(r"$\mu_0 H_{res}$ (T)"); ax.set_title(f"{name}: Resonanzfeld")
+        ax.plot(T["B_pf"][~ok_pf], T["f_GHz"][~ok_pf], "x", color="C3", ms=5, label="PolderFit (problematisch)")
+    ax.set_xlabel(r"$\mu_0 H_{res}$ (T)"); ax.set_ylabel("f (GHz)"); ax.set_title(f"{name}: Resonanzfeld")
     ax.legend(fontsize=8)
 
     ax = axs[0, 1]
-    ax.errorbar(T["f_GHz"][ok_ftf], T["dH_ftf"][ok_ftf] * 1e3, yerr=T["dH_ftf_err"][ok_ftf] * 1e3, fmt="s", ms=4,
+    ax.errorbar(T["B_ftf"][ok_ftf], T["dH_ftf"][ok_ftf] * 1e3, yerr=T["dH_ftf_err"][ok_ftf] * 1e3, fmt="s", ms=4,
                 mfc="none", color="C1", label="FTF")
-    ax.errorbar(T["f_GHz"][ok_pf], T["dH_pf"][ok_pf] * 1e3, yerr=T["dH_pf_err"][ok_pf] * 1e3, fmt=".", ms=5,
+    ax.errorbar(T["B_pf"][ok_pf], T["dH_pf"][ok_pf] * 1e3, yerr=T["dH_pf_err"][ok_pf] * 1e3, fmt=".", ms=5,
                 color="C0", label="PolderFit (gut)")
     if (~ok_pf).any():
-        ax.plot(T["f_GHz"][~ok_pf], T["dH_pf"][~ok_pf] * 1e3, "x", color="C3", ms=5, label="PolderFit (problematisch)")
-    ax.set_xlabel("f (GHz)"); ax.set_ylabel(r"$\mu_0 \Delta H$ (mT)"); ax.set_title("Linienbreite (FWHM)")
+        ax.plot(T["B_pf"][~ok_pf], T["dH_pf"][~ok_pf] * 1e3, "x", color="C3", ms=5, label="PolderFit (problematisch)")
+    ax.set_xlabel(r"$\mu_0 H_{res}$ (T)"); ax.set_ylabel(r"$\mu_0 \Delta H$ (mT)"); ax.set_title("Linienbreite (FWHM)")
     ax.legend(fontsize=8)
 
     ax = axs[1, 0]
     ax.axhline(0, color="k", lw=0.8)
-    ax.errorbar(T["f_GHz"][beide_ok], T["dB"][beide_ok] * 1e3,
+    ax.errorbar(T["B_ftf"][beide_ok], T["dB"][beide_ok] * 1e3,
                 yerr=np.hypot(np.nan_to_num(T["B_pf_err"][beide_ok]), np.nan_to_num(T["B_ftf_err"][beide_ok])) * 1e3,
                 fmt=".", ms=4, color="C2")
-    ax.set_xlabel("f (GHz)"); ax.set_ylabel(r"$B_{res}$(PF) − $B_{res}$(FTF) (mT)")
+    ax.set_xlabel(r"$\mu_0 H_{res}$ (T, FTF)"); ax.set_ylabel(r"$B_{res}$(PF) − $B_{res}$(FTF) (mT)")
     ax.set_title("Differenz Resonanzfeld (Fehlerbalken = kombinierte 1σ)")
 
     ax = axs[1, 1]
     ax.axhline(0, color="k", lw=0.8)
-    ax.errorbar(T["f_GHz"][beide_ok], T["rel_dH"][beide_ok] * 100,
+    ax.errorbar(T["B_ftf"][beide_ok], T["rel_dH"][beide_ok] * 100,
                 yerr=np.hypot(np.nan_to_num(T["dH_pf_err"][beide_ok]), np.nan_to_num(T["dH_ftf_err"][beide_ok]))
                 / T["dH_ftf"][beide_ok] * 100, fmt=".", ms=4, color="C2")
-    ax.set_xlabel("f (GHz)"); ax.set_ylabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)")
+    ax.set_xlabel(r"$\mu_0 H_{res}$ (T, FTF)"); ax.set_ylabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)")
     ax.set_title("Relative Differenz Linienbreite")
     fig.tight_layout()
     fig.savefig(OUT / f"{name}.png", dpi=130)

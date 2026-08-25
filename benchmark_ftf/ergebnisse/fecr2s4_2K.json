@@ -3,7 +3,7 @@
  "tdms": "2026-APR-09-colormap-2K_0dBm-111-axis-aligned_3T-6T-5\u00b0-misalignment-sorted.tdms",
  "geometrie_ftf": "oop",
  "n_linescans": 429,
- "t_fit_s": 32.82016611099243,
+ "t_fit_s": 11.58764100074768,
  "statistik": {
   "n_zugeordnet": 245,
   "n_pf_problematisch": 242,
@@ -88,7 +88,8 @@
    "keine Unsicherheiten": 10,
    "keine Konvergenz": 9,
    "phi an Grenze": 6,
-   "B_res-Unsicherheit zu gross": 3
+   "B_res-Unsicherheit zu gross": 3,
+   "Residuum zu gross": 1
   }
  },
  "kittel": {

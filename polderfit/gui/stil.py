@@ -72,6 +72,11 @@ QPushButton#gut:hover {{ background-color: {F.HELL_GRUEN}; }}
 QPushButton#problem {{ border-color: {F.SIGNAL_GELB}; color: {F.TEXT_GELB}; }}
 QPushButton#problem:hover {{ background-color: {F.HELL_GELB}; }}
 QPushButton#ignorieren {{ border-color: {F.NEUTRAL_GRAU}; color: {F.TEXT_GRAU}; }}
+QPushButton#abbrechen {{ border-color: {F.SIGNAL_ROT}; color: {F.TEXT_ROT}; font-weight: 600; padding: 3px 10px; }}
+QPushButton#abbrechen:hover {{ background-color: {F.HELL_ROT}; }}
+QPushButton#abbrechen:disabled {{ color: {F.INAKTIV}; border-color: {F.RAND}; }}
+QLabel#job_spinner {{ color: {F.SIGNAL_BLAU}; font-weight: 700; font-size: 14px; }}
+QLabel#job_text {{ color: {F.TEXT_BLAU}; font-weight: 600; }}
 QPushButton#ignorieren:hover {{ background-color: {F.HELL_GRAU}; }}
 
 QLabel#modus_anzeige {{

@@ -208,6 +208,7 @@ def fitte_bereich(
     modus: str = "ueberschreiben",
     breite_punkte: int | None = None,
     fortschritt=None,
+    abbruch=None,
 ) -> tuple[list[int], list[int]]:
     """Fittet alle Linescans im Rechteck (Feld x Frequenz) neu.
 
@@ -245,7 +246,7 @@ def fitte_bereich(
     return _fitte_mit_intervallen(stapel, intervalle, modus=modus,
                                   breite_faktor=breite_faktor,
                                   breite_punkte=breite_punkte,
-                                  fortschritt=fortschritt)
+                                  fortschritt=fortschritt, abbruch=abbruch)
 
 
 def _fitte_mit_intervallen(
@@ -255,8 +256,12 @@ def _fitte_mit_intervallen(
     breite_faktor: float = 8.0,
     breite_punkte: int | None = None,
     fortschritt=None,
+    abbruch=None,
 ) -> tuple[list[int], list[int]]:
     """Gemeinsamer Kern von Rechteck- und Grenzgeraden-Fit.
+
+    ``abbruch()`` (optional) wird nach jedem Fit abgefragt; bei ``True`` werden
+    die restlichen Indizes uebersprungen (unveraendert) und gemeldet.
 
     Fenstersuche mit Stationaer-Abzug ueber :func:`auto_fenster_intervalle`
     (siehe dort - behebt das Haengenbleiben an senkrechten Stoerstreifen),
@@ -282,6 +287,9 @@ def _fitte_mit_intervallen(
     neu_gefittet: list[int] = []
     reihenfolge = sorted(zu_fitten)
     for k, i in enumerate(reihenfolge):
+        if abbruch is not None and abbruch():
+            uebersprungen.extend(reihenfolge[k:])
+            break
         grenzen = fenster.get(i)
         if grenzen is None:  # zu wenige Messpunkte im Intervall
             uebersprungen.append(i)
@@ -372,6 +380,7 @@ def fitte_geraden_bereich(
     frequenz_max: float | None = None,
     feld_min: float | None = None,
     feld_max: float | None = None,
+    abbruch=None,
 ) -> tuple[list[int], list[int]]:
     """Fittet alle Linescans im GRUENEN Bereich der Grenzgeraden neu.
 
@@ -414,5 +423,5 @@ def fitte_geraden_bereich(
     neu, weitere = _fitte_mit_intervallen(stapel, intervalle, modus=modus,
                                           breite_faktor=breite_faktor,
                                           breite_punkte=breite_punkte,
-                                          fortschritt=fortschritt)
+                                          fortschritt=fortschritt, abbruch=abbruch)
     return neu, sorted(uebersprungen + weitere)

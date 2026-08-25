@@ -230,8 +230,13 @@ def auto_fenster_alle(
     datensatz: Messdatensatz,
     gamma: float = GAMMA_STANDARD,
     breite_faktor: float = 8.0,
+    fortschritt=None,
 ) -> list[tuple[float, float]]:
     """AutoWindows fuer alle Linescans.
+
+    ``fortschritt(k, n)`` (optional) meldet den Stand der Untergrund-/Residuen-
+    Berechnung je Linescan (der aufwendige Teil), damit die GUI schon in dieser
+    ersten Phase des Auto-Fits Fortschritt zeigen kann.
 
     Strategie (robust gegen Stoerfeatures und schwache Resonanzen):
 
@@ -253,7 +258,11 @@ def auto_fenster_alle(
     """
     linescans = datensatz.linescans
     n = len(linescans)
-    reins: list[np.ndarray] = [_detrend_residuum(ls.feld, ls.s21) for ls in linescans]
+    reins: list[np.ndarray] = []
+    for k, ls in enumerate(linescans):
+        reins.append(_detrend_residuum(ls.feld, ls.s21))
+        if fortschritt is not None:
+            fortschritt(k + 1, n)
 
     # Feld-stationaeren Untergrund abziehen, falls gemeinsames Feldgitter vorliegt
     # (unsortierte Daten: jeder Linescan hat dieselbe Feldachse).

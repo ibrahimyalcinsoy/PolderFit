@@ -15,7 +15,11 @@ Abweichung"). Verglichen werden nur Frequenzen, an denen BEIDE Programme ein
 Ergebnis liefern (PF nicht problematisch, FTF mit gueltigem Hres/dH); die
 uebrigen Punkte sind in den Uebersichtsplots hohl dargestellt.
 
-Ausgabe (``benchmark_ftf/ergebnisse/einfach/``): je Datensatz ein PNG mit sechs
+Darstellung wie in der PolderFit-GUI: **Feld auf der x-Achse, Frequenz auf der
+y-Achse** (Dispersion); Differenzen werden ueber dem Resonanzfeld aufgetragen,
+die zugehoerige Frequenz steht als obere Zusatzachse daran.
+
+Ausgabe (``benchmark_ftf/ergebnisse/einfach/``): je Messung ein PNG mit vier
 Teilbildern und eine CSV-Tabelle, dazu ``uebersicht.png`` (alle Datensaetze),
 ``kittel_llg.png``, der Bericht ``VERGLEICH_EINFACH.md`` (Ordner ``benchmark_ftf``)
 und ``Vergleich_PolderFit_FTF.pdf`` (alle Abbildungen).
@@ -71,17 +75,31 @@ OPTIONEN = {
     "fecr2s4_100K": {"alpha_max": 1.0},
 }
 
+#: Verstaendliche Namen der Messungen (Ordnerkuerzel nur intern).
 BESCHREIBUNG = {
-    "cofe_wm_ip_290K_1": "CoFe, ip, 290 K, 20–66 GHz",
-    "cofe_wm_ip_290K_2": "CoFe, ip, 290 K, 6–19 GHz",
-    "cofe_wm_ip_5K_1": "CoFe, ip, 5 K, 20–66 GHz",
-    "cofe_wm_ip_5K_2": "CoFe, ip, 5 K, 6–19 GHz",
-    "cofe_gratings_ip_5K": "CoFe-Gitter 138 nm, ip, 5 K",
-    "yig_konstanz_ip_50K": "YIG 180 nm, ip, 50 K",
-    "fecr2s4_2K": "FeCr₂S₄, oop, 2 K (α-Obergrenze 1,0)",
-    "fecr2s4_50K": "FeCr₂S₄, oop, 50 K (α-Obergrenze 1,0)",
-    "fecr2s4_100K": "FeCr₂S₄, oop, 100 K (α-Obergrenze 1,0)",
+    "cofe_wm_ip_290K_1": "CoFe-Schicht, 290 K, Feld in der Ebene, 20–66 GHz",
+    "cofe_wm_ip_290K_2": "CoFe-Schicht, 290 K, Feld in der Ebene, 6–19 GHz",
+    "cofe_wm_ip_5K_1": "CoFe-Schicht, 5 K, Feld in der Ebene, 20–66 GHz",
+    "cofe_wm_ip_5K_2": "CoFe-Schicht, 5 K, Feld in der Ebene, 6–19 GHz",
+    "cofe_gratings_ip_5K": "CoFe mit Gitterstruktur (138 nm), 5 K, Feld in der Ebene",
+    "yig_konstanz_ip_50K": "YIG-Schicht (180 nm), 50 K, Feld in der Ebene",
+    "fecr2s4_2K": "FeCr₂S₄-Kristall, 2 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt)",
+    "fecr2s4_50K": "FeCr₂S₄-Kristall, 50 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt)",
+    "fecr2s4_100K": "FeCr₂S₄-Kristall, 100 K, Feld senkrecht (Dämpfung α bis 1,0 erlaubt)",
 }
+#: Kurzname fuer Achsenbeschriftungen/Uebersicht.
+KURZNAME = {
+    "cofe_wm_ip_290K_1": "CoFe 290 K (20–66 GHz)",
+    "cofe_wm_ip_290K_2": "CoFe 290 K (6–19 GHz)",
+    "cofe_wm_ip_5K_1": "CoFe 5 K (20–66 GHz)",
+    "cofe_wm_ip_5K_2": "CoFe 5 K (6–19 GHz)",
+    "cofe_gratings_ip_5K": "CoFe-Gitter 5 K",
+    "yig_konstanz_ip_50K": "YIG 50 K",
+    "fecr2s4_2K": "FeCr₂S₄ 2 K",
+    "fecr2s4_50K": "FeCr₂S₄ 50 K",
+    "fecr2s4_100K": "FeCr₂S₄ 100 K",
+}
+GEOMETRIE_TEXT = {"ip": "Feld in der Ebene", "oop": "Feld senkrecht zur Schicht"}
 
 
 def vergleiche_datensatz(ordner: Path) -> dict:
@@ -203,46 +221,67 @@ def _prozent_grenzen(ax, werte, grenze=200.0):
     return aussen
 
 
+def _frequenzachse_oben(ax, b_feld, f_ghz):
+    """Obere Zusatzachse mit der Frequenz zum Resonanzfeld (nur wenn B_res(f) monoton)."""
+    b_feld = np.asarray(b_feld, dtype=float)
+    f_ghz = np.asarray(f_ghz, dtype=float)
+    m = np.isfinite(b_feld) & np.isfinite(f_ghz)
+    if m.sum() < 3:
+        return
+    reihe = np.argsort(f_ghz[m])
+    f_s, b_s = f_ghz[m][reihe], b_feld[m][reihe]
+    if not np.all(np.diff(b_s) > 0):
+        return
+    sek = ax.secondary_xaxis("top", functions=(lambda b: np.interp(b, b_s, f_s),
+                                               lambda f: np.interp(f, f_s, b_s)))
+    sek.set_xlabel("Frequenz (GHz)", fontsize=8)
+    sek.tick_params(labelsize=8)
+
+
 def zeichne_datensatz(name: str, kenn: dict, T: dict):
+    """Vier Teilbilder, Feld stets auf der x-Achse (wie in der GUI)."""
     f = T["f_GHz"]
     beide = T["beide_ok"].astype(bool)
     pf_ok = T["PF_ok"].astype(bool)
     ftf_ok = T["FTF_ok"].astype(bool)
-    fig, axs = plt.subplots(3, 2, figsize=(13, 12))
-    fig.suptitle(f"{name} – {kenn['beschreibung']}\nPolderFit (grün) und LabVIEW-FTF (orange) "
-                 f"je Frequenz; unten: PolderFit minus FTF", fontsize=13)
+    b_ftf = T["B_res_FTF_T"]
+    b_pf = T["B_res_PF_T"]
+    fig, axs = plt.subplots(2, 2, figsize=(13, 9.5))
+    fig.suptitle(f"{kenn['beschreibung']}\nPolderFit (grün) und LabVIEW-FTF (orange); "
+                 f"unten: PolderFit minus FTF", fontsize=13)
 
-    # Zeile 1: Werte uebereinander
+    # Dispersion: Resonanzfeld (x) gegen Frequenz (y).
     ax = axs[0, 0]
-    ax.plot(f[ftf_ok], T["B_res_FTF_T"][ftf_ok], "s", ms=6, mfc="none", mec=F_FTF, mew=1.3,
-            label="LabVIEW-FTF")
-    ax.plot(f[pf_ok], T["B_res_PF_T"][pf_ok], "o", ms=4, color=F_PF, label="PolderFit")
+    ax.plot(b_ftf[ftf_ok], f[ftf_ok], "s", ms=6, mfc="none", mec=F_FTF, mew=1.3, label="LabVIEW-FTF")
+    ax.plot(b_pf[pf_ok], f[pf_ok], "o", ms=4, color=F_PF, label="PolderFit")
     if (~pf_ok).any():
-        ax.plot(f[~pf_ok], T["B_res_PF_T"][~pf_ok], "^", ms=5, mfc="none", mec=F_AUS,
+        ax.plot(b_pf[~pf_ok], f[~pf_ok], "^", ms=5, mfc="none", mec=F_AUS,
                 label="PolderFit: problematisch (nicht verglichen)")
-    ax.set_xlabel("Frequenz (GHz)")
-    ax.set_ylabel("Resonanzfeld µ₀H_res (T)")
-    ax.set_title("Resonanzfeld")
+    ax.set_xlabel("Resonanzfeld µ₀H_res (T)")
+    ax.set_ylabel("Frequenz (GHz)")
+    ax.set_title("Resonanzfeld je Frequenz")
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
 
+    # Linienbreite ueber dem Resonanzfeld.
     ax = axs[0, 1]
-    ax.plot(f[ftf_ok], T["dH_FTF_mT"][ftf_ok], "s", ms=6, mfc="none", mec=F_FTF, mew=1.3,
+    ax.plot(b_ftf[ftf_ok], T["dH_FTF_mT"][ftf_ok], "s", ms=6, mfc="none", mec=F_FTF, mew=1.3,
             label="LabVIEW-FTF")
-    ax.plot(f[pf_ok], T["dH_PF_mT"][pf_ok], "o", ms=4, color=F_PF, label="PolderFit")
+    ax.plot(b_pf[pf_ok], T["dH_PF_mT"][pf_ok], "o", ms=4, color=F_PF, label="PolderFit")
     if (~pf_ok).any():
-        ax.plot(f[~pf_ok], T["dH_PF_mT"][~pf_ok], "^", ms=5, mfc="none", mec=F_AUS,
+        ax.plot(b_pf[~pf_ok], T["dH_PF_mT"][~pf_ok], "^", ms=5, mfc="none", mec=F_AUS,
                 label="PolderFit: problematisch")
-    ax.set_xlabel("Frequenz (GHz)")
+    ax.set_xlabel("Resonanzfeld µ₀H_res (T)")
     ax.set_ylabel("Linienbreite µ₀ΔH (mT)")
-    ax.set_title("Linienbreite")
+    ax.set_title("Linienbreite über dem Resonanzfeld")
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
+    _frequenzachse_oben(ax, b_ftf[ftf_ok], f[ftf_ok])
 
-    # Zeile 2: Differenzen ueber der Frequenz
+    # Differenzen ueber dem Feld (Frequenz oben).
     ax = axs[1, 0]
     ax.axhline(0, color="k", lw=1)
-    ax.plot(f[beide], T["dB_res_mT"][beide], "o", ms=4, color=F_DIFF)
+    ax.plot(b_ftf[beide], T["dB_res_mT"][beide], "o", ms=4, color=F_DIFF)
     if beide.any():
         med = kenn["median_dB_mT"]
         ax.axhline(med, color=F_DIFF, lw=1, ls="--")
@@ -250,45 +289,30 @@ def zeichne_datensatz(name: str, kenn: dict, T: dict):
                 f"|Differenz| ≤ 1 mT bei {kenn['anteil_dB_unter_1mT']*100:.0f} % der Frequenzen",
                 transform=ax.transAxes, va="top", fontsize=9,
                 bbox=dict(facecolor="white", edgecolor=F_DIFF, alpha=0.9))
-    ax.set_xlabel("Frequenz (GHz)")
+    ax.set_xlabel("Resonanzfeld µ₀H_res (T, FTF)")
     ax.set_ylabel("B_res(PolderFit) − B_res(FTF)  (mT)")
-    ax.set_title("Differenz Resonanzfeld je Frequenz")
+    ax.set_title("Differenz Resonanzfeld")
     ax.grid(alpha=0.3)
+    _frequenzachse_oben(ax, b_ftf[beide], f[beide])
 
     ax = axs[1, 1]
     ax.axhline(0, color="k", lw=1)
-    ax.plot(f[beide], T["ddH_mT"][beide], "o", ms=4, color=F_DIFF)
+    ax.plot(b_ftf[beide], T["ddH_prozent"][beide], "o", ms=4, color=F_DIFF)
     if beide.any():
-        med = kenn["median_ddH_mT"]
+        med = kenn["median_ddH_prozent"]
         ax.axhline(med, color=F_DIFF, lw=1, ls="--")
-        ax.text(0.02, 0.95, f"typisch (Median): {med:+.3f} mT = {kenn['median_ddH_prozent']:+.1f} %\n"
+        ax.text(0.02, 0.95, f"typisch (Median): {kenn['median_ddH_mT']:+.3f} mT = {med:+.1f} %\n"
                 f"|Differenz| ≤ 5 % bei {kenn['anteil_ddH_unter_5prozent']*100:.0f} % der Frequenzen",
                 transform=ax.transAxes, va="top", fontsize=9,
                 bbox=dict(facecolor="white", edgecolor=F_DIFF, alpha=0.9))
-    ax.set_xlabel("Frequenz (GHz)")
-    ax.set_ylabel("ΔH(PolderFit) − ΔH(FTF)  (mT)")
-    ax.set_title("Differenz Linienbreite je Frequenz")
-    ax.grid(alpha=0.3)
-
-    # Zeile 3: Differenzen ueber dem Feld (Resonanzfeld des FTF) und relativ
-    ax = axs[2, 0]
-    ax.axhline(0, color="k", lw=1)
-    ax.plot(T["B_res_FTF_T"][beide], T["dB_res_mT"][beide], "o", ms=4, color=F_DIFF)
-    ax.set_xlabel("Resonanzfeld µ₀H_res (T, FTF)")
-    ax.set_ylabel("B_res(PolderFit) − B_res(FTF)  (mT)")
-    ax.set_title("Differenz Resonanzfeld je Feld")
-    ax.grid(alpha=0.3)
-
-    ax = axs[2, 1]
-    ax.axhline(0, color="k", lw=1)
-    ax.plot(T["B_res_FTF_T"][beide], T["ddH_prozent"][beide], "o", ms=4, color=F_DIFF)
     ax.set_xlabel("Resonanzfeld µ₀H_res (T, FTF)")
     ax.set_ylabel("ΔH(PolderFit) / ΔH(FTF) − 1  (%)")
-    ax.set_title("Relative Differenz Linienbreite je Feld")
+    ax.set_title("Differenz Linienbreite (relativ)")
     _prozent_grenzen(ax, T["ddH_prozent"][beide])
     ax.grid(alpha=0.3)
+    _frequenzachse_oben(ax, b_ftf[beide], f[beide])
 
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
     return fig
 
 
@@ -299,27 +323,28 @@ def zeichne_uebersicht(alle: list[dict]):
     if n == 0:
         return None
     fig, axs = plt.subplots(n, 2, figsize=(12, 2.6 * n), squeeze=False)
-    fig.suptitle("PolderFit minus LabVIEW-FTF je Frequenz – alle Datensätze", fontsize=13)
+    fig.suptitle("PolderFit minus LabVIEW-FTF über dem Resonanzfeld – alle Messungen", fontsize=13)
     for zeile, k in enumerate(gueltig):
         T = k["T"]
         beide = T["beide_ok"].astype(bool)
-        f = T["f_GHz"][beide]
+        b = T["B_res_FTF_T"][beide]
+        kurz = KURZNAME.get(k["name"], k["name"])
         ax = axs[zeile, 0]
         ax.axhline(0, color="k", lw=0.8)
-        ax.plot(f, T["dB_res_mT"][beide], "o", ms=3, color=F_DIFF)
+        ax.plot(b, T["dB_res_mT"][beide], "o", ms=3, color=F_DIFF)
         ax.set_ylabel("ΔB_res (mT)")
-        ax.set_title(f"{k['name']} – Resonanzfeld, typisch {k['median_dB_mT']:+.2f} mT", fontsize=9)
+        ax.set_title(f"{kurz} – Resonanzfeld, typisch {k['median_dB_mT']:+.2f} mT", fontsize=9)
         ax.grid(alpha=0.3)
         ax = axs[zeile, 1]
         ax.axhline(0, color="k", lw=0.8)
-        ax.plot(f, T["ddH_prozent"][beide], "o", ms=3, color=F_DIFF)
+        ax.plot(b, T["ddH_prozent"][beide], "o", ms=3, color=F_DIFF)
         ax.set_ylabel("ΔΔH (%)")
-        ax.set_title(f"{k['name']} – Linienbreite, typisch {k['median_ddH_prozent']:+.1f} %", fontsize=9)
+        ax.set_title(f"{kurz} – Linienbreite, typisch {k['median_ddH_prozent']:+.1f} %", fontsize=9)
         _prozent_grenzen(ax, T["ddH_prozent"][beide])
         ax.grid(alpha=0.3)
         if zeile == n - 1:
-            axs[zeile, 0].set_xlabel("Frequenz (GHz)")
-            axs[zeile, 1].set_xlabel("Frequenz (GHz)")
+            axs[zeile, 0].set_xlabel("Resonanzfeld µ₀H_res (T)")
+            axs[zeile, 1].set_xlabel("Resonanzfeld µ₀H_res (T)")
     fig.tight_layout(rect=(0, 0, 1, 0.97))
     return fig
 
@@ -329,10 +354,10 @@ def zeichne_kittel(alle: list[dict]):
     gueltig = [k for k in alle if "kittel" in k and "FTF" in k["kittel"] and "fehler" not in k["kittel"]["PF"]]
     if not gueltig:
         return None
-    groessen = [("g", "g-Faktor", 1.0), ("mu0Meff_T", "µ₀M_eff (T)", 1.0),
-                ("alpha", "α", 1.0), ("mu0dH0_mT", "µ₀ΔH₀ (mT)", 1.0)]
+    groessen = [("g", "g-Faktor", 1.0), ("mu0Meff_T", "effektive Magnetisierung µ₀M_eff (T)", 1.0),
+                ("alpha", "Dämpfung α", 1.0), ("mu0dH0_mT", "Linienbreite bei f = 0, µ₀ΔH₀ (mT)", 1.0)]
     fig, axs = plt.subplots(1, 4, figsize=(15, 4.6))
-    fig.suptitle("Kittel/LLG-Parameter: PolderFit (grün) und LabVIEW-FTF (orange) je Datensatz", fontsize=12)
+    fig.suptitle("Kittel/LLG-Parameter: PolderFit (grün) und LabVIEW-FTF (orange) je Messung", fontsize=12)
     x = np.arange(len(gueltig))
     for ax, (key, titel, _s) in zip(axs, groessen):
         pf = np.array([k["kittel"]["PF"].get(key, np.nan) for k in gueltig], dtype=float)
@@ -343,7 +368,8 @@ def zeichne_kittel(alle: list[dict]):
             if np.isfinite(a) and np.isfinite(b):
                 ax.plot([xi, xi], [a, b], "-", color=F_AUS, lw=1, zorder=0)
         ax.set_xticks(x)
-        ax.set_xticklabels([k["name"] for k in gueltig], rotation=60, ha="right", fontsize=8)
+        ax.set_xticklabels([KURZNAME.get(k["name"], k["name"]) for k in gueltig],
+                           rotation=60, ha="right", fontsize=8)
         ax.set_title(titel)
         ax.grid(alpha=0.3)
     axs[0].legend(fontsize=8)
@@ -360,14 +386,25 @@ def schreibe_bericht(alle: list[dict]) -> None:
              "Differenzen; die einzige Kennzahl ist der Median der Differenz („typische Abweichung“) "
              "und der Anteil der Frequenzen innerhalb ±1 mT (Feld) bzw. ±5 % (Linienbreite). "
              "Verglichen werden Frequenzen, an denen beide Programme ein Ergebnis liefern.\n")
-    z.append("PolderFit lief mit den GUI-Standardwerten (Auto-Fit, Nachfenster ±2,5·ΔH, "
-             "α-Obergrenze 0,1; FeCr₂S₄ mit α-Obergrenze 1,0). Hinweis: Alle FTF-Referenzen sind "
-             "umsortierte Colormaps (siehe `BERICHT.md`, Abschnitt 1).\n")
-    z.append("Abbildungen: `ergebnisse/einfach/<name>.png` (je Datensatz), `uebersicht.png`, "
+    z.append("PolderFit lief mit den Standardwerten der Oberfläche (Auto-Fit; zweiter Fit-Durchgang "
+             "auf ±2,5 Linienbreiten; Dämpfung α im Fit bis 0,1 erlaubt, bei FeCr₂S₄ bis 1,0). "
+             "Alle Abbildungen wie in der Oberfläche: **Feld auf der x-Achse, Frequenz auf der "
+             "y-Achse** bzw. als obere Zusatzachse. Hinweis: Die FTF-Referenzen stammen aus "
+             "umsortierten Frequenz-Sweeps (siehe `BERICHT.md`, Abschnitt 1).\n")
+    z.append("Abbildungen: `ergebnisse/einfach/<Kürzel>.png` (je Messung), `uebersicht.png`, "
              "`kittel_llg.png`; alles zusammen in `ergebnisse/einfach/Vergleich_PolderFit_FTF.pdf`; "
-             "Werte je Frequenz in `ergebnisse/einfach/<name>.csv`.\n")
+             "Werte je Frequenz in `ergebnisse/einfach/<Kürzel>.csv`. Kürzel ↔ Messung: Tabelle am Ende.\n")
+    z.append("## Begriffe\n")
+    z.append("| Begriff | Bedeutung |\n|---|---|\n"
+             "| Resonanzfeld B_res | Feld µ₀H (Tesla), bei dem die Resonanz liegt – je Frequenz ein Wert |\n"
+             "| Linienbreite µ₀ΔH | volle Breite der Resonanz (mT) |\n"
+             "| Dämpfung α | Gilbert-Dämpfung (dimensionslos); Steigung der Linienbreite über der Frequenz |\n"
+             "| µ₀M_eff, µ₀H_u, µ₀ΔH₀ | effektive Magnetisierung, Anisotropiefeld, Linienbreite bei f = 0 (Kittel/LLG) |\n"
+             "| Feld in der Ebene / senkrecht | Messgeometrie: Magnetfeld parallel zur Schicht (ip) bzw. senkrecht dazu (oop) |\n"
+             "| typische Differenz | Median aller Differenzen PolderFit − FTF (Ausreißer verzerren ihn nicht) |\n"
+             "| FTF | LabVIEW-Auswerteprogramm „fiddling together FMR“ (Referenz) |\n")
     z.append("## Einzelfits je Frequenz\n")
-    z.append("| Datensatz | Frequenzen verglichen | B_res: typische Differenz | B_res innerhalb ±1 mT | "
+    z.append("| Messung | Frequenzen verglichen | B_res: typische Differenz | B_res innerhalb ±1 mT | "
              "ΔH: typische Differenz | ΔH innerhalb ±5 % | ΔH innerhalb ±10 % |")
     z.append("|---|---|---|---|---|---|---|")
     for k in alle:
@@ -375,21 +412,22 @@ def schreibe_bericht(alle: list[dict]) -> None:
             z.append(f"| {k['name']} | Fehler: {k['fehler']} | | | | | |")
             continue
         if not k.get("n_beide_ok"):
-            z.append(f"| {k['name']} | 0 von {k['n_zugeordnet']} | – | – | – | – | – |")
+            z.append(f"| {k['beschreibung']} | 0 von {k['n_zugeordnet']} | – | – | – | – | – |")
             continue
-        z.append(f"| {k['name']} | {k['n_beide_ok']} von {k['n_zugeordnet']} "
+        z.append(f"| {k['beschreibung']} | {k['n_beide_ok']} von {k['n_zugeordnet']} "
                  f"(PF problematisch {k['n_pf_problematisch']}, FTF ohne Ergebnis {k['n_ftf_ohne_ergebnis']}) "
                  f"| {k['median_dB_mT']:+.3f} mT | {k['anteil_dB_unter_1mT']*100:.0f} % "
                  f"| {k['median_ddH_mT']:+.3f} mT ({k['median_ddH_prozent']:+.1f} %) "
                  f"| {k['anteil_ddH_unter_5prozent']*100:.0f} % | {k['anteil_ddH_unter_10prozent']*100:.0f} % |")
     z.append("\n![Übersicht](ergebnisse/einfach/uebersicht.png)\n")
     z.append("## Kittel/LLG-Parameter\n")
-    z.append("PolderFit ungewichtet (Standard). FTF-„M eff“ (oop) ist in PolderFit-Konvention "
-             "umgerechnet (Vorzeichen; FTF: B_res = ω/γ − M). FeCr₂S₄: die Fenster-Automatik ist "
-             "für Linienbreiten ≳ 0,3 T nicht ausgelegt, viele PolderFit-Einzelfits sind dort "
-             "problematisch (siehe `BERICHT.md`); die Werte sind entsprechend zu lesen.\n")
-    z.append("| Datensatz | Geometrie | g PF / FTF (Diff.) | µ₀M_eff PF / FTF (T) | µ₀H_u PF / FTF (mT) | α PF / FTF (Diff.) | µ₀ΔH₀ PF / FTF (mT) |")
-    z.append("|---|---|---|---|---|---|---|")
+    z.append("PolderFit ungewichtet (Standard). FTF-„M eff“ bei senkrechtem Feld ist in die "
+             "PolderFit-Konvention umgerechnet (Vorzeichen; FTF: B_res = ω/γ − M). FeCr₂S₄: die "
+             "automatische Fenstersuche ist für Linienbreiten ≳ 0,3 T nicht ausgelegt, viele "
+             "PolderFit-Einzelfits sind dort problematisch (siehe `BERICHT.md`); die Werte sind "
+             "entsprechend zu lesen.\n")
+    z.append("| Messung | g PF / FTF (Diff.) | µ₀M_eff PF / FTF (T) | µ₀H_u PF / FTF (mT) | α PF / FTF (Diff.) | µ₀ΔH₀ PF / FTF (mT) |")
+    z.append("|---|---|---|---|---|---|")
 
     def paar(a, b, fmt, rel=False):
         if a is None or b is None or not (np.isfinite(a) and np.isfinite(b)):
@@ -402,20 +440,24 @@ def schreibe_bericht(alle: list[dict]) -> None:
         if "fehler" in k or "FTF" not in kit or "fehler" in kit.get("PF", {}):
             continue
         pf, ft = kit["PF"], kit["FTF"]
-        hinweis = " ⚠ FTF-Kittel an der Fitgrenze (g = 4,000) – FTF-Wert unbrauchbar" \
+        hinweis = " ⚠ FTF-Kittel-Fit an seiner Grenze (g = 4,000) – FTF-Werte unbrauchbar" \
             if abs(ft["g"] - 4.0) < 1e-6 else ""
-        z.append(f"| {k['name']}{hinweis} | {k['geometrie']} | {paar(pf['g'], ft['g'], '.4f')} "
+        z.append(f"| {k['beschreibung']}{hinweis} | {paar(pf['g'], ft['g'], '.4f')} "
                  f"| {paar(pf['mu0Meff_T'], ft['mu0Meff_T'], '.4f')} "
                  f"| {paar(pf['mu0Hu_mT'], ft['mu0Hu_mT'], '.2f')} "
                  f"| {paar(pf['alpha'], ft['alpha'], '.2e', rel=True)} "
                  f"| {paar(pf['mu0dH0_mT'], ft['mu0dH0_mT'], '.2f')} |")
     z.append("\n![Kittel/LLG](ergebnisse/einfach/kittel_llg.png)\n")
-    z.append("## Abbildungen je Datensatz\n")
+    z.append("## Abbildungen je Messung\n")
     for k in alle:
         if "fehler" in k:
             continue
-        z.append(f"### {k['name']} – {k['beschreibung']}\n")
+        z.append(f"### {k['beschreibung']}\n")
         z.append(f"![{k['name']}](ergebnisse/einfach/{k['name']}.png)\n")
+    z.append("## Kürzel der Ordner und Dateien\n")
+    z.append("| Kürzel (Ordner/Datei) | Messung |\n|---|---|")
+    for k in alle:
+        z.append(f"| `{k['name']}` | {k.get('beschreibung', k['name'])} |")
     BERICHT.write_text("\n".join(z) + "\n", encoding="utf-8")
 
 
@@ -430,6 +472,7 @@ def main(argv):
                 zeilen = list(csv.DictReader(fh))
             k["T"] = {
                 "f_GHz": np.array([float(r["f_GHz"]) for r in zeilen]),
+                "B_res_FTF_T": np.array([float(r["B_res_FTF_T"]) for r in zeilen]),
                 "beide_ok": np.array([r["beide_ok"] == "True" for r in zeilen]),
                 "dB_res_mT": np.array([float(r["dB_res_mT"]) for r in zeilen]),
                 "ddH_prozent": np.array([float(r["ddH_prozent"]) for r in zeilen]),

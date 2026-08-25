@@ -581,3 +581,99 @@ def test_fit_ansicht_mit_moden_und_status(app):
     assert any(l.startswith("Mode 1") for l in labels) and "Mode 2" in labels
     fa.zeige(ls, 0.6, 0.9, FitErgebnis.platzhalter(20e9, ls.feld))
     assert "nicht gefittet" in fa.ax_re.get_title()
+
+
+# ---------------------------------------------------------------------------
+# Sofortige Rueckmeldung bei Hintergrund-Jobs: Statusleiste, Live-Vorschau, Abbrechen
+# ---------------------------------------------------------------------------
+def test_fitte_alle_abbruch_und_fensterfortschritt():
+    ds = _synth_datensatz(6)
+    zaehler = {"fenster": 0, "fits": 0}
+
+    def fortschritt_fenster(k, n):
+        zaehler["fenster"] = max(zaehler["fenster"], k)
+        assert n == 6
+
+    def abbruch():
+        return zaehler["fits"] >= 2
+
+    def fortschritt(i, n, erg):
+        zaehler["fits"] += 1
+
+    st = fitte_alle(ds, nachfenster_faktor=0.0, fortschritt=fortschritt,
+                    fortschritt_fenster=fortschritt_fenster, abbruch=abbruch)
+    assert zaehler["fenster"] == 6                      # Phase 1 meldet jeden Linescan
+    assert len(st.ergebnisse) == 6 and st.index_gefittet() == [0, 1]
+    assert all(not e.gefittet for e in st.ergebnisse[2:])
+    # Grenzgeraden-Fit bricht ebenfalls geordnet ab.
+    st2 = leerer_stapel(ds, nachfenster_faktor=0.0)
+    g = Grenzgerade(b1=0.56, f1=5e9, b2=0.56, f2=30e9, gruen_positiv=False)
+    if (g.erlaubtes_intervall(10e9, 0.55, 0.95) or (0, 0))[1] < 0.9:
+        g.seite_wechseln()
+    n_fits = {"k": 0}
+
+    def fortschritt2(k, n, erg):
+        n_fits["k"] = k
+
+    neu, uebersprungen = fitte_geraden_bereich(st2, [g], fortschritt=fortschritt2,
+                                               abbruch=lambda: n_fits["k"] >= 3)
+    assert len(neu) == 3 and len(uebersprungen) == 3
+
+
+def test_hauptfenster_job_rueckmeldung_live_und_abbruch(app, monkeypatch, tmp_path):
+    monkeypatch.setenv("POLDERFIT_KONFIG", str(tmp_path / "konfig"))
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    ds = _synth_datensatz(6)
+    w._datensatz_uebernehmen(ds)
+    gesehen = {}
+
+    def aufgabe(melde):
+        melde(0, 0, "", phase="Fenstersuche")
+        for k in range(6):
+            melde(k + 1, 6, "", phase="Einzelfits",
+                  daten=(ds.frequenzen[k], 0.62 + 0.02 * k, "gut"))
+            if melde.abgebrochen():
+                return f"abgebrochen bei {k + 1}"
+            _pumpe(120)
+        return "fertig"
+
+    def bei_fertig(res):
+        gesehen["res"] = res
+
+    w._starte_job(aufgabe, bei_fertig, "Testfit läuft …", abbrechbar=True, live="neu")
+    # Sofort sichtbar: Statusleiste, Banner, Wartecursor, Abbrechen-Knopf.
+    assert w.status_job.isVisibleTo(w) and w.status_fortschritt.isVisibleTo(w)
+    assert w.btn_abbrechen.isVisibleTo(w) and w.btn_abbrechen.isEnabled()
+    assert w.matrix._hinweis_text and "Testfit" in w.matrix._hinweis_text
+    assert QtWidgets.QApplication.overrideCursor() is not None
+    _pumpe(500)
+    # Live-Vorschau zeichnet die bisher gefitteten Punkte.
+    assert w.matrix._res_freq is not None and w.matrix._res_freq.size >= 1
+    assert "Einzelfits" in w.status_job.text() and "%" in w.status_job.text()
+    w._job_abbrechen()
+    assert not w.btn_abbrechen.isEnabled()
+    _pumpe(2500)
+    assert gesehen["res"].startswith("abgebrochen")
+    assert w._job_laeuft is False
+    assert not w.status_job.isVisibleTo(w) and w.matrix._hinweis_text is None
+    assert QtWidgets.QApplication.overrideCursor() is None
+    # Nicht abbrechbarer Job zeigt keinen Abbrechen-Knopf, aber Spinner/Status.
+    w._starte_job(lambda melde: (melde(0, 0, "", phase="TDMS lesen"), "x")[1],
+                  lambda r: None, "Lade …", abbrechbar=False)
+    assert w.status_spinner.isVisibleTo(w) and not w.btn_abbrechen.isVisibleTo(w)
+    _pumpe(800)
+    assert w._job_laeuft is False
+    w.close()
+
+
+def test_matrix_hinweis_banner(app):
+    from polderfit.gui.matrix_ansicht import MatrixAnsicht
+    m = MatrixAnsicht()
+    m.zeige(_mini_datensatz(5))
+    m.zeige_hinweis("Auto-Fit läuft … 3/5")
+    assert m._hinweis_artist is not None
+    m.setze_verarbeitung(Verarbeitungskette.standard(), "betrag")   # Neuzeichnen behaelt Banner
+    assert m._hinweis_artist is not None and m._hinweis_text == "Auto-Fit läuft … 3/5"
+    m.zeige_hinweis(None)
+    assert m._hinweis_artist is None

@@ -4,7 +4,7 @@
   "tdms": "ip-parallel-colormap-5K-sorted-2.tdms",
   "geometrie_ftf": "ip",
   "n_linescans": 1061,
-  "t_fit_s": 11.595937013626099,
+  "t_fit_s": 4.195984601974487,
   "statistik": {
    "n_zugeordnet": 1061,
    "n_pf_problematisch": 0,
@@ -389,7 +389,7 @@
   "tdms": "2024-JUN-28-CoFe-ip-colormap-290K_0dBm-sorted-1st-part.tdms",
   "geometrie_ftf": "ip",
   "n_linescans": 70,
-  "t_fit_s": 0.9738504886627197,
+  "t_fit_s": 0.3682987689971924,
   "statistik": {
    "n_zugeordnet": 70,
    "n_pf_problematisch": 0,
@@ -774,7 +774,7 @@
   "tdms": "2024-JUN-28-CoFe-ip-colormap-290K_0dBm-sorted-2-2nd-part.tdms",
   "geometrie_ftf": "ip",
   "n_linescans": 21,
-  "t_fit_s": 0.4799633026123047,
+  "t_fit_s": 0.10145735740661621,
   "statistik": {
    "n_zugeordnet": 21,
    "n_pf_problematisch": 0,
@@ -1159,7 +1159,7 @@
   "tdms": "2024-JUN-30-CoFe-ip-colormap-5K_0dBm-sorted-1st-part.tdms",
   "geometrie_ftf": "ip",
   "n_linescans": 71,
-  "t_fit_s": 1.1984660625457764,
+  "t_fit_s": 0.3359341621398926,
   "statistik": {
    "n_zugeordnet": 71,
    "n_pf_problematisch": 0,
@@ -1544,7 +1544,7 @@
   "tdms": "2024-JUN-30-CoFe-ip-colormap-5K_0dBm-sorted-2nd-part.tdms",
   "geometrie_ftf": "ip",
   "n_linescans": 21,
-  "t_fit_s": 0.5111703872680664,
+  "t_fit_s": 0.23259973526000977,
   "statistik": {
    "n_zugeordnet": 13,
    "n_pf_problematisch": 0,
@@ -1931,7 +1931,7 @@
   "tdms": "2026-APR-15-colormap-100K_0dBm-111-axis-aligned_6T-2.5\u00b0-x-axis-rotation-sorted.tdms",
   "geometrie_ftf": "oop",
   "n_linescans": 97,
-  "t_fit_s": 15.150724411010742,
+  "t_fit_s": 5.320078134536743,
   "statistik": {
    "n_zugeordnet": 90,
    "n_pf_problematisch": 84,
@@ -2272,7 +2272,7 @@
   "tdms": "2026-APR-09-colormap-2K_0dBm-111-axis-aligned_3T-6T-5\u00b0-misalignment-sorted.tdms",
   "geometrie_ftf": "oop",
   "n_linescans": 429,
-  "t_fit_s": 32.82016611099243,
+  "t_fit_s": 11.58764100074768,
   "statistik": {
    "n_zugeordnet": 245,
    "n_pf_problematisch": 242,
@@ -2357,7 +2357,8 @@
     "keine Unsicherheiten": 10,
     "keine Konvergenz": 9,
     "phi an Grenze": 6,
-    "B_res-Unsicherheit zu gross": 3
+    "B_res-Unsicherheit zu gross": 3,
+    "Residuum zu gross": 1
    }
   },
   "kittel": {
@@ -2613,7 +2614,7 @@
   "tdms": "2026-APR-14-colormap-50K_0dBm-111-axis-aligned_6T-2.5\u00b0-x-axis-rotation-sorted.tdms",
   "geometrie_ftf": "oop",
   "n_linescans": 85,
-  "t_fit_s": 13.931918382644653,
+  "t_fit_s": 4.503255128860474,
   "statistik": {
    "n_zugeordnet": 85,
    "n_pf_problematisch": 83,
@@ -2867,7 +2868,7 @@
   "tdms": "2024-OCT-28-YIG_Konstanz_180nm_CM-IP-1.8T_50K_0dBm_symm_r0.01_2-Kit-pos-j10_dH0.1.tdms",
   "geometrie_ftf": "ip",
   "n_linescans": 367,
-  "t_fit_s": 3.9338507652282715,
+  "t_fit_s": 1.2613763809204102,
   "statistik": {
    "n_zugeordnet": 367,
    "n_pf_problematisch": 0,

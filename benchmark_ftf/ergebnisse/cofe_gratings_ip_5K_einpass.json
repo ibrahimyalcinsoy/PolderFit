@@ -3,7 +3,7 @@
  "tdms": "ip-parallel-colormap-5K-sorted-2.tdms",
  "geometrie_ftf": "ip",
  "n_linescans": 1061,
- "t_fit_s": 8.409525632858276,
+ "t_fit_s": 3.123932361602783,
  "statistik": {
   "n_zugeordnet": 1061,
   "n_pf_problematisch": 0,

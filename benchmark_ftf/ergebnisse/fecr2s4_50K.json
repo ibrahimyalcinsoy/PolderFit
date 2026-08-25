@@ -3,7 +3,7 @@
  "tdms": "2026-APR-14-colormap-50K_0dBm-111-axis-aligned_6T-2.5\u00b0-x-axis-rotation-sorted.tdms",
  "geometrie_ftf": "oop",
  "n_linescans": 85,
- "t_fit_s": 13.931918382644653,
+ "t_fit_s": 4.503255128860474,
  "statistik": {
   "n_zugeordnet": 85,
   "n_pf_problematisch": 83,

@@ -164,6 +164,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._drag_endpunkt = None         # (geraden_index, "p1"|"p2")
         # Ausreisser-Overlay-Zustand.
         self._res_ausgeschlossen = None
+        # Hinweis-Banner (laufender Hintergrund-Job).
+        self._hinweis_text: str | None = None
+        self._hinweis_artist = None
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.mpl_connect("button_press_event", self._on_press)
@@ -421,8 +424,32 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zeichne_zonen()
         if self._geraden:
             self._zeichne_geraden()
+        self._hinweis_artist = None
+        if self._hinweis_text:
+            self._zeichne_hinweis()
         self._tight_layout_sicher()
         self.draw_idle()
+
+    def zeige_hinweis(self, text: str | None) -> None:
+        """Banner oben im Farbplot (z. B. "Auto-Fit läuft … 120/1001"); ``None`` entfernt es."""
+        self._hinweis_text = text or None
+        if self._hinweis_artist is not None:
+            try:
+                self._hinweis_artist.remove()
+            except (ValueError, AttributeError):
+                pass
+            self._hinweis_artist = None
+        if self._hinweis_text:
+            self._zeichne_hinweis()
+        self.draw_idle()
+
+    def _zeichne_hinweis(self) -> None:
+        self._hinweis_artist = self.ax.text(
+            0.5, 0.975, self._hinweis_text, transform=self.ax.transAxes,
+            ha="center", va="top", fontsize=11, fontweight="bold", color=F.TEXT, zorder=20,
+            bbox=dict(boxstyle="round,pad=0.45", facecolor=F.HELL_BLAU,
+                      edgecolor=F.SIGNAL_BLAU, lw=1.5, alpha=0.96))
+        self._hinweis_artist.set_in_layout(False)
 
     def thumbnail(self):
         """Liefert ``(matrix, extent)`` der gesamten Messung (fuer den Navigator)."""

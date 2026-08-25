@@ -3,7 +3,7 @@
  "tdms": "2024-JUN-30-CoFe-ip-colormap-5K_0dBm-sorted-2nd-part.tdms",
  "geometrie_ftf": "ip",
  "n_linescans": 21,
- "t_fit_s": 0.24131441116333008,
+ "t_fit_s": 0.09093189239501953,
  "statistik": {
   "n_zugeordnet": 13,
   "n_pf_problematisch": 0,

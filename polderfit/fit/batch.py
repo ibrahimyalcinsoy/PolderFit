@@ -262,8 +262,16 @@ def fitte_alle(
     alpha_plausibel: float | None = None,
     n_moden: int = 1,
     nachfit_bestaetigen: bool = True,
+    fortschritt_fenster=None,
+    abbruch=None,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
+
+    ``fortschritt_fenster(k, n)`` meldet die Fenstersuche (Phase 1),
+    ``fortschritt(i, n, ergebnis)`` die Einzelfits (Phase 2). ``abbruch()``
+    (optional) wird nach jedem Einzelfit abgefragt; liefert es ``True``, bleiben
+    die restlichen Frequenzen als Platzhalter ("nicht gefittet") stehen und der
+    bis dahin erreichte Stapel wird zurueckgegeben.
 
     ``fortschritt`` ist ein optionaler Callback ``f(i, n, ergebnis)`` fuer die GUI.
     ``zentren`` (optional): vorgegebene Fenstermitten ``B_res(f)`` je Frequenz (z. B.
@@ -285,7 +293,8 @@ def fitte_alle(
         fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor,
                                      alpha_erwartet=alpha_erwartet)
     else:
-        fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)
+        fenster = auto_fenster_alle(datensatz, gamma, breite_faktor,
+                                    fortschritt=fortschritt_fenster)
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=fenster,
         alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
@@ -294,6 +303,12 @@ def fitte_alle(
     )
     n = len(datensatz.linescans)
     for i, ls in enumerate(datensatz.linescans):
+        if abbruch is not None and abbruch():
+            # Rest als Platzhalter: der Stapel bleibt konsistent und nutzbar.
+            for rest in datensatz.linescans[i:]:
+                stapel.zugeschnitten.append(rest)
+                stapel.ergebnisse.append(FitErgebnis.platzhalter(rest.frequenz, rest.feld))
+            break
         ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
             ls, fenster[i], gamma, alpha_max=alpha_max,
             nachfenster_faktor=nachfenster_faktor, alpha_plausibel=alpha_plausibel,
