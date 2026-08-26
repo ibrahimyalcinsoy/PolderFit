@@ -90,7 +90,7 @@ from ..auswertung.moden import auswertung_je_mode, max_moden, zuordnung_moden
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
 from .ausreisser_panel import AusreisserPanel
-from .auswahl_dialog import AuswahlDialog
+from .auswahl_dialog import AuswahlDialog, RoiAnfrage
 from .parameter_dialog import ParameterDialog
 from .auswertung_fenster import AuswertungsFenster
 from .bereichsfit_dialog import BereichsFitDialog
@@ -142,6 +142,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.datensatz_voll = None
         # Zuletzt benutzte Auswertungsauswahl (Jumper/Bereich) als Vorbelegung.
         self._letzte_auswahl: Auswertungsauswahl | None = None
+        #: ROI-Rechteck fuer den Auto-Fit-Dialog laeuft: (fertig, abgebrochen).
+        self._roi_rueckruf = None
         #: Voreinstellungen (Datei -> Einstellungen); beim Start aus dem
         #: Konfigurationsverzeichnis geladen.
         self._einstellungen, self._einstellungen_geladen = lade_standard()
@@ -981,6 +983,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if modus is None:
             self.modus_label.setVisible(False)
             self.statusBar().showMessage("Modus beendet.", 4000)
+            if self._roi_rueckruf is not None:
+                # Rechteck-Modus meldet erst das Ende, dann das Rechteck: Abbruch
+                # (Esc) erst pruefen, wenn der Rueckruf Gelegenheit hatte.
+                QtCore.QTimer.singleShot(0, self._roi_abbruch_pruefen)
         else:
             text = _MODUS_TEXTE.get(modus, modus)
             self.modus_label.setText(text.split(" – ")[0])
@@ -1846,12 +1852,25 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "'TDMS laden' öffnen und die Kanäle den Rollen zuordnen.")
         return False
 
-    def _frage_auswahl(self) -> Auswertungsauswahl | None:
-        """Zeigt vor der Auswertung den Jumper-/Bereichs-Dialog (Frequenz/Feld von … bis …)."""
-        dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self,
-                               n_moden=self._physik.n_moden,
-                               zweistufig=self._physik.auto_fit_zweistufig)
-        if not dialog.exec():
+    def _frage_auswahl(self, vorbelegung=None, roi_bereich=None, moden_vorgabe=None):
+        """Zeigt vor der Auswertung den Jumper-/Bereichs-Dialog (Frequenz/Feld von … bis …).
+
+        Liefert die :class:`Auswertungsauswahl`, ``None`` (abgebrochen) oder eine
+        :class:`RoiAnfrage`, wenn der Nutzer zuerst eine ROI im Farbplot aufziehen
+        will. ``roi_bereich`` = aufgezogenes Rechteck (Vorbelegung), ``vorbelegung``
+        = Eingaben vor dem ROI-Umweg, ``moden_vorgabe`` = ``(n_moden, zweistufig)``.
+        """
+        n_moden, zweistufig = (moden_vorgabe if moden_vorgabe is not None
+                               else (self._physik.n_moden, self._physik.auto_fit_zweistufig))
+        dialog = AuswahlDialog(self.datensatz_voll,
+                               vorbelegung if vorbelegung is not None else self._letzte_auswahl,
+                               parent=self, n_moden=n_moden, zweistufig=zweistufig,
+                               zoom_bereich=self.matrix.sichtbarer_bereich(),
+                               roi_moeglich=True, roi_bereich=roi_bereich)
+        code = dialog.exec()
+        if code == AuswahlDialog.ROI_AUFZIEHEN:
+            return RoiAnfrage(dialog.zwischenstand(), dialog.n_moden(), dialog.zweistufig())
+        if not code:
             return None
         auswahl = dialog.auswahl()
         self._letzte_auswahl = auswahl
@@ -1867,6 +1886,35 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._log("Auswertungsauswahl: "
                       + auswahl.beschreibung(self.datensatz_voll), "info")
         return auswahl
+
+    def _roi_im_farbplot(self, fertig, abgebrochen) -> None:
+        """ROI fuer den Auto-Fit: Rechteck im Farbplot aufziehen; danach
+        ``fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)``, bei Esc ``abgebrochen()``."""
+        if not self._modus_start_erlaubt():
+            abgebrochen()
+            return
+        self._roi_rueckruf = (fertig, abgebrochen)
+
+        def rechteck(feld_min, feld_max, f_min_ghz, f_max_ghz):
+            self._roi_rueckruf = None
+            self._log(f"ROI übernommen: {feld_min:.3f}–{feld_max:.3f} T, "
+                      f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz.", "ok")
+            fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)
+
+        self.matrix.starte_bereichs_fit(rechteck)
+        text = ("ROI für den Auto-Fit: Rechteck (Feld × Frequenz) im Farbplot aufziehen – "
+                "danach öffnet sich der Auto-Fit-Dialog wieder (Esc bricht ab).")
+        self._log(text, "info")
+        self.statusBar().showMessage(text)
+
+    def _roi_abbruch_pruefen(self) -> None:
+        """Rechteck-Modus endete ohne Rechteck (Esc): Dialog ohne ROI wieder oeffnen."""
+        rueckruf = self._roi_rueckruf
+        if rueckruf is None:
+            return
+        self._roi_rueckruf = None
+        self._log("ROI abgebrochen – Auto-Fit-Dialog ohne Rechteck.", "info")
+        rueckruf[1]()
 
     # --- Physikalische Parameter --------------------------------------------
     def _physik_dialog(self):
@@ -1938,14 +1986,30 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._autosicherung_anstossen()
 
     def _auto_fit(self):
+        self._auto_fit_fortsetzen()
+
+    def _auto_fit_fortsetzen(self, vorbelegung=None, roi_bereich=None, moden_vorgabe=None):
+        """Auto-Fit mit Dialog; ``roi_bereich``/``vorbelegung``/``moden_vorgabe``
+        kommen aus dem ROI-Umweg (Rechteck im Farbplot, siehe :meth:`_roi_im_farbplot`)."""
         if self.stapel is None or self.datensatz_voll is None:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
             return
         if not self._mapping_vorhanden():
             return
         datensatz = self.datensatz_voll
-        auswahl = self._frage_auswahl()
+        auswahl = self._frage_auswahl(vorbelegung=vorbelegung, roi_bereich=roi_bereich,
+                                      moden_vorgabe=moden_vorgabe)
         if auswahl is None:
+            return
+        if isinstance(auswahl, RoiAnfrage):
+            anfrage = auswahl
+            self._roi_im_farbplot(
+                fertig=lambda b0, b1, f0, f1: self._auto_fit_fortsetzen(
+                    vorbelegung=anfrage.auswahl, roi_bereich=(b0, b1, f0, f1),
+                    moden_vorgabe=(anfrage.n_moden, anfrage.zweistufig)),
+                abgebrochen=lambda: self._auto_fit_fortsetzen(
+                    vorbelegung=anfrage.auswahl,
+                    moden_vorgabe=(anfrage.n_moden, anfrage.zweistufig)))
             return
         physik = self._physik
 

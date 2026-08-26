@@ -672,6 +672,16 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         return bool((abs(x1 - x0) < abs(fx1 - fx0) - eps)
                     or (abs(y1 - y0) < abs(fy1 - fy0) - eps))
 
+    def sichtbarer_bereich(self) -> tuple[float, float, float, float] | None:
+        """``(feld_min, feld_max, f_min_ghz, f_max_ghz)`` des sichtbaren Ausschnitts,
+        wenn gezoomt ist - sonst ``None`` (ganzer Datenbereich). Vorbelegung der
+        ROI im Auto-Fit-Dialog."""
+        if self._extent is None or not self._ist_gezoomt():
+            return None
+        x0, x1 = sorted(float(v) for v in self.ax.get_xlim())
+        y0, y1 = sorted(float(v) for v in self.ax.get_ylim())
+        return (x0, x1, y0, y1)
+
     def _zoom(self, event, faktor: float) -> None:
         if self._extent is None:
             return

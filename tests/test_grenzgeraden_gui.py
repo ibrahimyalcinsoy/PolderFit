@@ -382,3 +382,80 @@ def test_band_werkzeug_und_vorpruefung(app, monkeypatch):
     assert "kein linescan" in w.statusBar().currentMessage().lower()
     w._setze_n_moden(1)
     assert panel.band_box.isHidden() and panel.n_moden_combo.currentData() == 1
+
+
+def test_auswahl_dialog_roi_vorbelegung_und_knoepfe(app):
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
+    ds = _mini_datensatz()
+    dlg = AuswahlDialog(ds, None, zoom_bereich=(2.7, 3.1, 10.0, 30.0), roi_moeglich=True)
+    assert dlg.btn_roi.isEnabled() and dlg.btn_zoom.isEnabled()
+    a = dlg.auswahl()
+    assert (a.feld_min_t, a.feld_max_t) == pytest.approx((2.7, 3.1))
+    assert (a.frequenz_min_hz, a.frequenz_max_hz) == pytest.approx((10e9, 30e9))
+    assert "Zoom" in dlg.bereich_hinweis.text()
+    dlg.btn_alles.click()
+    assert dlg.auswahl().ist_neutral
+    dlg.btn_zoom.click()
+    assert dlg.auswahl().feld_min_t == pytest.approx(2.7)
+    # Rechteck hat Vorrang vor Zoom.
+    dlg2 = AuswahlDialog(ds, None, zoom_bereich=(2.7, 3.1, 10.0, 30.0),
+                         roi_bereich=(2.8, 3.0, 12.0, 20.0))
+    assert dlg2.auswahl().feld_max_t == pytest.approx(3.0) and "ROI" in dlg2.bereich_hinweis.text()
+    assert not dlg2.btn_roi.isEnabled()
+    # Ohne Zoom: letzte Auswahl vorbelegt, Zoom-Knopf aus.
+    dlg3 = AuswahlDialog(ds, dlg2.auswahl(), roi_moeglich=True)
+    assert not dlg3.btn_zoom.isEnabled() and dlg3.auswahl().feld_max_t == pytest.approx(3.0)
+    # "ROI im Farbplot aufziehen": Dialog endet mit ROI_AUFZIEHEN, Eingaben bleiben.
+    dlg3.n_feld.setValue(3)
+    dlg3.btn_roi.click()
+    assert dlg3.result() == AuswahlDialog.ROI_AUFZIEHEN
+    assert dlg3.zwischenstand().n_feld == 3
+
+
+def test_hauptfenster_roi_umweg_vor_autofit(app, monkeypatch):
+    """ROI-Knopf im Dialog -> Rechteck im Farbplot -> Dialog wieder (mit Rechteck) ->
+    Auto-Fit startet mit dem Bereich; Esc im Rechteck-Modus -> Dialog ohne Rechteck."""
+    from polderfit.gui import auswahl_dialog as ad
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
+    w = _fenster_mit_stapel()
+    aufrufe = []
+
+    def exec_fake(dlg):
+        aufrufe.append((dlg.auswahl().feld_min_t, dlg.auswahl().feld_max_t,
+                        dlg.auswahl().frequenz_min_hz, dlg.auswahl().frequenz_max_hz))
+        if len(aufrufe) == 1:
+            dlg.n_feld.setValue(2)
+            dlg._roi_geklickt()                  # 1. Dialog: ROI aufziehen
+            return AuswahlDialog.ROI_AUFZIEHEN
+        return True                              # 2. Dialog: starten
+
+    jobs = []
+    monkeypatch.setattr(ad.AuswahlDialog, "exec", exec_fake)
+    monkeypatch.setattr(w, "_starte_job", lambda *a, **k: jobs.append(a))
+    w._auto_fit()
+    assert len(aufrufe) == 1 and w.matrix.modus == "bereich" and w._roi_rueckruf is not None
+    w.matrix._rechteck_abschliessen(2.7, 12.0, 3.1, 30.0)       # Rechteck (T, GHz)
+    app.processEvents()
+    assert len(aufrufe) == 2 and w.matrix.modus is None and w._roi_rueckruf is None
+    assert aufrufe[1] == pytest.approx((2.7, 3.1, 12e9, 30e9))
+    assert len(jobs) == 1 and w._letzte_auswahl.n_feld == 2   # Zwischenstand uebernommen
+    assert w._letzte_auswahl.feld_min_t == pytest.approx(2.7)
+
+    # Abbruch (Esc): Rechteck-Modus endet ohne Rechteck -> Dialog ohne ROI erneut.
+    aufrufe.clear()
+    jobs.clear()
+
+    def exec_abbruch(dlg):
+        aufrufe.append(dlg.result())
+        if len(aufrufe) == 1:
+            dlg._roi_geklickt()
+            return AuswahlDialog.ROI_AUFZIEHEN
+        return False                             # 2. Dialog: abbrechen
+
+    monkeypatch.setattr(ad.AuswahlDialog, "exec", exec_abbruch)
+    w._auto_fit()
+    assert w.matrix.modus == "bereich"
+    w.matrix.beende_modus()                      # wie Esc
+    from PySide6.QtTest import QTest
+    QTest.qWait(50)
+    assert len(aufrufe) == 2 and w._roi_rueckruf is None and jobs == []
