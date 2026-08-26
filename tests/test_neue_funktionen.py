@@ -648,8 +648,8 @@ def test_hauptfenster_job_rueckmeldung_live_und_abbruch(app, monkeypatch, tmp_pa
     assert w.matrix._hinweis_text and "Testfit" in w.matrix._hinweis_text
     assert QtWidgets.QApplication.overrideCursor() is not None
     _pumpe(500)
-    # Live-Vorschau zeichnet die bisher gefitteten Punkte.
-    assert w.matrix._res_freq is not None and w.matrix._res_freq.size >= 1
+    # Waehrend des Jobs wird NICHT gezeichnet (GIL-Konkurrenz), nur vorgemerkt.
+    assert len(w._live) >= 1 and w.matrix._res_freq.size == 0
     assert "Einzelfits" in w.status_job.text() and "%" in w.status_job.text()
     w._job_abbrechen()
     assert not w.btn_abbrechen.isEnabled()

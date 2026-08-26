@@ -1515,9 +1515,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_abbrechen_dock.setVisible(bool(abbrechbar))
         self.btn_abbrechen_dock.setEnabled(True)
         self._spinner_timer.start()
-        self.matrix.zeige_hinweis(f"{titel}")
-        self.statusBar().showMessage(f"{titel} – das Programm arbeitet, die Anzeige "
-                                     "aktualisiert sich laufend.")
+        self.matrix.zeige_hinweis(f"{titel}\nFortschritt in der Statusleiste; Ergebnis am Ende")
+        self.statusBar().showMessage(f"{titel} – das Programm arbeitet, Fortschritt in "
+                                     "Statusleiste und Aktivität.")
         # Live-Vorschau vorbereiten.
         self._live_aktiv = live is not None
         self._live = {}
@@ -1560,7 +1560,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_abbrechen.setEnabled(False)
         self.btn_abbrechen_dock.setEnabled(False)
         self.status_job.setText(f"{self._job_titel}  – Abbruch angefordert, beende …")
-        self.matrix.zeige_hinweis(f"{self._job_titel}\nAbbruch angefordert – bisherige Ergebnisse bleiben")
+        self._setze_aktivitaet(f"{self._job_titel} – Abbruch angefordert, beende …")
         self._log("Abbruch angefordert – der laufende Schritt wird noch beendet, "
                   "bisherige Ergebnisse bleiben erhalten.", "warn")
 
@@ -1599,19 +1599,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
         text = f"{self._job_titel}{phase}: {i}/{n} ({prozent} %) · {verstrichen:.0f} s{rest}"
         self.status_job.setText(text)
         self._setze_aktivitaet(text)
-        # Der Hinweis im Farbplot zeichnet den ganzen Plot neu - hoechstens 4x/s
-        # (Statusleiste/Aktivitaet oben sind billig und laufen ungedrosselt).
-        jetzt = time.monotonic()
-        if not self._job_abgebrochen and (i >= n or jetzt - self._hinweis_zuletzt >= 0.25):
-            self._hinweis_zuletzt = jetzt
-            self.matrix.zeige_hinweis(f"{self._job_titel}{phase}: {i}/{n}{rest}")
+        # KEIN Neuzeichnen des Farbplots waehrend des Jobs: Der rechnende Fit-
+        # Thread haelt den GIL, jeder Zeichenschritt wartet darauf - ein sonst
+        # 0,1 s langes Zeichnen dauert dann Sekunden und der Desktop meldet
+        # "antwortet nicht". Fortschritt nur in Statusleiste/Aktivitaet (billig);
+        # das Banner im Farbplot bleibt statisch, der Plot wird am Ende gezeichnet.
 
     def _auf_protokoll(self, text: str) -> None:
         art = "warn" if "⚠" in text else ("ok" if "✓" in text else "auto")
         self._log(text, art)
 
     def _auf_zwischenstand(self, daten) -> None:
-        """Fertiger Einzelfit aus dem Worker: fuer die Live-Vorschau vormerken."""
+        """Fertiger Einzelfit aus dem Worker: nur vormerken (kein Zeichnen waehrend
+        des Jobs, siehe :meth:`_auf_fortschritt`); gezeichnet wird am Ende."""
         if not self._live_aktiv:
             return
         try:
@@ -1622,12 +1622,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._live[float(frequenz)] = (float(b_res), str(status))
         elif float(frequenz) in self._live:
             del self._live[float(frequenz)]
-        if not self._live_timer.isActive():
-            self._live_timer.start()
 
     def _live_zeichnen(self) -> None:
-        """Live-Vorschau der bisher gefitteten Punkte im Farbplot (entprellt)."""
-        if not self._live_aktiv or self.datensatz_voll is None:
+        """Vorschau der vorgemerkten Punkte im Farbplot (nur ausserhalb eines Jobs)."""
+        if not self._live_aktiv or self.datensatz_voll is None or self._job_laeuft:
             return
         if not self._live:
             return
