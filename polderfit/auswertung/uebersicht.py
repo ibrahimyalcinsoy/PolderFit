@@ -27,6 +27,18 @@ from ..physik.kittel_llg import (
 )
 
 
+def ist_guter_fit(e: FitErgebnis, r2_min: float = 0.9) -> bool:
+    """Punktkriterium der Kittel-/LLG-Auswertung: erfolgreicher, nicht
+    problematischer Einzelfit mit endlichem Resonanzfeld und (sekundaer)
+    ``R2 >= r2_min``. Gleiche Regel in GUI, Export und Auswertung je Mode."""
+    return bool(
+        e.erfolg
+        and not e.problematisch
+        and np.isfinite(e.B_res)
+        and (not np.isfinite(e.R2) or e.R2 >= r2_min)
+    )
+
+
 def _gute_ergebnisse(ergebnisse: list[FitErgebnis], r2_min: float):
     """Liefert (f, B_res, mu0dH, T, B_res_err, mu0dH_err) nur fuer
     nicht-problematische Einzelfits.
@@ -37,13 +49,7 @@ def _gute_ergebnisse(ergebnisse: list[FitErgebnis], r2_min: float):
     """
     f, b, dh, t, b_err, dh_err = [], [], [], [], [], []
     for e in ergebnisse:
-        gut = (
-            e.erfolg
-            and not e.problematisch
-            and np.isfinite(e.B_res)
-            and (not np.isfinite(e.R2) or e.R2 >= r2_min)
-        )
-        if gut:
+        if ist_guter_fit(e, r2_min):
             f.append(e.frequenz)
             b.append(e.B_res)
             dh.append(e.dH)

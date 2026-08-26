@@ -69,7 +69,7 @@ from ..fit.fenster_steuerung import (
 )
 from ..fit.linescan_fit import BEWERTUNG_TEXTE, hauptmode_wechseln
 from ..fit.parameter import PhysikParameter
-from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv
+from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv, kittel_llg_flach
 from ..persistenz.einstellungen import (
     DATEI_ENDUNG,
     FARBSKALEN,
@@ -86,6 +86,7 @@ from ..persistenz.projekt import (
     speichere_sitzung,
     stelle_stapel_wieder_her,
 )
+from ..auswertung.moden import auswertung_je_mode, max_moden, zuordnung_moden
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
 from .ausreisser_panel import AusreisserPanel
@@ -190,6 +191,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.ausreisserpanel = AusreisserPanel(
             wieder_aufnehmen=self._ausreisser_wieder_aufnehmen,
             rueckgaengig=self._rueckgaengig,
+            wieder_aufnehmen_moden=self._ausreisser_mode_wieder_aufnehmen,
         )
         # Zentraler Rueckgaengig-/Wiederholen-Stapel (Strg+Z / Strg+Umschalt+Z):
         # Eintraege (beschreibung, vorher(), nachher()) mit Zustands-
@@ -1113,6 +1115,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._merke_aenderung(beschreibung,
                               lambda v=vorher: self._geraden_setzen(v),
                               lambda n=nachher: self._geraden_setzen(n))
+        self._auswertung_nachziehen()   # Moden-Zuordnung haengt an den Baendern
 
     def _gerade_geaendert(self, index: int, b1: float, f1_ghz: float,
                           b2: float, f2_ghz: float):
@@ -1388,6 +1391,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _geraden_setzen(self, geraden: list[Grenzgerade]) -> None:
         self._grenzgeraden = [replace(g) for g in geraden]
         self._zeige_geraden()
+        self._auswertung_nachziehen()
+
+    def _auswertung_nachziehen(self) -> None:
+        """Offenes Kittel/LLG-Fenster neu rechnen (Punkte, Baender, Ausreisser)."""
+        fenster = getattr(self, "_auswertungsfenster", None)
+        if fenster is not None:
+            fenster.aktualisiere()
 
     def _fit_zustand(self, indizes) -> dict:
         """Referenz-Schnappschuss der Fits an ``indizes`` (Fenster/Ergebnis/Beschnitt)."""
@@ -1907,6 +1917,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.spin_moden.setValue(n)
         self.spin_moden.blockSignals(False)
         self.zonenpanel.setze_n_moden(n)
+        self._auswertung_nachziehen()
 
     # --- Auto-Fit --------------------------------------------------------------
     def _nach_autofit(self, stapel: StapelErgebnis) -> None:
@@ -2293,6 +2304,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 ausreisser_rueckgaengig=self._rueckgaengig,
                 geometrie=self._physik.geometrie,
                 hole_parameter=lambda: self._physik,
+                hole_geraden=lambda: self._grenzgeraden,
+                ausreisser_mode_markieren=self._ausreisser_mode_gewaehlt,
                 parent=self)
             self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
         else:
@@ -2359,23 +2372,51 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                          geometrie=p.geometrie, gamma_fest=p.gamma_fest,
                                          gamma_start=p.gamma, r2_min=p.r2_min,
                                          gewichtet=p.gewichtet)
-            kit, llg = info["kittel"], info["llg"]
-            werte.update({f"kittel_{k}": v for k, v in kit.items()})
-            werte["kittel_mu0Meff_mT"] = kit["mu0Meff"] * 1e3
-            werte["kittel_mu0Meff_err_mT"] = kit["mu0Meff_err"] * 1e3
-            if "mu0Hu" in kit:
-                werte["kittel_mu0Hu_mT"] = kit["mu0Hu"] * 1e3
-                werte["kittel_mu0Hu_err_mT"] = kit["mu0Hu_err"] * 1e3
-            werte.update({f"llg_{k}": v for k, v in llg.items()})
-            werte["llg_mu0Hinh_mT"] = llg["mu0Hinh"] * 1e3
-            werte["llg_mu0Hinh_err_mT"] = llg["mu0Hinh_err"] * 1e3
+            werte.update(kittel_llg_flach(info))
             werte["gewichtung"] = "w=1/u^2 (GUM)" if p.gewichtet else "ungewichtet"
-            werte["kittel_geometrie"] = info["geometrie"]
             werte["n_punkte_kittel"] = len(self._kittel_indizes())
         except Exception as exc:
             werte["kittel_llg"] = f"nicht berechenbar: {exc}"
+        werte.update(self._global_parameter_moden())
         werte.update({f"physik_{k}": v for k, v in p.als_dict().items()})
         werte["verarbeitung"] = self.verarbeitung.kette().beschreibung()
+        return werte
+
+    def _moden_zuordnung(self):
+        """Zweig-Zuordnung der Resonanzen (Baender der Grenzgeraden, sonst Feldordnung)."""
+        st = self.stapel
+        try:
+            bereich = st.datensatz.feld_bereich()
+        except Exception:
+            bereich = None
+        return zuordnung_moden(st.ergebnisse, self._grenzgeraden, st.n_moden, feld_bereich=bereich)
+
+    def _global_parameter_moden(self) -> dict:
+        """Kittel/LLG je Mode (nur bei mehreren Resonanzen) fuer das Blatt 'Global':
+        ``mode<k>_kittel_*``, ``mode<k>_llg_*``, ``mode<k>_n_punkte``."""
+        st = self.stapel
+        werte: dict = {}
+        if st is None or max_moden(st.ergebnisse) <= 1:
+            return werte
+        p = self._physik
+        try:
+            zuordnung = self._moden_zuordnung()
+            werte["moden_zuordnung"] = ("Moden-Baender (Grenzgeraden)" if zuordnung.regel == "band"
+                                       else "aufsteigend nach Resonanzfeld")
+            reihen = auswertung_je_mode(
+                st.ergebnisse, range(1, zuordnung.n_moden + 1), zuordnung, st.ausreisser,
+                st.ausreisser_moden, geometrie=p.geometrie, gamma_fest=p.gamma_fest,
+                gamma_start=p.gamma, r2_min=p.r2_min, gewichtet=p.gewichtet)
+            for k, reihe in reihen.items():
+                werte[f"mode{k}_n_punkte"] = reihe.n
+                werte[f"mode{k}_n_ausreisser_mode"] = sum(
+                    1 for _i, m in st.ausreisser_moden if int(m) == k)
+                if reihe.info is None:
+                    werte[f"mode{k}_kittel_llg"] = f"nicht berechenbar: {reihe.fehler}"
+                else:
+                    werte.update(kittel_llg_flach(reihe.info, praefix=f"mode{k}_"))
+        except Exception as exc:
+            werte["moden_kittel_llg"] = f"nicht berechenbar: {exc}"
         return werte
 
     def _zusatzblaetter(self) -> dict[str, pd.DataFrame]:
@@ -2392,6 +2433,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         ausreisser = [{"index": i, "frequenz_Hz": st.ergebnisse[i].frequenz,
                        "B_res_T": st.ergebnisse[i].B_res}
                       for i in (st.ausreisser if st else []) if i < len(st.ergebnisse)]
+        if st is not None and st.ausreisser_moden:
+            zuordnung = self._moden_zuordnung()
+            for i, k in st.ausreisser_moden:
+                if i >= len(st.ergebnisse):
+                    continue
+                e = st.ergebnisse[i]
+                pos = zuordnung.position(i, k)
+                b = (e.moden[pos]["B_res"] if (pos is not None and e.moden and pos < len(e.moden))
+                     else np.nan)
+                ausreisser.append({"index": i, "mode": int(k), "frequenz_Hz": e.frequenz,
+                                   "B_res_T": b})
         return {
             "Einstellungen": pd.DataFrame(einst),
             "Zonen_Geraden": pd.DataFrame(zonen) if zonen else pd.DataFrame(columns=["Typ"]),
@@ -2675,6 +2727,57 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._auswertungsfenster.aktualisiere()
         self._log(f"{len(indizes)} Punkt(e) wieder aufgenommen – "
                   f"verbleibend {len(self.stapel.ausreisser)} ignoriert.", "ok")
+
+    # Ausreisser je Mode (nur Kittel/LLG-Auswertung dieser Mode) ----------------
+    def _ausreisser_moden_setzen(self, liste) -> None:
+        if self.stapel is None:
+            return
+        self.stapel.ausreisser_moden = sorted((int(i), int(k)) for i, k in liste)
+        self.ausreisserpanel.zeige_ausreisser(self.stapel)
+        self._auswertung_nachziehen()
+
+    def _merke_ausreisser_moden_aenderung(self, beschreibung: str, vorher: list) -> None:
+        nachher = list(self.stapel.ausreisser_moden)
+        self._merke_aenderung(beschreibung,
+                              lambda v=vorher: self._ausreisser_moden_setzen(v),
+                              lambda n=nachher: self._ausreisser_moden_setzen(n))
+
+    def _ausreisser_mode_gewaehlt(self, paare) -> None:
+        """Callback aus dem Auswertungsfenster (Mode-Ansicht): Punkt nur aus der
+        Kittel/LLG-Auswertung dieser Mode ausschliessen - der Linescan und seine
+        anderen Moden bleiben drin."""
+        if not self.stapel or not paare:
+            return
+        neu = [(int(i), int(k)) for i, k in paare
+               if not self.stapel.ist_ausreisser_mode(i, k)]
+        if not neu:
+            return
+        vorher = list(self.stapel.ausreisser_moden)
+        for i, k in neu:
+            self.stapel.ausreisser_mode_umschalten(i, k)
+        self._merke_ausreisser_moden_aenderung(
+            f"Punkt(e) je Mode ausgeschlossen ({len(neu)})", vorher)
+        self.ausreisserpanel.zeige_ausreisser(self.stapel)
+        self._auswertung_nachziehen()
+        beschreibung = ", ".join(f"{self.stapel.ergebnisse[i].frequenz/1e9:.2f} GHz/M{k}"
+                                 for i, k in neu[:6])
+        self._log(f"Nur für die Auswertung je Mode ausgeschlossen: {len(neu)} Punkt(e) "
+                  f"({beschreibung}{' …' if len(neu) > 6 else ''}) – insgesamt "
+                  f"{len(self.stapel.ausreisser_moden)}.", "ok")
+
+    def _ausreisser_mode_wieder_aufnehmen(self, paare) -> None:
+        if not self.stapel or not paare:
+            return
+        vorher = list(self.stapel.ausreisser_moden)
+        for i, k in paare:
+            if self.stapel.ist_ausreisser_mode(i, k):
+                self.stapel.ausreisser_mode_umschalten(i, k)
+        self._merke_ausreisser_moden_aenderung(
+            f"Punkt(e) je Mode wieder aufgenommen ({len(paare)})", vorher)
+        self.ausreisserpanel.zeige_ausreisser(self.stapel)
+        self._auswertung_nachziehen()
+        self._log(f"{len(paare)} Punkt(e) je Mode wieder aufgenommen – verbleibend "
+                  f"{len(self.stapel.ausreisser_moden)}.", "ok")
 
     # --- Projekt speichern / laden / Auto-Sicherung --------------------------
     def _projekt_speichern(self, pfad: str | None = None) -> str | None:

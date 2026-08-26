@@ -118,6 +118,20 @@ LOG_FARBEN = {
 }
 
 
+#: Farbe je Mode (Zweig) bei mehreren Resonanzen - Grenzgeraden/Baender im
+#: Farbplot (Mode 1 = Textfarbe) und Kittel/LLG je Mode (Mode 1 = Signalgruen).
+MODE_FARBEN = {2: "#7B2CBF", 3: "#0077B6", 4: "#E36414", 5: "#2A9D8F", 6: "#B5179E"}
+
+
+def mode_farbe(mode: int, standard: str = SIGNAL_GRUEN) -> str:
+    """Farbe der Mode ``mode`` (1 = ``standard``; ab Mode 7 zyklisch)."""
+    mode = int(mode)
+    if mode <= 1:
+        return standard
+    farben = list(MODE_FARBEN.values())
+    return farben[(mode - 2) % len(farben)]
+
+
 def status_von(ergebnis, ignoriert: bool = False) -> str:
     """Statusklasse eines :class:`~polderfit.fit.linescan_fit.FitErgebnis`.
 

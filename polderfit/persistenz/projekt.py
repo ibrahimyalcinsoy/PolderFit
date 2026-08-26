@@ -76,6 +76,7 @@ def sitzung_als_dict(stapel: StapelErgebnis, physik: dict | None = None,
         "fenster": [[float(u), float(o)] for (u, o) in stapel.fenster],
         "ausschlusszonen": [z.als_dict() for z in stapel.ausschlusszonen],
         "ausreisser": [int(i) for i in stapel.ausreisser],
+        "ausreisser_moden": [[int(i), int(k)] for i, k in stapel.ausreisser_moden],
         "ergebnisse": [
             {k: _zahl(v) for k, v in e.als_zeile(hauptmode_nur=True).items()}
             for e in stapel.ergebnisse
@@ -165,6 +166,9 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> Stapel
     n = len(fenster)
     stapel.ausreisser = sorted(
         int(i) for i in daten.get("ausreisser", []) if 0 <= int(i) < n)
+    stapel.ausreisser_moden = sorted(
+        (int(i), int(k)) for i, k in daten.get("ausreisser_moden", [])
+        if 0 <= int(i) < n and int(k) >= 1)
     return stapel
 
 

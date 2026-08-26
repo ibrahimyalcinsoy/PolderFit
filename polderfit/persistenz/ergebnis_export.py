@@ -158,12 +158,33 @@ def exportiere_excel(
             blatt.to_excel(writer, sheet_name=str(name)[:31], index=False)
 
 
+def kittel_llg_flach(info: dict, praefix: str = "") -> dict:
+    """Kittel-/LLG-Parameter als flaches dict fuer das Blatt 'Global'
+    (``kittel_*``/``llg_*``, Felder zusaetzlich in mT); ``praefix`` z. B.
+    ``"mode2_"`` fuer die Auswertung je Mode."""
+    kit, llg = info["kittel"], info["llg"]
+    werte = {f"{praefix}kittel_{k}": v for k, v in kit.items()}
+    werte[f"{praefix}kittel_mu0Meff_mT"] = kit["mu0Meff"] * 1e3
+    werte[f"{praefix}kittel_mu0Meff_err_mT"] = kit["mu0Meff_err"] * 1e3
+    if "mu0Hu" in kit:
+        werte[f"{praefix}kittel_mu0Hu_mT"] = kit["mu0Hu"] * 1e3
+        werte[f"{praefix}kittel_mu0Hu_err_mT"] = kit["mu0Hu_err"] * 1e3
+    werte.update({f"{praefix}llg_{k}": v for k, v in llg.items()})
+    werte[f"{praefix}llg_mu0Hinh_mT"] = llg["mu0Hinh"] * 1e3
+    werte[f"{praefix}llg_mu0Hinh_err_mT"] = llg["mu0Hinh_err"] * 1e3
+    werte[f"{praefix}kittel_geometrie"] = info.get("geometrie", "")
+    return werte
+
+
 def kittel_llg_tabelle(info: dict | None, gewichtet: bool = False,
-                       n_punkte: int | None = None, n_ausreisser: int | None = None
-                       ) -> pd.DataFrame:
+                       n_punkte: int | None = None, n_ausreisser: int | None = None,
+                       mode: int | None = None, mode_text: str = "") -> pd.DataFrame:
     """Physikalische Parameter des Kittel-/LLG-Fits als Tabelle (Wert, 1σ, Einheit)
-    - Felder in Tesla UND Millitesla."""
+    - Felder in Tesla UND Millitesla. ``mode``/``mode_text``: Auswertung je
+    Mode (Zweig-Nummer und Zuordnungsregel als erste Zeile)."""
     zeilen = []
+    if mode is not None:
+        zeilen.append(("Mode", "Hauptmode" if int(mode) == 0 else int(mode), mode_text, ""))
     if info is not None:
         kit, llg = info["kittel"], info["llg"]
         g_err = kit.get("g_faktor_err", np.nan)
@@ -193,15 +214,24 @@ def kittel_llg_tabelle(info: dict | None, gewichtet: bool = False,
 
 
 def kittel_llg_punkte_tabelle(ergebnisse: list[FitErgebnis], ausreisser: list[int] | None,
-                              verwendet: list[int] | None) -> pd.DataFrame:
-    """Alle Punkte der Kittel-/LLG-Auswertung mit Einzelfehlern (T und mT)."""
+                              verwendet: list[int] | None, indizes: list[int] | None = None,
+                              mode: int | None = None) -> pd.DataFrame:
+    """Alle Punkte der Kittel-/LLG-Auswertung mit Einzelfehlern (T und mT).
+
+    ``indizes``: Stapel-Indizes der uebergebenen Ergebnisse (Standard: Position
+    in der Liste) - fuer die Auswertung je Mode, wo ``ergebnisse`` die Kopien
+    mit Mode ``mode`` als Hauptmode sind (Spalte ``mode``)."""
     gesperrt = set(ausreisser or [])
     benutzt = set(verwendet or [])
+    if indizes is None:
+        indizes = list(range(len(ergebnisse)))
     zeilen = []
-    for i, e in enumerate(ergebnisse):
+    for i, e in zip(indizes, ergebnisse):
         if not e.gefittet:
             continue
         zeilen.append({
+            **({"mode": int(mode)} if mode is not None else {}),
+            "stapel_index": int(i),
             "frequenz_Hz": e.frequenz, "frequenz_GHz": e.frequenz / 1e9,
             "B_res_T": e.B_res, "B_res_err_T": e.B_res_err, "B_res_mT": e.B_res_mT,
             "alpha": e.alpha, "alpha_err": e.alpha_err,

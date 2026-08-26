@@ -129,9 +129,33 @@ class StapelErgebnis:
     #: Als Ausreisser markierte Stapel-Indizes: aus Darstellung UND allen
     #: uebergreifenden Rechnungen (insb. Kittel-/LLG-Fit) ausgenommen.
     ausreisser: list[int] = field(default_factory=list)
+    #: Nur fuer die Kittel-/LLG-Auswertung JE MODE ausgeschlossene Paare
+    #: ``(Stapel-Index, Mode)`` (Mode = Zweig-Nummer 1..n, siehe
+    #: :mod:`polderfit.auswertung.moden`); der Linescan selbst und seine
+    #: anderen Moden bleiben in der Auswertung.
+    ausreisser_moden: list[tuple[int, int]] = field(default_factory=list)
 
     def ist_ausreisser(self, index: int) -> bool:
         return index in self.ausreisser
+
+    def ist_ausreisser_mode(self, index: int, mode: int) -> bool:
+        return (int(index), int(mode)) in set(map(tuple, self.ausreisser_moden))
+
+    def ausreisser_mode_umschalten(self, index: int, mode: int) -> bool:
+        """Schaltet den Ausschluss der Mode ``mode`` am Linescan ``index`` um.
+
+        Liefert ``True``, wenn das Paar jetzt ausgeschlossen ist. Liste bleibt
+        sortiert (Index, dann Mode).
+        """
+        paar = (int(index), int(mode))
+        paare = [tuple(p) for p in self.ausreisser_moden]
+        if paar in paare:
+            paare.remove(paar)
+            self.ausreisser_moden = sorted(paare)
+            return False
+        paare.append(paar)
+        self.ausreisser_moden = sorted(paare)
+        return True
 
     def ausreisser_umschalten(self, index: int) -> bool:
         """Schaltet den Ausreisser-Status eines Punkts um.

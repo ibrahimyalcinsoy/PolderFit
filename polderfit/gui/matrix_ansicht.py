@@ -85,7 +85,7 @@ _GERADE_ROT = F.SIGNAL_ROT
 #: Breite des Seitensaums in Achsen-Anteilen.
 _GERADE_SAUM = 0.025
 #: Linienfarbe je Mode (Grenzgeraden bei mehreren Resonanzen; Mode 1 = Textfarbe).
-_MODE_FARBEN = {2: "#7B2CBF", 3: "#0077B6", 4: "#E36414", 5: "#2A9D8F", 6: "#B5179E"}
+_MODE_FARBEN = F.MODE_FARBEN
 #: Relative Trefferdistanz fuer Endpunkt-Griffe bzw. Doppelklick auf die Linie.
 _GRIFF_TOLERANZ = 0.035
 _LINIEN_TOLERANZ = 0.02

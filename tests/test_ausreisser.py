@@ -125,6 +125,7 @@ def test_projekt_roundtrip_mit_ausreissern_und_zonen(tmp_path):
               feld_oben=stapel.fenster[2][1] + 0.05)
     stapel.ausschlusszonen.append(Ausschlusszone(0.50, 0.55, 0.0, 1e12))
     stapel.ausreisser_umschalten(4)
+    stapel.ausreisser_mode_umschalten(3, 2)      # nur Kittel/LLG der Mode 2
 
     projekt_pfad = tmp_path / "sitzung.json"
     speichere_sitzung(stapel, str(projekt_pfad))
@@ -138,6 +139,7 @@ def test_projekt_roundtrip_mit_ausreissern_und_zonen(tmp_path):
 
     assert stapel2.fenster == stapel.fenster
     assert stapel2.ausreisser == [4]
+    assert stapel2.ausreisser_moden == [(3, 2)]
     assert len(stapel2.ausschlusszonen) == 1
     assert stapel2.ergebnisse[2].nachbearbeitet is True
     assert stapel2.ergebnisse[0].nachbearbeitet is False

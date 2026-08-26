@@ -6,14 +6,24 @@ Zeigt die uebergreifende Auswertung mit Feld auf der x-Achse (wie im Farbplot):
 * Dispersion: Resonanzfeld (x) gegen Frequenz (y) mit Kittel-Fit,
 * Linienbreite: mu0*DeltaH (y) ueber dem Resonanzfeld (x) mit LLG-Fit.
 
+**Mehrere Resonanzen** (``n_moden > 1``): Die Auswahl "Resonanz" schaltet
+zwischen *Hauptmode* (staerkste Resonanz je Linescan - bisheriges Verhalten),
+*Mode 1 … n* (je ein Dispersionszweig mit eigenem Kittel-/LLG-Fit) und
+*Alle Moden* um. Die Zuordnung Resonanz -> Mode liefert
+:mod:`polderfit.auswertung.moden` (Band k der Grenzgeraden, sonst aufsteigend
+nach Resonanzfeld).
+
 Unerwuenschte Punkte lassen sich DIREKT im Plot entfernen (Einzelklick oder
-Kasten aufziehen) - sie werden als Ausreisser des Fit-Stapels markiert
-(reversibel, gleiche Liste wie im Hauptfenster) und der Kittel-/LLG-Fit
-rechnet sofort neu. "Exportieren" schreibt Plot (PNG + PDF) und eine
-Excel-Datei mit den physikalischen Parametern samt Messfehlern sowie allen
-Datenpunkten inklusive Einzelfehlern und Ausreisser-Kennzeichnung
-(Fehlerrechnung: Kovarianz der Kittel-/LLG-Fits, lmfit-stderr je Linescan;
-vgl. Dissertation M. Mueller 2023, Kap. 2, und Maier-Flaig et al. 2018).
+Kasten aufziehen): in der Hauptmode-Ansicht als Ausreisser des Linescans
+(gleiche Liste wie im Hauptfenster), in einer Mode-Ansicht nur fuer diese
+Mode (``StapelErgebnis.ausreisser_moden``) - jeweils reversibel, der Fit
+rechnet sofort neu. "Exportieren" schreibt Plot (PNG + PDF), eine Excel-Datei
+mit den physikalischen Parametern samt Messfehlern und allen Datenpunkten
+inklusive Einzelfehlern und Ausreisser-Kennzeichnung (bei mehreren Moden
+zusaetzlich je Mode die Blaetter ``Parameter_M<k>`` / ``Punkte_M<k>``) sowie
+die Punkte als CSV (Fehlerrechnung: Kovarianz der Kittel-/LLG-Fits,
+lmfit-stderr je Linescan; vgl. Dissertation M. Mueller 2023, Kap. 2, und
+Maier-Flaig et al. 2018).
 """
 
 from __future__ import annotations
@@ -26,7 +36,15 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PySide6 import QtCore, QtWidgets
 
-from ..auswertung.uebersicht import auswertung_kittel_llg
+from ..auswertung.moden import (
+    ALLE_MODEN,
+    HAUPTMODE,
+    ModenReihe,
+    ModenZuordnung,
+    auswertung_je_mode,
+    ergebnisse_fuer_mode,
+    zuordnung_moden,
+)
 from ..persistenz.ergebnis_export import kittel_llg_punkte_tabelle, kittel_llg_tabelle
 from ..physik.kittel_llg import kittel_ip, kittel_oop, linienbreite
 from . import farben as F
@@ -35,33 +53,54 @@ from . import farben as F
 _KLICK_TOLERANZ = 0.03
 #: Mindest-Mausbewegung (Anteil der Spanne), ab der ein Klick zum Kasten wird.
 _BOX_SCHWELLE_REL = 0.02
+#: Klartext der Zuordnungsregel (siehe :func:`zuordnung_moden`).
+_REGEL_TEXTE = {
+    "band": "Moden-Bänder der Grenzgeraden (Mode k = Band k)",
+    "feld": "aufsteigend nach Resonanzfeld (Mode 1 = niedrigstes Feld)",
+}
+
+
+def _leere_reihe(mode: int) -> ModenReihe:
+    return ModenReihe(mode=int(mode), indizes=np.array([], dtype=int), f=np.array([]),
+                      b=np.array([]), dh=np.array([]), info=None, fehler="")
 
 
 class AuswertungsFenster(QtWidgets.QDialog):
-    """Interaktive Kittel/LLG-Auswertung mit Punkt-Entfernen und Export.
+    """Interaktive Kittel/LLG-Auswertung mit Moden-Auswahl, Punkt-Entfernen und Export.
 
     ``hole_stapel()`` liefert den aktuellen Fit-Stapel des Hauptfensters;
-    ``ausreisser_markieren(indizes)`` und ``ausreisser_rueckgaengig()`` laufen
-    ueber das Hauptfenster (gemeinsame Ausreisser-Liste, Undo, Overlay-Sync).
-    Das Hauptfenster ruft :meth:`aktualisiere` auf, wenn sich die Liste
-    anderweitig aendert.
+    ``ausreisser_markieren(indizes)`` (Linescans), ``ausreisser_mode_markieren(paare)``
+    (``(index, mode)``-Paare, nur die Auswertung dieser Mode) und
+    ``ausreisser_rueckgaengig()`` laufen ueber das Hauptfenster (gemeinsame
+    Listen, Undo, Overlay-Sync); ``hole_geraden()`` liefert die Grenzgeraden
+    (Moden-Baender fuer die Zuordnung). Das Hauptfenster ruft
+    :meth:`aktualisiere` auf, wenn sich Fits, Ausreisser oder Geraden aendern.
     """
 
     def __init__(self, hole_stapel, ausreisser_markieren=None,
                  ausreisser_rueckgaengig=None, geometrie: str = "oop",
-                 hole_parameter=None, parent=None):
+                 hole_parameter=None, parent=None, hole_geraden=None,
+                 ausreisser_mode_markieren=None):
         super().__init__(parent)
         #: Liefert die aktuellen PhysikParameter (g/gamma, gamma_fest, r2_min)
         #: des Hauptfensters - oder None (Standardwerte).
         self._hole_parameter = hole_parameter
+        self._hole_geraden = hole_geraden
         self.setWindowFlag(QtCore.Qt.Window, True)  # eigenes Fenster, nicht modal
         self.setWindowTitle("Kittel/LLG-Auswertung")
         self.resize(1080, 640)
         self._hole_stapel = hole_stapel
         self._cb_markieren = ausreisser_markieren
+        self._cb_markieren_mode = ausreisser_mode_markieren
         self._cb_rueckgaengig = ausreisser_rueckgaengig
-        self._info: dict | None = None      # letzter erfolgreicher Auswertungslauf
+        self._info: dict | None = None      # Kittel/LLG der gewaehlten Einzel-Ansicht
+        self._reihen: dict[int, ModenReihe] = {}
+        self._zuordnung: ModenZuordnung | None = None
+        self._moden_aktiv = False           # Resonanz-Auswahl sichtbar (n_moden > 1)
+        self._gewichtet = False
+        self._fit_argumente: dict = {}
         self._punkt_indizes = np.array([], dtype=int)  # Stapel-Indizes der Plotpunkte
+        self._punkt_moden = np.array([], dtype=int)    # Mode je Plotpunkt (0 = Hauptmode)
         self._punkt_b = np.array([])
         self._punkt_f = np.array([])
         self._punkt_dh = np.array([])
@@ -77,10 +116,24 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.geo_combo.setCurrentText(geometrie)
         self.geo_combo.currentTextChanged.connect(lambda _t: self.aktualisiere())
         kopf.addWidget(self.geo_combo)
+        kopf.addSpacing(12)
+        self.mode_label = QtWidgets.QLabel("Resonanz:")
+        self.mode_combo = QtWidgets.QComboBox()
+        self.mode_combo.setToolTip(
+            "Bei mehreren Resonanzen je Linescan: Hauptmode (stärkste Resonanz je\n"
+            "Linescan), Mode 1 … n (je ein Dispersionszweig mit eigenem Kittel-/LLG-Fit)\n"
+            "oder alle Moden. Mode k = Band k der Grenzgeraden; ohne Bänder aufsteigend\n"
+            "nach Resonanzfeld.")
+        self.mode_combo.currentIndexChanged.connect(lambda _i: self.aktualisiere())
+        kopf.addWidget(self.mode_label)
+        kopf.addWidget(self.mode_combo)
+        self.mode_label.setVisible(False)
+        self.mode_combo.setVisible(False)
         kopf.addSpacing(16)
         hinweis = QtWidgets.QLabel(
             "Punkt anklicken oder Kasten aufziehen → Punkt wird als Ausreißer "
-            "entfernt und der Fit rechnet sofort neu (reversibel).")
+            "entfernt (in einer Mode-Ansicht nur für diese Mode) und der Fit rechnet "
+            "sofort neu (reversibel).")
         hinweis.setWordWrap(True)
         kopf.addWidget(hinweis, 1)
         lay.addLayout(kopf)
@@ -105,8 +158,9 @@ class AuswertungsFenster(QtWidgets.QDialog):
         fuss.addStretch(1)
         self.btn_export = QtWidgets.QPushButton("Exportieren … (Excel + CSV + Plot)")
         self.btn_export.setToolTip(
-            "Excel (Parameter mit 1σ-Fehlern in T und mT, alle Punkte), CSV der\n"
-            "Punkte (Listendaten) und Plot als PNG + PDF.")
+            "Excel (Parameter mit 1σ-Fehlern in T und mT, alle Punkte; bei mehreren\n"
+            "Moden zusätzlich je Mode ein Blatt), CSV der Punkte (Listendaten) und\n"
+            "Plot als PNG + PDF.")
         self.btn_export.clicked.connect(self._exportieren)
         fuss.addWidget(self.btn_export)
         btn_zu = QtWidgets.QPushButton("Schließen")
@@ -120,15 +174,78 @@ class AuswertungsFenster(QtWidgets.QDialog):
 
         self.aktualisiere()
 
+    # --- Moden-Auswahl ----------------------------------------------------------
+    def mode_gewaehlt(self) -> int:
+        """Gewaehlte Ansicht: ``HAUPTMODE`` (0), Mode 1..n oder ``ALLE_MODEN`` (-1)."""
+        if not self._moden_aktiv or self.mode_combo.count() == 0:
+            return HAUPTMODE
+        daten = self.mode_combo.currentData()
+        return HAUPTMODE if daten is None else int(daten)
+
+    def setze_mode(self, mode: int) -> None:
+        """Ansicht umschalten (Hauptmode / Mode k / alle) - wie die Auswahl im Kopf."""
+        index = self.mode_combo.findData(int(mode))
+        if index >= 0:
+            self.mode_combo.setCurrentIndex(index)   # loest aktualisiere() aus
+
+    def _combo_befuellen(self, n: int) -> None:
+        """Eintraege Hauptmode / Mode 1..n / Alle Moden; sichtbar nur bei n > 1.
+        Beim ersten Erscheinen ist Mode 1 vorgewaehlt (je Zweig ein eigener Fit),
+        danach bleibt die Auswahl erhalten."""
+        aktiv = n > 1
+        self._moden_aktiv = aktiv
+        self.mode_label.setVisible(aktiv)
+        self.mode_combo.setVisible(aktiv)
+        if not aktiv:
+            if self.mode_combo.count():
+                self.mode_combo.blockSignals(True)
+                self.mode_combo.clear()
+                self.mode_combo.blockSignals(False)
+            return
+        gewuenscht = ([("Hauptmode (stärkste je Linescan)", HAUPTMODE)]
+                      + [(f"Mode {k}", k) for k in range(1, n + 1)]
+                      + [("Alle Moden", ALLE_MODEN)])
+        vorhanden = [(self.mode_combo.itemText(i), self.mode_combo.itemData(i))
+                     for i in range(self.mode_combo.count())]
+        if vorhanden == gewuenscht:
+            return
+        aktuell = self.mode_combo.currentData() if self.mode_combo.count() else None
+        self.mode_combo.blockSignals(True)
+        self.mode_combo.clear()
+        for text, daten in gewuenscht:
+            self.mode_combo.addItem(text, daten)
+        ziel = 1 if aktuell is None else int(aktuell)
+        index = self.mode_combo.findData(ziel)
+        self.mode_combo.setCurrentIndex(index if index >= 0 else 0)
+        self.mode_combo.blockSignals(False)
+
+    @staticmethod
+    def _farbe(mode: int, einzeln: bool) -> str:
+        return F.SIGNAL_GRUEN if einzeln or mode <= 1 else F.mode_farbe(mode)
+
+    def _titel_zusatz(self, mode: int) -> str:
+        if mode == HAUPTMODE:
+            return ""
+        if mode == ALLE_MODEN:
+            return " – alle Moden"
+        regel = self._zuordnung.beschreibung(mode) if self._zuordnung is not None else ""
+        return f" – Mode {mode}" + (f" ({regel})" if regel else "")
+
     # --- Auswertung + Darstellung -------------------------------------------
     def aktualisiere(self) -> None:
-        """Rechnet Kittel/LLG mit den aktiven Punkten neu und zeichnet alles."""
+        """Rechnet Kittel/LLG (je gewaehlter Mode) mit den aktiven Punkten neu und
+        zeichnet alles."""
         stapel = self._hole_stapel()
         self.ax_disp.clear()
         self.ax_lb.clear()
-        if self._box_patch is not None:
-            self._box_patch = None
+        self._box_patch = None
+        leer = np.array([], dtype=int)
         if stapel is None or not stapel.ergebnisse:
+            self._reihen = {}
+            self._info = None
+            self._punkt_indizes = leer
+            self._punkt_moden = leer.copy()
+            self._punkt_b = self._punkt_f = self._punkt_dh = np.array([])
             self.param_text.setHtml("<p>Keine Fits vorhanden.</p>")
             self.canvas.draw_idle()
             return
@@ -136,89 +253,104 @@ class AuswertungsFenster(QtWidgets.QDialog):
         # Einstellbare Parameter (g/gamma, gamma_fest, r2_min) des Hauptfensters.
         p = self._hole_parameter() if self._hole_parameter is not None else None
         r2_min = p.r2_min if p is not None else 0.9
-
-        # Plotpunkte = aktive (nicht ausgeschlossene), brauchbare Einzelfits;
-        # gleiche Kriterien wie die Auswertung selbst (_gute_ergebnisse).
-        gesperrt = set(stapel.ausreisser)
-        idx, f, b, dh = [], [], [], []
-        for i, e in enumerate(stapel.ergebnisse):
-            if i in gesperrt:
-                continue
-            gut = (e.erfolg and not e.problematisch and np.isfinite(e.B_res)
-                   and (not np.isfinite(e.R2) or e.R2 >= r2_min))
-            if gut:
-                idx.append(i)
-                f.append(e.frequenz)
-                b.append(e.B_res)
-                dh.append(e.dH)
-        self._punkt_indizes = np.array(idx, dtype=int)
-        self._punkt_f = np.array(f)
-        self._punkt_b = np.array(b)
-        self._punkt_dh = np.array(dh)
+        geraden = list(self._hole_geraden() or []) if self._hole_geraden is not None else []
+        try:
+            feld_bereich = stapel.datensatz.feld_bereich()
+        except Exception:
+            feld_bereich = None
+        self._zuordnung = zuordnung_moden(stapel.ergebnisse, geraden,
+                                          getattr(stapel, "n_moden", 1),
+                                          feld_bereich=feld_bereich)
+        n = self._zuordnung.n_moden
+        self._combo_befuellen(n)
+        mode = self.mode_gewaehlt()
+        if mode == ALLE_MODEN:
+            modi = list(range(1, n + 1))
+        elif mode == HAUPTMODE:
+            modi = [HAUPTMODE]
+        else:
+            modi = [mode]
 
         geometrie = self.geo_combo.currentText()
-        self._gewichtet = getattr(p, "gewichtet", False) if p is not None else False
-        self._info = None
-        fehler_text = ""
-        if self._punkt_indizes.size >= 3:
-            try:
-                if p is not None:
-                    self._info = auswertung_kittel_llg(
-                        stapel.ergebnisse_aktiv(), geometrie=geometrie,
-                        gamma_fest=p.gamma_fest, gamma_start=p.gamma,
-                        r2_min=p.r2_min,
-                        gewichtet=getattr(p, "gewichtet", False))
-                else:
-                    self._info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(),
-                                                       geometrie=geometrie)
-            except Exception as exc:
-                fehler_text = str(exc)
-        else:
-            fehler_text = "Zu wenige gute Punkte fuer den Kittel-/LLG-Fit (min. 3)."
+        self._gewichtet = bool(getattr(p, "gewichtet", False)) if p is not None else False
+        self._fit_argumente = dict(geometrie=geometrie, r2_min=r2_min, gewichtet=self._gewichtet)
+        if p is not None:
+            self._fit_argumente.update(gamma_fest=p.gamma_fest, gamma_start=p.gamma)
+        self._reihen = auswertung_je_mode(
+            stapel.ergebnisse, modi, self._zuordnung, stapel.ausreisser,
+            getattr(stapel, "ausreisser_moden", []), **self._fit_argumente)
+        reihen = list(self._reihen.values())
+        self._punkt_indizes = (np.concatenate([r.indizes for r in reihen]).astype(int)
+                               if reihen else leer)
+        self._punkt_moden = (np.concatenate([np.full(r.n, r.mode, dtype=int) for r in reihen])
+                             if reihen else leer.copy())
+        self._punkt_f = np.concatenate([r.f for r in reihen]) if reihen else np.array([])
+        self._punkt_b = np.concatenate([r.b for r in reihen]) if reihen else np.array([])
+        self._punkt_dh = np.concatenate([r.dh for r in reihen]) if reihen else np.array([])
+        self._info = self._reihen[mode].info if mode in self._reihen else None
 
-        # Dispersionsplot: Feld (x) gegen Frequenz (y).
-        self.ax_disp.plot(self._punkt_b, self._punkt_f / 1e9, "o", ms=4.5,
-                          color=F.SIGNAL_GRUEN, mec="white", mew=0.6, label="verwendete Fits")
-        # Linienbreite ueber dem Feld.
-        self.ax_lb.plot(self._punkt_b, self._punkt_dh * 1e3, "o", ms=4.5,
-                        color=F.SIGNAL_GRUEN, mec="white", mew=0.6, label="verwendete Fits")
-        if self._info is not None:
-            kit, llg = self._info["kittel"], self._info["llg"]
-            ff = np.linspace(self._punkt_f.min(), self._punkt_f.max(), 400)
+        einzeln = len(reihen) == 1
+        for r in reihen:
+            farbe = self._farbe(r.mode, einzeln)
+            label = "verwendete Fits" if einzeln else f"Mode {r.mode}"
+            # Dispersionsplot: Feld (x) gegen Frequenz (y); Linienbreite ueber dem Feld.
+            self.ax_disp.plot(r.b, r.f / 1e9, "o", ms=4.5, color=farbe, mec="white",
+                              mew=0.6, label=label)
+            self.ax_lb.plot(r.b, r.dh * 1e3, "o", ms=4.5, color=farbe, mec="white",
+                            mew=0.6, label=label)
+            if r.info is None or r.n == 0:
+                continue
+            kit, llg = r.info["kittel"], r.info["llg"]
+            ff = np.linspace(r.f.min(), r.f.max(), 400)
             if geometrie == "ip":
                 bb = kittel_ip(ff, kit["mu0Meff"], kit["mu0Hu"], kit["gamma"])
             else:
                 bb = kittel_oop(ff, kit["mu0Meff"], kit["gamma"])
-            self.ax_disp.plot(bb, ff / 1e9, "-", color=F.TEXT, label="Kittel-Fit")
-            reihenfolge = np.argsort(self._punkt_b)
+            linie = F.TEXT if einzeln else farbe
+            self.ax_disp.plot(bb, ff / 1e9, "-", color=linie,
+                              label="Kittel-Fit" if einzeln else f"Kittel M{r.mode}")
+            reihenfolge = np.argsort(r.b)
             self.ax_lb.plot(
-                self._punkt_b[reihenfolge],
-                linienbreite(self._punkt_f[reihenfolge], llg["mu0Hinh"],
-                             llg["alpha"], llg["gamma"]) * 1e3,
-                "-", color=F.TEXT, label="LLG-Fit")
+                r.b[reihenfolge],
+                linienbreite(r.f[reihenfolge], llg["mu0Hinh"], llg["alpha"], llg["gamma"]) * 1e3,
+                "-", color=linie, label="LLG-Fit" if einzeln else f"LLG M{r.mode}")
+        zusatz = self._titel_zusatz(mode)
         self.ax_disp.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
         self.ax_disp.set_ylabel("Frequenz (GHz)")
-        self.ax_disp.set_title(f"Dispersion (Kittel, {geometrie})")
+        self.ax_disp.set_title(f"Dispersion (Kittel, {geometrie}){zusatz}")
         self.ax_disp.legend(fontsize=8)
         self.ax_lb.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
         self.ax_lb.set_ylabel(r"Linienbreite $\mu_0\Delta H$ (mT)")
-        self.ax_lb.set_title("Linienbreite (LLG)")
+        self.ax_lb.set_title(f"Linienbreite (LLG){zusatz}")
         self.ax_lb.legend(fontsize=8)
         try:
             self.figur.tight_layout()
         except Exception:
             pass
         self.canvas.draw_idle()
-        self._zeige_parameter(stapel, fehler_text)
+        self._zeige_parameter(stapel, mode)
 
-    def _zeige_parameter(self, stapel, fehler_text: str) -> None:
-        n_aus = len(stapel.ausreisser)
+    def _zeige_parameter(self, stapel, mode: int) -> None:
+        paare = list(getattr(stapel, "ausreisser_moden", []))
         zeilen = [f"<p><b>Punkte:</b> {self._punkt_indizes.size} verwendet, "
-                  f"{n_aus} Ausreißer ausgeschlossen</p>"]
-        if self._info is None:
-            zeilen.append(f"<p style='color:{F.TEXT_ROT}'>{fehler_text}</p>")
-        else:
-            kit, llg = self._info["kittel"], self._info["llg"]
+                  f"{len(stapel.ausreisser)} Ausreißer ausgeschlossen"
+                  + (f", {len(paare)} Punkt(e) nur je Mode ausgeschlossen" if paare else "")
+                  + "</p>"]
+        if mode != HAUPTMODE and self._zuordnung is not None:
+            was = "alle Moden" if mode == ALLE_MODEN else f"Mode {mode}"
+            regel = _REGEL_TEXTE.get(self._zuordnung.regel, self._zuordnung.regel)
+            zeilen.append(f"<p><b>Resonanz:</b> {was} · Zuordnung: {regel}</p>")
+        mehrere = len(self._reihen) > 1
+        irgendein_fit = False
+        for r in self._reihen.values():
+            if mehrere:
+                zeilen.append(f"<h3 style='color:{self._farbe(r.mode, False)}'>"
+                              f"Mode {r.mode} – {r.n} Punkte</h3>")
+            if r.info is None:
+                zeilen.append(f"<p style='color:{F.TEXT_ROT}'>{r.fehler}</p>")
+                continue
+            irgendein_fit = True
+            kit, llg = r.info["kittel"], r.info["llg"]
             g_err = kit.get("g_faktor_err", float("nan"))
 
             def w(wert, err, faktor=1.0, fmt=".4f"):
@@ -226,7 +358,8 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 # Statistik in der Anzeige).
                 return f"{wert*faktor:{fmt}}"
 
-            zeilen.append("<h3>Kittel</h3><ul>"
+            ueberschrift = "h4" if mehrere else "h3"
+            zeilen.append(f"<{ueberschrift}>Kittel</{ueberschrift}><ul>"
                           f"<li>µ₀M<sub>eff</sub> = {w(kit['mu0Meff'], kit['mu0Meff_err'])} T "
                           f"= {w(kit['mu0Meff'], kit['mu0Meff_err'], 1e3, '.1f')} mT</li>"
                           f"<li>g = {w(kit['g_faktor'], g_err, fmt='.4f')}</li>")
@@ -235,13 +368,14 @@ class AuswertungsFenster(QtWidgets.QDialog):
                               f"= {w(kit['mu0Hu'], kit['mu0Hu_err'], 1e3, '.2f')} mT</li>")
             zeilen.append(f"<li>γ = {kit['gamma']:.4e} rad/(s·T)</li>"
                           f"<li>R² = {kit['R2']:.5f}</li></ul>")
-            zeilen.append("<h3>LLG (Dämpfung)</h3><ul>"
+            zeilen.append(f"<{ueberschrift}>LLG (Dämpfung)</{ueberschrift}><ul>"
                           f"<li>α = {w(llg['alpha'], llg['alpha_err'], fmt='.3e')}</li>"
                           f"<li>µ₀ΔH<sub>0</sub> (inhomogen) = "
                           f"{w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT "
                           f"= {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1.0, '.5f')} T</li>"
                           f"<li>R² = {llg['R2']:.5f}</li></ul>")
-            modus = ("gewichtet" if getattr(self, "_gewichtet", False) else "ungewichtet")
+        if irgendein_fit:
+            modus = "gewichtet" if self._gewichtet else "ungewichtet"
             zeilen.append(f"<p style='color:{F.TEXT_SCHWACH};font-size:11px'>Kittel-/LLG-Fit "
                           f"{modus} (umschaltbar: Strg+P). Unsicherheiten der Parameter: "
                           "im Export.</p>")
@@ -301,7 +435,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             x1, y1 = event.xdata, event.ydata
             drin = ((px >= min(x0, x1)) & (px <= max(x0, x1))
                     & (py >= min(y0, y1)) & (py <= max(y0, y1)))
-            indizes = [int(i) for i in self._punkt_indizes[drin]]
+            treffer = [int(k) for k in np.flatnonzero(drin)]
         elif not war_box and event.inaxes is ax:
             xs = abs(np.diff(ax.get_xlim())[0]) or 1e-12
             ys = abs(np.diff(ax.get_ylim())[0]) or 1e-12
@@ -309,21 +443,68 @@ class AuswertungsFenster(QtWidgets.QDialog):
             naechster = int(np.argmin(abstand))
             if abstand[naechster] > _KLICK_TOLERANZ:
                 return
-            indizes = [int(self._punkt_indizes[naechster])]
+            treffer = [naechster]
         else:
             return
-        if indizes and self._cb_markieren is not None:
-            self._cb_markieren(indizes)
+        self._punkte_entfernen(treffer)
+
+    def _punkte_entfernen(self, treffer: list[int]) -> None:
+        """Plotpunkte (Positionen) als Ausreisser melden: Hauptmode-Ansicht ->
+        Linescan-Ausreisser, Mode-Ansicht -> nur ``(index, mode)``."""
+        linescans = [int(self._punkt_indizes[k]) for k in treffer
+                     if int(self._punkt_moden[k]) == HAUPTMODE]
+        paare = [(int(self._punkt_indizes[k]), int(self._punkt_moden[k])) for k in treffer
+                 if int(self._punkt_moden[k]) != HAUPTMODE]
+        geaendert = False
+        if linescans and self._cb_markieren is not None:
+            self._cb_markieren(linescans)
+            geaendert = True
+        if paare and self._cb_markieren_mode is not None:
+            self._cb_markieren_mode(paare)
+            geaendert = True
+        if geaendert:
             self.aktualisiere()
 
     # --- Export ---------------------------------------------------------------
     def verwendete_indizes(self) -> list[int]:
-        """Stapel-Indizes der im Kittel-/LLG-Fit verwendeten Punkte."""
+        """Stapel-Indizes der in der aktuellen Ansicht verwendeten Punkte."""
         return [int(i) for i in self._punkt_indizes]
+
+    def _reihen_alle_moden(self, stapel) -> dict[int, ModenReihe]:
+        n = self._zuordnung.n_moden if self._zuordnung is not None else 1
+        modi = list(range(1, n + 1))
+        if all(k in self._reihen for k in modi):
+            return {k: self._reihen[k] for k in modi}
+        return auswertung_je_mode(stapel.ergebnisse, modi, self._zuordnung, stapel.ausreisser,
+                                  getattr(stapel, "ausreisser_moden", []), **self._fit_argumente)
+
+    def _parameter_tabelle(self, stapel, reihe: ModenReihe, kennzeichnen: bool) -> pd.DataFrame:
+        mode = reihe.mode
+        paare = [(i, k) for i, k in getattr(stapel, "ausreisser_moden", []) if int(k) == mode]
+        n_aus = len(stapel.ausreisser) + (len(paare) if mode != HAUPTMODE else 0)
+        text = (self._zuordnung.beschreibung(mode)
+                if kennzeichnen and self._zuordnung is not None else "")
+        return kittel_llg_tabelle(reihe.info, gewichtet=self._gewichtet, n_punkte=reihe.n,
+                                  n_ausreisser=n_aus, mode=mode if kennzeichnen else None,
+                                  mode_text=text)
+
+    def _punkte_tabelle(self, stapel, reihe: ModenReihe, kennzeichnen: bool) -> pd.DataFrame:
+        mode = reihe.mode
+        verwendet = [int(i) for i in reihe.indizes]
+        if mode == HAUPTMODE:
+            return kittel_llg_punkte_tabelle(stapel.ergebnisse, stapel.ausreisser, verwendet,
+                                             mode=HAUPTMODE if kennzeichnen else None)
+        paare = ergebnisse_fuer_mode(stapel.ergebnisse, mode, self._zuordnung)
+        gesperrt = set(stapel.ausreisser) | {
+            int(i) for i, k in getattr(stapel, "ausreisser_moden", []) if int(k) == mode}
+        return kittel_llg_punkte_tabelle([e for _, e in paare], sorted(gesperrt), verwendet,
+                                         indizes=[i for i, _ in paare], mode=mode)
 
     def exportiere(self, basis: str, csv_deutsch: bool = False) -> list[str]:
         """Schreibt ``<basis>.xlsx``, ``<basis>_punkte.csv``, ``<basis>.png/.pdf``.
 
+        Excel: Blaetter ``Parameter``/``Punkte`` der aktuellen Ansicht; bei
+        mehreren Moden zusaetzlich ``Parameter_M<k>``/``Punkte_M<k>`` je Mode.
         Liefert die geschriebenen Pfade. Wird auch von "Alles speichern" genutzt.
         """
         stapel = self._hole_stapel()
@@ -333,14 +514,29 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.figur.savefig(basis + ".png", dpi=300)
         self.figur.savefig(basis + ".pdf")
         geschrieben += [basis + ".png", basis + ".pdf"]
-        tab_param = kittel_llg_tabelle(self._info, gewichtet=getattr(self, "_gewichtet", False),
-                                       n_punkte=int(self._punkt_indizes.size),
-                                       n_ausreisser=len(stapel.ausreisser))
-        tab_punkte = kittel_llg_punkte_tabelle(stapel.ergebnisse, stapel.ausreisser,
-                                               self.verwendete_indizes())
+
+        def _zusammen(tabellen):
+            voll = [t for t in tabellen if not t.empty]
+            return pd.concat(voll, ignore_index=True) if voll else pd.DataFrame()
+
+        mode = self.mode_gewaehlt()
+        mehrere = self._moden_aktiv
+        if mode == ALLE_MODEN:
+            reihen = list(self._reihen.values())
+            tab_param = _zusammen([self._parameter_tabelle(stapel, r, True) for r in reihen])
+            tab_punkte = _zusammen([self._punkte_tabelle(stapel, r, True) for r in reihen])
+        else:
+            reihe = self._reihen.get(mode) or _leere_reihe(mode)
+            tab_param = self._parameter_tabelle(stapel, reihe, mehrere)
+            tab_punkte = self._punkte_tabelle(stapel, reihe, mehrere)
+        blaetter = [("Parameter", tab_param), ("Punkte", tab_punkte)]
+        if mehrere:
+            for k, r in self._reihen_alle_moden(stapel).items():
+                blaetter.append((f"Parameter_M{k}", self._parameter_tabelle(stapel, r, True)))
+                blaetter.append((f"Punkte_M{k}", self._punkte_tabelle(stapel, r, True)))
         with pd.ExcelWriter(basis + ".xlsx", engine="openpyxl") as writer:
-            tab_param.to_excel(writer, sheet_name="Parameter", index=False)
-            tab_punkte.to_excel(writer, sheet_name="Punkte", index=False)
+            for name, tab in blaetter:
+                tab.to_excel(writer, sheet_name=name, index=False)
         geschrieben.append(basis + ".xlsx")
         csv_pfad = basis + "_punkte.csv"
         if csv_deutsch:
