@@ -264,9 +264,9 @@ def test_hauptfenster_uebernimmt_moden_aus_auswahl_dialog(app, monkeypatch):
 
 def test_geraden_mode_zuordnung_und_undo(app):
     w = _fenster_mit_stapel()
-    assert not w.zonenpanel.mode_spin.isEnabled()
+    assert w.zonenpanel.band_box.isHidden()          # eine Mode: klassische Ansicht
     w._setze_n_moden(2)
-    assert w.zonenpanel.mode_spin.isEnabled() and w.zonenpanel.mode_spin.maximum() == 2
+    assert not w.zonenpanel.band_box.isHidden() and w.zonenpanel.mode_spin.maximum() == 2
     w.zonenpanel.mode_spin.setValue(2)
     w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
     assert w._grenzgeraden[0].mode == 2
@@ -278,3 +278,32 @@ def test_geraden_mode_zuordnung_und_undo(app):
     assert w._grenzgeraden[0].mode == 2
     w._setze_n_moden(1)
     assert w.zonenpanel.mode_neu() == 1
+
+
+def test_band_werkzeug_und_vorpruefung(app, monkeypatch):
+    from polderfit.fit.fenster_steuerung import band_geraden
+    from polderfit.gui import bereichsfit_dialog as bd
+    w = _fenster_mit_stapel()
+    panel = w.zonenpanel
+    assert panel.band_box.isHidden() and "Grünen Bereich" in panel.btn_geraden_fit.text()
+    panel.n_moden_combo.setCurrentIndex(panel.n_moden_combo.findData(2))   # Panel -> Hauptfenster
+    assert w._physik.n_moden == 2 and w.stapel.n_moden == 2 and w.spin_moden.value() == 2
+    assert not panel.band_box.isHidden() and "Moden-Bänder" in panel.btn_geraden_fit.text()
+    panel.mode_spin.setValue(2)
+    panel.breite_spin.setValue(8)
+    w._band_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
+    assert len(w._grenzgeraden) == 2 and all(g.mode == 2 for g in w._grenzgeraden)
+    assert "M2 ✓" in panel.band_status.text() and "M1 –" in panel.band_status.text()
+    w._rueckgaengig()
+    assert w._grenzgeraden == []
+    # Vorpruefung: Geraden, deren gruene Seiten sich nirgends schneiden -> kein Dialog
+    a, b = band_geraden(2.6, 5e9, 3.4, 50e9, 0.02, 1)
+    a.seite_wechseln()
+    b.seite_wechseln()
+    w._geraden_setzen([a, b])
+    monkeypatch.setattr(bd.BereichsFitDialog, "exec",
+                        lambda dlg: pytest.fail("Dialog trotz leerem Fit-Bereich"))
+    w._geraden_fit()
+    assert "kein linescan" in w.statusBar().currentMessage().lower()
+    w._setze_n_moden(1)
+    assert panel.band_box.isHidden() and panel.n_moden_combo.currentData() == 1

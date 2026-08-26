@@ -5,7 +5,7 @@ Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, `
 | Werkzeug | Aufruf | Wirkung |
 |---|---|---|
 | Auto-Fit (alle) | `F5` | Dialog: Frequenz/Feld von … bis …, Jumper; Fenstersuche + Fit je Frequenz |
-| Grenzgeraden | `Strg+L` oder Panel *Zonen & Grenzgeraden*, 2 Klicks | grüne Seite fitten, rote ignorieren; zwei Geraden = Band; Doppelklick tauscht Seiten; „Grünen Bereich fitten …“ fragt **Frequenz/Feld von … bis …** (zuletzt benutzter Bereich vorbelegt; Punkt oder Komma), Modus, Fensterbreite, Resonanzen ab; bei mehreren Resonanzen je Mode ein Band (2n Geraden), Mode je Gerade im Panel („Mode neuer Geraden“ / „Mode ändern“) |
+| Grenzgeraden | `Strg+L` oder Panel *Zonen & Grenzgeraden*, 2 Klicks | grüne Seite fitten, rote ignorieren; zwei Geraden = Band; Doppelklick tauscht Seiten; „Grünen Bereich fitten …“ fragt **Frequenz/Feld von … bis …** (zuletzt benutzter Bereich vorbelegt; Punkt oder Komma), Modus, Fensterbreite, Resonanzen ab; bei mehreren Resonanzen (Panel: „Resonanzen je Linescan“) je Mode ein Band: Mode wählen, „Band einzeichnen“ (2 Klicks entlang der Mode, ± Breite) → „Moden-Bänder fitten …“; Vorprüfung meldet, wenn sich die grünen Seiten nirgends schneiden |
 | Bereich neu fitten (Rechteck) | `Strg+B` | derselbe Dialog (Bereich editierbar); `B_res` bleibt im Bereich |
 | Grenzen im Linescan ziehen | Fit-Panel (erscheint mit erstem Fit oder Klick in die Karte) | Einzelfrequenz, Fit sofort; Zahl der Resonanzen wählbar |
 | Ausschlusszone | Panel, Rechteck | Punkte aus allen (Nach-)Fits; schraffiert; einzeln entfernbar |

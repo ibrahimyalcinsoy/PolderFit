@@ -373,6 +373,55 @@ class Grenzgerade:
         return (lo, hi) if hi > lo else None
 
 
+def band_geraden(b1: float, f1: float, b2: float, f2: float, halbbreite: float,
+                 mode: int = 1) -> list[Grenzgerade]:
+    """Zwei Grenzgeraden parallel zur Linie ``(b1, f1)-(b2, f2)`` (f in Hz), im
+    Feld um ``+-halbbreite`` (T) versetzt, gruene Seiten nach innen: das Band um
+    eine Mode. Werkzeug "Band einzeichnen" der GUI (eine Linie + Breite statt
+    zwei Geraden mit Seitenwahl)."""
+    if f1 == f2:
+        raise ValueError("Die Bandlinie braucht zwei verschiedene Frequenzen.")
+    halbbreite = abs(float(halbbreite))
+    f_m = 0.5 * (f1 + f2)
+    b_m = b1 + (b2 - b1) * (f_m - f1) / (f2 - f1)
+    geraden = []
+    for vorzeichen in (-1.0, 1.0):
+        g = Grenzgerade(b1=float(b1) + vorzeichen * halbbreite, f1=float(f1),
+                        b2=float(b2) + vorzeichen * halbbreite, f2=float(f2),
+                        mode=max(1, int(mode)))
+        erlaubt = g.erlaubtes_intervall(f_m, -1e6, 1e6)
+        if erlaubt is None or not (erlaubt[0] <= b_m <= erlaubt[1]):
+            g.seite_wechseln()
+        geraden.append(g)
+    return geraden
+
+
+def zaehle_abgedeckt(stapel: StapelErgebnis, geraden: list[Grenzgerade]) -> int:
+    """Anzahl Linescans mit nicht-leerem gruenen Bereich (bzw. nicht-leeren
+    Moden-Baendern) - Vorpruefung der GUI vor dem Grenzgeraden-Fit: 0 heisst
+    "die gruenen Seiten schneiden sich nirgends"."""
+    if not geraden:
+        return 0
+    n_moden = max(1, int(stapel.n_moden))
+    moden_modus = n_moden > 1 and any(int(getattr(g, "mode", 1)) > 1 for g in geraden)
+    anzahl = 0
+    for ls in stapel.datensatz.linescans:
+        lo, hi = float(ls.feld.min()), float(ls.feld.max())
+        if hi <= lo:
+            continue
+        if moden_modus:
+            ok = _moden_baender(geraden, n_moden, ls.frequenz, lo, hi) is not None
+        else:
+            erlaubt: tuple[float, float] | None = (lo, hi)
+            for g in geraden:
+                if erlaubt is None:
+                    break
+                erlaubt = g.erlaubtes_intervall(ls.frequenz, erlaubt[0], erlaubt[1])
+            ok = erlaubt is not None
+        anzahl += int(ok)
+    return anzahl
+
+
 def _moden_baender(geraden, n_moden: int, frequenz: float, lo: float, hi: float):
     """Je Mode 1..n das Feldband (Schnitt der gruenen Seiten ihrer Geraden) bei
     ``frequenz``; Moden ohne Geraden -> ``None`` (frei). Liefert ``(fenster,

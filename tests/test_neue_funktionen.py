@@ -770,3 +770,22 @@ def test_grenzgerade_mode_persistenz():
     assert zurueck.mode == 2
     [alt] = grenzgeraden_aus_sitzung({"grenzgeraden": [{"b1": 1, "f1": 1e9, "b2": 2, "f2": 2e9}]})
     assert alt.mode == 1
+
+
+def test_band_geraden_und_abdeckung():
+    from polderfit.fit.batch import leerer_stapel
+    from polderfit.fit.fenster_steuerung import band_geraden, zaehle_abgedeckt
+    ds = _synth_datensatz(zwei_moden=True)
+    g = band_geraden(0.62, 10e9, 0.76, 24e9, 0.012, mode=2)
+    assert len(g) == 2 and all(x.mode == 2 for x in g)
+    iv = g[0].erlaubtes_intervall(17e9, 0.0, 2.0)
+    iv = g[1].erlaubtes_intervall(17e9, iv[0], iv[1])
+    assert iv is not None and abs(iv[0] - 0.678) < 1e-9 and abs(iv[1] - 0.702) < 1e-9
+    st = leerer_stapel(ds, n_moden=2)
+    assert zaehle_abgedeckt(st, band_geraden(0.62, 10e9, 0.76, 24e9, 0.012, 1) + g) == 8
+    a, b = band_geraden(0.62, 10e9, 0.76, 24e9, 0.012, 1)
+    a.seite_wechseln()
+    b.seite_wechseln()                     # gruen jeweils nach aussen -> leer
+    assert zaehle_abgedeckt(st, [a, b]) == 0
+    with pytest.raises(ValueError):
+        band_geraden(0.6, 10e9, 0.7, 10e9, 0.01)

@@ -65,7 +65,7 @@ _ZOOM_RAUS = 1.25
 _BOX_SCHWELLE_REL = 0.02
 
 #: Alle bekannten Interaktionsmodi (zentrale Verwaltung, exklusiv).
-MODI = ("bereich", "zone", "ausreisser", "gerade")
+MODI = ("bereich", "zone", "ausreisser", "gerade", "band")
 
 #: Mauszeiger je Modus.
 _MODUS_CURSOR = {
@@ -73,10 +73,11 @@ _MODUS_CURSOR = {
     "zone": QtCore.Qt.CrossCursor,
     "ausreisser": QtCore.Qt.PointingHandCursor,
     "gerade": QtCore.Qt.CrossCursor,
+    "band": QtCore.Qt.CrossCursor,
 }
 
 #: Modi, die ueber ZWEI Klicks zwei Punkte einsammeln.
-_ZWEI_PUNKT_MODI = ("gerade",)
+_ZWEI_PUNKT_MODI = ("gerade", "band")
 
 #: Farben der Grenzgeraden-Seiten (gruen = wird neu gefittet, rot = ignoriert).
 _GERADE_GRUEN = F.SIGNAL_GRUEN
@@ -248,6 +249,11 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         ``fertig(punkte)`` erhaelt ``[(B1, f1_GHz), (B2, f2_GHz)]``.
         """
         self.starte_modus("gerade", fertig)
+
+    def starte_band_zeichnen(self, fertig) -> None:
+        """Band-Modus (mehrere Moden): zwei Klicks entlang einer Mode; ``fertig(punkte)``
+        wie beim Geraden-Modus - das Hauptfenster macht daraus zwei Geraden +- Breite."""
+        self.starte_modus("band", fertig)
 
     def setze_ausreisser_modus(self, an: bool, gewaehlt=None) -> None:
         """Schaltet den (dauerhaften) Ausreisser-Markiermodus um.

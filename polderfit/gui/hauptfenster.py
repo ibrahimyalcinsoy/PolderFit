@@ -64,7 +64,7 @@ from ..fit.fenster_steuerung import (
     Grenzgerade,
     entferne_ausschlusszone,
     fitte_bereich,
-    fitte_geraden_bereich,
+    band_geraden, fitte_geraden_bereich, zaehle_abgedeckt,
     fuege_ausschlusszone_hinzu,
 )
 from ..fit.linescan_fit import BEWERTUNG_TEXTE, hauptmode_wechseln
@@ -119,6 +119,7 @@ _MODUS_TEXTE = {
     "zone": "Modus: Ausschlusszone – Rechteck aufziehen · Esc bricht ab",
     "ausreisser": "Modus: Ausreißer markieren – Punkt anklicken oder Kasten aufziehen · Esc beendet",
     "gerade": "Modus: Grenzgerade – zwei Punkte klicken · Esc bricht ab",
+    "band": "Modus: Moden-Band – zwei Punkte entlang der Mode klicken · Esc bricht ab",
 }
 
 #: Verzoegerung der Auto-Sicherung nach der letzten Aenderung (ms).
@@ -180,6 +181,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             gerade_entfernen=self._gerade_entfernen,
             geraden_fit=self._geraden_fit,
             gerade_mode=self._gerade_mode,
+            band_umschalten=self._band_modus,
+            n_moden_geaendert=self._setze_n_moden,
         )
         #: Grenzgeraden (Fit-Bereich); bleiben ueber Auto-Fits erhalten,
         #: werden mit einem neuen Datensatz verworfen.
@@ -972,6 +975,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 aktion.blockSignals(False)
         self.zonenpanel.setze_modus_aktiv(modus == "zone")
         self.zonenpanel.setze_gerade_modus_aktiv(modus == "gerade")
+        self.zonenpanel.setze_band_modus_aktiv(modus == "band")
         if modus is None:
             self.modus_label.setVisible(False)
             self.statusBar().showMessage("Modus beendet.", 4000)
@@ -1054,6 +1058,40 @@ class Hauptfenster(QtWidgets.QMainWindow):
                   f"({b2:.3f} T, {f2_ghz:.2f} GHz). Grüner Saum = wird "
                   f"gefittet; Seite per Doppelklick oder im Panel wechseln; "
                   f"dann „Grünen Bereich fitten …“.", "ok")
+
+    def _band_modus(self, an: bool):
+        """Band-Werkzeug (mehrere Moden): zwei Klicks entlang der Mode -> Band ± Breite."""
+        if not an:
+            if self.matrix.modus == "band":
+                self.matrix.beende_modus()
+            return
+        if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
+            self.zonenpanel.setze_band_modus_aktiv(False)
+            return
+        self._dock_schmal_halten(self.zonen_dock, breite=300)
+        self._log(f"Band für Mode {self.zonenpanel.mode_neu()}: zwei Punkte entlang der "
+                  f"Mode im Farbplot klicken – das Band ±{self.zonenpanel.bandbreite_T()*1e3:.0f} mT "
+                  "entsteht als zwei Geraden dieser Mode (Seiten automatisch). Esc bricht ab.", "info")
+        self.matrix.starte_band_zeichnen(self._band_gezeichnet)
+
+    def _band_gezeichnet(self, punkte):
+        """Callback des Band-Werkzeugs: zwei Geraden (± Breite) fuer die gewaehlte Mode."""
+        (b1, f1_ghz), (b2, f2_ghz) = punkte
+        mode = self.zonenpanel.mode_neu()
+        halbbreite = self.zonenpanel.bandbreite_T()
+        try:
+            neue = band_geraden(float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9,
+                                halbbreite, mode=mode)
+        except ValueError as exc:
+            self._log(f"Band: {exc}", "warn")
+            return
+        vorher = self._geraden_schatten
+        self._grenzgeraden.extend(neue)
+        self._zeige_geraden()
+        self._merke_geraden_aenderung(f"Band Mode {mode} eingefügt", vorher)
+        self._log(f"Band für Mode {mode} eingefügt: ±{halbbreite*1e3:.0f} mT um "
+                  f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
+                  "Nächste Mode wählen und Band einzeichnen, dann „Moden-Bänder fitten …“.", "ok")
 
     def _zeige_geraden(self):
         """Synchronisiert Geraden-Overlay (Farbplot), Panel-Liste und Schatten."""
@@ -1156,11 +1194,26 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         stapel = self.stapel
         geraden = list(self._grenzgeraden)
+        moden_modus = stapel.n_moden > 1 and any(g.mode > 1 for g in geraden)
+        # Vorpruefung: schneiden sich die gruenen Seiten ueberhaupt irgendwo?
+        if zaehle_abgedeckt(stapel, geraden) == 0:
+            if stapel.n_moden > 1 and not moden_modus:
+                grund = ("Alle Geraden gehören zu Mode 1 – bei mehreren Resonanzen je Mode ein "
+                         "Band einzeichnen (Panel: Mode wählen, „Band einzeichnen“).")
+            else:
+                grund = ("Die grünen Seiten der Geraden schneiden sich in keinem Linescan – "
+                         "Seite per Doppelklick auf die Linie tauschen oder „Band einzeichnen“ "
+                         "verwenden.")
+            text = "Grenzgeraden-Fit: kein Linescan im grünen Bereich. " + grund
+            self._log(text, "warn")
+            self.statusBar().showMessage(text)
+            self._dock_schmal_halten(self.zonen_dock, breite=300)
+            return
         (b_von, b_bis, f_von_ghz, f_bis_ghz), gemerkt = self._geraden_bereich_vorgabe()
         dialog = BereichsFitDialog(
             b_von, b_bis, f_von_ghz, f_bis_ghz,
             modus_vorgabe=self._bereich_modus, breite_vorgabe=self._bereich_breite,
-            titel="Grünen Bereich fitten",
+            titel="Moden-Bänder fitten" if moden_modus else "Grünen Bereich fitten",
             info_text=(f"{len(geraden)} Grenzgerade(n): Im GRÜNEN Bereich werden "
                        "Fenstersuche und Fit ausgeführt; die rote Seite bleibt "
                        "unangetastet. Frequenz-/Feldbereich unten grenzt zusätzlich ein"
