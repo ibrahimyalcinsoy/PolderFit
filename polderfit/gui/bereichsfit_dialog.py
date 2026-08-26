@@ -30,7 +30,7 @@ class BereichsFitDialog(QtWidgets.QDialog):
                  breite_vorgabe: int | None = None,
                  info_text: str | None = None, titel: str | None = None,
                  daten_bereich: tuple[float, float, float, float] | None = None,
-                 n_moden: int = 1,
+                 n_moden: int = 1, moden_hinweis: str | None = None,
                  parent=None):
         """``daten_bereich`` = (feld_min, feld_max, f_min_ghz, f_max_ghz) der
         ganzen Messung (Grenzen der Eingabefelder); fehlt es, gilt das Rechteck."""
@@ -93,6 +93,10 @@ class BereichsFitDialog(QtWidgets.QDialog):
             "Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard;\n"
             "2 = zwei nahe Dips, z. B. nanostrukturiertes CoFe).")
         form.addRow("Resonanzen je Linescan:", self.moden_spin)
+        if moden_hinweis:
+            hinweis = QtWidgets.QLabel(moden_hinweis)
+            hinweis.setWordWrap(True)
+            form.addRow("", hinweis)
         lay.addLayout(form)
 
         breite_zeile = QtWidgets.QHBoxLayout()

@@ -305,18 +305,51 @@ def test_geraden_mode_zuordnung_und_undo(app):
     w = _fenster_mit_stapel()
     assert w.zonenpanel.band_box.isHidden()          # eine Mode: klassische Ansicht
     w._setze_n_moden(2)
-    assert not w.zonenpanel.band_box.isHidden() and w.zonenpanel.mode_spin.maximum() == 2
-    w.zonenpanel.mode_spin.setValue(2)
+    assert not w.zonenpanel.band_box.isHidden()
     w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
+    assert w._grenzgeraden[0].mode == 1              # erste Gerade: Mode 1
+    assert w.zonenpanel.geraden_liste.item(0).text().startswith("M1")
+    w.zonenpanel.geraden_liste.setCurrentRow(0)
+    w.zonenpanel.btn_gerade_mode.click()            # Experten-Werkzeug: 1 -> 2
     assert w._grenzgeraden[0].mode == 2
     assert w.zonenpanel.geraden_liste.item(0).text().startswith("M2")
-    w.zonenpanel.geraden_liste.setCurrentRow(0)
-    w.zonenpanel.btn_gerade_mode.click()            # 2 -> 1
-    assert w._grenzgeraden[0].mode == 1
     w._rueckgaengig()
-    assert w._grenzgeraden[0].mode == 2
+    assert w._grenzgeraden[0].mode == 1
     w._setze_n_moden(1)
     assert w.zonenpanel.mode_neu() == 1
+
+
+def test_sukzessive_moden_nummerierung(app):
+    """Nutzerwunsch: Baender NACHEINANDER einzeichnen, Mode-Nummer automatisch -
+    zwei Geraden = ein Band = eine Mode, das naechste Band ist die naechste Mode
+    (bis zur eingestellten Modenzahl); Fit-Modenzahl = Zahl der Baender."""
+    w = _fenster_mit_stapel()
+    panel = w.zonenpanel
+    w._setze_n_moden(3)
+    assert panel.mode_neu() == 1 and panel.n_moden_effektiv() == 1
+    w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])       # Mode 1, Gerade 1
+    assert panel.mode_neu() == 1                           # Band 1 noch offen
+    w._gerade_gezeichnet([(2.8, 10.0), (3.3, 40.0)])       # Mode 1, Gerade 2 -> Band 1 fertig
+    assert [g.mode for g in w._grenzgeraden] == [1, 1]
+    assert panel.mode_neu() == 2 and panel.n_moden_effektiv() == 1
+    assert "Mode 1 fitten" in panel.btn_geraden_fit.text()
+    assert "nächste Gerade/Band: Mode 2" in panel.band_status.text()
+    panel.breite_spin.setValue(8)
+    w._band_gezeichnet([(2.9, 10.0), (3.4, 40.0)])         # Band-Werkzeug -> Mode 2
+    assert [g.mode for g in w._grenzgeraden] == [1, 1, 2, 2]
+    assert panel.mode_neu() == 3 and panel.n_moden_effektiv() == 2
+    assert "Moden 1–2 fitten" in panel.btn_geraden_fit.text()
+    assert "M1 ✓ (2)" in panel.band_status.text() and "M2 ✓ (2)" in panel.band_status.text()
+    w._band_gezeichnet([(3.0, 10.0), (3.5, 40.0)])         # Mode 3
+    assert panel.n_moden_effektiv() == 3
+    w._gerade_gezeichnet([(3.1, 10.0), (3.6, 40.0)])       # ueber der Obergrenze: bleibt Mode 3
+    assert w._grenzgeraden[-1].mode == 3 and panel.mode_neu() == 3
+    w._rueckgaengig()
+    w._rueckgaengig()                                      # Band 3 weg
+    assert panel.n_moden_effektiv() == 2 and panel.mode_neu() == 3
+    # Klassisch (eine Resonanz): immer Mode 1, Knopftext klassisch.
+    w._setze_n_moden(1)
+    assert panel.mode_neu() == 1 and "Grünen Bereich" in panel.btn_geraden_fit.text()
 
 
 def test_band_werkzeug_und_vorpruefung(app, monkeypatch):
@@ -327,12 +360,15 @@ def test_band_werkzeug_und_vorpruefung(app, monkeypatch):
     assert panel.band_box.isHidden() and "Grünen Bereich" in panel.btn_geraden_fit.text()
     panel.n_moden_combo.setCurrentIndex(panel.n_moden_combo.findData(2))   # Panel -> Hauptfenster
     assert w._physik.n_moden == 2 and w.stapel.n_moden == 2 and w.spin_moden.value() == 2
-    assert not panel.band_box.isHidden() and "Moden-Bänder" in panel.btn_geraden_fit.text()
-    panel.mode_spin.setValue(2)
+    assert not panel.band_box.isHidden() and "Mode 1 fitten" in panel.btn_geraden_fit.text()
     panel.breite_spin.setValue(8)
     w._band_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
-    assert len(w._grenzgeraden) == 2 and all(g.mode == 2 for g in w._grenzgeraden)
-    assert "M2 ✓" in panel.band_status.text() and "M1 –" in panel.band_status.text()
+    assert len(w._grenzgeraden) == 2 and all(g.mode == 1 for g in w._grenzgeraden)
+    assert "M1 ✓" in panel.band_status.text() and "M2 –" in panel.band_status.text()
+    w._band_gezeichnet([(2.8, 10.0), (3.3, 40.0)])       # zweites Band -> Mode 2
+    assert [g.mode for g in w._grenzgeraden] == [1, 1, 2, 2]
+    assert "M2 ✓" in panel.band_status.text()
+    w._rueckgaengig()
     w._rueckgaengig()
     assert w._grenzgeraden == []
     # Vorpruefung: Geraden, deren gruene Seiten sich nirgends schneiden -> kein Dialog

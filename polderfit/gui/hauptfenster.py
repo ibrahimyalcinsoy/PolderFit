@@ -1054,10 +1054,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                               mode=self.zonenpanel.mode_neu()))
         self._zeige_geraden()
         self._merke_geraden_aenderung("Grenzgerade eingefügt", vorher)
-        self._log(f"Grenzgerade eingefügt: ({b1:.3f} T, {f1_ghz:.2f} GHz) – "
-                  f"({b2:.3f} T, {f2_ghz:.2f} GHz). Grüner Saum = wird "
-                  f"gefittet; Seite per Doppelklick oder im Panel wechseln; "
-                  f"dann „Grünen Bereich fitten …“.", "ok")
+        mode = self._grenzgeraden[-1].mode
+        self._log(f"Grenzgerade eingefügt{f' (Mode {mode})' if self.stapel and self.stapel.n_moden > 1 else ''}: "
+                  f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
+                  f"Grüner Saum = wird gefittet; Seite per Doppelklick oder im Panel "
+                  f"wechseln; dann „{self.zonenpanel.btn_geraden_fit.text()}“.", "ok")
 
     def _band_modus(self, an: bool):
         """Band-Werkzeug (mehrere Moden): zwei Klicks entlang der Mode -> Band ± Breite."""
@@ -1069,9 +1070,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.zonenpanel.setze_band_modus_aktiv(False)
             return
         self._dock_schmal_halten(self.zonen_dock, breite=300)
-        self._log(f"Band für Mode {self.zonenpanel.mode_neu()}: zwei Punkte entlang der "
-                  f"Mode im Farbplot klicken – das Band ±{self.zonenpanel.bandbreite_T()*1e3:.0f} mT "
-                  "entsteht als zwei Geraden dieser Mode (Seiten automatisch). Esc bricht ab.", "info")
+        self._log(f"Band für Mode {self.zonenpanel.mode_neu()} (automatisch vergeben): zwei "
+                  f"Punkte entlang der Mode im Farbplot klicken – das Band "
+                  f"±{self.zonenpanel.bandbreite_T()*1e3:.0f} mT entsteht als zwei Geraden "
+                  "dieser Mode (Seiten automatisch). Esc bricht ab.", "info")
         self.matrix.starte_band_zeichnen(self._band_gezeichnet)
 
     def _band_gezeichnet(self, punkte):
@@ -1089,9 +1091,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._grenzgeraden.extend(neue)
         self._zeige_geraden()
         self._merke_geraden_aenderung(f"Band Mode {mode} eingefügt", vorher)
+        naechste = self.zonenpanel.mode_neu()
         self._log(f"Band für Mode {mode} eingefügt: ±{halbbreite*1e3:.0f} mT um "
                   f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
-                  "Nächste Mode wählen und Band einzeichnen, dann „Moden-Bänder fitten …“.", "ok")
+                  f"Jetzt „{self.zonenpanel.btn_geraden_fit.text()}“"
+                  + (f" – oder erst das Band für Mode {naechste} einzeichnen."
+                     if naechste > mode else "."), "ok")
 
     def _zeige_geraden(self):
         """Synchronisiert Geraden-Overlay (Farbplot), Panel-Liste und Schatten."""
@@ -1194,12 +1199,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         stapel = self.stapel
         geraden = list(self._grenzgeraden)
-        moden_modus = stapel.n_moden > 1 and any(g.mode > 1 for g in geraden)
+        # Modenzahl dieses Fits = Zahl der bisher eingezeichneten Baender (sukzessiv:
+        # Mode 1 allein -> Ein-Moden-Fit, mit Band 2 -> zwei Moden gleichzeitig).
+        n_eff = self.zonenpanel.n_moden_effektiv()
+        moden_modus = n_eff > 1
         # Vorpruefung: schneiden sich die gruenen Seiten ueberhaupt irgendwo?
-        if zaehle_abgedeckt(stapel, geraden) == 0:
-            if stapel.n_moden > 1 and not moden_modus:
-                grund = ("Alle Geraden gehören zu Mode 1 – bei mehreren Resonanzen je Mode ein "
-                         "Band einzeichnen (Panel: Mode wählen, „Band einzeichnen“).")
+        if zaehle_abgedeckt(stapel, geraden, n_moden=n_eff) == 0:
+            if stapel.n_moden == 1 and len(geraden) >= 3:
+                grund = ("„Resonanzen je Linescan“ steht auf 1, daher gehören alle Geraden zu "
+                         "Mode 1. Für mehrere Moden im Panel erhöhen – dann bekommt jedes "
+                         "weitere Band automatisch die nächste Mode.")
             else:
                 grund = ("Die grünen Seiten der Geraden schneiden sich in keinem Linescan – "
                          "Seite per Doppelklick auf die Linie tauschen oder „Band einzeichnen“ "
@@ -1213,13 +1222,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dialog = BereichsFitDialog(
             b_von, b_bis, f_von_ghz, f_bis_ghz,
             modus_vorgabe=self._bereich_modus, breite_vorgabe=self._bereich_breite,
-            titel="Moden-Bänder fitten" if moden_modus else "Grünen Bereich fitten",
-            info_text=(f"{len(geraden)} Grenzgerade(n): Im GRÜNEN Bereich werden "
-                       "Fenstersuche und Fit ausgeführt; die rote Seite bleibt "
-                       "unangetastet. Frequenz-/Feldbereich unten grenzt zusätzlich ein"
+            titel=f"Moden 1–{n_eff} fitten" if moden_modus else "Grünen Bereich fitten",
+            info_text=((f"{len(geraden)} Grenzgerade(n), Bänder für Mode 1–{n_eff}: jede "
+                        "Mode wird nur in ihrem Band gesucht, alle Moden werden gleichzeitig "
+                        "gefittet (Überlagerung berücksichtigt)."
+                        if moden_modus else
+                        f"{len(geraden)} Grenzgerade(n): Im GRÜNEN Bereich werden "
+                        "Fenstersuche und Fit ausgeführt; die rote Seite bleibt unangetastet.")
+                       + " Frequenz-/Feldbereich unten grenzt zusätzlich ein"
                        + (" (vorbelegt: zuletzt benutzter Bereich)." if gemerkt else ".")),
             daten_bereich=self._daten_bereich(),
-            n_moden=stapel.n_moden, parent=self)
+            n_moden=n_eff,
+            moden_hinweis=(f"aus den eingezeichneten Bändern: Mode 1–{n_eff}. Eine höhere "
+                           "Zahl fittet weitere Moden ohne Band (frei) mit."
+                           if stapel.n_moden > 1 else None),
+            parent=self)
         if not dialog.exec():
             self._log("Grenzgeraden-Fit abgebrochen.", "info")
             return
@@ -1229,11 +1246,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         b_von, b_bis = dialog.feld_bereich()
         self._bereich_modus, self._bereich_breite = modus, breite
         self._bereich_frequenz, self._bereich_feld = (f_von, f_bis), (b_von, b_bis)
-        self._setze_n_moden(dialog.n_moden())
-        if stapel.n_moden > 1 and any(g.mode > 1 for g in geraden):
-            moden = sorted({min(g.mode, stapel.n_moden) for g in geraden})
-            self._log(f"Grenzgeraden-Fit je Mode: Bänder für Mode {moden} "
-                      f"(Moden ohne Geraden sind frei).", "info")
+        n_fit = max(1, int(dialog.n_moden()))
+        if n_fit > self._physik.n_moden:
+            self._setze_n_moden(n_fit)   # nur anheben - die Einstellung ist die Obergrenze
+        if n_fit > 1 and moden_modus:
+            moden = sorted({min(g.mode, n_fit) for g in geraden})
+            self._log(f"Grenzgeraden-Fit mit {n_fit} Resonanzen: Bänder für Mode {moden}"
+                      + (" (weitere Moden frei)" if n_fit > n_eff else "")
+                      + " – alle Moden gleichzeitig.", "info")
+        elif n_fit > 1:
+            self._log(f"Grenzgeraden-Fit mit {n_fit} Resonanzen im grünen Bereich (ohne "
+                      "Bänder je Mode – Startwerte automatisch).", "info")
         # Undo-Schnappschuss ueber alle Fits (jede Frequenz kann betroffen sein).
         fits_vorher = self._fit_zustand(range(len(stapel.ergebnisse)))
 
@@ -1247,7 +1270,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                          fortschritt=fortschritt,
                                          frequenz_min=f_von, frequenz_max=f_bis,
                                          feld_min=b_von, feld_max=b_bis,
-                                         abbruch=melde.abgebrochen)
+                                         abbruch=melde.abgebrochen,
+                                         n_moden=n_fit)
 
         def bei_fertig(res):
             neu, uebersprungen = res

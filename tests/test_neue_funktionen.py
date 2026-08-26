@@ -761,6 +761,32 @@ def test_grenzgeraden_band_leer_wird_uebersprungen():
     assert neu == [] and len(ueb) == 8
 
 
+def test_sukzessive_baender_modenzahl_aus_baendern():
+    """Sukzessives Vorgehen (Nutzerwunsch): Band 1 allein wird als Ein-Moden-Fit
+    gerechnet (``n_moden=1`` trotz Stapel-Einstellung 2); mit Band 2 werden
+    beide Moden GLEICHZEITIG gefittet (Ueberlagerung beruecksichtigt), jede in
+    ihrem Band. Die Stapel-Einstellung bleibt die Obergrenze."""
+    from polderfit.fit.batch import leerer_stapel
+    from polderfit.fit.fenster_steuerung import fitte_geraden_bereich, zaehle_abgedeckt
+    ds = _synth_datensatz(zwei_moden=True)          # b = 0.62 + 0.02 k, Nebenmode +0.035
+    steig = 0.02 / 2e9
+    band1 = _band_geraden(0.62, steig, 0.012, 1)
+    st = leerer_stapel(ds, n_moden=2)
+    assert zaehle_abgedeckt(st, band1, n_moden=1) == 8
+    neu, ueb = fitte_geraden_bereich(st, band1, n_moden=1)
+    assert len(neu) == 8 and ueb == []
+    assert st.n_moden == 2                           # Einstellung unveraendert
+    for k, e in enumerate(st.ergebnisse):
+        assert len(e.moden) == 1 and abs(e.B_res - (0.62 + 0.02 * k)) < 0.004
+    band2 = _band_geraden(0.655, steig, 0.012, 2)
+    neu, ueb = fitte_geraden_bereich(st, band1 + band2, n_moden=2)
+    assert len(neu) == 8 and ueb == []
+    for k, e in enumerate(st.ergebnisse):
+        assert len(e.moden) == 2
+        b1, b2 = sorted(m["B_res"] for m in e.moden)
+        assert abs(b1 - (0.62 + 0.02 * k)) < 0.004 and abs(b2 - (0.655 + 0.02 * k)) < 0.004
+
+
 def test_grenzgerade_mode_persistenz():
     from dataclasses import asdict
     from polderfit.fit.fenster_steuerung import Grenzgerade

@@ -87,12 +87,7 @@ class ZonenPanel(QtWidgets.QWidget):
         band_lay = QtWidgets.QVBoxLayout(self.band_box)
         band_lay.setContentsMargins(0, 0, 0, 0)
         band_zeile = QtWidgets.QHBoxLayout()
-        band_zeile.addWidget(QtWidgets.QLabel("Mode:"))
-        self.mode_spin = RuhigeSpinBox()
-        self.mode_spin.setRange(1, 1)
-        self.mode_spin.setToolTip("Mode, für die das nächste Band bzw. die nächste Gerade gilt.")
-        band_zeile.addWidget(self.mode_spin)
-        band_zeile.addWidget(QtWidgets.QLabel("Breite ±"))
+        band_zeile.addWidget(QtWidgets.QLabel("Bandbreite ±"))
         self.breite_spin = RuhigeSpinBox()
         self.breite_spin.setRange(1, 500)
         self.breite_spin.setValue(10)
@@ -106,7 +101,8 @@ class ZonenPanel(QtWidgets.QWidget):
         self.btn_band.setCheckable(True)
         self.btn_band.setToolTip(
             "Zwei Punkte entlang der Mode klicken; das Band ± Breite entsteht als zwei\n"
-            "Geraden dieser Mode, Seiten automatisch. Esc oder erneuter Klick bricht ab.")
+            "Geraden, Seiten automatisch. Die Mode-Nummer wird automatisch vergeben:\n"
+            "erstes Band = Mode 1, nächstes Band = Mode 2 … Esc oder erneuter Klick bricht ab.")
         self.btn_band.toggled.connect(self._band_umgeschaltet)
         band_lay.addWidget(self.btn_band)
         self.band_status = QtWidgets.QLabel("")
@@ -145,8 +141,9 @@ class ZonenPanel(QtWidgets.QWidget):
 
         self.btn_geraden_fit = QtWidgets.QPushButton("Grünen Bereich fitten …")
         self.btn_geraden_fit.setToolTip(
-            "Fenstersuche und Fit im grünen Bereich aller Geraden bzw. in den Moden-\n"
-            "Bändern; im Dialog: Frequenz/Feld von … bis …, Modus, Fensterbreite.")
+            "Fenstersuche und Fit im grünen Bereich aller Geraden bzw. in den Bändern\n"
+            "der Moden (alle bisher eingezeichneten Moden gleichzeitig); im Dialog:\n"
+            "Frequenz/Feld von … bis …, Modus, Fensterbreite.")
         self.btn_geraden_fit.clicked.connect(
             lambda: self._cb_geraden_fit and self._cb_geraden_fit())
         geraden_lay.addWidget(self.btn_geraden_fit)
@@ -217,7 +214,6 @@ class ZonenPanel(QtWidgets.QWidget):
         """Resonanzen je Linescan (vom Hauptfenster): Auswahl, Band-Werkzeug und
         Liste umschalten - ohne Rueckruf."""
         self._n_moden = max(1, int(n))
-        self.mode_spin.setRange(1, self._n_moden)
         index = self.n_moden_combo.findData(min(self._n_moden, 6))
         if index >= 0 and index != self.n_moden_combo.currentIndex():
             self.n_moden_combo.blockSignals(True)
@@ -244,29 +240,39 @@ class ZonenPanel(QtWidgets.QWidget):
         if self._cb_band_umschalten is not None:
             self._cb_band_umschalten(bool(an))
 
+    def _mode_von(self, gerade) -> int:
+        """Mode einer Geraden, an die eingestellte Modenzahl geklemmt."""
+        return min(max(int(getattr(gerade, "mode", 1)), 1), self._n_moden)
+
+    def n_moden_effektiv(self) -> int:
+        """Zahl der Moden, fuer die Geraden/Baender existieren (hoechste Mode-Nummer;
+        1 ohne Geraden) - die Modenzahl des naechsten Grenzgeraden-Fits."""
+        return max((self._mode_von(g) for g in self._geraden), default=1)
+
     def _moden_ansicht_aktualisieren(self) -> None:
-        """Ein-Moden-Ansicht (klassisch) oder Moden-Baender-Ansicht (n > 1)."""
+        """Ein-Moden-Ansicht (klassisch) oder Moden-Ansicht (n > 1, sukzessive Baender)."""
         mehrere = self._n_moden > 1
         self.band_box.setVisible(mehrere)
         self.btn_gerade_mode.setVisible(mehrere)
-        self.btn_geraden_fit.setText("Moden-Bänder fitten …" if mehrere
-                                     else "Grünen Bereich fitten …")
         if mehrere:
+            n_eff = self.n_moden_effektiv()
+            self.btn_geraden_fit.setText(f"Moden 1–{n_eff} fitten …" if n_eff > 1
+                                         else "Mode 1 fitten …")
             self.hinweis_g.setText(
-                f"Ablauf bei {self._n_moden} Moden: Mode wählen → „Band einzeichnen“ "
-                "(zwei Klicks entlang der Mode) → nächste Mode → „Moden-Bänder fitten …“. "
-                "Jede Mode wird nur in ihrem Band gesucht; Moden ohne Band sind frei. "
-                "Einzelne Geraden (grün/rot) bleiben als Experten-Werkzeug.")
+                f"Ablauf bei {self._n_moden} Moden – nacheinander: Band um Mode 1 "
+                "einzeichnen („Band einzeichnen“ oder zwei Geraden) → fitten → Band um "
+                "Mode 2 → fitten (alle bisherigen Moden gleichzeitig, Überlagerung wird "
+                "berücksichtigt) → … Die Mode-Nummer wird automatisch vergeben (zwei "
+                "Geraden = ein Band = eine Mode). Kittel/LLG je Mode: Strg+K.")
             teile = []
             for k in range(1, self._n_moden + 1):
-                anzahl = sum(1 for g in self._geraden
-                             if min(max(int(getattr(g, "mode", 1)), 1), self._n_moden) == k)
+                anzahl = sum(1 for g in self._geraden if self._mode_von(g) == k)
                 teile.append(f"M{k} {'✓' if anzahl >= 2 else '–'} ({anzahl})")
-            self.band_status.setText("Bänder: " + " · ".join(teile)
-                                     + ("" if any(int(getattr(g, "mode", 1)) > 1 for g in self._geraden)
-                                        or not self._geraden
-                                        else "  – alle Geraden gehören zu Mode 1!"))
+            self.band_status.setText(
+                "Bänder: " + " · ".join(teile)
+                + f"  →  nächste Gerade/Band: Mode {self.mode_neu()}")
         else:
+            self.btn_geraden_fit.setText("Grünen Bereich fitten …")
             self.hinweis_g.setText(
                 "Gerade per zwei Klicks einfügen, an den Endpunkten ziehen "
                 "(verschieben/rotieren). Grüner Saum = wird gefittet, roter Saum = wird "
@@ -275,8 +281,18 @@ class ZonenPanel(QtWidgets.QWidget):
                 "wird nur der grüne Bereich gefittet.")
 
     def mode_neu(self) -> int:
-        """Mode, die eine neu eingezeichnete Gerade bekommt (1 bei einer Resonanz)."""
-        return int(self.mode_spin.value()) if self._n_moden > 1 else 1
+        """Mode der naechsten Gerade / des naechsten Bands - automatisch vergeben.
+
+        Zwei Geraden bilden ein Band (= eine Mode). Ist das Band der hoechsten
+        Mode vollstaendig (mindestens zwei Geraden), beginnt die naechste Mode -
+        bis zur eingestellten Modenzahl ("Resonanzen je Linescan"); danach
+        gehoeren weitere Geraden zur letzten Mode. Bei einer Resonanz immer 1.
+        """
+        if self._n_moden <= 1 or not self._geraden:
+            return 1
+        k = self.n_moden_effektiv()
+        anzahl = sum(1 for g in self._geraden if self._mode_von(g) == k)
+        return min(k + 1, self._n_moden) if anzahl >= 2 else k
 
     def _gerade_zeile(self) -> int:
         """Ausgewaehlte Gerade - ohne Auswahl die zuletzt gesetzte (-1 = keine)."""
