@@ -190,9 +190,17 @@ class ZonenPanel(QtWidgets.QWidget):
                 f"{zone.frequenz_min/1e9:.2f}–{zone.frequenz_max/1e9:.2f} GHz")
 
     def setze_geraden(self, geraden) -> None:
-        """Fuellt die Geradenliste (Handgriffe + gruene Seite; bei >1 Resonanz die Mode)."""
+        """Fuellt die Geradenliste (Handgriffe + gruene Seite; bei >1 Resonanz die Mode).
+
+        Neu hinzugekommene Geraden werden vorgewaehlt (die zuletzt gesetzte),
+        damit "Seite wechseln"/"Mode"/"Entfernen" ohne Klick in die Liste auf
+        die neueste Gerade wirken.
+        """
+        n_vorher = len(self._geraden)
         gewaehlt = self.geraden_liste.currentRow()
         self._geraden = list(geraden)
+        if len(self._geraden) > n_vorher or gewaehlt < 0:
+            gewaehlt = len(self._geraden) - 1
         self.geraden_liste.clear()
         for gerade in geraden:
             seite = "+" if gerade.gruen_positiv else "−"
@@ -270,8 +278,15 @@ class ZonenPanel(QtWidgets.QWidget):
         """Mode, die eine neu eingezeichnete Gerade bekommt (1 bei einer Resonanz)."""
         return int(self.mode_spin.value()) if self._n_moden > 1 else 1
 
-    def _gerade_mode_geklickt(self) -> None:
+    def _gerade_zeile(self) -> int:
+        """Ausgewaehlte Gerade - ohne Auswahl die zuletzt gesetzte (-1 = keine)."""
         zeile = self.geraden_liste.currentRow()
+        if zeile < 0 and self._geraden:
+            zeile = len(self._geraden) - 1
+        return zeile
+
+    def _gerade_mode_geklickt(self) -> None:
+        zeile = self._gerade_zeile()
         if 0 <= zeile < len(self._geraden) and self._cb_gerade_mode is not None:
             aktuell = int(getattr(self._geraden[zeile], "mode", 1))
             self._cb_gerade_mode(zeile, aktuell % self._n_moden + 1)
@@ -306,11 +321,11 @@ class ZonenPanel(QtWidgets.QWidget):
             self._cb_gerade_umschalten(bool(an))
 
     def _gerade_seite_geklickt(self) -> None:
-        zeile = self.geraden_liste.currentRow()
+        zeile = self._gerade_zeile()
         if zeile >= 0 and self._cb_gerade_seite is not None:
             self._cb_gerade_seite(zeile)
 
     def _gerade_entfernen_geklickt(self) -> None:
-        zeile = self.geraden_liste.currentRow()
+        zeile = self._gerade_zeile()
         if zeile >= 0 and self._cb_gerade_entfernen is not None:
             self._cb_gerade_entfernen(zeile)

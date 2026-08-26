@@ -124,6 +124,45 @@ def test_zonen_panel_geraden_steuerung(app):
     assert ("seite", 0) in aufrufe and ("weg", 0) in aufrufe and ("fit",) in aufrufe
 
 
+def test_zonen_panel_seite_wechseln_ohne_auswahl_trifft_letzte_gerade(app):
+    """Nach dem Einzeichnen ist keine Zeile angeklickt - der Knopf muss trotzdem
+    auf die zuletzt gesetzte Gerade wirken (Nutzerbericht: 'funktioniert nicht')."""
+    from polderfit.gui.zonen_panel import ZonenPanel
+    aufrufe = []
+    panel = ZonenPanel(
+        gerade_seite=lambda i: aufrufe.append(("seite", i)),
+        gerade_entfernen=lambda i: aufrufe.append(("weg", i)),
+        gerade_mode=lambda i, m: aufrufe.append(("mode", i, m)),
+    )
+    # Ohne Geraden: Klick ist wirkungslos (kein Fehler).
+    panel.btn_gerade_seite.click()
+    assert aufrufe == []
+
+    g1 = Grenzgerade(b1=2.8, f1=10e9, b2=3.2, f2=40e9)
+    g2 = Grenzgerade(b1=2.9, f1=10e9, b2=3.3, f2=40e9)
+    panel.setze_geraden([g1])
+    assert panel.geraden_liste.currentRow() == 0        # neue Gerade vorgewaehlt
+    panel.setze_geraden([g1, g2])
+    assert panel.geraden_liste.currentRow() == 1        # zuletzt gesetzte
+    panel.geraden_liste.clearSelection()
+    panel.geraden_liste.setCurrentRow(-1)
+    assert panel.geraden_liste.currentRow() == -1
+    panel.btn_gerade_seite.click()
+    assert aufrufe[-1] == ("seite", 1)                  # letzte Gerade, nicht nichts
+    panel.geraden_liste.setCurrentRow(0)                # explizite Auswahl hat Vorrang
+    panel.btn_gerade_seite.click()
+    assert aufrufe[-1] == ("seite", 0)
+    # Aendern ohne Hinzufuegen (z. B. Seite gewechselt) behaelt die Auswahl.
+    g1.seite_wechseln()
+    panel.setze_geraden([g1, g2])
+    assert panel.geraden_liste.currentRow() == 0
+    panel.setze_geraden([g1])                            # Entfernen: Auswahl geklemmt
+    assert panel.geraden_liste.currentRow() == 0
+    panel.setze_n_moden(2)
+    panel.btn_gerade_mode.click()
+    assert aufrufe[-1] == ("mode", 0, 2)
+
+
 def test_navigator_robuste_farbskala(app):
     from polderfit.gui.navigator_ansicht import NavigatorAnsicht
     nav = NavigatorAnsicht()
