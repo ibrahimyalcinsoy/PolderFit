@@ -146,6 +146,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Zuletzt benutzte Bereichs-Fit-Optionen (Vorbelegung des Dialogs).
         self._bereich_modus: str = self._einstellungen.bereichsfit.get("modus", "ueberschreiben")
         self._bereich_breite: int | None = self._einstellungen.bereichsfit.get("breite_punkte")
+        # Zuletzt benutzter Frequenz- (Hz) und Feldbereich (T) des Grenzgeraden-
+        # Fits: Vorbelegung beim naechsten Aufruf, mit neuem Datensatz verworfen.
+        self._bereich_frequenz: tuple[float, float] | None = None
+        self._bereich_feld: tuple[float, float] | None = None
         #: Einstellbare physikalische Parameter (g-Faktor/gamma, Geometrie,
         #: Fensterfaktor, Schwellen, alpha-Grenzen, Moden) - Dialog: Strg+P.
         self._physik = self._einstellungen.physik_parameter()
@@ -175,6 +179,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             gerade_seite=self._gerade_seite,
             gerade_entfernen=self._gerade_entfernen,
             geraden_fit=self._geraden_fit,
+            gerade_mode=self._gerade_mode,
         )
         #: Grenzgeraden (Fit-Bereich); bleiben ueber Auto-Fits erhalten,
         #: werden mit einem neuen Datensatz verworfen.
@@ -1041,7 +1046,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         (b1, f1_ghz), (b2, f2_ghz) = punkte
         vorher = self._geraden_schatten
         self._grenzgeraden.append(Grenzgerade(b1=float(b1), f1=f1_ghz * 1e9,
-                                              b2=float(b2), f2=f2_ghz * 1e9))
+                                              b2=float(b2), f2=f2_ghz * 1e9,
+                                              mode=self.zonenpanel.mode_neu()))
         self._zeige_geraden()
         self._merke_geraden_aenderung("Grenzgerade eingefügt", vorher)
         self._log(f"Grenzgerade eingefügt: ({b1:.3f} T, {f1_ghz:.2f} GHz) – "
@@ -1087,6 +1093,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._merke_geraden_aenderung("Grenzgerade: Seite gewechselt", vorher)
         self._log("Grenzgerade: Seiten getauscht (grün = wird gefittet).", "info")
 
+    def _gerade_mode(self, index: int, mode: int):
+        """Gerade einer anderen Mode zuordnen (n_moden > 1: je Mode ein Band)."""
+        if not (0 <= index < len(self._grenzgeraden)):
+            return
+        vorher = self._geraden_schatten
+        self._grenzgeraden[index].mode = max(1, int(mode))
+        self._zeige_geraden()
+        self._merke_geraden_aenderung("Grenzgerade: Mode geändert", vorher)
+        self._log(f"Grenzgerade {index + 1} gehört jetzt zu Mode "
+                  f"{self._grenzgeraden[index].mode}.", "info")
+
     def _gerade_entfernen(self, index: int):
         if not (0 <= index < len(self._grenzgeraden)):
             return
@@ -1104,6 +1121,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
         return (b_min, b_max, float(f.min()) / 1e9 if f.size else 0.0,
                 float(f.max()) / 1e9 if f.size else 1.0)
 
+    def _geraden_bereich_vorgabe(self) -> tuple[tuple[float, float, float, float], bool]:
+        """Vorbelegung ``(feld_min, feld_max, f_min_ghz, f_max_ghz)`` des
+        Grenzgeraden-Dialogs: der zuletzt benutzte Bereich (an den Datenbereich
+        geklemmt), sonst der ganze Datenbereich. Zweiter Wert: ``True``, wenn
+        die Vorbelegung aus dem letzten Aufruf stammt."""
+        b_min, b_max, f_min_ghz, f_max_ghz = self._daten_bereich()
+
+        def _geklemmt(gemerkt, lo, hi):
+            if gemerkt is None:
+                return None
+            a = min(max(float(gemerkt[0]), lo), hi)
+            b = min(max(float(gemerkt[1]), lo), hi)
+            return (a, b) if b > a else None
+
+        feld = _geklemmt(self._bereich_feld, b_min, b_max)
+        freq = _geklemmt(None if self._bereich_frequenz is None
+                         else (self._bereich_frequenz[0] / 1e9, self._bereich_frequenz[1] / 1e9),
+                         f_min_ghz, f_max_ghz)
+        gemerkt = feld is not None or freq is not None
+        feld = feld or (b_min, b_max)
+        freq = freq or (f_min_ghz, f_max_ghz)
+        return (feld[0], feld[1], freq[0], freq[1]), gemerkt
+
     def _geraden_fit(self):
         """Fitten des gruenen Bereichs aller Grenzgeraden (mit Optionen; auch ohne Auto-Fit)."""
         if self.stapel is None:
@@ -1116,15 +1156,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         stapel = self.stapel
         geraden = list(self._grenzgeraden)
-        b_min, b_max, f_min_ghz, f_max_ghz = self._daten_bereich()
+        (b_von, b_bis, f_von_ghz, f_bis_ghz), gemerkt = self._geraden_bereich_vorgabe()
         dialog = BereichsFitDialog(
-            b_min, b_max, f_min_ghz, f_max_ghz,
+            b_von, b_bis, f_von_ghz, f_bis_ghz,
             modus_vorgabe=self._bereich_modus, breite_vorgabe=self._bereich_breite,
             titel="Grünen Bereich fitten",
             info_text=(f"{len(geraden)} Grenzgerade(n): Im GRÜNEN Bereich werden "
                        "Fenstersuche und Fit ausgeführt; die rote Seite bleibt "
-                       "unangetastet. Frequenz-/Feldbereich unten grenzt zusätzlich ein."),
-            daten_bereich=(b_min, b_max, f_min_ghz, f_max_ghz),
+                       "unangetastet. Frequenz-/Feldbereich unten grenzt zusätzlich ein"
+                       + (" (vorbelegt: zuletzt benutzter Bereich)." if gemerkt else ".")),
+            daten_bereich=self._daten_bereich(),
             n_moden=stapel.n_moden, parent=self)
         if not dialog.exec():
             self._log("Grenzgeraden-Fit abgebrochen.", "info")
@@ -1134,7 +1175,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         f_von, f_bis = dialog.frequenz_bereich()
         b_von, b_bis = dialog.feld_bereich()
         self._bereich_modus, self._bereich_breite = modus, breite
+        self._bereich_frequenz, self._bereich_feld = (f_von, f_bis), (b_von, b_bis)
         self._setze_n_moden(dialog.n_moden())
+        if stapel.n_moden > 1 and any(g.mode > 1 for g in geraden):
+            moden = sorted({min(g.mode, stapel.n_moden) for g in geraden})
+            self._log(f"Grenzgeraden-Fit je Mode: Bänder für Mode {moden} "
+                      f"(Moden ohne Geraden sind frei).", "info")
         # Undo-Schnappschuss ueber alle Fits (jede Frequenz kann betroffen sein).
         fits_vorher = self._fit_zustand(range(len(stapel.ergebnisse)))
 
@@ -1684,6 +1730,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._grenzgeraden = []
         self._geraden_schatten = []
         self.zonenpanel.setze_geraden([])
+        self._bereich_frequenz = self._bereich_feld = None  # datensatzbezogen
         self._undo_verwerfen()  # alte Zustaende gehoeren zum alten Datensatz
         self.linescan_dock.setVisible(False)
         self._aktualisiere_overlay()
@@ -1711,11 +1758,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _frage_auswahl(self) -> Auswertungsauswahl | None:
         """Zeigt vor der Auswertung den Jumper-/Bereichs-Dialog (Frequenz/Feld von … bis …)."""
-        dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self)
+        dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self,
+                               n_moden=self._physik.n_moden,
+                               zweistufig=self._physik.auto_fit_zweistufig)
         if not dialog.exec():
             return None
         auswahl = dialog.auswahl()
         self._letzte_auswahl = auswahl
+        self._setze_n_moden(dialog.n_moden())
+        if dialog.zweistufig() != self._physik.auto_fit_zweistufig:
+            self._physik = replace(self._physik, auto_fit_zweistufig=dialog.zweistufig())
+            self._einstellungen.physik = self._physik.als_dict()
+        if dialog.n_moden() > 1:
+            self._log(f"Auto-Fit mit {dialog.n_moden()} Resonanzen je Linescan"
+                      + (" – zweistufig (erst klassisch, dann Moden ergänzen)."
+                         if dialog.zweistufig() else " (simultan)."), "info")
         if not auswahl.ist_neutral:
             self._log("Auswertungsauswahl: "
                       + auswahl.beschreibung(self.datensatz_voll), "info")
@@ -1769,6 +1826,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.spin_moden.blockSignals(True)
         self.spin_moden.setValue(n)
         self.spin_moden.blockSignals(False)
+        self.zonenpanel.setze_n_moden(n)
 
     # --- Auto-Fit --------------------------------------------------------------
     def _nach_autofit(self, stapel: StapelErgebnis) -> None:
@@ -1812,6 +1870,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 melde(i + 1, total, self._fortschritt_text(i + 1, total, erg) if zeige else "",
                       daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
 
+            def fortschritt_moden(i, total, erg):
+                zeige = (i == 0) or (i + 1 == total) or ((i + 1) % schritt == 0)
+                n_m = len(erg.moden) if erg.moden else 1
+                melde(i + 1, total,
+                      f"  {i + 1}/{total}  f={erg.frequenz / 1e9:6.2f} GHz  {n_m} Resonanz(en)"
+                      if zeige else "",
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Moden ergänzen")
+
             return fitte_alle(datensatz, gamma=physik.gamma,
                               breite_faktor=physik.breite_faktor,
                               r2_schwelle=physik.r2_schwelle,
@@ -1823,13 +1889,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               n_moden=physik.n_moden,
                               nachfit_bestaetigen=physik.nachfit_bestaetigen,
                               fortschritt_fenster=fortschritt_fenster,
-                              abbruch=melde.abgebrochen)
+                              abbruch=melde.abgebrochen,
+                              zweistufig=physik.auto_fit_zweistufig,
+                              fortschritt_moden=fortschritt_moden)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
             n_fit = len(stapel.index_gefittet())
             n_prob = len(stapel.index_problematisch())
             art = "ok" if n_prob == 0 else "warn"
+            if stapel.zweistufig:
+                n_mehr = sum(1 for e in stapel.ergebnisse if e.moden and len(e.moden) > 1)
+                self._log(f"Zweistufig: bei {n_mehr} von {n_fit} Linescans weitere Resonanzen "
+                          f"ergänzt (Rest: klassisches Ergebnis).", "info")
             if n_fit < len(stapel.ergebnisse):
                 self._log(f"Auto-Fit abgebrochen: {n_fit} von {len(stapel.ergebnisse)} "
                           f"Frequenzen gefittet, {n_prob} problematisch – der Rest bleibt "

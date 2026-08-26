@@ -346,6 +346,7 @@ def fitte_linescan(
     alpha_max: float = ALPHA_MAX,
     alpha_plausibel: float | None = None,
     n_moden: int = 1,
+    bereiche: list | None = None,
 ) -> FitErgebnis:
     """Fittet einen (i. d. R. bereits zugeschnittenen) Linescan.
 
@@ -365,7 +366,10 @@ def fitte_linescan(
         alpha_max = ALPHA_MAX
     if int(n_moden) > 1:
         return fitte_linescan_multi(linescan, gamma, n_moden=int(n_moden),
-                                    alpha_max=alpha_max, alpha_plausibel=alpha_plausibel)
+                                    alpha_max=alpha_max, alpha_plausibel=alpha_plausibel,
+                                    startwerte=(list(startwerte)
+                                                if isinstance(startwerte, (list, tuple)) else None),
+                                    bereiche=bereiche)
     omega = 2.0 * np.pi * linescan.frequenz
     B = linescan.feld
     s21 = linescan.s21
@@ -482,12 +486,16 @@ def fitte_linescan_multi(
     alpha_max: float = ALPHA_MAX,
     alpha_plausibel: float | None = None,
     startwerte: list[Startwerte] | None = None,
+    bereiche: list | None = None,
 ) -> FitErgebnis:
     """Fittet ``n_moden`` Resonanzen SIMULTAN in einem Linescan.
 
     Parametrisierung: ``B_res_1`` frei im Fenster, ``B_res_k = B_res_(k-1) +
     dB_k`` mit ``dB_k >= 2 Feldschritte`` (verhindert das Zusammenfallen und
-    Vertauschen der Moden). Untergrund (Offset, Steigung) ist gemeinsam.
+    Vertauschen der Moden). Mit ``bereiche`` (je Mode ``(lo, hi)`` in Tesla oder
+    ``None``) ist stattdessen jedes ``B_res_k`` unabhaengig auf seinen Bereich
+    beschraenkt - Grenzgeraden-Baender je Mode; die Paarung Startwert/Bereich
+    bleibt erhalten. Untergrund (Offset, Steigung) ist gemeinsam.
     Die Hauptmode (groesste Signalhoehe |A|·|χ(B_res)|) fuellt die Felder
     des :class:`FitErgebnis`; ``moden`` enthaelt alle Moden, Hauptmode zuerst,
     ``fitkurven_moden`` je Mode die Kurve "diese Mode + Untergrund".
@@ -513,20 +521,36 @@ def fitte_linescan_multi(
         return _abschliessen(erg, alpha_max, alpha_plausibel)
 
     try:
-        starts = (sorted(startwerte, key=lambda sw: sw.B_res) if startwerte
+        starts = (list(startwerte) if startwerte
                   else schaetze_startwerte_multi(B, s21, omega, gamma, n_moden,
                                                  alpha_max=alpha_max))
     except Exception as exc:
         return _fehlschlag(f"Startwerte: {exc}")
     if len(starts) != n_moden:
         return _fehlschlag(f"{len(starts)} Startwerte fuer {n_moden} Moden.")
+    if bereiche is not None:
+        if len(bereiche) != n_moden:
+            return _fehlschlag(f"{len(bereiche)} Feldbereiche fuer {n_moden} Moden.")
+        # Paarung Startwert <-> Bereich erhalten, gemeinsam nach Feld ordnen.
+        paare = sorted(zip(starts, bereiche), key=lambda t: t[0].B_res)
+        starts = [q[0] for q in paare]
+        bereiche = [q[1] for q in paare]
+    else:
+        starts = sorted(starts, key=lambda sw: sw.B_res)
 
     def _params(phi_offsets):
         params = Parameters()
         vorher = None
         for k, sw in enumerate(starts, start=1):
             b = float(np.clip(sw.B_res, B_min, B_max))
-            if k == 1:
+            if bereiche is not None:
+                lo, hi = (bereiche[k - 1] if bereiche[k - 1] is not None
+                          else (B_min, B_max))
+                lo, hi = float(np.clip(lo, B_min, B_max)), float(np.clip(hi, B_min, B_max))
+                if hi - lo < min_abstand:
+                    lo, hi = max(B_min, lo - min_abstand), min(B_max, hi + min_abstand)
+                params.add(f"B_res_{k}", value=float(np.clip(b, lo, hi)), min=lo, max=hi)
+            elif k == 1:
                 params.add("B_res_1", value=b, min=B_min, max=B_max)
             else:
                 d = max(b - vorher, min_abstand * 1.5)

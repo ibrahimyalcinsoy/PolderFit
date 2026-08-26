@@ -351,8 +351,19 @@ def schaetze_startwerte_multi(
     gewaehlt = sorted(set(gewaehlt))[:n_moden]
     while len(gewaehlt) < n_moden:      # Duplikate entfernt -> auffuellen
         gewaehlt.append(min(B.size - 1, gewaehlt[-1] + max(2, B.size // (2 * n_moden))))
+    starts = _startwerte_aus_indizes(B, rein, betrag_rein, grund, hoehe_max, gewaehlt,
+                                     omega, gamma, alpha_max,
+                                     (off_re, off_im, slope_re, slope_im))
+    starts.sort(key=lambda sw: sw.B_res)
+    return starts
+
+
+def _startwerte_aus_indizes(B, rein, betrag_rein, grund, hoehe_max, indizes,
+                            omega, gamma, alpha_max, untergrund) -> list[Startwerte]:
+    """Startwerte an den Peak-Indizes ``indizes`` (Reihenfolge bleibt erhalten)."""
+    off_re, off_im, slope_re, slope_im = untergrund
     starts: list[Startwerte] = []
-    for i0 in gewaehlt:
+    for i0 in indizes:
         i0 = int(np.clip(i0, 0, B.size - 1))
         fwhm = max(_fwhm_lokal(B, betrag_rein, i0, grund), 1e-4)
         alpha = float(gamma * fwhm / (2.0 * np.sqrt(3.0) * omega))
@@ -367,5 +378,56 @@ def schaetze_startwerte_multi(
             off_re=off_re, off_im=off_im, slope_re=slope_re, slope_im=slope_im,
             B_min=float(B.min()), B_max=float(B.max()),
         ))
-    starts.sort(key=lambda sw: sw.B_res)
     return starts
+
+
+def startwerte_in_bereichen(
+    mu0H: np.ndarray,
+    s21_mess: np.ndarray,
+    omega: float,
+    gamma: float,
+    bereiche: list,
+    alpha_max: float = 0.1,
+) -> list[Startwerte]:
+    """Startwerte fuer ``len(bereiche)`` Moden mit je einem Feldbereich.
+
+    ``bereiche[k]`` = ``(lo, hi)`` in Tesla oder ``None`` (frei); die Rueckgabe
+    hat dieselbe Reihenfolge (Mode 1, 2, ...). Je Bereich wird das Maximum des
+    untergrundbereinigten Betrags genommen; freie Moden bekommen das staerkste
+    Maximum ausserhalb der belegten Bereiche. Grundlage der Grenzgeraden-
+    Baender je Mode (:func:`polderfit.fit.fenster_steuerung.fitte_geraden_bereich`).
+    """
+    n = len(bereiche)
+    if n < 1:
+        raise ValueError("Mindestens ein Bereich noetig.")
+    mu0H = np.asarray(mu0H, dtype=float)
+    if mu0H.size < 4 * n:
+        raise ValueError("Linescan zu kurz fuer die Startwertschaetzung mehrerer Moden.")
+    B, sig, rein, (slope_re, slope_im, off_re, off_im, B_ref) = _untergrund_und_rein(
+        mu0H, np.asarray(s21_mess))
+    betrag_rein = np.abs(rein)
+    grund = float(np.median(betrag_rein))
+    hoehe_max = float(betrag_rein.max() - grund) or 1.0
+    frei = np.ones(B.size, dtype=bool)
+    gewaehlt: list = [None] * n
+    for k, bereich in enumerate(bereiche):
+        if bereich is None:
+            continue
+        lo, hi = float(bereich[0]), float(bereich[1])
+        maske = (B >= lo) & (B <= hi)
+        if not maske.any():
+            maske = np.zeros(B.size, dtype=bool)
+            maske[int(np.argmin(np.abs(B - 0.5 * (lo + hi))))] = True
+        gewaehlt[k] = int(np.argmax(np.where(maske, betrag_rein, -np.inf)))
+        frei &= ~maske
+    for k in range(n):
+        if gewaehlt[k] is not None:
+            continue
+        kand = np.where(frei, betrag_rein, -np.inf) if frei.any() else betrag_rein
+        i0 = int(np.argmax(kand))
+        gewaehlt[k] = i0
+        fwhm = _fwhm_lokal(B, betrag_rein, i0, grund)
+        frei &= ~((B >= B[i0] - 1.5 * fwhm) & (B <= B[i0] + 1.5 * fwhm))
+    return _startwerte_aus_indizes(B, rein, betrag_rein, grund, hoehe_max, gewaehlt,
+                                   omega, gamma, alpha_max,
+                                   (off_re, off_im, slope_re, slope_im))

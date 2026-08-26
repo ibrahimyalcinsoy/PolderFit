@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
-"""Dialog "Auswertungsbereich & Jumper" - wird vor jeder Stapelauswertung gezeigt.
+"""Dialog "Auto-Fit: Bereich, Jumper & Resonanzen" - wird vor jeder Stapelauswertung gezeigt.
 
 Fragt die Unterabtastung (jeden n-ten Punkt, getrennt fuer Frequenz- und
 Feldachse) und die Bereichseinschraenkung ab (Frequenz-/Feldfenster plus
@@ -15,15 +15,19 @@ from PySide6 import QtWidgets
 
 from ..fit.auswahl import Auswertungsauswahl, parse_bereiche
 from ..io.datensatz import Messdatensatz
+from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox
 
 
 class AuswahlDialog(QtWidgets.QDialog):
     """Fragt die :class:`Auswertungsauswahl` fuer den naechsten Auto-Fit ab."""
 
     def __init__(self, datensatz: Messdatensatz,
-                 letzte: Auswertungsauswahl | None = None, parent=None):
+                 letzte: Auswertungsauswahl | None = None, parent=None,
+                 n_moden: int = 1, zweistufig: bool = False):
+        """``n_moden``/``zweistufig``: Vorbelegung der Resonanzen je Linescan
+        (Dropdown) und der erweiterten Option "erst klassisch, dann ergaenzen"."""
         super().__init__(parent)
-        self.setWindowTitle("Auswertungsbereich & Jumper")
+        self.setWindowTitle("Auto-Fit: Bereich, Jumper & Resonanzen")
         self.setModal(True)
         self._datensatz = datensatz
         vorgabe = letzte if letzte is not None else Auswertungsauswahl()
@@ -62,7 +66,7 @@ class AuswahlDialog(QtWidgets.QDialog):
         form_b = QtWidgets.QFormLayout(grp_b)
 
         def _spin(minimum, maximum, wert, dezimalen, schritt, suffix):
-            box = QtWidgets.QDoubleSpinBox()
+            box = RuhigeDoubleSpinBox()   # Punkt und Komma; Mausrad nur mit Fokus
             box.setRange(minimum, maximum)
             box.setDecimals(dezimalen)
             box.setSingleStep(schritt)
@@ -100,6 +104,33 @@ class AuswahlDialog(QtWidgets.QDialog):
         form_b.addRow("Frequenz-Ausschluesse (GHz):", self.ausschluss)
         lay.addWidget(grp_b)
 
+        # --- Resonanzen je Linescan (Moden) ----------------------------------
+        grp_m = QtWidgets.QGroupBox("Resonanzen je Linescan")
+        form_m = QtWidgets.QFormLayout(grp_m)
+        self.moden_combo = RuhigeComboBox()
+        self.moden_combo.addItem("1 – klassisch (eine Resonanz)", 1)
+        self.moden_combo.addItem("2 – zwei nahe Resonanzen", 2)
+        for k in range(3, 7):
+            self.moden_combo.addItem(f"{k} Resonanzen", k)
+        self.moden_combo.setToolTip(
+            "Anzahl simultan gefitteter Resonanzen je Linescan.\n"
+            "1 = klassischer Auto-Fit; 2 = zwei nahe Dips (z. B. zwei magnetische Moden).")
+        index_m = self.moden_combo.findData(max(1, min(6, int(n_moden))))
+        self.moden_combo.setCurrentIndex(max(0, index_m))
+        form_m.addRow("Anzahl:", self.moden_combo)
+        self.chk_zweistufig = QtWidgets.QCheckBox(
+            "Erweitert: erst klassischer Auto-Fit (1 Resonanz), dann weitere Resonanzen ergänzen")
+        self.chk_zweistufig.setToolTip(
+            "Stufe 1: klassischer Ein-Moden-Fit (robuste Fenstersuche, Hauptmode).\n"
+            "Stufe 2: je Linescan weitere Resonanzen aus dem Residuum ergänzen und alle\n"
+            "Moden simultan fitten. Gelingt Stufe 2 nicht, bleibt das klassische Ergebnis\n"
+            "stehen – keine Phantom-Resonanzen auf Ein-Moden-Daten.")
+        self.chk_zweistufig.setChecked(bool(zweistufig))
+        form_m.addRow("", self.chk_zweistufig)
+        self.moden_combo.currentIndexChanged.connect(self._moden_geaendert)
+        self._moden_geaendert()
+        lay.addWidget(grp_m)
+
         self.zusammenfassung = QtWidgets.QLabel("")
         self.zusammenfassung.setWordWrap(True)
         lay.addWidget(self.zusammenfassung)
@@ -117,6 +148,17 @@ class AuswahlDialog(QtWidgets.QDialog):
             box.valueChanged.connect(self._aktualisiere_zusammenfassung)
         self.ausschluss.textChanged.connect(self._aktualisiere_zusammenfassung)
         self._aktualisiere_zusammenfassung()
+
+    def n_moden(self) -> int:
+        """Gewaehlte Anzahl Resonanzen je Linescan (1 = klassisch)."""
+        return int(self.moden_combo.currentData() or 1)
+
+    def zweistufig(self) -> bool:
+        """Erweiterte Option: erst klassisch fitten, dann weitere Moden ergaenzen."""
+        return self.n_moden() > 1 and self.chk_zweistufig.isChecked()
+
+    def _moden_geaendert(self, *_args) -> None:
+        self.chk_zweistufig.setEnabled(self.n_moden() > 1)
 
     def auswahl(self) -> Auswertungsauswahl:
         """Aktuelle Auswahl aus den Dialogfeldern (wirft ValueError bei Parsefehler)."""

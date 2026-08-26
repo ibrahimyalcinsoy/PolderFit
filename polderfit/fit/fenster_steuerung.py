@@ -20,7 +20,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .autowindows import auto_fenster_intervalle
+from ..physik.fitmodell import startwerte_in_bereichen
+from .autowindows import auto_fenster_intervalle, schneide_band
 from .batch import Ausschlusszone, StapelErgebnis, fitte_neu, nachfenster
 
 #: Gueltige Modi fuer das Ueberschreib-Verhalten beim Neu-Fitten.
@@ -341,6 +342,9 @@ class Grenzgerade:
     b2: float
     f2: float          # Hz
     gruen_positiv: bool = True
+    #: Resonanz (Mode), zu der die Gerade gehoert - bei ``n_moden > 1`` bilden
+    #: die Geraden einer Mode ihr Band (n Moden = 2n Geraden).
+    mode: int = 1
 
     def seite_wechseln(self) -> None:
         self.gruen_positiv = not self.gruen_positiv
@@ -369,6 +373,73 @@ class Grenzgerade:
         return (lo, hi) if hi > lo else None
 
 
+def _moden_baender(geraden, n_moden: int, frequenz: float, lo: float, hi: float):
+    """Je Mode 1..n das Feldband (Schnitt der gruenen Seiten ihrer Geraden) bei
+    ``frequenz``; Moden ohne Geraden -> ``None`` (frei). Liefert ``(fenster,
+    baender)`` - ``fenster`` = Huelle der Baender plus 50 % Rand (Untergrund fuer
+    den Fit) - oder ``None``, wenn ein Band bei dieser Frequenz leer ist.
+    Geraden mit ``mode > n`` zaehlen zur Mode ``n``."""
+    baender: list = []
+    for k in range(1, n_moden + 1):
+        gk = [g for g in geraden
+              if min(max(int(getattr(g, "mode", 1)), 1), n_moden) == k]
+        if not gk:
+            baender.append(None)
+            continue
+        erlaubt: tuple[float, float] | None = (lo, hi)
+        for g in gk:
+            if erlaubt is None:
+                break
+            erlaubt = g.erlaubtes_intervall(frequenz, erlaubt[0], erlaubt[1])
+        if erlaubt is None:
+            return None
+        baender.append(erlaubt)
+    definiert = [b for b in baender if b is not None]
+    h_lo, h_hi = min(b[0] for b in definiert), max(b[1] for b in definiert)
+    rand = 0.5 * (h_hi - h_lo)
+    return (max(lo, h_lo - rand), min(hi, h_hi + rand)), baender
+
+
+def _fitte_moden_baender(stapel: StapelErgebnis, eintraege: dict, modus: str = "ueberschreiben",
+                         fortschritt=None, abbruch=None) -> tuple[list[int], list[int]]:
+    """Grenzgeraden-Fit je Mode: ``eintraege[i] = (fenster, baender)``. Kein
+    Fenstersuchlauf - das Fenster ist die Huelle der Baender; Startwerte je Band
+    (:func:`startwerte_in_bereichen`), ``B_res_k`` im Fit auf sein Band
+    beschraenkt. Liefert ``(neu_gefittet, uebersprungen)``."""
+    _pruefe_modus(modus)
+    n = max(1, int(stapel.n_moden))
+    neu: list[int] = []
+    uebersprungen: list[int] = []
+    reihenfolge = sorted(eintraege)
+    for k, i in enumerate(reihenfolge):
+        if abbruch is not None and abbruch():
+            uebersprungen.extend(reihenfolge[k:])
+            break
+        if (modus == "ergaenzen" and stapel.ergebnisse
+                and not stapel.ergebnisse[i].problematisch):
+            uebersprungen.append(i)
+            continue
+        fenster, baender = eintraege[i]
+        ls = stapel.datensatz.linescans[i]
+        beschnitten = schneide_band(ls, fenster[0], fenster[1])
+        if beschnitten.feld.size < 4 * n:
+            uebersprungen.append(i)
+            continue
+        try:
+            starts = startwerte_in_bereichen(beschnitten.feld, beschnitten.s21,
+                                             2.0 * np.pi * ls.frequenz, stapel.gamma,
+                                             baender, alpha_max=stapel.alpha_max)
+        except Exception:
+            starts = None
+        ergebnis = fitte_neu(stapel, i, feld_unten=fenster[0], feld_oben=fenster[1],
+                             startwerte=starts, n_moden=n, bereiche=baender,
+                             bestaetigen=False)
+        neu.append(i)
+        if fortschritt is not None:
+            fortschritt(k + 1, len(reihenfolge), ergebnis)
+    return neu, sorted(uebersprungen)
+
+
 def fitte_geraden_bereich(
     stapel: StapelErgebnis,
     geraden: list[Grenzgerade],
@@ -391,10 +462,20 @@ def fitte_geraden_bereich(
     schraenken den Bereich zusaetzlich ein ("Frequenz von … bis …").
     Liefert ``(neu_gefittet, uebersprungen)``. Funktioniert auch auf einem
     Stapel ohne Auto-Fit (:func:`polderfit.fit.batch.leerer_stapel`).
+
+    **Mehrere Resonanzen** (``stapel.n_moden > 1`` und mindestens eine Gerade
+    mit ``mode > 1``): Die Geraden jeder Mode bilden ihr eigenes Band (n Moden =
+    2n Geraden). Je Frequenz wird Mode k nur in ihrem Band gesucht (Startwert =
+    Maximum im Band, ``B_res_k`` im Fit darauf beschraenkt), Moden ohne Geraden
+    sind frei; das Fit-Fenster ist die Huelle aller Baender plus 50 % Rand.
+    ``breite_punkte`` wird in diesem Fall nicht verwendet.
     """
     if not geraden:
         return [], []
+    n_moden = max(1, int(stapel.n_moden))
+    moden_modus = n_moden > 1 and any(int(getattr(g, "mode", 1)) > 1 for g in geraden)
     intervalle: dict[int, tuple[float, float]] = {}
+    baender_je_index: dict = {}
     uebersprungen: list[int] = []
     for i, ls in enumerate(stapel.datensatz.linescans):
         if frequenz_min is not None and ls.frequenz < frequenz_min:
@@ -411,6 +492,13 @@ def fitte_geraden_bereich(
         if hi <= lo:
             uebersprungen.append(i)
             continue
+        if moden_modus:
+            eintrag = _moden_baender(geraden, n_moden, ls.frequenz, lo, hi)
+            if eintrag is None:
+                uebersprungen.append(i)
+            else:
+                baender_je_index[i] = eintrag
+            continue
         erlaubt: tuple[float, float] | None = (lo, hi)
         for gerade in geraden:
             if erlaubt is None:
@@ -420,8 +508,12 @@ def fitte_geraden_bereich(
             uebersprungen.append(i)
             continue
         intervalle[i] = erlaubt
-    neu, weitere = _fitte_mit_intervallen(stapel, intervalle, modus=modus,
-                                          breite_faktor=breite_faktor,
-                                          breite_punkte=breite_punkte,
-                                          fortschritt=fortschritt, abbruch=abbruch)
+    if moden_modus:
+        neu, weitere = _fitte_moden_baender(stapel, baender_je_index, modus=modus,
+                                            fortschritt=fortschritt, abbruch=abbruch)
+    else:
+        neu, weitere = _fitte_mit_intervallen(stapel, intervalle, modus=modus,
+                                              breite_faktor=breite_faktor,
+                                              breite_punkte=breite_punkte,
+                                              fortschritt=fortschritt, abbruch=abbruch)
     return neu, sorted(uebersprungen + weitere)

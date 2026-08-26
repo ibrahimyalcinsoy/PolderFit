@@ -144,3 +144,137 @@ def test_vollbereich_checkbox_spiegelt_aktion(app):
     assert w.akt_vollbereich.isChecked() is True
     w.akt_vollbereich.setChecked(False)
     assert w.chk_vollbereich.isChecked() is False
+
+
+def _fenster_mit_stapel(n=10):
+    """Hauptfenster mit synthetischem Datensatz und gefuelltem Stapel (ohne Auto-Fit)."""
+    from polderfit.fit.batch import StapelErgebnis
+    from polderfit.fit.linescan_fit import FitErgebnis
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    ds = _mini_datensatz(n)
+    ds.meta["zuordnung"] = {"re": ("g", "k")}
+    w._datensatz_uebernehmen(ds)
+    stapel = StapelErgebnis(datensatz=ds)
+    for i, ls in enumerate(ds.linescans):
+        stapel.ergebnisse.append(FitErgebnis(frequenz=ls.frequenz, erfolg=True,
+                                             B_res=2.7 + 0.06 * i, problematisch=False))
+        stapel.fenster.append((2.6, 3.4))
+        stapel.zugeschnitten.append(ls)
+    w.stapel = stapel
+    return w
+
+
+def test_geraden_fit_merkt_sich_frequenz_und_feldbereich(app, monkeypatch):
+    """Bug: der Grenzgeraden-Dialog vergass den zuletzt eingegebenen
+    Frequenz-/Feldbereich (sprang auf den ganzen Datenbereich zurueck)."""
+    from polderfit.gui import bereichsfit_dialog as bd
+    w = _fenster_mit_stapel()
+    w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
+    gestartet = []
+    monkeypatch.setattr(w, "_starte_job", lambda *a, **k: gestartet.append(a))
+    gesehen = []
+
+    def exec_setzen(dlg):
+        gesehen.append((dlg.f_von.value(), dlg.f_bis.value(), dlg.b_von.value(), dlg.b_bis.value()))
+        dlg.f_von.setValue(20.0)
+        dlg.b_bis.setValue(3.2)
+        return True
+
+    monkeypatch.setattr(bd.BereichsFitDialog, "exec", exec_setzen)
+    w._geraden_fit()
+    assert gesehen[-1] == (5.0, 50.0, 2.5, 3.5)               # erster Aufruf: Datenbereich
+    assert w._bereich_frequenz == (20e9, 50e9) and w._bereich_feld == (2.5, 3.2)
+    assert len(gestartet) == 1
+
+    def exec_abbrechen(dlg):
+        gesehen.append((dlg.f_von.value(), dlg.f_bis.value(), dlg.b_von.value(), dlg.b_bis.value()))
+        return False
+
+    monkeypatch.setattr(bd.BereichsFitDialog, "exec", exec_abbrechen)
+    w._geraden_fit()
+    assert gesehen[-1] == (20.0, 50.0, 2.5, 3.2)              # zweiter Aufruf: gemerkt
+    assert len(gestartet) == 1                                # Abbruch startet nichts
+
+    # Neuer Datensatz: Bereich gehoert zum alten -> wieder Datenbereich.
+    w._datensatz_uebernehmen(_mini_datensatz())
+    assert w._bereich_frequenz is None and w._bereich_feld is None
+
+
+def test_geraden_bereich_vorgabe_klemmt_an_datenbereich(app):
+    w = _fenster_mit_stapel()
+    w._bereich_frequenz, w._bereich_feld = (1e9, 30e9), (3.6, 3.9)   # Feld ganz ausserhalb
+    (b1, b2, f1, f2), gemerkt = w._geraden_bereich_vorgabe()
+    assert gemerkt and (f1, f2) == (5.0, 30.0) and (b1, b2) == (2.5, 3.5)
+    w._bereich_frequenz = w._bereich_feld = None
+    (b1, b2, f1, f2), gemerkt = w._geraden_bereich_vorgabe()
+    assert not gemerkt and (b1, b2, f1, f2) == (2.5, 3.5, 5.0, 50.0)
+
+
+@pytest.mark.parametrize("locale_name, eingabe, erwartet", [
+    ("de_DE", "5,51", 5.51), ("de_DE", "5.51", 5.51), ("de_DE", "12.5", 12.5),
+    ("en_US", "5.51", 5.51), ("en_US", "5,51", 5.51), ("en_US", "0,25", 0.25),
+])
+def test_double_spinbox_punkt_und_komma(app, locale_name, eingabe, erwartet):
+    """Bug: unter deutscher Locale wurde „5.51" zu 55 (Punkt = Tausendertrenner).
+    Getippte Tausendertrenner werden bewusst nicht unterstuetzt (physikalische
+    Groessen wie 1.234 T sind mit Punkt gemeint, nicht 1234 T)."""
+    from PySide6 import QtCore
+    from PySide6.QtTest import QTest
+    from polderfit.gui.widgets import RuhigeDoubleSpinBox
+    box = RuhigeDoubleSpinBox()
+    box.setLocale(QtCore.QLocale(locale_name))
+    box.setRange(0.0, 5000.0)
+    box.setDecimals(3)
+    box.setValue(0.01)
+    box.setSuffix(" GHz")
+    box.show()
+    box.setFocus()
+    box.selectAll()
+    QTest.keyClicks(box, eingabe)
+    assert box.value() == pytest.approx(erwartet)
+    assert box.valueFromText(eingabe) == pytest.approx(erwartet)
+
+
+def test_auswahl_dialog_resonanzen_dropdown_und_zweistufig(app):
+    from polderfit.gui.auswahl_dialog import AuswahlDialog
+    dlg = AuswahlDialog(_mini_datensatz(), None, n_moden=2, zweistufig=True)
+    assert dlg.n_moden() == 2 and dlg.zweistufig() is True and dlg.chk_zweistufig.isEnabled()
+    dlg.moden_combo.setCurrentIndex(dlg.moden_combo.findData(1))
+    assert dlg.n_moden() == 1 and dlg.zweistufig() is False
+    assert not dlg.chk_zweistufig.isEnabled()          # nur bei > 1 Resonanz sinnvoll
+    dlg2 = AuswahlDialog(_mini_datensatz())
+    assert dlg2.n_moden() == 1 and dlg2.zweistufig() is False
+
+
+def test_hauptfenster_uebernimmt_moden_aus_auswahl_dialog(app, monkeypatch):
+    from polderfit.gui import auswahl_dialog as ad
+    w = _fenster_mit_stapel()
+
+    def exec_setzen(dlg):
+        dlg.moden_combo.setCurrentIndex(dlg.moden_combo.findData(2))
+        dlg.chk_zweistufig.setChecked(True)
+        return True
+
+    monkeypatch.setattr(ad.AuswahlDialog, "exec", exec_setzen)
+    assert w._frage_auswahl() is not None
+    assert w._physik.n_moden == 2 and w._physik.auto_fit_zweistufig is True
+    assert w.stapel.n_moden == 2 and w._einstellungen.physik["auto_fit_zweistufig"] is True
+
+
+def test_geraden_mode_zuordnung_und_undo(app):
+    w = _fenster_mit_stapel()
+    assert not w.zonenpanel.mode_spin.isEnabled()
+    w._setze_n_moden(2)
+    assert w.zonenpanel.mode_spin.isEnabled() and w.zonenpanel.mode_spin.maximum() == 2
+    w.zonenpanel.mode_spin.setValue(2)
+    w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
+    assert w._grenzgeraden[0].mode == 2
+    assert w.zonenpanel.geraden_liste.item(0).text().startswith("M2")
+    w.zonenpanel.geraden_liste.setCurrentRow(0)
+    w.zonenpanel.btn_gerade_mode.click()            # 2 -> 1
+    assert w._grenzgeraden[0].mode == 1
+    w._rueckgaengig()
+    assert w._grenzgeraden[0].mode == 2
+    w._setze_n_moden(1)
+    assert w.zonenpanel.mode_neu() == 1

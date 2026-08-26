@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from PySide6 import QtWidgets
 
+from .widgets import RuhigeSpinBox
+
 
 class ZonenPanel(QtWidgets.QWidget):
     """Listen und Steuerung der Ausschlusszonen und Grenzgeraden.
@@ -34,7 +36,8 @@ class ZonenPanel(QtWidgets.QWidget):
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
                  gerade_umschalten=None, gerade_seite=None,
-                 gerade_entfernen=None, geraden_fit=None, parent=None):
+                 gerade_entfernen=None, geraden_fit=None, gerade_mode=None,
+                 parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
@@ -42,6 +45,9 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_gerade_seite = gerade_seite
         self._cb_gerade_entfernen = gerade_entfernen
         self._cb_geraden_fit = geraden_fit
+        self._cb_gerade_mode = gerade_mode
+        self._n_moden = 1
+        self._geraden: list = []
 
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 10)
@@ -67,6 +73,19 @@ class ZonenPanel(QtWidgets.QWidget):
         self.btn_gerade.toggled.connect(self._gerade_umgeschaltet)
         geraden_lay.addWidget(self.btn_gerade)
 
+        mode_zeile = QtWidgets.QHBoxLayout()
+        mode_zeile.addWidget(QtWidgets.QLabel("Mode neuer Geraden:"))
+        self.mode_spin = RuhigeSpinBox()
+        self.mode_spin.setRange(1, 1)
+        self.mode_spin.setToolTip(
+            "Bei mehreren Resonanzen je Linescan gehört jede Gerade zu EINER Mode;\n"
+            "zwei Geraden je Mode ergeben ihr Band (n Moden = 2n Geraden). Der Fit\n"
+            "sucht Mode k nur in ihrem Band. Aktiv, sobald >1 Resonanz gewählt ist.")
+        self.mode_spin.setEnabled(False)
+        mode_zeile.addWidget(self.mode_spin)
+        mode_zeile.addStretch(1)
+        geraden_lay.addLayout(mode_zeile)
+
         self.geraden_liste = QtWidgets.QListWidget()
         self.geraden_liste.setMaximumHeight(110)
         geraden_lay.addWidget(self.geraden_liste)
@@ -78,6 +97,12 @@ class ZonenPanel(QtWidgets.QWidget):
             "Geraden tauschen. Geht auch per Doppelklick auf die Linie.")
         self.btn_gerade_seite.clicked.connect(self._gerade_seite_geklickt)
         zeile.addWidget(self.btn_gerade_seite)
+        self.btn_gerade_mode = QtWidgets.QPushButton("Mode ändern")
+        self.btn_gerade_mode.setToolTip(
+            "Gewählte Gerade der nächsten Mode zuordnen (1 → 2 → … → 1).")
+        self.btn_gerade_mode.clicked.connect(self._gerade_mode_geklickt)
+        self.btn_gerade_mode.setEnabled(False)
+        zeile.addWidget(self.btn_gerade_mode)
         self.btn_gerade_entfernen = QtWidgets.QPushButton("Entfernen")
         self.btn_gerade_entfernen.clicked.connect(self._gerade_entfernen_geklickt)
         zeile.addWidget(self.btn_gerade_entfernen)
@@ -130,16 +155,37 @@ class ZonenPanel(QtWidgets.QWidget):
                 f"{zone.frequenz_min/1e9:.2f}–{zone.frequenz_max/1e9:.2f} GHz")
 
     def setze_geraden(self, geraden) -> None:
-        """Fuellt die Geradenliste (Handgriffe + gruene Seite)."""
+        """Fuellt die Geradenliste (Handgriffe + gruene Seite; bei >1 Resonanz die Mode)."""
         gewaehlt = self.geraden_liste.currentRow()
+        self._geraden = list(geraden)
         self.geraden_liste.clear()
         for gerade in geraden:
             seite = "+" if gerade.gruen_positiv else "−"
+            praefix = (f"M{int(getattr(gerade, 'mode', 1))} · "
+                       if self._n_moden > 1 else "")
             self.geraden_liste.addItem(
-                f"({gerade.b1:.3f} T, {gerade.f1/1e9:.2f} GHz) – "
+                f"{praefix}({gerade.b1:.3f} T, {gerade.f1/1e9:.2f} GHz) – "
                 f"({gerade.b2:.3f} T, {gerade.f2/1e9:.2f} GHz)  · grün: {seite}")
         if 0 <= gewaehlt < self.geraden_liste.count():
             self.geraden_liste.setCurrentRow(gewaehlt)
+
+    def setze_n_moden(self, n: int) -> None:
+        """Resonanzen je Linescan: Mode-Wahl der Geraden freischalten (n > 1)."""
+        self._n_moden = max(1, int(n))
+        self.mode_spin.setRange(1, self._n_moden)
+        self.mode_spin.setEnabled(self._n_moden > 1)
+        self.btn_gerade_mode.setEnabled(self._n_moden > 1)
+        self.setze_geraden(self._geraden)
+
+    def mode_neu(self) -> int:
+        """Mode, die eine neu eingezeichnete Gerade bekommt (1 bei einer Resonanz)."""
+        return int(self.mode_spin.value()) if self._n_moden > 1 else 1
+
+    def _gerade_mode_geklickt(self) -> None:
+        zeile = self.geraden_liste.currentRow()
+        if 0 <= zeile < len(self._geraden) and self._cb_gerade_mode is not None:
+            aktuell = int(getattr(self._geraden[zeile], "mode", 1))
+            self._cb_gerade_mode(zeile, aktuell % self._n_moden + 1)
 
     def setze_modus_aktiv(self, an: bool) -> None:
         """Synchronisiert den Zonen-Knopf mit dem Modus-Manager (ohne Rueckruf)."""

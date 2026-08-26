@@ -176,7 +176,8 @@ def grenzgeraden_aus_sitzung(daten: dict) -> list:
         try:
             geraden.append(Grenzgerade(b1=float(g["b1"]), f1=float(g["f1"]),
                                        b2=float(g["b2"]), f2=float(g["f2"]),
-                                       gruen_positiv=bool(g.get("gruen_positiv", True))))
+                                       gruen_positiv=bool(g.get("gruen_positiv", True)),
+                                       mode=max(1, int(g.get("mode", 1)))))
         except (KeyError, TypeError, ValueError):
             continue
     return geraden

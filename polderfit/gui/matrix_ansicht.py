@@ -83,6 +83,8 @@ _GERADE_GRUEN = F.SIGNAL_GRUEN
 _GERADE_ROT = F.SIGNAL_ROT
 #: Breite des Seitensaums in Achsen-Anteilen.
 _GERADE_SAUM = 0.025
+#: Linienfarbe je Mode (Grenzgeraden bei mehreren Resonanzen; Mode 1 = Textfarbe).
+_MODE_FARBEN = {2: "#7B2CBF", 3: "#0077B6", 4: "#E36414", 5: "#2A9D8F", 6: "#B5179E"}
 #: Relative Trefferdistanz fuer Endpunkt-Griffe bzw. Doppelklick auf die Linie.
 _GRIFF_TOLERANZ = 0.035
 _LINIEN_TOLERANZ = 0.02
@@ -855,11 +857,20 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                     ecken, closed=True, facecolor=farbe, edgecolor="none",
                     alpha=alpha, zorder=5, label="_gerade_saum"))
                 self._geraden_artists.append(patch)
-            linie = self.ax.plot([x0, x1], [y0, y1], "-", color=F.TEXT,
+            mode = int(getattr(gerade, "mode", 1))
+            farbe_linie = _MODE_FARBEN.get(mode, F.TEXT) if mode > 1 else F.TEXT
+            linie = self.ax.plot([x0, x1], [y0, y1], "-", color=farbe_linie,
                                  lw=1.6, zorder=6, label="_gerade")[0]
             linie.set_path_effects(
                 [pe.Stroke(linewidth=3.0, foreground="#FFFFFFAA"), pe.Normal()])
             self._geraden_artists.append(linie)
+            if mode > 1:
+                text = self.ax.text(0.5 * (x0 + x1), 0.5 * (y0 + y1), f"M{mode}",
+                                    color=farbe_linie, fontsize=8, fontweight="bold",
+                                    ha="center", va="bottom", zorder=7, label="_gerade_mode")
+                text.set_path_effects(
+                    [pe.Stroke(linewidth=2.5, foreground="#FFFFFFCC"), pe.Normal()])
+                self._geraden_artists.append(text)
             griffe = self.ax.plot([p1[0], p2[0]], [p1[1], p2[1]], "s",
                                   color=F.SIGNAL_BLAU, mec="white", mew=1.2, ms=9,
                                   ls="", zorder=9, label="_gerade_griff")[0]

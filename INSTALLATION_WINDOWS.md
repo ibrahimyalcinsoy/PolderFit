@@ -164,14 +164,22 @@ polderfit
 
 ## Auf eine neue Version aktualisieren
 
-Wenn es eine neuere Programmversion gibt:
+Liegt bereits eine (ältere) Version im Ordner `PolderFit`, wird sie so durch den
+neuesten Stand von GitHub ersetzt:
 
 ```bat
 cd %USERPROFILE%\PolderFit
-git pull
+git fetch origin
+git reset --hard origin/main
 .venv\Scripts\activate
 pip install -e ".[gui]"
 ```
+
+`git reset --hard origin/main` überschreibt alle Programmdateien mit der neuesten
+Version (selbst geänderte Programmdateien gehen verloren); eigene Dateien im Ordner
+(Messdaten, Projekte) bleiben erhalten. Meldet `git fetch` „not a git repository“
+(Ordner stammt z. B. aus einer ZIP): Ordner umbenennen (`ren PolderFit PolderFit_alt`)
+und ab Schritt 3 neu installieren.
 
 ---
 

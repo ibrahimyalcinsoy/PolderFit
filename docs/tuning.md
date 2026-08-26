@@ -7,7 +7,8 @@
 | `alpha_max` | 0.1 | harte α-Schranke (breite Linien: anheben) |
 | `nachfenster_faktor` | 2.5 | 2. Durchgang `B_res ± k·ΔH`; 0 = aus |
 | `alpha_plausibel` | None (= α_max/2) | Grenze „alpha unphysikalisch“ |
-| `n_moden` | 1 | Resonanzen je Linescan (simultan) |
+| `n_moden` | 1 | Resonanzen je Linescan (Dropdown im Auto-Fit-Dialog) |
+| `auto_fit_zweistufig` | aus | Erweitert: erst klassischer Ein-Moden-Auto-Fit, dann weitere Resonanzen je Linescan ergänzen (Phantom-Filter, bei Misserfolg bleibt das klassische Ergebnis) |
 | `nachfit_bestaetigen` | True | manuelle Nachfits gelten als gut |
 | `zentren` | None | vorgegebene Fenstermitten (Skript-API) |
 | `alpha_erwartet` | 0.01 | Fensterbreite bei vorgegebener Trasse (Skript-API) |

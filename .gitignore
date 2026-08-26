@@ -21,6 +21,7 @@ dist/
 # Lokale Messdaten (TDMS) – nicht versionieren
 /testdata/
 /testdata_old_anglecal/
+/testdata-n-lorentz/
 /TDMS files/
 /Weitere TDMS files/
 /dritter Datensatz/

@@ -4,7 +4,8 @@
 Fragt Modus (ueberschreiben/ergaenzen), optional eine feste Fensterbreite in
 Punkten und den auszuwertenden Bereich ab: **Frequenz von … bis …** und
 **Feld von … bis …** - beim Rechteck mit dessen Werten vorbelegt (editierbar),
-beim Grenzgeraden-Fit mit dem ganzen Datenbereich.
+beim Grenzgeraden-Fit mit dem zuletzt benutzten Bereich (sonst dem ganzen
+Datenbereich). Eingaben mit Punkt oder Komma sind gleichwertig.
 """
 
 from __future__ import annotations

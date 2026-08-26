@@ -9,13 +9,13 @@ nochmal fitten). Diese Klasse haelt den Zustand fuer GUI und Skriptbetrieb.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
 from ..io.datensatz import Linescan, Messdatensatz
 from ..physik.konstanten import GAMMA_STANDARD
-from ..physik.fitmodell import Startwerte
+from ..physik.fitmodell import Startwerte, s21_modell_multi, schaetze_startwerte_multi
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
 from .kriterien import ALPHA_MAX
@@ -117,6 +117,8 @@ class StapelErgebnis:
     alpha_plausibel: float | None = None
     #: Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard).
     n_moden: int = 1
+    #: Auto-Fit lief zweistufig (klassisch, danach Moden ergaenzt; siehe fitte_alle).
+    zweistufig: bool = False
     #: Manuelle Nachfits automatisch als "gut - vom Nutzer bestaetigt" bewerten.
     nachfit_bestaetigen: bool = True
     fenster: list[tuple[float, float]] = field(default_factory=list)
@@ -264,6 +266,8 @@ def fitte_alle(
     nachfit_bestaetigen: bool = True,
     fortschritt_fenster=None,
     abbruch=None,
+    zweistufig: bool = False,
+    fortschritt_moden=None,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -283,6 +287,11 @@ def fitte_alle(
     ``alpha_max``: harte obere alpha-Schranke der Einzelfits.
     ``nachfenster_faktor``: zweiter Fit-Durchgang auf ``B_res +/- Faktor*dH``
     (siehe :data:`NACHFENSTER_FAKTOR_STANDARD`; 0 = nur ein Durchgang).
+    ``zweistufig`` (nur bei ``n_moden > 1``): Stufe 1 ist der klassische
+    Ein-Moden-Auto-Fit (robuste Fenstersuche, Hauptmode), Stufe 2 ergaenzt je
+    Linescan weitere Resonanzen (:func:`ergaenze_moden`; Fortschritt ueber
+    ``fortschritt_moden(i, n, ergebnis)``). Gelingt Stufe 2 an einem Linescan
+    nicht, bleibt dort das klassische Ergebnis stehen.
     """
     if auswahl is not None and not auswahl.ist_neutral:
         datensatz, indizes = auswahl.reduziere(datensatz)
@@ -302,6 +311,8 @@ def fitte_alle(
         nachfit_bestaetigen=nachfit_bestaetigen,
     )
     n = len(datensatz.linescans)
+    zweistufig_aktiv = bool(zweistufig) and stapel.n_moden > 1
+    fenster_auto = list(fenster)   # stapel.fenster wird unten je Index ueberschrieben
     for i, ls in enumerate(datensatz.linescans):
         if abbruch is not None and abbruch():
             # Rest als Platzhalter: der Stapel bleibt konsistent und nutzbar.
@@ -312,13 +323,134 @@ def fitte_alle(
         ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
             ls, fenster[i], gamma, alpha_max=alpha_max,
             nachfenster_faktor=nachfenster_faktor, alpha_plausibel=alpha_plausibel,
-            n_moden=stapel.n_moden)
+            n_moden=1 if zweistufig_aktiv else stapel.n_moden)
         stapel.fenster[i] = verwendet
         stapel.zugeschnitten.append(beschnitten)
         stapel.ergebnisse.append(ergebnis)
         if fortschritt is not None:
             fortschritt(i, n, ergebnis)
+    if zweistufig_aktiv:
+        stapel.zweistufig = True
+        for i in range(len(stapel.ergebnisse)):
+            if abbruch is not None and abbruch():
+                break
+            ergebnis = ergaenze_moden(stapel, i, stapel.n_moden, fenster=fenster_auto[i])
+            if fortschritt_moden is not None:
+                fortschritt_moden(i, n, ergebnis)
     return stapel
+
+
+#: Stufe 2 des zweistufigen Auto-Fits: eine weitere Mode gilt nur als echt, wenn
+#: das normierte Residuum um mindestens diesen Faktor unter dem Ein-Moden-Fit liegt.
+PHANTOM_FAKTOR = 0.95
+
+
+def ergaenze_moden(
+    stapel: StapelErgebnis,
+    index: int,
+    n_moden: int,
+    fenster: tuple[float, float] | None = None,
+) -> FitErgebnis:
+    """Stufe 2 des zweistufigen Auto-Fits: weitere Resonanzen ergaenzen.
+
+    Ausgangspunkt ist das klassische Ein-Moden-Ergebnis an ``index``. Mode 1
+    startet bei diesem Ergebnis, die ``n_moden - 1`` weiteren bei den Maxima
+    des Residuums (Messung minus Mode 1, ausserhalb +-FWHM der Hauptmode);
+    danach werden alle Moden simultan im Fenster ``fenster`` gefittet (Standard:
+    Stapelfenster; das breitere von beiden gilt, damit Nachbarmoden Platz haben).
+
+    Uebernommen wird der Mehr-Moden-Fit nur, wenn er erfolgreich, nicht
+    problematisch, mit der klassischen Hauptmode vertraeglich
+    (``|B_res - B_res_klassisch| <= max(FWHM, 2 Feldschritte)``) und deutlich
+    besser als der Ein-Moden-Fit im selben Fenster ist (:data:`PHANTOM_FAKTOR`);
+    unter mehreren Startwert-Kandidaten gewinnt das kleinste Residuum. Sonst bleibt
+    das klassische Ergebnis unveraendert (``moden`` = nur die Hauptmode) -
+    so entstehen auf Ein-Moden-Daten keine Phantom-Resonanzen. Liefert das
+    Ergebnis am Index.
+    """
+    klassisch = stapel.ergebnisse[index]
+    n_moden = max(1, int(n_moden))
+    if (n_moden < 2 or not getattr(klassisch, "gefittet", True) or not klassisch.erfolg
+            or not np.isfinite(klassisch.B_res)):
+        return klassisch
+    ls = stapel.datensatz.linescans[index]
+    st_unten, st_oben = stapel.fenster[index]
+    unten, oben = fenster if fenster is not None else (st_unten, st_oben)
+    unten, oben = min(float(unten), float(st_unten)), max(float(oben), float(st_oben))
+    beschnitten = schneide_band(ls, unten, oben)
+    if stapel.ausschlusszonen:
+        beschnitten = ohne_ausschlusszonen(beschnitten, stapel.ausschlusszonen)
+    B = np.asarray(beschnitten.feld, dtype=float)
+    if B.size < 4 * n_moden:
+        return klassisch
+    s21 = beschnitten.s21
+    omega = 2.0 * np.pi * float(ls.frequenz)
+    B_ref = float(np.mean(B))
+    # Untergrund des klassischen Fits bezieht sich auf dessen Fenstermitte.
+    B_ref_klassisch = float(np.mean(stapel.zugeschnitten[index].feld))
+    untergrund = dict(
+        off_re=float(klassisch.off_re + klassisch.slope_re * (B_ref - B_ref_klassisch)),
+        off_im=float(klassisch.off_im + klassisch.slope_im * (B_ref - B_ref_klassisch)),
+        slope_re=float(klassisch.slope_re), slope_im=float(klassisch.slope_im))
+    mode1 = s21_modell_multi(B, [(klassisch.B_res, klassisch.alpha, klassisch.A, klassisch.phi)],
+                             0.0, 0.0, 0.0, 0.0, omega, stapel.gamma, B_ref)
+    rest = s21 - mode1
+    fwhm = float(np.sqrt(3.0) * klassisch.dH) if np.isfinite(klassisch.dH) else 0.0
+    schritt = float(np.ptp(B)) / max(B.size - 1, 1)
+    toleranz = max(fwhm, 2.0 * schritt)
+    maske = np.abs(B - klassisch.B_res) > toleranz
+    grenzen = dict(B_min=float(B.min()), B_max=float(B.max()))
+    seed = Startwerte(B_res=float(klassisch.B_res), alpha=float(klassisch.alpha),
+                      A=float(klassisch.A), phi=float(klassisch.phi), **untergrund, **grenzen)
+
+    # Startwert-Kandidaten fuer die weiteren Moden: (a) Rohdaten ausserhalb der
+    # Hauptmode (unverzerrt, findet getrennte Nachbarlinien), (b) Residuum
+    # ausserhalb, (c) Residuum im ganzen Fenster (ueberlappende Moden).
+    versuche = []
+    if np.count_nonzero(maske) >= 4 * (n_moden - 1):
+        versuche += [(B[maske], s21[maske]), (B[maske], rest[maske])]
+    versuche.append((B, rest))
+    kandidaten: list[list[Startwerte]] = []
+    for Bk, sk in versuche:
+        try:
+            weitere = schaetze_startwerte_multi(Bk, sk, omega, stapel.gamma, n_moden - 1,
+                                                alpha_max=stapel.alpha_max)
+        except Exception:
+            continue
+        starts = [seed] + [replace(sw, **untergrund, **grenzen) for sw in weitere]
+        lage = tuple(round(sw.B_res / max(schritt, 1e-9)) for sw in starts[1:])
+        if all(lage != tuple(round(sw.B_res / max(schritt, 1e-9)) for sw in k[1:]) for k in kandidaten):
+            kandidaten.append(starts)
+    if not kandidaten:
+        return klassisch
+
+    # Vergleichsbasis: Ein-Moden-Fit im SELBEN Fenster (Phantom-Filter).
+    if (unten, oben) == (float(st_unten), float(st_oben)):
+        basis = klassisch
+    else:
+        basis = fitte_linescan(beschnitten, stapel.gamma, startwerte=seed,
+                               alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
+                               n_moden=1)
+    basis_rmse = float(basis.rmse_norm) if np.isfinite(basis.rmse_norm) else np.inf
+
+    beste = None
+    for starts in kandidaten:
+        ergebnis = fitte_linescan(beschnitten, stapel.gamma, startwerte=starts,
+                                  alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
+                                  n_moden=n_moden)
+        if not (ergebnis.erfolg and not ergebnis.problematisch and np.isfinite(ergebnis.B_res)
+                and abs(ergebnis.B_res - klassisch.B_res) <= toleranz):
+            continue
+        if not (np.isfinite(ergebnis.rmse_norm) and ergebnis.rmse_norm <= PHANTOM_FAKTOR * basis_rmse):
+            continue   # keine echte Verbesserung gegenueber einer Mode -> Phantom
+        if beste is None or ergebnis.rmse_norm < beste.rmse_norm:
+            beste = ergebnis
+    if beste is None:
+        return klassisch
+    stapel.fenster[index] = (unten, oben)
+    stapel.zugeschnitten[index] = beschnitten
+    stapel.ergebnisse[index] = beste
+    return beste
 
 
 def leerer_stapel(
@@ -364,6 +496,7 @@ def fitte_neu(
     B_res_vorgabe: float | None = None,
     bestaetigen: bool | None = None,
     n_moden: int | None = None,
+    bereiche: list | None = None,
 ) -> FitErgebnis:
     """Fittet einen einzelnen Datensatz neu (manuelles Nachfitten).
 
@@ -378,7 +511,8 @@ def fitte_neu(
     die Kriterien bleiben in ``problematisch_auto`` einsehbar). Bereichs-/
     Grenzgeraden-Fits ueber viele Frequenzen, Zonen-Nachrechnungen und das
     Wiederherstellen einer Sitzung uebergeben ``False``. ``n_moden``: Anzahl Resonanzen fuer diesen Fit
-    (``None`` = Stapel-Einstellung).
+    (``None`` = Stapel-Einstellung). ``bereiche``: je Mode ``(lo, hi)``/``None`` -
+    Feldbereich der jeweiligen Resonanz (Grenzgeraden-Baender je Mode).
     """
     ls = stapel.datensatz.linescans[index]
     unten, oben = stapel.fenster[index]
@@ -395,6 +529,7 @@ def fitte_neu(
         beschnitten, stapel.gamma, startwerte=startwerte, B_res_vorgabe=B_res_vorgabe,
         alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
         n_moden=stapel.n_moden if n_moden is None else max(1, int(n_moden)),
+        bereiche=bereiche,
     )
     ergebnis.nachbearbeitet = True
     if bestaetigen is None:

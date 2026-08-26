@@ -1,0 +1,72 @@
+[
+ {
+  "name": "oop_5K",
+  "beschreibung": "oop_5K",
+  "geometrie": "oop",
+  "n_pf": 629,
+  "n_zugeordnet": 629,
+  "n_beide_ok": 599,
+  "n_pf_problematisch": 24,
+  "n_ftf_ohne_ergebnis": 15,
+  "t_fit_s": 3.2030766010284424,
+  "median_dB_mT": 0.16253548105726878,
+  "max_abs_dB_mT": 1.6385694512912607,
+  "anteil_dB_unter_1mT": 0.9616026711185309,
+  "median_ddH_mT": 0.3341416308019305,
+  "median_ddH_prozent": 1.9290799685242346,
+  "anteil_ddH_unter_5prozent": 0.8964941569282137,
+  "anteil_ddH_unter_10prozent": 0.993322203672788,
+  "kittel": {
+   "PF": {
+    "g": 2.0808261722362165,
+    "mu0Meff_T": 2.40120367761536,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.002214076541274631,
+    "mu0dH0_mT": 14.498743794846854,
+    "n": 604
+   },
+   "FTF": {
+    "g": 2.07918217,
+    "mu0Meff_T": 2.39994143,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.00224583639,
+    "mu0dH0_mT": 13.705280400000001
+   }
+  }
+ },
+ {
+  "name": "oop_295K",
+  "beschreibung": "oop_295K",
+  "geometrie": "oop",
+  "n_pf": 629,
+  "n_zugeordnet": 315,
+  "n_beide_ok": 308,
+  "n_pf_problematisch": 0,
+  "n_ftf_ohne_ergebnis": 7,
+  "t_fit_s": 3.861455202102661,
+  "median_dB_mT": 0.07931645194680925,
+  "max_abs_dB_mT": 9.774197738615875,
+  "anteil_dB_unter_1mT": 0.7597402597402597,
+  "median_ddH_mT": 0.5770937723735203,
+  "median_ddH_prozent": 3.7184091050345414,
+  "anteil_ddH_unter_5prozent": 0.5811688311688312,
+  "anteil_ddH_unter_10prozent": 0.7564935064935064,
+  "kittel": {
+   "PF": {
+    "g": 2.0842051613691277,
+    "mu0Meff_T": 2.337169811751159,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.005324850378197839,
+    "mu0dH0_mT": 7.642655732468041,
+    "n": 622
+   },
+   "FTF": {
+    "g": 2.08794381,
+    "mu0Meff_T": 2.33881519,
+    "mu0Hu_mT": NaN,
+    "alpha": 0.00539200965,
+    "mu0dH0_mT": 5.28463428
+   }
+  }
+ }
+]

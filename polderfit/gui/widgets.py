@@ -34,9 +34,34 @@ class RuhigeSpinBox(_RuhigMixin, QtWidgets.QSpinBox):
 
 
 class RuhigeDoubleSpinBox(_RuhigMixin, QtWidgets.QDoubleSpinBox):
+    """Zusaetzlich: Punkt UND Komma gelten als Dezimalzeichen.
+
+    Unter deutscher Locale ist der Punkt Tausendertrennzeichen - ein getipptes
+    „5.51" wurde stillschweigend zu 55 (der Punkt verschluckt, die letzte
+    Ziffer verworfen), unter englischer Locale entsprechend ein Komma. Das
+    fremde Zeichen wird beim Tippen in das Dezimalzeichen der Locale
+    umgeschrieben, solange dieses nicht selbst im Text vorkommt (ein
+    eingefuegtes „1.234,5" bleibt unangetastet). Getippte Tausendertrenner
+    werden bewusst nicht unterstuetzt: physikalische Groessen wie „1.234 T"
+    sind mit Punkt als Dezimalzeichen gemeint, nicht als 1234 T.
+    """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._ruhig_einrichten()
+
+    def _dezimal_normiert(self, text: str) -> str:
+        dezimal = str(self.locale().decimalPoint())
+        fremd = "," if dezimal == "." else "."
+        if fremd in text and dezimal not in text:
+            return text.replace(fremd, dezimal)
+        return text
+
+    def validate(self, text: str, pos: int):  # noqa: N802 (Qt-Name)
+        return super().validate(self._dezimal_normiert(text), pos)
+
+    def valueFromText(self, text: str) -> float:  # noqa: N802 (Qt-Name)
+        return super().valueFromText(self._dezimal_normiert(text))
 
 
 class RuhigeComboBox(_RuhigMixin, QtWidgets.QComboBox):

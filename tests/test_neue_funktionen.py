@@ -677,3 +677,96 @@ def test_matrix_hinweis_banner(app):
     assert m._hinweis_artist is not None and m._hinweis_text == "Auto-Fit läuft … 3/5"
     m.zeige_hinweis(None)
     assert m._hinweis_artist is None
+
+
+def test_zweistufiger_autofit_ergaenzt_moden():
+    """Zweistufig: klassischer Ein-Moden-Fit, dann zweite Resonanz aus dem Residuum."""
+    ds = _synth_datensatz(zwei_moden=True)
+    st = fitte_alle(ds, nachfenster_faktor=0.0, n_moden=2, zweistufig=True)
+    assert st.zweistufig and st.n_moden == 2
+    ergaenzt = [e for e in st.ergebnisse if e.moden and len(e.moden) == 2]
+    assert len(ergaenzt) >= 6
+    for k, e in enumerate(st.ergebnisse):
+        b = 0.62 + 0.02 * k
+        if e.moden and len(e.moden) == 2:
+            b1, b2 = sorted(m["B_res"] for m in e.moden)
+            assert abs(b1 - b) < 0.004 and abs(b2 - (b + 0.035)) < 0.004
+        else:
+            assert abs(e.B_res - b) < 0.004
+
+
+def test_zweistufiger_autofit_ohne_zweite_mode_bleibt_klassisch():
+    """Ein-Moden-Daten: keine Phantom-Resonanzen, Hauptmode wie im klassischen Fit."""
+    ds = _synth_datensatz(zwei_moden=False)
+    st = fitte_alle(ds, nachfenster_faktor=0.0, n_moden=2, zweistufig=True)
+    klassisch = fitte_alle(ds, nachfenster_faktor=0.0, n_moden=1)
+    assert sum(e.problematisch for e in st.ergebnisse) <= sum(e.problematisch for e in klassisch.ergebnisse)
+    for e, k in zip(st.ergebnisse, klassisch.ergebnisse):
+        assert abs(e.B_res - k.B_res) < 0.002
+
+
+def test_ergaenze_moden_laesst_klassisch_bei_platzhalter():
+    from polderfit.fit.batch import ergaenze_moden, leerer_stapel
+    ds = _synth_datensatz(zwei_moden=True)
+    st = leerer_stapel(ds, n_moden=2)
+    vorher = st.ergebnisse[0]
+    assert ergaenze_moden(st, 0, 2) is vorher          # nicht gefittet -> unveraendert
+
+
+def _band_geraden(b0, steigung, halbbreite, mode, f_lo=10e9, f_hi=24e9):
+    """Zwei Geraden parallel zur Dispersion b(f) = b0 + steigung*(f - f_lo); gruen dazwischen."""
+    from polderfit.fit.fenster_steuerung import Grenzgerade
+    f_mitte = 0.5 * (f_lo + f_hi)
+    b_mitte = b0 + steigung * (f_mitte - f_lo)
+    geraden = []
+    for vorz in (-1.0, +1.0):
+        g = Grenzgerade(b1=b0 + vorz * halbbreite, f1=f_lo,
+                        b2=b0 + steigung * (f_hi - f_lo) + vorz * halbbreite, f2=f_hi, mode=mode)
+        iv = g.erlaubtes_intervall(f_mitte, 0.0, 2.0)
+        if iv is None or not (iv[0] <= b_mitte <= iv[1]):
+            g.seite_wechseln()
+        geraden.append(g)
+    return geraden
+
+
+def test_grenzgeraden_baender_je_mode():
+    """n Resonanzen = 2n Geraden: Mode k wird nur in ihrem Band gesucht."""
+    from polderfit.fit.batch import leerer_stapel
+    from polderfit.fit.fenster_steuerung import fitte_geraden_bereich
+    ds = _synth_datensatz(zwei_moden=True)          # b = 0.62 + 0.02 k, Nebenmode +0.035
+    steig = 0.02 / 2e9
+    geraden = _band_geraden(0.62, steig, 0.012, 1) + _band_geraden(0.655, steig, 0.012, 2)
+    st = leerer_stapel(ds, n_moden=2)
+    neu, ueb = fitte_geraden_bereich(st, geraden)
+    assert len(neu) == 8 and ueb == []
+    assert sum(e.problematisch for e in st.ergebnisse) <= 1
+    for k, e in enumerate(st.ergebnisse):
+        b = 0.62 + 0.02 * k
+        assert len(e.moden) == 2
+        b1, b2 = sorted(m["B_res"] for m in e.moden)
+        assert abs(b1 - b) < 0.004 and abs(b2 - (b + 0.035)) < 0.004
+        lo, hi = st.fenster[k]
+        assert lo < b - 0.012 and hi > b + 0.035 + 0.012          # Huelle + Rand
+
+
+def test_grenzgeraden_band_leer_wird_uebersprungen():
+    from polderfit.fit.batch import leerer_stapel
+    from polderfit.fit.fenster_steuerung import fitte_geraden_bereich
+    ds = _synth_datensatz(zwei_moden=True)
+    steig = 0.02 / 2e9
+    # Mode-2-Band ausserhalb des Feldbereichs (B nur 0.55-0.95 T) -> leer -> alle uebersprungen
+    geraden = _band_geraden(0.62, steig, 0.012, 1) + _band_geraden(1.5, steig, 0.012, 2)
+    st = leerer_stapel(ds, n_moden=2)
+    neu, ueb = fitte_geraden_bereich(st, geraden)
+    assert neu == [] and len(ueb) == 8
+
+
+def test_grenzgerade_mode_persistenz():
+    from dataclasses import asdict
+    from polderfit.fit.fenster_steuerung import Grenzgerade
+    from polderfit.persistenz.projekt import grenzgeraden_aus_sitzung
+    g = Grenzgerade(b1=1.0, f1=1e9, b2=2.0, f2=2e9, mode=2)
+    [zurueck] = grenzgeraden_aus_sitzung({"grenzgeraden": [asdict(g)]})
+    assert zurueck.mode == 2
+    [alt] = grenzgeraden_aus_sitzung({"grenzgeraden": [{"b1": 1, "f1": 1e9, "b2": 2, "f2": 2e9}]})
+    assert alt.mode == 1

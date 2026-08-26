@@ -41,8 +41,34 @@ def _version_ermitteln() -> str:
         return "0.0.0"
 
 
-#: Versionsnummer – EINE Quelle: ``pyproject.toml``.
-__version__: str = _version_ermitteln()
+def _git_commits() -> int | None:
+    """Anzahl Commits seit dem allerersten Commit (``git rev-list --count HEAD``)
+    im Entwicklungs-Checkout; ``None`` ohne Git/Checkout (z. B. ZIP)."""
+    import subprocess
+    from pathlib import Path
+    wurzel = Path(__file__).resolve().parent.parent
+    if not (wurzel / ".git").exists():
+        return None
+    try:
+        aus = subprocess.run(["git", "-C", str(wurzel), "rev-list", "--count", "HEAD"],
+                             capture_output=True, text=True, timeout=5)
+        return int(aus.stdout.strip()) if aus.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def _version_mit_commits(basis: str) -> str:
+    """``<major>.<minor>.<Commits>`` – die letzte Stelle zaehlt, wie oft seit der
+    Erstversion etwas committet wurde (z. B. ``0.1.57``). Ohne Git: ``basis``."""
+    commits = _git_commits()
+    if not commits:
+        return basis
+    teile = basis.split(".")
+    return ".".join(teile[:2] + [str(commits)])
+
+
+#: Versionsnummer: ``pyproject.toml`` (major.minor) + Anzahl Git-Commits.
+__version__: str = _version_mit_commits(_version_ermitteln())
 
 #: Anzeigename ohne Version – EINE Quelle: ``pyproject.toml`` ``[tool.polderfit] name``.
 NAME: str = str(_PYPROJECT.get("tool", {}).get("polderfit", {}).get("name", "PolderFit"))

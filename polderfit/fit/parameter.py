@@ -61,6 +61,9 @@ class PhysikParameter:
     #: Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard;
     #: 2 = Doppel-Dip, z. B. nanostrukturiertes CoFe).
     n_moden: int = 1
+    #: Auto-Fit bei n_moden > 1 zweistufig: erst klassischer Ein-Moden-Fit
+    #: (robuste Fenstersuche, Hauptmode), dann weitere Resonanzen ergaenzen.
+    auto_fit_zweistufig: bool = False
     #: Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) automatisch als
     #: "gut – vom Nutzer bestaetigt" bewerten (Bereichs-/Grenzgeraden-Fits ueber
     #: viele Frequenzen nicht - dort entscheiden die Kriterien).
