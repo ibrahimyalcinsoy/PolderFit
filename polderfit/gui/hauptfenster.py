@@ -1417,12 +1417,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._job_i = 0
         self._job_n = 0
         self._job_abgebrochen = False
+        self._hinweis_zuletzt = 0.0   # letzter Farbplot-Hinweis (Voll-Neuzeichnen!)
         # Live-Vorschau: Frequenz -> (B_res, Status); Zeichnen entprellt.
         self._live: dict[float, tuple[float, str]] = {}
         self._live_aktiv = False
         self._live_timer = QtCore.QTimer(self)
         self._live_timer.setSingleShot(True)
-        self._live_timer.setInterval(200)
+        self._live_timer.setInterval(300)
         self._live_timer.timeout.connect(self._live_zeichnen)
 
     def _starte_job(self, funktion, bei_fertig, titel: str,
@@ -1545,7 +1546,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         text = f"{self._job_titel}{phase}: {i}/{n} ({prozent} %) · {verstrichen:.0f} s{rest}"
         self.status_job.setText(text)
         self._setze_aktivitaet(text)
-        if not self._job_abgebrochen:
+        # Der Hinweis im Farbplot zeichnet den ganzen Plot neu - hoechstens 4x/s
+        # (Statusleiste/Aktivitaet oben sind billig und laufen ungedrosselt).
+        jetzt = time.monotonic()
+        if not self._job_abgebrochen and (i >= n or jetzt - self._hinweis_zuletzt >= 0.25):
+            self._hinweis_zuletzt = jetzt
             self.matrix.zeige_hinweis(f"{self._job_titel}{phase}: {i}/{n}{rest}")
 
     def _auf_protokoll(self, text: str) -> None:

@@ -349,3 +349,20 @@ def test_zoom_umschalter_im_ansicht_menue(app):
     assert w.matrix.zoom_aktiv() is True
     w.akt_zoom.setChecked(False)
     assert w.matrix.zoom_aktiv() is False
+
+
+def test_arbeiter_drosselt_fortschritt(app):
+    """200 Meldungen in Folge -> deutlich weniger Fortschritts-Signale, letzte kommt an."""
+    from polderfit.gui.arbeiter import Arbeiter
+    a = Arbeiter(lambda melde: None)
+    empfangen = []
+    a.fortschritt.connect(lambda i, n: empfangen.append(i))
+    zwischen = []
+    a.zwischenstand.connect(lambda d: zwischen.append(d))
+    for i in range(1, 201):
+        a._melde(i, 200, daten=(i, 1.0, "gut"), phase="Einzelfits")
+    assert empfangen[0] == 1 and empfangen[-1] == 200
+    assert len(empfangen) < 20                      # statt 200
+    assert len(zwischen) == 200                     # Live-Daten vollstaendig
+    a._melde(5, 200, text="Zeile", phase="Einzelfits")
+    assert empfangen[-1] == 5                       # Textzeilen tragen ihren Fortschritt

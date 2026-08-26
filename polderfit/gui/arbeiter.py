@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import Callable
 
+import time
+
 from PySide6 import QtCore
 
 
@@ -36,11 +38,17 @@ class Arbeiter(QtCore.QObject):
     fertig = QtCore.Signal(object)          # Rueckgabewert der Funktion
     fehler = QtCore.Signal(str)             # Fehlertext (mit Traceback)
 
+    #: Mindestabstand zweier Fortschrittsmeldungen (s). Schnelle Jobs (200 Fits
+    #: in 3 s) wuerden sonst die GUI mit Ereignissen fluten - jedes zeichnet den
+    #: grossen Farbplot neu, der Stau laesst den Desktop "antwortet nicht" melden.
+    MINDESTABSTAND_S = 0.1
+
     def __init__(self, funktion: Callable):
         super().__init__()
         self._funktion = funktion
         self._abbruch = False
         self._letzte_phase: str | None = None
+        self._letzte_meldung = 0.0
 
     def abbrechen(self) -> None:
         """Abbruch anfordern (thread-sicher: einfacher Flag, nur gelesen/gesetzt)."""
@@ -51,14 +59,21 @@ class Arbeiter(QtCore.QObject):
 
     def _melde(self, i: int, n: int, text: str = "", daten=None, phase: str | None = None) -> None:
         """Vom Arbeitscode aufgerufener Fortschritts-Callback."""
-        if phase is not None and phase != self._letzte_phase:
+        jetzt = time.monotonic()
+        phasenwechsel = phase is not None and phase != self._letzte_phase
+        if phasenwechsel:
             self._letzte_phase = phase
             self.phase.emit(str(phase))
-        self.fortschritt.emit(int(i), int(n))
+        # Fortschritt gedrosselt: erste/letzte Meldung, Phasenwechsel und Zeilen
+        # mit Text immer, dazwischen hoechstens alle MINDESTABSTAND_S.
+        if (phasenwechsel or text or int(i) <= 1 or int(i) >= int(n)
+                or jetzt - self._letzte_meldung >= self.MINDESTABSTAND_S):
+            self._letzte_meldung = jetzt
+            self.fortschritt.emit(int(i), int(n))
         if text:
             self.protokoll.emit(text)
         if daten is not None:
-            self.zwischenstand.emit(daten)
+            self.zwischenstand.emit(daten)   # billig: nur vormerken, Zeichnen entprellt
 
     @QtCore.Slot()
     def ausfuehren(self) -> None:
