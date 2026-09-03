@@ -509,8 +509,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         fehlt es, wird aus ``problematisch`` abgeleitet. ``ausgeschlossen``
         (bool-Array) sind Ausreisser - unsichtbar, ausser *Ansicht -> Ausreisser
         anzeigen* ist an. ``info`` (optional): Tooltip-Text je Punkt.
-        ``nebenmoden``: Liste von ``B_res``-Arrays weiterer Resonanzen (NaN,
-        wo keine).
+        ``nebenmoden``: Liste ``(mode, B_res-Array, Status-Array)`` weiterer
+        Moden (Korridor-Fits; NaN, wo keine).
         """
         if self._datensatz is None:
             return
@@ -525,8 +525,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             status = np.where(self._res_problem, "problem", "gut")
         self._res_status = np.asarray(status, dtype=object)
         self._res_info = list(info) if info is not None else None
-        self._res_nebenmoden = ([np.asarray(m, dtype=float) for m in nebenmoden]
-                                if nebenmoden else None)
+        self._res_nebenmoden = ([(int(m), np.asarray(b, dtype=float), np.asarray(st, dtype=object))
+                                 for m, b, st in nebenmoden] if nebenmoden else None)
         self._hover_index = None
         self._zeichne_resonanz()
 
@@ -579,15 +579,27 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                              mec=rand, ms=6 if klasse == "gut" else 7, mew=0.9, ls="",
                              label=_STATUS_LABEL[klasse])
         if self._nebenmoden_anzeigen and self._res_nebenmoden:
-            fuell, rand = F.STATUS_FARBEN["nebenmode"]
-            sichtbar = np.isin(status, ["gut", "bestaetigt", "problem"]) if \
-                self._problemfits_ausblenden else status != "ignoriert"
-            for moden_b in self._res_nebenmoden:
-                maske = sichtbar & np.isfinite(moden_b)
-                if maske.any():
-                    self.ax.plot(moden_b[maske], f_ghz[maske], F.STATUS_MARKER["nebenmode"],
-                                 mfc="#FFFFFF", mec=rand, ms=6, mew=1.3, ls="",
-                                 label="_resonanz_nebenmode")
+            # Weitere Moden: runde Punkte in der Mode-Farbe; Problemfits als
+            # Dreieck (wie Mode 1), ignorierte grau - dieselbe Sichtbarkeitslogik.
+            for mode, moden_b, moden_status in self._res_nebenmoden:
+                farbe = F.mode_farbe(mode)
+                for klasse in ("ignoriert", "fehler", "problem", "gut", "bestaetigt"):
+                    maske = (moden_status == klasse) & np.isfinite(moden_b)
+                    if not maske.any() or not self._status_sichtbar(klasse):
+                        continue
+                    if klasse == "ignoriert":
+                        fuell, rand = F.STATUS_FARBEN["ignoriert"]
+                        self.ax.plot(moden_b[maske], f_ghz[maske], "o", color=fuell, mec=rand,
+                                     ms=5.5, mew=0.9, ls="", label="_resonanz_nebenmode")
+                    elif klasse in ("problem", "fehler"):
+                        self.ax.plot(moden_b[maske], f_ghz[maske], F.STATUS_MARKER[klasse],
+                                     color=F.STATUS_FARBEN[klasse][0], mec=farbe, ms=7, mew=1.2,
+                                     ls="", label="_resonanz_nebenmode")
+                    else:
+                        self.ax.plot(moden_b[maske], f_ghz[maske], "o", color=farbe,
+                                     mec="white" if klasse == "gut" else farbe,
+                                     ms=6, mew=0.9 if klasse == "gut" else 1.6, ls="",
+                                     label="_resonanz_nebenmode")
         self.draw_idle()
 
     def _status_array(self) -> np.ndarray:

@@ -1281,6 +1281,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def bei_fertig(res):
             neu, uebersprungen = res
+            if len(korridore) == 1:
+                # Gefittete Mode sofort im Linescan-Panel und in der Liste zeigen.
+                self._mode_aktiv = int(korridore[0].mode)
+                self.zonenpanel.setze_mode_aktiv(self._mode_aktiv)
+            self._zeige_korridore()
             self._nach_nachfit(neu, fits_vorher, f"Korridor-Fit {namen}")
             probleme = 0
             for korridor in korridore:
@@ -2076,8 +2081,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         info = [self._tooltip_text(i, s) for i, s in enumerate(status)]
         nebenmoden = None
         if st.nebenmoden:
-            nebenmoden = [np.array([e.B_res if e.gefittet else np.nan for e in liste], dtype=float)
-                          for k, liste in sorted(st.nebenmoden.items())]
+            nebenmoden = []
+            for k, liste in sorted(st.nebenmoden.items()):
+                b_k = np.array([e.B_res if e.gefittet else np.nan for e in liste], dtype=float)
+                st_k = [F.status_von(e, ignoriert=st.ist_ausreisser(i) or st.ist_ausreisser_mode(i, k))
+                        for i, e in enumerate(liste)]
+                nebenmoden.append((k, b_k, st_k))
         self.matrix.aktualisiere_resonanz(st.datensatz.frequenzen, bres, problem,
                                           ausgeschlossen, status=status, info=info,
                                           nebenmoden=nebenmoden)
