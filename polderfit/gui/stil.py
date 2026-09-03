@@ -139,14 +139,6 @@ QPlainTextEdit, QTextBrowser, QListWidget, QLineEdit, QSpinBox, QDoubleSpinBox, 
     selection-color: {F.TEXT};
 }}
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{ border-color: {F.SIGNAL_BLAU}; }}
-QSpinBox::up-button, QDoubleSpinBox::up-button, QSpinBox::down-button, QDoubleSpinBox::down-button {{
-    subcontrol-origin: border; width: 22px; border-left: 1px solid {F.RAND};
-    background-color: {F.PANEL};
-}}
-QSpinBox::up-button, QDoubleSpinBox::up-button {{ subcontrol-position: top right; }}
-QSpinBox::down-button, QDoubleSpinBox::down-button {{ subcontrol-position: bottom right; }}
-QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover, QSpinBox::down-button:hover,
-QDoubleSpinBox::down-button:hover {{ background-color: {F.HELL_BLAU}; }}
 QListWidget::item:selected {{ background-color: {F.HELL_BLAU}; color: {F.TEXT_BLAU}; }}
 QStatusBar {{ background-color: {F.PANEL}; border-top: 1px solid {F.RAND}; color: {F.TEXT_SCHWACH}; }}
 QSplitter::handle {{ background-color: {F.RAND}; }}
