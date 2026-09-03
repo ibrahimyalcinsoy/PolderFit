@@ -112,13 +112,13 @@ def test_manuelle_trennlinien_wandern_mit_der_mode():
     k = Korridor(mode=1, n_dips=2, moden=[1, 2],
                  anker=[Anker(10e9, 2.0, 2.2), Anker(20e9, 2.5, 2.7)])
     assert k.trennstellen(15e9) is None
-    k.trenner_setzen(10e9, [2.10])
-    assert k.trennstellen(15e9) == [2.10]                      # eine Stuetzstelle: konstant
-    k.trenner_setzen(20e9, [2.60])
-    assert k.trennstellen(15e9) == pytest.approx([2.35])        # linear dazwischen
-    assert k.trennstellen(25e9) == pytest.approx([2.85])        # linear fortgesetzt
+    k.trenner_setzen(10e9, [2.12])                              # +20 mT rechts der Mitte
+    assert k.trennstellen(15e9) == pytest.approx([2.37])        # wandert mit der Korridormitte
+    k.trenner_setzen(20e9, [2.64])                              # +40 mT
+    assert k.trennstellen(15e9) == pytest.approx([2.38])        # Abstand linear dazwischen
+    assert k.trennstellen(25e9) == pytest.approx([2.90])        # linear fortgesetzt
     k2 = Korridor.aus_dict(k.als_dict())
-    assert k2.trennstellen(15e9) == pytest.approx([2.35])
-    assert k.trenner_entfernen(20e9) and k.trennstellen(15e9) == [2.10]
+    assert k2.trennstellen(15e9) == pytest.approx([2.38])
+    assert k.trenner_entfernen(20e9) and k.trennstellen(15e9) == pytest.approx([2.37])
     from polderfit.fit.korridor import segmente_aus_trennern
     assert segmente_aus_trennern(2.0, 2.3, [2.1]) == [(2.0, 2.1), (2.1, 2.3)]

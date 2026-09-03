@@ -96,14 +96,27 @@ class Korridor:
         return len(self.trenner) < vorher
 
     def trennstellen(self, f: float) -> list | None:
-        """Interpolierte Trennlinien bei ``f`` (aufsteigend) oder ``None``; nur
-        Stuetzstellen mit ``n_dips - 1`` Werten zaehlen."""
+        """Interpolierte Trennlinien bei ``f`` (aufsteigend) oder ``None``.
+
+        Gefuehrt werden die Trennlinien als Abstand zur Korridormitte: schon
+        EINE Stuetzstelle wandert damit mit der Mode (Korridor) mit; mehrere
+        Stuetzstellen interpolieren den Abstand linear ueber der Frequenz
+        (ausserhalb linear fortgesetzt). Nur Stuetzstellen mit ``n_dips - 1``
+        Werten zaehlen.
+        """
         n_t = self.n_dips - 1
         st = [t for t in self.trenner if len(t["b"]) == n_t]
         if n_t <= 0 or not st:
             return None
+        mitte_f = self.mitte(f)
+        if mitte_f is None:
+            return None
+        offsets = []
+        for t in st:
+            m = self.mitte(t["f"])
+            offsets.append([float(b) - (m if m is not None else 0.0) for b in t["b"]])
         if len(st) == 1:
-            return list(st[0]["b"])
+            return sorted(mitte_f + o for o in offsets[0])
         fs = np.array([t["f"] for t in st], dtype=float)
         f = float(f)
         if f <= fs[0]:
@@ -115,7 +128,7 @@ class Korridor:
             i0 = i1 - 1
         df = fs[i1] - fs[i0]
         w = (f - fs[i0]) / df if df else 0.0
-        return sorted(float(a + w * (b - a)) for a, b in zip(st[i0]["b"], st[i1]["b"]))
+        return sorted(mitte_f + a + w * (b - a) for a, b in zip(offsets[i0], offsets[i1]))
 
     def mode_von_dip(self, j: int) -> int | None:
         """Mode-Nummer des ``j``-ten Dips (0-basiert) oder ``None``."""
