@@ -574,11 +574,19 @@ def fitte_mode(
     if stapel.ausschlusszonen:
         ausschnitt = ohne_ausschlusszonen(ausschnitt, stapel.ausschlusszonen)
     manuell = korridor.trennstellen(ls.frequenz)
+    lo_k, hi_k = float(ausschnitt.feld.min()), float(ausschnitt.feld.max())
     if manuell is not None:
-        segmente = segmente_aus_trennern(float(ausschnitt.feld.min()),
-                                         float(ausschnitt.feld.max()), manuell)
+        segmente = segmente_aus_trennern(lo_k, hi_k, manuell)
     else:
-        segmente = dip_segmente(ausschnitt.feld, ausschnitt.s21, len(korridor.moden))
+        # Dips iterativ "abschaelen": staerkste Linie fitten, abziehen, naechste
+        # suchen - robuster als Maxima im Signalbetrag (Rauschen, Ueberlappung).
+        positionen = dip_positionen_iterativ(ausschnitt, len(korridor.moden), stapel.gamma,
+                                             stapel.alpha_max)
+        if len(positionen) >= 2:
+            trenn = [0.5 * (a + b) for a, b in zip(positionen[:-1], positionen[1:])]
+            segmente = segmente_aus_trennern(lo_k, hi_k, trenn)
+        else:
+            segmente = dip_segmente(ausschnitt.feld, ausschnitt.s21, len(korridor.moden))
     ergebnisse: dict[int, FitErgebnis] = {}
     # Durchgang 1: jeder Dip in seinem Segment (harte Trennung).
     for j, mode in enumerate(korridor.moden):
@@ -675,6 +683,36 @@ def fitte_mode(
             if not geaendert:
                 break   # zweite Runde nur, wenn die erste etwas veraendert hat
     return ergebnisse.get(korridor.moden[0])
+
+
+def dip_positionen_iterativ(linescan: Linescan, n: int, gamma: float,
+                            alpha_max: float = ALPHA_MAX) -> list[float]:
+    """Resonanzfelder von bis zu ``n`` Dips im (bereits beschnittenen) Linescan
+    durch sequentielles Abschaelen: Einzelfit einer Polder-Linie auf den
+    aktuellen Daten, Resonanzanteil abziehen, naechsten Fit auf dem Rest.
+    Liefert die gefundenen ``B_res`` aufsteigend (Duplikate < 2 Feldschritte
+    verworfen); leer, wenn schon der erste Fit scheitert."""
+    B = np.asarray(linescan.feld, dtype=float)
+    if B.size < 4:
+        return []
+    schritt = float(np.ptp(B)) / max(B.size - 1, 1)
+    omega = 2.0 * np.pi * linescan.frequenz
+    rest = np.asarray(linescan.s21, dtype=complex).copy()
+    gefunden: list[float] = []
+    for _ in range(max(1, int(n))):
+        ls_rest = Linescan(frequenz=linescan.frequenz, feld=B, re=rest.real, im=rest.imag)
+        try:
+            e = fitte_linescan(ls_rest, gamma, alpha_max=alpha_max)
+        except Exception:
+            break
+        if not (e.erfolg and np.isfinite(e.B_res) and np.isfinite(e.A)):
+            break
+        if any(abs(e.B_res - b) < 2.0 * schritt for b in gefunden):
+            break
+        gefunden.append(float(e.B_res))
+        rest -= s21_modell(B, e.B_res, e.alpha, e.A, e.phi, 0.0, 0.0, 0.0, 0.0,
+                           omega, gamma, float(np.mean(B)))
+    return sorted(gefunden)
 
 
 def _fitte_mode_im_fenster(stapel: StapelErgebnis, index: int, mode: int,

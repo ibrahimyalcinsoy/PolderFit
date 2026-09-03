@@ -122,3 +122,32 @@ def test_manuelle_trennlinien_wandern_mit_der_mode():
     assert k.trenner_entfernen(20e9) and k.trennstellen(15e9) == pytest.approx([2.37])
     from polderfit.fit.korridor import segmente_aus_trennern
     assert segmente_aus_trennern(2.0, 2.3, [2.1]) == [(2.0, 2.1), (2.1, 2.3)]
+
+
+@pytest.mark.parametrize("methode", ["summe", "trennung"])
+def test_drei_dips_im_korridor_iterativ(methode):
+    """Drei nahe Dips (Abstaende 25/30 mT, dH ~6 mT, SNR ~ 20) in EINEM Korridor:
+    Dip-Positionen durch sequentielles Abschaelen, alle drei Moden ohne Befund."""
+    from polderfit.fit.batch import leerer_stapel, fitte_mode
+    from polderfit.io.datensatz import Linescan, Messdatensatz
+    from polderfit.physik.fitmodell import s21_modell
+    from polderfit.physik.konstanten import GAMMA_STANDARD as g
+    B = np.linspace(1.0, 3.65, 2400)
+    rng = np.random.default_rng(3)
+    for f in (10e9, 20e9, 30e9):
+        w = 2 * np.pi * f
+        b1 = 1.37 + w / g
+        wahr = [b1, b1 + 0.025, b1 + 0.055]
+        rein = sum(s21_modell(B, bk, 4e-3, A, 0.4, 0, 0, 0, 0, w, g, float(B.mean()))
+                   for bk, A in zip(wahr, (0.02, 0.012, 0.015)))
+        rausch = np.abs(rein).max() / 20.0
+        s = rein + 0.2 + 0.1j + rausch * (rng.normal(size=B.size) + 1j * rng.normal(size=B.size))
+        d = Messdatensatz(quelle="x", format_typ="unsortiert",
+                          linescans=[Linescan(frequenz=f, feld=B, re=s.real, im=s.imag)])
+        st = leerer_stapel(d)
+        k = Korridor(mode=1, n_dips=3, moden=[1, 2, 3], methode=methode,
+                     anker=[Anker(f, b1 - 0.03, b1 + 0.085)])
+        fitte_mode(st, 0, k)
+        for m, bw in zip((1, 2, 3), wahr):
+            e = st.ergebnisse_mode(m)[0]
+            assert e.gefittet and abs(e.B_res - bw) < 1.5e-3, (methode, f, m, e.B_res, bw)
