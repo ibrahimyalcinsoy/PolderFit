@@ -1064,8 +1064,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         vorher = self._korridor_schatten
         self._korridore.append(neu)
         self._mode_aktiv = mode
+        self._zeige_korridore()                 # erst Liste, dann Auswahl (sonst Reset auf M1)
         self.zonenpanel.setze_mode_aktiv(mode)
-        self._zeige_korridore()
         self._merke_korridor_aenderung(f"Korridor M{mode} angelegt", vorher)
         self._log(f"Korridor M{mode} angelegt: ±{halbbreite*1e3:.0f} mT um "
                   f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
@@ -1296,11 +1296,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def bei_fertig(res):
             neu, uebersprungen = res
+            self._zeige_korridore()
             if len(korridore) == 1:
                 # Gefittete Mode sofort im Linescan-Panel und in der Liste zeigen.
                 self._mode_aktiv = int(korridore[0].mode)
                 self.zonenpanel.setze_mode_aktiv(self._mode_aktiv)
-            self._zeige_korridore()
+                self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv)
             self._nach_nachfit(neu, fits_vorher, f"Korridor-Fit {namen}")
             probleme = 0
             for korridor in korridore:

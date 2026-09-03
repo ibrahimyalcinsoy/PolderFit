@@ -25,13 +25,8 @@ S21(B) = A·e^{iφ}·χ_oop(B; B_res, α, ω, γ) + (o_re + i o_im) + (s_re + i 
 
 Optimierer: lmfit `leastsq` (Levenberg–Marquardt/MINPACK), Schranken per MINUIT-Transformation, φ-Neustart um π bei fehlender Kovarianz. Startwerte datengetrieben; `α_start = γ·FWHM(|χ|)/(2√3·ω)`.
 
-**Mehrere Resonanzen je Linescan (`n_moden`, `s21_modell_multi`, `fitte_linescan_multi`)** – z. B. zwei nahe Dips bei nanostrukturiertem CoFe:
+**Mehrere Moden (Korridore, `fit/korridor.py`, `fitte_mode`)** – z. B. zwei nahe Dips oder eine vermiedene Kreuzung: kein Summenfit. Jede Mode hat einen Korridor (Ankerpunkte an wenigen Frequenzen, dazwischen linear) und wird je Frequenz als **Einzelfit mit einer Polder-Linie ausschließlich auf den Messpunkten im Korridor** gefittet; Punkte außerhalb sind maskiert. Startwert `B_res` aus dem lokalen Dip im Korridor, sonst vom Nachbarn; Nachfenster ±2,5·ΔH innerhalb des Korridors. Weniger als 12 Punkte oder ΔH unter 1,5 Feldschritten → problematisch. Kittel/LLG und Export je Mode getrennt.
 
-```
-S21(B) = Σ_k A_k·e^{iφ_k}·χ_oop(B; B_res,k, α_k, ω, γ) + (o_re + i o_im) + (s_re + i s_im)(B − B_ref)
-```
-
-Gemeinsamer Untergrund; `B_res,k = B_res,k−1 + dB_k` mit `dB_k ≥ 2 Feldschritte` (kein Zusammenfallen/Vertauschen); Startwerte = `n` prominenteste Peaks des untergrundbereinigten Betrags (`scipy.signal.find_peaks`). Die **Hauptmode** (größte Signalhöhe `|A_k|·|χ_k(B_res,k)|`) füllt `B_res`, `α`, `µ0ΔH` (→ Kittel/LLG), alle Moden stehen in `moden` und im Export (`*_2`, `*_3`, …); Hauptmode im Linescan-Panel wechselbar. Für `n = 1` identisch mit dem Ein-Moden-Fit.
 
 ![Fit](abb/abb_linescan_fit.png)
 

@@ -30,6 +30,6 @@ Farben und Formen nach DIN EN 60073 / ISO 3864 (`gui/farben.py`); Form als zweit
 | `problem` | gelb | ▲ | Kriterien verletzt oder vom Nutzer verworfen – prüfen |
 | `fehler` | rot | ✕ | keine Konvergenz / kein Ergebnis |
 | `ignoriert` | grau, dunkler Rand | ● | Ausreißer (nur mit *Ansicht → Ignorierte anzeigen*) oder nicht gefittet |
-| Nebenmode | grün | ◇ | weitere Resonanz bei `n_moden > 1` |
+| Mode k ≥ 2 | Mode-Farbe | ● | Korridor-Fit einer weiteren Mode (Status wie Mode 1) |
 
 Blau kennzeichnet aktive Modi, Auswahl und Bedienzustände; gelb Warnungen im Protokoll, rot Fehler.

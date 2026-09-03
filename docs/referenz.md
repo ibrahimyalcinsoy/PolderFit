@@ -8,7 +8,7 @@
 | µ0H, B_res | Feld / Resonanzfeld | T (auch mT) | `B_res_T`, `B_res_mT` |
 | µ0ΔH = 2ωα/γ | Linienbreite (FWHM χ″) | T (auch mT) | `mu0_dH_T`, `mu0_dH_mT`, `mu0_dH_err_mT` |
 | A·e^{iφ} | komplexe Amplitude | – | `A`, `phi_rad`, `A_komplex_re/im` |
-| Mode k ≥ 2 | weitere Resonanz (`n_moden`) | | `B_res_k_T`, `alpha_k`, `mu0_dH_k_mT` … |
+| Mode k ≥ 2 | Korridor-Fit der Mode k | eigenes Blatt `Einzelfits_M<k>` | gleiche Spalten wie Mode 1, Spalte `mode` |
 | Bewertung | auto / bestaetigt / verworfen | | `bewertung`, `problematisch`, `problematisch_auto` |
 | µ0M_eff | eff. Magnetisierung | T | `kittel_mu0Meff` |
 | µ0H_u | Anisotropiefeld (ip) | T | `kittel_mu0Hu` |

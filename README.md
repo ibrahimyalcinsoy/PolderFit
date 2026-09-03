@@ -68,7 +68,7 @@ Aktualisieren (in aktivierter venv): `cd PolderFit && git fetch origin && git re
 
 ## Bedienung in Kürze
 
-TDMS laden → Auto-Fit (`F5`; im Dialog „Resonanzen je Linescan“ für mehrere nahe Moden) → Nachfitten mit Grenzgeraden (`Strg+L`) oder Bereich (`Strg+B`) → Kittel/LLG-Auswertung → Export. Felder als `µ0H` in T; Plots x = Feld, y = Frequenz; Vollbild `F11`.
+TDMS laden → Auto-Fit (`F5`) → bei mehreren Moden je Mode einen Korridor anlegen (`Strg+L`, Panel *Korridore & Zonen*) und „Korridor fitten …“ → Nachfitten im Linescan-Panel oder Bereich (`Strg+B`) → Kittel/LLG-Auswertung je Mode → Export.
 
 ## Name und Version
 

@@ -15,7 +15,7 @@ from polderfit.io.tdms_laden import lade_tdms
 from polderfit.fit.batch import fitte_alle
 from polderfit.auswertung.uebersicht import auswertung_kittel_llg
 ds = lade_tdms("Messung.tdms")
-stapel = fitte_alle(ds, n_moden=1)            # AutoWindow + Fit + Nachfenster + Bewertung
+stapel = fitte_alle(ds)                       # AutoWindow + Fit + Nachfenster + Bewertung
 info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(), geometrie="ip")
 ```
 

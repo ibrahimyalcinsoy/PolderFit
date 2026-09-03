@@ -4,7 +4,7 @@
 
 ![Auswahl](abb/abb_kittel_unsort.png)
 
-**Projekt** (`Datei → Projekt speichern`, JSON Formatversion 3): Quelle, Kanal-Zuordnung, Auswertungsauswahl, γ, Fenster je Frequenz, Zonen, **Grenzgeraden**, Ausreißer, **Bewertung je Fit**, Platzhalter (nicht gefittet), Modenzahl, physikalische Parameter, Verarbeitungskette, `programm`. Laden = TDMS neu lesen + **alle Fits deterministisch neu rechnen**. Nie gespeichert: Zoom, Fensterlayout, Achsengeometrie (*Ansicht → Fensterlayout zurücksetzen* stellt den Auslieferungszustand her).
+**Projekt** (`Datei → Projekt speichern`, JSON Formatversion 4): Quelle, Kanal-Zuordnung, Auswertungsauswahl, γ, Fenster je Frequenz, Zonen, **Korridore** (je Mode, mit Ergebnissen der Moden 2…n), Ausreißer, **Bewertung je Fit**, Platzhalter (nicht gefittet), Modenzahl, physikalische Parameter, Verarbeitungskette, `programm`. Laden = TDMS neu lesen + **alle Fits deterministisch neu rechnen**. Nie gespeichert: Zoom, Fensterlayout, Achsengeometrie (*Ansicht → Fensterlayout zurücksetzen* stellt den Auslieferungszustand her).
 
 **Auto-Sicherung:** 15 s nach jeder Änderung und beim Beenden wird der Arbeitsstand als Projekt in das Konfigurationsverzeichnis geschrieben (`Datei → Auto-Sicherung wiederherstellen`).
 
