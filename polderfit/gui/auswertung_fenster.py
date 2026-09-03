@@ -69,11 +69,12 @@ class AuswertungsFenster(QtWidgets.QDialog):
     def __init__(self, hole_stapel, ausreisser_markieren=None,
                  ausreisser_rueckgaengig=None, geometrie: str = "oop",
                  hole_parameter=None, parent=None,
-                 ausreisser_mode_markieren=None):
+                 ausreisser_mode_markieren=None, geometrie_geaendert=None):
         super().__init__(parent)
         #: Liefert die aktuellen PhysikParameter (g/gamma, gamma_fest, r2_min)
         #: des Hauptfensters - oder None (Standardwerte).
         self._hole_parameter = hole_parameter
+        self._cb_geometrie = geometrie_geaendert
         self.setWindowFlag(QtCore.Qt.Window, True)  # eigenes Fenster, nicht modal
         self.setWindowTitle("Kittel/LLG-Auswertung")
         self.resize(1080, 640)
@@ -102,7 +103,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.geo_combo = QtWidgets.QComboBox()
         self.geo_combo.addItems(["oop", "ip"])
         self.geo_combo.setCurrentText(geometrie)
-        self.geo_combo.currentTextChanged.connect(lambda _t: self.aktualisiere())
+        self.geo_combo.currentTextChanged.connect(self._geometrie_gewaehlt)
         kopf.addWidget(self.geo_combo)
         kopf.addSpacing(12)
         self.mode_label = QtWidgets.QLabel("Mode:")
@@ -157,6 +158,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.canvas.mpl_connect("motion_notify_event", self._on_move)
         self.canvas.mpl_connect("button_release_event", self._on_release)
 
+        self.aktualisiere()
+
+    def _geometrie_gewaehlt(self, text: str) -> None:
+        if self._cb_geometrie is not None:
+            self._cb_geometrie(str(text))
         self.aktualisiere()
 
     # --- Moden-Auswahl ----------------------------------------------------------

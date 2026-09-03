@@ -149,7 +149,7 @@ class SpaltenDialog(QtWidgets.QDialog):
         self.chk_csv_deutsch.setChecked(bool(export_einstellungen.get("csv_deutsch", False)))
         self.chk_csv_deutsch.setToolTip("Direkt in deutschem Excel/LibreOffice lesbar; sonst ',' und Punkt.")
         lay.addWidget(self.chk_csv_deutsch)
-        self.chk_zusatz = QtWidgets.QCheckBox("Zusatzblätter in Excel (Einstellungen, Zonen/Geraden, Ausreißer)")
+        self.chk_zusatz = QtWidgets.QCheckBox("Zusatzblätter in Excel (Einstellungen, Zonen/Korridore, Ausreißer)")
         self.chk_zusatz.setChecked(bool(export_einstellungen.get("zusatzblaetter", True)))
         lay.addWidget(self.chk_zusatz)
 
@@ -165,6 +165,8 @@ class SpaltenDialog(QtWidgets.QDialog):
 
     def einstellungen(self) -> dict:
         spalten = [k for k, b in self._boxen.items() if b.isChecked()]
+        if not spalten:
+            spalten = ["kern"]   # nichts gewaehlt = Kern (statt stillschweigend alles)
         return {
             "spalten": spalten if len(spalten) < len(SPALTEN_GRUPPEN) else [],
             "nur_gefittete": self.chk_nur_gefittete.isChecked(),

@@ -10,9 +10,9 @@ divide slice, ... ganz ohne Fit).
 Alle Funktionen sitzen in EINER Leiste: der Menueleiste mit klickbarem
 Programmnamen (links), den Menues Datei/Bearbeiten/Funktionen/Ansicht/Hilfe
 und dem "TDMS laden"-Schnellzugriff (rechts). Interaktive Modi (Bereich neu
-fitten, Ausschlusszone, Grenzgerade, Ausreisser markieren) sind EXKLUSIV: es
+fitten, Ausschlusszone, Korridor/Anker, Ausreisser markieren) sind EXKLUSIV: es
 ist immer hoechstens ein Modus aktiv, der aktive Modus ist im Menue und in der
-Statusleiste markiert, Esc bricht ihn ab. Grenzgeraden, Zonen und Bereichs-Fit
+Statusleiste markiert, Esc bricht ihn ab. Korridore, Zonen und Bereichs-Fit
 funktionieren DIREKT nach dem Laden - ein Auto-Fit ist keine Voraussetzung
 (:func:`polderfit.fit.batch.leerer_stapel`).
 
@@ -70,6 +70,7 @@ from ..fit.fenster_steuerung import (
 )
 from ..fit.korridor import Korridor, korridor_aus_linie
 from ..fit.linescan_fit import BEWERTUNG_TEXTE
+from ..fit.kriterien import kriterien_kurz, kriterien_text
 from ..fit.parameter import PhysikParameter
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv, kittel_llg_flach
 from ..persistenz.einstellungen import (
@@ -201,7 +202,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Zentraler Rueckgaengig-/Wiederholen-Stapel (Strg+Z / Strg+Umschalt+Z):
         # Eintraege (beschreibung, vorher(), nachher()) mit Zustands-
         # Schnappschuessen - Zonen-Undo stellt die betroffenen Fits SOFORT
-        # wieder her, ohne neu zu rechnen. Gilt fuer Grenzgeraden, Zonen,
+        # wieder her, ohne neu zu rechnen. Gilt fuer Korridore, Zonen,
         # Ausreisser, Bewertungen und Nachfits; ein neuer Auto-Fit/Datensatz leert ihn.
         self._undo_stapel: list[tuple[str, object, object]] = []
         self._redo_stapel: list[tuple[str, object, object]] = []
@@ -275,7 +276,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_zurueck = QtWidgets.QPushButton("◀ Zurück")
         self.btn_weiter = QtWidgets.QPushButton("Weiter ▶")
         self.btn_naechstes_problem = QtWidgets.QPushButton("Problemfit ▶")
-        self.btn_naechstes_problem.setToolTip("Zum nächsten gelb/rot markierten Fit springen.")
+        self.btn_naechstes_problem.setToolTip(
+            "Zum nächsten gelb/rot markierten Fit der angezeigten Mode springen\n"
+            "(ignorierte Punkte werden übersprungen). Rechtsklick/Umschalt: zurück.")
+        self.btn_voriges_problem = QtWidgets.QPushButton("◀ Problemfit")
+        self.btn_voriges_problem.setToolTip("Zum vorigen gelb/rot markierten Fit springen.")
+        self.btn_voriges_problem.clicked.connect(lambda: self._naechster_problemfit(-1))
         self.btn_neu = QtWidgets.QPushButton("Neu fitten")
         self.btn_neu.setToolTip(
             "Diese Frequenz (gewählte Mode) mit dem aktuellen Fenster bzw. Korridor\n"
@@ -291,15 +297,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_zurueck.clicked.connect(lambda: self._navigiere(-1))
         self.btn_weiter.clicked.connect(lambda: self._navigiere(+1))
         self.btn_neu.clicked.connect(self._neu_fitten)
-        self.btn_naechstes_problem.clicked.connect(self._naechster_problemfit)
-        for b in (self.btn_zurueck, self.btn_weiter, self.btn_naechstes_problem, self.btn_neu):
+        self.btn_naechstes_problem.clicked.connect(lambda: self._naechster_problemfit(+1))
+        for b in (self.btn_zurueck, self.btn_weiter, self.btn_naechstes_problem, self.btn_neu,
+                  self.btn_voriges_problem):
             b.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
             b.setMinimumWidth(60)
         # Drei Spalten: passt auch bei 430 px Panelbreite ohne abgeschnittene Texte.
         steuer.addWidget(self.btn_zurueck, 0, 0)
         steuer.addWidget(self.btn_weiter, 0, 1)
         steuer.addWidget(self.btn_naechstes_problem, 0, 2)
-        steuer.addWidget(self.btn_neu, 1, 0, 1, 2)
+        steuer.addWidget(self.btn_voriges_problem, 1, 0)
+        steuer.addWidget(self.btn_neu, 1, 1)
         steuer.addWidget(self.mode_label, 1, 2)
         # Bewertungszeile: Status-Chip (Farbe wie im Farbplot) + Auswahlliste
         # (Strg+1/2/3, Strg+I).
@@ -387,7 +395,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_projekt_speichern.setShortcut(QtGui.QKeySequence.Save)   # Strg+S
         self.akt_projekt_speichern.setToolTip(
             "Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
-            "Zonen, Grenzgeraden, Ausreißer, Bewertungen, Parameter und Verarbeitung "
+            "Zonen, Korridore, Ausreißer, Bewertungen, Parameter und Verarbeitung "
             "(nie: Zoom oder Fensterlayout).")
         self.akt_projekt_speichern.triggered.connect(lambda: self._projekt_speichern())
         self.akt_autosicherung = A("Auto-Sicherung wiederherstellen …", self)
@@ -449,7 +457,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_rueckgaengig = A("Rückgängig", self)
         self.akt_rueckgaengig.setShortcut(QtGui.QKeySequence.Undo)        # Strg+Z
         self.akt_rueckgaengig.setToolTip(
-            "Letzte Änderung zurücknehmen: Grenzgerade, Ausschlusszone, "
+            "Letzte Änderung zurücknehmen: Korridor/Anker, Ausschlusszone, "
             "Ausreißer, Bewertung oder Nachfit (Strg+Z).")
         self.akt_rueckgaengig.setEnabled(False)
         self.akt_rueckgaengig.triggered.connect(self._rueckgaengig)
@@ -466,8 +474,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_fit.setShortcut(QtGui.QKeySequence("F5"))
         self.akt_fit.setToolTip(
             "Resonanz je Frequenz automatisch suchen und fitten (mit Dialog: "
-            "Frequenz/Feld von … bis …, Jumper). Optional – Grenzgeraden und "
-            "Bereichs-Fit funktionieren auch ohne.")
+            "Frequenz/Feld von … bis …, Jumper). Mit Korridoren: jede Mode nur in ihrem "
+            "Korridor. Korridor- und Bereichs-Fit funktionieren auch ohne Auto-Fit.")
         self.akt_fit.triggered.connect(self._auto_fit)
         self.akt_bereich = A("Bereich neu fitten", self)
         self.akt_bereich.setShortcut(QtGui.QKeySequence("Ctrl+B"))
@@ -565,7 +573,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_ausreisser_anzeigen = A("Ignorierte Punkte (Ausreißer) grau anzeigen", self)
         self.akt_ausreisser_anzeigen.setCheckable(True)
         self.akt_ausreisser_anzeigen.toggled.connect(self.matrix.setze_ausreisser_anzeigen)
-        self.akt_nebenmoden = A("Weitere Resonanzen (Nebenmoden) anzeigen", self)
+        self.akt_nebenmoden = A("Weitere Moden (M2 …) anzeigen", self)
         self.akt_nebenmoden.setCheckable(True)
         self.akt_nebenmoden.setChecked(True)
         self.akt_nebenmoden.toggled.connect(self.matrix.setze_nebenmoden_anzeigen)
@@ -595,9 +603,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Verarbeitung des Farbplots (divide-slice, derivative-divide, "
             "relation-amplitude, Farbskala) ein-/ausblenden – funktioniert direkt nach dem "
             "Laden, ganz ohne Fit.")
-        self.akt_zonen_panel = A("Panel: Zonen && Grenzgeraden", self)
+        self.akt_zonen_panel = A("Panel: Korridore && Zonen", self)
         self.akt_zonen_panel.setToolTip(
-            "Fit-Werkzeuge ein-/ausblenden: Grenzgeraden (nur den grünen Bereich "
+            "Fit-Werkzeuge ein-/ausblenden: Korridore je Mode (nur im Korridor "
             "fitten) und Ausschlusszonen (Messpunkte aus allen Fits ausnehmen).")
         self.akt_linescan = A("Panel: Linescan-Fit", self)
         self.akt_linescan.setToolTip(
@@ -765,7 +773,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_abbrechen_dock = QtWidgets.QPushButton("Abbrechen")
         self.btn_abbrechen_dock.setObjectName("abbrechen")
         self.btn_abbrechen_dock.setToolTip(
-            "Laufenden Auto-/Bereichs-/Grenzgeraden-Fit geordnet beenden; bisherige "
+            "Laufenden Auto-/Bereichs-/Korridor-Fit geordnet beenden; bisherige "
             "Ergebnisse bleiben erhalten.")
         self.btn_abbrechen_dock.clicked.connect(self._job_abbrechen)
         self.btn_abbrechen_dock.setVisible(False)
@@ -835,7 +843,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dock.visibilityChanged.connect(self.akt_verarbeitung.setChecked)
 
     def _baue_zonen_dock(self):
-        """Fit-Werkzeuge (links): Grenzgeraden und Ausschlusszonen."""
+        """Fit-Werkzeuge (links): Korridore (Moden) und Ausschlusszonen."""
         dock = QtWidgets.QDockWidget("Korridore & Zonen", self)
         dock.setObjectName("zonen_dock")
         dock.setAllowedAreas(
@@ -995,7 +1003,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return False
         if braucht_fits and not self.stapel.index_gefittet():
             self._log("Modus nicht verfügbar: es gibt noch keine Fit-Punkte "
-                      "(Auto-Fit, Grenzgeraden- oder Bereichs-Fit ausführen).", "warn")
+                      "(Auto-Fit, Korridor- oder Bereichs-Fit ausführen).", "warn")
             self.statusBar().showMessage("Noch keine Fits vorhanden.", 5000)
             return False
         return True
@@ -1207,7 +1215,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _geraden_bereich_vorgabe(self) -> tuple[tuple[float, float, float, float], bool]:
         """Vorbelegung ``(feld_min, feld_max, f_min_ghz, f_max_ghz)`` des
-        Grenzgeraden-Dialogs: der zuletzt benutzte Bereich (an den Datenbereich
+        Korridor-Fit-Dialogs: der zuletzt benutzte Bereich (an den Datenbereich
         geklemmt), sonst der ganze Datenbereich. Zweiter Wert: ``True``, wenn
         die Vorbelegung aus dem letzten Aufruf stammt."""
         b_min, b_max, f_min_ghz, f_max_ghz = self._daten_bereich()
@@ -1317,7 +1325,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         return f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}"
 
     def _nach_nachfit(self, neu: list[int], fits_vorher: dict, beschreibung: str) -> None:
-        """Gemeinsamer Abschluss von Bereichs-/Grenzgeraden-Fit."""
+        """Gemeinsamer Abschluss von Bereichs-/Korridor-Fit."""
         stapel = self.stapel
         self._aktualisiere_overlay()
         if neu:
@@ -1492,7 +1500,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                        self.akt_einst_laden, self.akt_einst_reset):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
-                      self.btn_naechstes_problem, self.bewertung_combo):
+                      self.btn_naechstes_problem, self.btn_voriges_problem, self.bewertung_combo):
             knopf.setEnabled(an)
 
     # --- Job-Steuerung (Hintergrund-Thread) -------------------------------
@@ -1788,7 +1796,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.statusBar().showMessage(
                 f"Geladen: {os.path.basename(pfad_)} ({datensatz.format_typ}, "
                 f"{len(datensatz)} Frequenzen). Daten ansehen (Verarbeitung), "
-                f"Grenzgeraden/Bereich fitten oder Auto-Fit starten.")
+                f"Korridor/Bereich fitten oder Auto-Fit starten.")
 
         self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …",
                          abbrechbar=False)
@@ -1985,7 +1993,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if n_fit < len(stapel.ergebnisse):
                 self._log(f"Auto-Fit abgebrochen: {n_fit} von {len(stapel.ergebnisse)} "
                           f"Frequenzen gefittet, {n_prob} problematisch – der Rest bleibt "
-                          "„nicht gefittet“ (Grenzgeraden/Bereich fitten den Rest bei Bedarf).", "warn")
+                          "„nicht gefittet“ (Korridor/Bereich fitten den Rest bei Bedarf).", "warn")
             else:
                 self._log(f"Auto-Fit fertig: {n_fit} Fits, {n_prob} problematisch.", art)
             for grund, anzahl in stapel.problem_statistik().items():
@@ -2117,6 +2125,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if idx >= 0:
             self.bewertung_combo.setCurrentIndex(idx)
         self._bewertung_blockiert = False
+        self.status_label.setToolTip(F.STATUS_TEXTE.get(status, status)
+                                     + ("\nKriterien: " + kriterien_text(e) if e.gefittet else ""))
         punkte_im_fenster = int(np.count_nonzero((voll.feld >= unten) & (voll.feld <= oben)))
         if not e.gefittet:
             text = (f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
@@ -2127,8 +2137,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
                 f"B_res={e.B_res:.4f} T ({e.B_res_mT:.1f} mT) │ µ₀ΔH={e.dH_mT:.2f} mT │ "
                 f"α={e.alpha:.2e} │ R²={e.R2:.4f} │ Fenster {punkte_im_fenster} Pkt │ "
-                f"{e.problem_text}")
+                f"{kriterien_kurz(e)}")
         self.label_info.setText(text)
+        self.label_info.setToolTip(kriterien_text(e) if e.gefittet else "")
         self.statusBar().showMessage(text)
 
     def _fenster_der_mode(self, i: int, mode: int, e) -> tuple[float, float]:
@@ -2176,18 +2187,33 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 return zurueck[-1]
         return min(gefittet, key=lambda i: abs(i - ziel))
 
-    def _naechster_problemfit(self):
-        if not self.stapel or not self.stapel.ergebnisse:
+    def _naechster_problemfit(self, richtung: int = +1):
+        """Zum naechsten (``+1``) bzw. vorigen (``-1``) Problemfit der angezeigten
+        Mode springen; ignorierte Punkte zaehlen nicht; Umlauf wird gemeldet."""
+        st = self.stapel
+        if not st or not st.ergebnisse:
             return
-        probleme = self.stapel.index_problematisch()
-        spaeter = [i for i in probleme if i > self.aktueller_index]
-        ziel = spaeter[0] if spaeter else (probleme[0] if probleme else None)
-        if ziel is None:
-            QtWidgets.QMessageBox.information(self, "Fertig", "Keine problematischen Fits mehr.")
+        mode = self._mode_aktiv
+        liste = st.ergebnisse_mode(mode)
+        probleme = [i for i, e in enumerate(liste)
+                    if e.gefittet and e.problematisch and not st.ist_ausreisser(i)
+                    and not st.ist_ausreisser_mode(i, mode)]
+        if not probleme:
+            self.statusBar().showMessage("Keine problematischen Fits mehr.", 5000)
             self._log("Keine problematischen Fits mehr.", "ok")
             return
+        if richtung >= 0:
+            weiter = [i for i in probleme if i > self.aktueller_index]
+            ziel, umlauf = (weiter[0], False) if weiter else (probleme[0], True)
+        else:
+            zurueck = [i for i in probleme if i < self.aktueller_index]
+            ziel, umlauf = (zurueck[-1], False) if zurueck else (probleme[-1], True)
         self.aktueller_index = ziel
         self._zeige_aktuellen()
+        if umlauf:
+            self.statusBar().showMessage(
+                f"Umlauf: wieder beim {'ersten' if richtung >= 0 else 'letzten'} Problemfit "
+                f"({len(probleme)} insgesamt).", 5000)
 
     # --- Bewertung ----------------------------------------------------------------
     def _bewertung_gewaehlt(self, index: int) -> None:
@@ -2360,12 +2386,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 ausreisser_rueckgaengig=self._rueckgaengig,
                 geometrie=self._physik.geometrie,
                 hole_parameter=lambda: self._physik,
+                geometrie_geaendert=self._geometrie_aus_auswertung,
                 ausreisser_mode_markieren=self._ausreisser_mode_gewaehlt,
                 parent=self)
             self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
         else:
             self._auswertungsfenster.aktualisiere()
         return self._auswertungsfenster
+
+    def _geometrie_aus_auswertung(self, geometrie: str) -> None:
+        """Geometrie-Auswahl im Kittel-Fenster gilt auch fuer Export und Parameter."""
+        if geometrie in ("oop", "ip") and geometrie != self._physik.geometrie:
+            self._physik = replace(self._physik, geometrie=geometrie)
+            self._einstellungen.physik = self._physik.als_dict()
+            self._log(f"Kittel-Geometrie: {geometrie} (gilt auch für den Export).", "info")
 
     def _kittel_llg(self):
         """Oeffnet das Kittel/LLG-Auswertungsfenster (eigenes, nicht-modales Fenster)."""
@@ -2398,7 +2432,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _fits_vorhanden(self) -> bool:
         if not self.stapel or not self.stapel.index_gefittet():
             QtWidgets.QMessageBox.information(
-                self, "Hinweis", "Bitte zuerst fitten (Auto-Fit, Grenzgeraden oder Bereich).")
+                self, "Hinweis", "Bitte zuerst fitten (Auto-Fit, Korridor oder Bereich).")
             return False
         return True
 
@@ -3074,7 +3108,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._einstellungen.anzeige["farbskala"] = name
 
     def _vollbereich_umschalten(self, an: bool):
-        """Ganzen Feldsweep statt Zoom aufs Band zeigen (und aktuelle Anzeige erneuern)."""
+        """Ganzen Feldsweep statt Zoom aufs Fenster zeigen (und aktuelle Anzeige erneuern)."""
         self.fitansicht.setze_vollbereich(an)
         self._zeige_aktuellen()
 
@@ -3165,28 +3199,31 @@ class Hauptfenster(QtWidgets.QMainWindow):
               Maus-Hover, Farbskala wählbar).</li>
           <li><b>Physikalische Parameter</b> (Strg+P, optional) – g-Faktor/γ, Kittel-Geometrie
               (oop/ip), Fensterbreite-Faktor, R²-Schwellen, α-Obergrenze und
-              α-Plausibilitätsgrenze, Resonanzen je Linescan (2 = Doppel-Dip).</li>
+              α-Plausibilitätsgrenze.</li>
           <li><b>Fitten – drei Wege, alle direkt nach dem Laden möglich:</b>
               <ul>
               <li><b>Auto-Fit (alle)</b> (F5): Dialog mit Frequenz/Feld von … bis … und Jumper,
                   danach Fenstersuche und Fit je Frequenz im Hintergrund.</li>
-              <li><b>Grenzgeraden</b> (Strg+L oder Panel „Zonen &amp; Grenzgeraden“): zwei Klicks
-                  im Farbplot, Endpunkte ziehbar, grüner Saum = wird gefittet, roter = ignoriert
-                  (Doppelklick tauscht), zwei Geraden = Band. „Grünen Bereich fitten …“ fragt
-                  Frequenz/Feld von … bis …, Modus, Fensterbreite und Resonanzen ab.</li>
-              <li><b>Bereich neu fitten</b> (Strg+B): Rechteck im Farbplot; derselbe Dialog.</li>
+              <li><b>Korridore je Mode</b> (Strg+L oder Panel „Korridore &amp; Zonen“): zwei
+                  Klicks entlang der Resonanz → Korridor ± Breite für die nächste Mode
+                  (M1, M2 …). Anker setzen (Klick) oder ziehen führt den Korridor nach;
+                  zwischen den Ankern wird linear interpoliert. „Korridor fitten …“ fittet
+                  die Mode je Frequenz NUR auf den Punkten im Korridor (Einzelfit, kein
+                  Summenfit) – der Korridor ist die harte Grenze. Bei nahen Moden Korridore
+                  eng setzen; das Programm trennt sie nicht selbst.</li>
+              <li><b>Bereich neu fitten</b> (Strg+B): Rechteck im Farbplot (Mode 1).</li>
               </ul>
               Im <b>Linescan-Panel</b> (erscheint mit dem ersten Fit oder Klick in die Karte)
-              die grünen Grenzlinien ziehen oder „Nochmal fitten“ – mit wählbarer Zahl
-              Resonanzen. <i>Zurück/Weiter/Nächster Problemfit</i> steuern den Korrekturlauf.</li>
+              zeigt „M1/M2 …“ die gewählte Mode (Korridorliste). Grüne Grenzlinien ziehen setzt
+              bei dieser Frequenz einen Anker und fittet neu; „Neu fitten“ wiederholt den Fit.
+              <i>Zurück/Weiter/Problemfit ◀ ▶</i> steuern den Korrekturlauf.</li>
           <li><b>Bewertung</b>: Farbe und Form der Punkte folgen DIN EN 60073 –
               <span style="color:{F.TEXT_GRUEN}"><b>grün ●</b> gut</span> (blauer Rand = vom Nutzer
               bestätigt), <span style="color:{F.TEXT_GELB}"><b>gelb ▲</b> problematisch</span>
               (prüfen), <span style="color:{F.TEXT_ROT}"><b>rot ✕</b> Fit fehlgeschlagen</span>,
-              <span style="color:{F.TEXT_GRAU}"><b>grau ●</b> ignoriert</span>. Ein gezielter
-              Eingriff an einer Frequenz (Grenzen ziehen, „Nochmal fitten“) gilt als bestätigt
-              (abschaltbar, Strg+P); Bereichs-/Grenzgeraden-Fits über viele Frequenzen bewerten
-              die Kriterien. Umbewerten: Auswahlliste im Linescan-Panel oder Strg+1 gut, Strg+2
+              <span style="color:{F.TEXT_GRAU}"><b>grau ●</b> ignoriert</span>. Auch Nachfits
+              bewerten die Kriterien (automatisches Bestätigen: Strg+P). Kriterien kompakt als
+              Kürzel im Linescan-Panel (Tooltip zeigt Details). Umbewerten: Auswahlliste im Linescan-Panel oder Strg+1 gut, Strg+2
               problematisch, Strg+3 automatisch, Strg+I ignorieren; Punkt im Farbplot
               überfahren zeigt f, B_res, µ₀ΔH in mT, α, R² und Status.</li>
           <li><b>Ausreißer markieren</b> (Strg+M) – Punkte anklicken oder per Kasten
@@ -3206,12 +3243,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         <h3>Interaktive Modi</h3>
         <ul>
-          <li>Es ist immer höchstens <b>ein</b> Modus aktiv (Bereich neu fitten, Grenzgerade,
+          <li>Es ist immer höchstens <b>ein</b> Modus aktiv (Bereich neu fitten, Korridor, Anker,
               Ausschlusszone, Ausreißer markieren); der aktive Modus ist im
               „Funktionen"-Menü markiert und wird rechts in der Statusleiste angezeigt.</li>
           <li><b>Esc</b> bricht jeden Modus ab; das Starten eines Modus beendet den vorherigen.</li>
           <li><b>Strg+Z / Strg+Umschalt+Z</b> (auch Strg+Y): Änderungen rückgängig machen und
-              wiederholen – Grenzgeraden, Ausschlusszonen, Ausreißer, Bewertungen und Nachfits.</li>
+              wiederholen – Korridore/Anker, Ausschlusszonen, Ausreißer, Bewertungen und Nachfits.</li>
         </ul>
 
         <h3>Übersicht – Navigation, Zoom, Fenster</h3>
@@ -3227,7 +3264,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
           <li>Der Arbeitsstand wird 15 s nach jeder Änderung automatisch gesichert
               (Datei → Auto-Sicherung wiederherstellen). Zoom, Fensterlayout und
               Achsengrößen werden nie gespeichert.</li>
-          <li>Während Auto-Fit, Bereichs-/Grenzgeraden-Fit und Laden zeigt die Statusleiste
+          <li>Während Auto-Fit, Bereichs-/Korridor-Fit und Laden zeigt die Statusleiste
               Phase, Stand, verstrichene und geschätzte Restzeit; die gefitteten Punkte
               erscheinen sofort im Farbplot. <b>Abbrechen</b> beendet den Fit geordnet –
               bisherige Ergebnisse bleiben.</li>

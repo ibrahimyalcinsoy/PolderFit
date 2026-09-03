@@ -24,7 +24,7 @@ Bedienung:
 * **Pfeiltasten** ``hoch/runter`` (bzw. ``links/rechts``), ``Bild hoch/runter``
   (10er-Schritt), ``Pos1/Ende`` (erste/letzte Frequenz); ``+/-/0`` zoomen.
 
-Interaktive Modi (Bereichs-Fit, Ausschlusszone, Ausreisser, Grenzgerade) laufen
+Interaktive Modi (Bereichs-Fit, Ausschlusszone, Ausreisser, Korridor, Anker) laufen
 ueber einen ZENTRALEN Modus-Manager: es ist immer hoechstens EIN Modus aktiv,
 das Starten eines Modus beendet den vorherigen, ``Esc`` bricht jeden Modus ab
 und jede Aenderung wird ueber ``modus_geaendert(name | None)`` gemeldet, damit
@@ -149,14 +149,13 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # ZENTRALER Modus-Manager: hoechstens ein Modus aktiv (siehe MODI).
         self._modus: str | None = None
         self._modus_cb = None              # fertig(...) bzw. gewaehlt(indizes)
-        # Zwei-Punkt-Modi (Grenzgerade): gesammelte Klicks und ihre Marker.
+        # Zwei-Punkt-Modus (Korridor): gesammelte Klicks und ihre Marker.
         self._punkt_liste: list[tuple[float, float]] = []
         self._punkt_marker: list = []
         # Ausschlusszonen (Anzeige).
         self._zonen: list = []
         self._zonen_patches: list = []
-        # Grenzgeraden (Anzeige + Endpunkt-Drag): Objekte mit b1/f1/b2/f2 (Hz)
-        # und gruen_positiv; Seitensaeume gruen/rot je Fit-/Ignorier-Seite.
+        # Korridore (Anzeige + Anker-Drag).
         self._korridore = []
         self._korridor_aktiv = 1
         self._korridor_artists: list = []

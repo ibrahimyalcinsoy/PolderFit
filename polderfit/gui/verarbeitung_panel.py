@@ -90,11 +90,7 @@ class VerarbeitungPanel(QtWidgets.QWidget):
         lay.setContentsMargins(10, 8, 10, 10)
         lay.setSpacing(8)
 
-        kopf = QtWidgets.QLabel(
-            "Genau <b>eine</b> Verarbeitung ist aktiv. Mit der Maus über einer "
-            "Option verweilen zeigt eine Erklärung.")
-        kopf.setWordWrap(True)
-        lay.addWidget(kopf)
+        self.setToolTip("Genau eine Verarbeitung ist aktiv; Erklärung je Option per Tooltip.")
 
         vorgabe = Verarbeitungskette.standard()
         js = {s.operation: s for s in vorgabe.schritte}

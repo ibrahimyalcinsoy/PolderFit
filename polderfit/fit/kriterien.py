@@ -178,3 +178,49 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
     # Duplikate entfernen, Reihenfolge erhalten.
     eindeutig = list(dict.fromkeys(gruende))
     return (len(eindeutig) > 0, eindeutig)
+
+
+#: Kompakte Darstellung der Problemgruende: Gruppe -> (Kuerzel, Titel).
+#: A = Anpassung (Residuum/Konvergenz), P = Parameter an Grenze/unplausibel,
+#: F = Fenster/Punkte, U = Unsicherheiten.
+KRITERIEN_GRUPPEN: dict[str, tuple[str, str]] = {
+    "Residuum zu gross": ("A", "Anpassung: normiertes Residuum > %.2f" % RMSE_NORM_SCHWELLE),
+    "Chi2 extrem": ("A", "Anpassung: reduziertes Chi² extrem"),
+    "keine Konvergenz": ("A", "Anpassung: Optimierer nicht konvergiert"),
+    "alpha an Grenze": ("P", "Parameter: α an der Fit-Schranke"),
+    "phi an Grenze": ("P", "Parameter: φ an der Schranke"),
+    "alpha unphysikalisch": ("P", "Parameter: α über der Plausibilitätsgrenze"),
+    "B_res am Fensterrand": ("F", "Fenster: B_res am Rand des Fitfensters"),
+    "B_res ausserhalb Fenster": ("F", "Fenster: B_res außerhalb des Fitfensters"),
+    "zu wenige Punkte": ("F", "Fenster: weniger als %d Messpunkte" % MIN_PUNKTE_FIT),
+    "Linie nicht aufgelöst": ("F", "Fenster: µ₀ΔH unter %.1f Feldschritten" % DH_MIN_FELDSCHRITTE),
+    "keine Unsicherheiten": ("U", "Unsicherheit: keine Kovarianz bestimmbar"),
+    "B_res-Unsicherheit zu gross": ("U", "Unsicherheit: u(B_res)/B_res > %.0f %%"
+                                    % (100 * B_RES_REL_UNSICHERHEIT_MAX)),
+}
+
+
+def kriterien_kurz(erg) -> str:
+    """Kuerzel der verletzten Kriteriengruppen (z. B. ``"A P"``), ``"OK"`` ohne
+    Befund, sonst der Bewertungstext des Nutzers."""
+    if getattr(erg, "bewertung", "auto") == "bestaetigt" and not erg.problematisch:
+        return "bestätigt"
+    gruende = list(getattr(erg, "problem_gruende", []) or [])
+    if not gruende:
+        return "OK"
+    if gruende == [GRUND_NICHT_GEFITTET]:
+        return GRUND_NICHT_GEFITTET
+    kuerzel = []
+    for g in gruende:
+        k = KRITERIEN_GRUPPEN.get(g, ("?", g))[0]
+        if k not in kuerzel:
+            kuerzel.append(k)
+    return " ".join(kuerzel) + (" (verworfen)" if getattr(erg, "bewertung", "") == "verworfen" else "")
+
+
+def kriterien_text(erg) -> str:
+    """Klartext aller verletzten Kriterien (eine Zeile je Grund) fuer Tooltips."""
+    gruende = list(getattr(erg, "problem_gruende", []) or [])
+    if not gruende:
+        return "alle Kriterien erfüllt"
+    return "\n".join(KRITERIEN_GRUPPEN.get(g, ("?", g))[1] for g in gruende)
