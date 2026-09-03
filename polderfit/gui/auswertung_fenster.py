@@ -6,18 +6,16 @@ Zeigt die uebergreifende Auswertung mit Feld auf der x-Achse (wie im Farbplot):
 * Dispersion: Resonanzfeld (x) gegen Frequenz (y) mit Kittel-Fit,
 * Linienbreite: mu0*DeltaH (y) ueber dem Resonanzfeld (x) mit LLG-Fit.
 
-**Mehrere Resonanzen** (``n_moden > 1``): Die Auswahl "Resonanz" schaltet
-zwischen *Hauptmode* (staerkste Resonanz je Linescan - bisheriges Verhalten),
-*Mode 1 … n* (je ein Dispersionszweig mit eigenem Kittel-/LLG-Fit) und
-*Alle Moden* um. Die Zuordnung Resonanz -> Mode liefert
-:mod:`polderfit.auswertung.moden` (Band k der Grenzgeraden, sonst aufsteigend
-nach Resonanzfeld).
+**Mehrere Moden** (Korridore): Die Auswahl "Mode" schaltet zwischen
+*Mode 1 … n* (je ein Korridor mit eigenem Kittel-/LLG-Fit und eigenem Plot)
+und *Alle Moden* um; die Mode-Nummer ist die Korridor-Nummer
+(:mod:`polderfit.auswertung.moden`).
 
 Unerwuenschte Punkte lassen sich DIREKT im Plot entfernen (Einzelklick oder
-Kasten aufziehen): in der Hauptmode-Ansicht als Ausreisser des Linescans
-(gleiche Liste wie im Hauptfenster), in einer Mode-Ansicht nur fuer diese
-Mode (``StapelErgebnis.ausreisser_moden``) - jeweils reversibel, der Fit
-rechnet sofort neu. "Exportieren" schreibt Plot (PNG + PDF), eine Excel-Datei
+Kasten aufziehen): bei einer Mode als Ausreisser des Linescans (gleiche Liste
+wie im Hauptfenster), bei mehreren Moden nur fuer die angezeigte Mode
+(``StapelErgebnis.ausreisser_moden``) - jeweils reversibel, der Fit rechnet
+sofort neu. "Exportieren" schreibt Plot (PNG + PDF), eine Excel-Datei
 mit den physikalischen Parametern samt Messfehlern und allen Datenpunkten
 inklusive Einzelfehlern und Ausreisser-Kennzeichnung (bei mehreren Moden
 zusaetzlich je Mode die Blaetter ``Parameter_M<k>`` / ``Punkte_M<k>``) sowie
@@ -38,12 +36,9 @@ from PySide6 import QtCore, QtWidgets
 
 from ..auswertung.moden import (
     ALLE_MODEN,
-    HAUPTMODE,
     ModenReihe,
-    ModenZuordnung,
     auswertung_je_mode,
     ergebnisse_fuer_mode,
-    zuordnung_moden,
 )
 from ..persistenz.ergebnis_export import kittel_llg_punkte_tabelle, kittel_llg_tabelle
 from ..physik.kittel_llg import kittel_ip, kittel_oop, linienbreite
@@ -53,11 +48,6 @@ from . import farben as F
 _KLICK_TOLERANZ = 0.03
 #: Mindest-Mausbewegung (Anteil der Spanne), ab der ein Klick zum Kasten wird.
 _BOX_SCHWELLE_REL = 0.02
-#: Klartext der Zuordnungsregel (siehe :func:`zuordnung_moden`).
-_REGEL_TEXTE = {
-    "band": "Moden-Bänder der Grenzgeraden (Mode k = Band k)",
-    "feld": "aufsteigend nach Resonanzfeld (Mode 1 = niedrigstes Feld)",
-}
 
 
 def _leere_reihe(mode: int) -> ModenReihe:
@@ -72,20 +62,18 @@ class AuswertungsFenster(QtWidgets.QDialog):
     ``ausreisser_markieren(indizes)`` (Linescans), ``ausreisser_mode_markieren(paare)``
     (``(index, mode)``-Paare, nur die Auswertung dieser Mode) und
     ``ausreisser_rueckgaengig()`` laufen ueber das Hauptfenster (gemeinsame
-    Listen, Undo, Overlay-Sync); ``hole_geraden()`` liefert die Grenzgeraden
-    (Moden-Baender fuer die Zuordnung). Das Hauptfenster ruft
-    :meth:`aktualisiere` auf, wenn sich Fits, Ausreisser oder Geraden aendern.
+    Listen, Undo, Overlay-Sync). Das Hauptfenster ruft :meth:`aktualisiere`
+    auf, wenn sich Fits, Ausreisser oder Korridore aendern.
     """
 
     def __init__(self, hole_stapel, ausreisser_markieren=None,
                  ausreisser_rueckgaengig=None, geometrie: str = "oop",
-                 hole_parameter=None, parent=None, hole_geraden=None,
+                 hole_parameter=None, parent=None,
                  ausreisser_mode_markieren=None):
         super().__init__(parent)
         #: Liefert die aktuellen PhysikParameter (g/gamma, gamma_fest, r2_min)
         #: des Hauptfensters - oder None (Standardwerte).
         self._hole_parameter = hole_parameter
-        self._hole_geraden = hole_geraden
         self.setWindowFlag(QtCore.Qt.Window, True)  # eigenes Fenster, nicht modal
         self.setWindowTitle("Kittel/LLG-Auswertung")
         self.resize(1080, 640)
@@ -95,12 +83,12 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self._cb_rueckgaengig = ausreisser_rueckgaengig
         self._info: dict | None = None      # Kittel/LLG der gewaehlten Einzel-Ansicht
         self._reihen: dict[int, ModenReihe] = {}
-        self._zuordnung: ModenZuordnung | None = None
-        self._moden_aktiv = False           # Resonanz-Auswahl sichtbar (n_moden > 1)
+        self._moden: list[int] = [1]
+        self._moden_aktiv = False           # Mode-Auswahl sichtbar (mehrere Moden)
         self._gewichtet = False
         self._fit_argumente: dict = {}
         self._punkt_indizes = np.array([], dtype=int)  # Stapel-Indizes der Plotpunkte
-        self._punkt_moden = np.array([], dtype=int)    # Mode je Plotpunkt (0 = Hauptmode)
+        self._punkt_moden = np.array([], dtype=int)    # Mode je Plotpunkt
         self._punkt_b = np.array([])
         self._punkt_f = np.array([])
         self._punkt_dh = np.array([])
@@ -117,24 +105,21 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.geo_combo.currentTextChanged.connect(lambda _t: self.aktualisiere())
         kopf.addWidget(self.geo_combo)
         kopf.addSpacing(12)
-        self.mode_label = QtWidgets.QLabel("Resonanz:")
+        self.mode_label = QtWidgets.QLabel("Mode:")
         self.mode_combo = QtWidgets.QComboBox()
         self.mode_combo.setToolTip(
-            "Bei mehreren Resonanzen je Linescan: Hauptmode (stärkste Resonanz je\n"
-            "Linescan), Mode 1 … n (je ein Dispersionszweig mit eigenem Kittel-/LLG-Fit)\n"
-            "oder alle Moden. Mode k = Band k der Grenzgeraden; ohne Bänder aufsteigend\n"
-            "nach Resonanzfeld.")
+            "Mode 1 … n (je ein Korridor mit eigenem Kittel-/LLG-Fit) oder alle Moden.")
         self.mode_combo.currentIndexChanged.connect(lambda _i: self.aktualisiere())
         kopf.addWidget(self.mode_label)
         kopf.addWidget(self.mode_combo)
         self.mode_label.setVisible(False)
         self.mode_combo.setVisible(False)
         kopf.addSpacing(16)
-        hinweis = QtWidgets.QLabel(
-            "Punkt anklicken oder Kasten aufziehen → Punkt wird als Ausreißer "
-            "entfernt (in einer Mode-Ansicht nur für diese Mode) und der Fit rechnet "
-            "sofort neu (reversibel).")
-        hinweis.setWordWrap(True)
+        hinweis = QtWidgets.QLabel("Klick/Kasten = Punkt ausschließen")
+        hinweis.setToolTip(
+            "Punkt anklicken oder Kasten aufziehen → Punkt wird als Ausreißer entfernt\n"
+            "(bei mehreren Moden nur für die angezeigte Mode); der Fit rechnet sofort\n"
+            "neu (reversibel).")
         kopf.addWidget(hinweis, 1)
         lay.addLayout(kopf)
 
@@ -176,11 +161,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
 
     # --- Moden-Auswahl ----------------------------------------------------------
     def mode_gewaehlt(self) -> int:
-        """Gewaehlte Ansicht: ``HAUPTMODE`` (0), Mode 1..n oder ``ALLE_MODEN`` (-1)."""
+        """Gewaehlte Ansicht: Mode 1..n oder ``ALLE_MODEN`` (-1)."""
         if not self._moden_aktiv or self.mode_combo.count() == 0:
-            return HAUPTMODE
+            return 1
         daten = self.mode_combo.currentData()
-        return HAUPTMODE if daten is None else int(daten)
+        return 1 if daten is None else int(daten)
 
     def setze_mode(self, mode: int) -> None:
         """Ansicht umschalten (Hauptmode / Mode k / alle) - wie die Auswahl im Kopf."""
@@ -188,11 +173,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
         if index >= 0:
             self.mode_combo.setCurrentIndex(index)   # loest aktualisiere() aus
 
-    def _combo_befuellen(self, n: int) -> None:
-        """Eintraege Hauptmode / Mode 1..n / Alle Moden; sichtbar nur bei n > 1.
-        Beim ersten Erscheinen ist Mode 1 vorgewaehlt (je Zweig ein eigener Fit),
-        danach bleibt die Auswahl erhalten."""
-        aktiv = n > 1
+    def _combo_befuellen(self, moden: list[int]) -> None:
+        """Eintraege Mode k (je vorhandener Mode) / Alle Moden; sichtbar nur bei
+        mehreren Moden. Beim ersten Erscheinen ist Mode 1 vorgewaehlt, danach
+        bleibt die Auswahl erhalten."""
+        aktiv = len(moden) > 1
         self._moden_aktiv = aktiv
         self.mode_label.setVisible(aktiv)
         self.mode_combo.setVisible(aktiv)
@@ -202,8 +187,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 self.mode_combo.clear()
                 self.mode_combo.blockSignals(False)
             return
-        gewuenscht = ([("Hauptmode (stärkste je Linescan)", HAUPTMODE)]
-                      + [(f"Mode {k}", k) for k in range(1, n + 1)]
+        gewuenscht = ([(f"Mode {k}", k) for k in moden]
                       + [("Alle Moden", ALLE_MODEN)])
         vorhanden = [(self.mode_combo.itemText(i), self.mode_combo.itemData(i))
                      for i in range(self.mode_combo.count())]
@@ -224,12 +208,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
         return F.SIGNAL_GRUEN if einzeln or mode <= 1 else F.mode_farbe(mode)
 
     def _titel_zusatz(self, mode: int) -> str:
-        if mode == HAUPTMODE:
+        if not self._moden_aktiv:
             return ""
         if mode == ALLE_MODEN:
             return " – alle Moden"
-        regel = self._zuordnung.beschreibung(mode) if self._zuordnung is not None else ""
-        return f" – Mode {mode}" + (f" ({regel})" if regel else "")
+        return f" – Mode {mode}"
 
     # --- Auswertung + Darstellung -------------------------------------------
     def aktualisiere(self) -> None:
@@ -253,21 +236,11 @@ class AuswertungsFenster(QtWidgets.QDialog):
         # Einstellbare Parameter (g/gamma, gamma_fest, r2_min) des Hauptfensters.
         p = self._hole_parameter() if self._hole_parameter is not None else None
         r2_min = p.r2_min if p is not None else 0.9
-        geraden = list(self._hole_geraden() or []) if self._hole_geraden is not None else []
-        try:
-            feld_bereich = stapel.datensatz.feld_bereich()
-        except Exception:
-            feld_bereich = None
-        self._zuordnung = zuordnung_moden(stapel.ergebnisse, geraden,
-                                          getattr(stapel, "n_moden", 1),
-                                          feld_bereich=feld_bereich)
-        n = self._zuordnung.n_moden
-        self._combo_befuellen(n)
+        self._moden = list(stapel.moden_vorhanden())
+        self._combo_befuellen(self._moden)
         mode = self.mode_gewaehlt()
         if mode == ALLE_MODEN:
-            modi = list(range(1, n + 1))
-        elif mode == HAUPTMODE:
-            modi = [HAUPTMODE]
+            modi = list(self._moden)
         else:
             modi = [mode]
 
@@ -276,9 +249,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self._fit_argumente = dict(geometrie=geometrie, r2_min=r2_min, gewichtet=self._gewichtet)
         if p is not None:
             self._fit_argumente.update(gamma_fest=p.gamma_fest, gamma_start=p.gamma)
-        self._reihen = auswertung_je_mode(
-            stapel.ergebnisse, modi, self._zuordnung, stapel.ausreisser,
-            getattr(stapel, "ausreisser_moden", []), **self._fit_argumente)
+        self._reihen = auswertung_je_mode(stapel, modi, **self._fit_argumente)
         reihen = list(self._reihen.values())
         self._punkt_indizes = (np.concatenate([r.indizes for r in reihen]).astype(int)
                                if reihen else leer)
@@ -336,10 +307,9 @@ class AuswertungsFenster(QtWidgets.QDialog):
                   f"{len(stapel.ausreisser)} Ausreißer ausgeschlossen"
                   + (f", {len(paare)} Punkt(e) nur je Mode ausgeschlossen" if paare else "")
                   + "</p>"]
-        if mode != HAUPTMODE and self._zuordnung is not None:
-            was = "alle Moden" if mode == ALLE_MODEN else f"Mode {mode}"
-            regel = _REGEL_TEXTE.get(self._zuordnung.regel, self._zuordnung.regel)
-            zeilen.append(f"<p><b>Resonanz:</b> {was} · Zuordnung: {regel}</p>")
+        if self._moden_aktiv:
+            was = "alle Moden" if mode == ALLE_MODEN else f"Mode {mode} (Korridor M{mode})"
+            zeilen.append(f"<p><b>Mode:</b> {was}</p>")
         mehrere = len(self._reihen) > 1
         irgendein_fit = False
         for r in self._reihen.values():
@@ -449,12 +419,14 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self._punkte_entfernen(treffer)
 
     def _punkte_entfernen(self, treffer: list[int]) -> None:
-        """Plotpunkte (Positionen) als Ausreisser melden: Hauptmode-Ansicht ->
-        Linescan-Ausreisser, Mode-Ansicht -> nur ``(index, mode)``."""
-        linescans = [int(self._punkt_indizes[k]) for k in treffer
-                     if int(self._punkt_moden[k]) == HAUPTMODE]
-        paare = [(int(self._punkt_indizes[k]), int(self._punkt_moden[k])) for k in treffer
-                 if int(self._punkt_moden[k]) != HAUPTMODE]
+        """Plotpunkte (Positionen) als Ausreisser melden: eine Mode ->
+        Linescan-Ausreisser, mehrere Moden -> nur ``(index, mode)``."""
+        if not self._moden_aktiv:
+            linescans = [int(self._punkt_indizes[k]) for k in treffer]
+            paare = []
+        else:
+            linescans = []
+            paare = [(int(self._punkt_indizes[k]), int(self._punkt_moden[k])) for k in treffer]
         geaendert = False
         if linescans and self._cb_markieren is not None:
             self._cb_markieren(linescans)
@@ -471,34 +443,27 @@ class AuswertungsFenster(QtWidgets.QDialog):
         return [int(i) for i in self._punkt_indizes]
 
     def _reihen_alle_moden(self, stapel) -> dict[int, ModenReihe]:
-        n = self._zuordnung.n_moden if self._zuordnung is not None else 1
-        modi = list(range(1, n + 1))
+        modi = list(self._moden)
         if all(k in self._reihen for k in modi):
             return {k: self._reihen[k] for k in modi}
-        return auswertung_je_mode(stapel.ergebnisse, modi, self._zuordnung, stapel.ausreisser,
-                                  getattr(stapel, "ausreisser_moden", []), **self._fit_argumente)
+        return auswertung_je_mode(stapel, modi, **self._fit_argumente)
 
     def _parameter_tabelle(self, stapel, reihe: ModenReihe, kennzeichnen: bool) -> pd.DataFrame:
         mode = reihe.mode
         paare = [(i, k) for i, k in getattr(stapel, "ausreisser_moden", []) if int(k) == mode]
-        n_aus = len(stapel.ausreisser) + (len(paare) if mode != HAUPTMODE else 0)
-        text = (self._zuordnung.beschreibung(mode)
-                if kennzeichnen and self._zuordnung is not None else "")
+        n_aus = len(stapel.ausreisser) + len(paare)
         return kittel_llg_tabelle(reihe.info, gewichtet=self._gewichtet, n_punkte=reihe.n,
                                   n_ausreisser=n_aus, mode=mode if kennzeichnen else None,
-                                  mode_text=text)
+                                  mode_text=f"Korridor M{mode}" if kennzeichnen else "")
 
     def _punkte_tabelle(self, stapel, reihe: ModenReihe, kennzeichnen: bool) -> pd.DataFrame:
         mode = reihe.mode
         verwendet = [int(i) for i in reihe.indizes]
-        if mode == HAUPTMODE:
-            return kittel_llg_punkte_tabelle(stapel.ergebnisse, stapel.ausreisser, verwendet,
-                                             mode=HAUPTMODE if kennzeichnen else None)
-        paare = ergebnisse_fuer_mode(stapel.ergebnisse, mode, self._zuordnung)
+        liste = stapel.ergebnisse_mode(mode)
         gesperrt = set(stapel.ausreisser) | {
             int(i) for i, k in getattr(stapel, "ausreisser_moden", []) if int(k) == mode}
-        return kittel_llg_punkte_tabelle([e for _, e in paare], sorted(gesperrt), verwendet,
-                                         indizes=[i for i, _ in paare], mode=mode)
+        return kittel_llg_punkte_tabelle(liste, sorted(gesperrt), verwendet,
+                                         mode=mode if kennzeichnen else None)
 
     def exportiere(self, basis: str, csv_deutsch: bool = False) -> list[str]:
         """Schreibt ``<basis>.xlsx``, ``<basis>_punkte.csv``, ``<basis>.png/.pdf``.

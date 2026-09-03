@@ -6,19 +6,9 @@ Feldachse) und die Bereichseinschraenkung ab (Frequenz-/Feldfenster plus
 Frequenz-Ausschlussbaender wie "3-5" GHz). Eine Live-Zusammenfassung zeigt,
 wie viele Linescans die aktuelle Auswahl uebrig laesst. Die zuletzt benutzte
 Auswahl wird vorbelegt.
-
-**ROI (Region of Interest) vor dem Auto-Fit:** Der Feld-/Frequenzbereich wird
-aus dem gezoomten Farbplot vorbelegt (``zoom_bereich``) oder direkt als
-Rechteck im Farbplot aufgezogen: "ROI im Farbplot aufziehen …" schliesst den
-Dialog mit :attr:`AuswahlDialog.ROI_AUFZIEHEN`; das Hauptfenster startet den
-Rechteck-Modus und oeffnet den Dialog danach mit dem Rechteck (``roi_bereich``)
-wieder. Ein enger Feldbereich (und "jeder n-te Feldpunkt") beschleunigt den
-Auto-Fit deutlich - bei mehreren Resonanzen je Linescan besonders.
 """
 
 from __future__ import annotations
-
-from dataclasses import dataclass
 
 import numpy as np
 from PySide6 import QtWidgets
@@ -28,40 +18,19 @@ from ..io.datensatz import Messdatensatz
 from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox
 
 
-@dataclass
-class RoiAnfrage:
-    """Rueckgabe von ``Hauptfenster._frage_auswahl``: Nutzer will zuerst eine ROI
-    im Farbplot aufziehen; ``auswahl`` sind die bisherigen Dialog-Eingaben."""
-
-    auswahl: Auswertungsauswahl | None
-    n_moden: int = 1
-    zweistufig: bool = False
-
-
 class AuswahlDialog(QtWidgets.QDialog):
     """Fragt die :class:`Auswertungsauswahl` fuer den naechsten Auto-Fit ab."""
 
-    #: Rueckgabecode von ``exec()``: Nutzer will zuerst eine ROI (Rechteck) im
-    #: Farbplot aufziehen; :meth:`zwischenstand` liefert die bisherigen Eingaben.
-    ROI_AUFZIEHEN = 2
-
     def __init__(self, datensatz: Messdatensatz,
                  letzte: Auswertungsauswahl | None = None, parent=None,
-                 n_moden: int = 1, zweistufig: bool = False,
-                 zoom_bereich: tuple[float, float, float, float] | None = None,
-                 roi_moeglich: bool = False,
-                 roi_bereich: tuple[float, float, float, float] | None = None):
-        """``n_moden``/``zweistufig``: Vorbelegung der Resonanzen je Linescan
-        (Dropdown) und der erweiterten Option "erst klassisch, dann ergaenzen".
-        ``zoom_bereich``/``roi_bereich``: ``(feld_min, feld_max, f_min_ghz,
-        f_max_ghz)`` - sichtbarer Farbplot-Ausschnitt bzw. aufgezogenes
-        Rechteck; belegt den Bereich vor (Rechteck vor Zoom vor letzter Auswahl).
-        ``roi_moeglich``: Knopf "ROI im Farbplot aufziehen …" anbieten."""
+                 zoom_bereich: tuple[float, float, float, float] | None = None):
+        """``zoom_bereich``: ``(feld_min, feld_max, f_min_ghz, f_max_ghz)`` -
+        sichtbarer Farbplot-Ausschnitt; belegt den Bereich vor (Zoom vor
+        letzter Auswahl)."""
         super().__init__(parent)
-        self.setWindowTitle("Auto-Fit: Bereich, Jumper & Resonanzen")
+        self.setWindowTitle("Auto-Fit: Bereich & Jumper")
         self.setModal(True)
         self._datensatz = datensatz
-        self._zwischenstand: Auswertungsauswahl | None = None
         vorgabe = letzte if letzte is not None else Auswertungsauswahl()
 
         frequenzen = datensatz.frequenzen
@@ -76,7 +45,7 @@ class AuswahlDialog(QtWidgets.QDialog):
             f"Auswertung von <b>{len(datensatz)}</b> Linescans "
             f"({f_min_ghz:.2f}-{f_max_ghz:.2f} GHz, {b_min:.3f}-{b_max:.3f} T). "
             f"Unterabtastung beschleunigt; Bereiche grenzen die Auswertung ein. "
-            f"<b>Tipp:</b> Ein enger Feldbereich (ROI) und „jeder n-te Feldpunkt“ "
+            f"<b>Tipp:</b> Ein enger Feldbereich und „jeder n-te Feldpunkt“ "
             f"machen den Auto-Fit deutlich schneller – bei mehreren Resonanzen besonders.")
         kopf.setWordWrap(True)
         lay.addWidget(kopf)
@@ -132,13 +101,6 @@ class AuswahlDialog(QtWidgets.QDialog):
         form_b.addRow("Feld von:", self.b_min)
         form_b.addRow("Feld bis:", self.b_max)
         roi_zeile = QtWidgets.QHBoxLayout()
-        self.btn_roi = QtWidgets.QPushButton("ROI im Farbplot aufziehen …")
-        self.btn_roi.setToolTip(
-            "Dialog schließen, Rechteck (Feld × Frequenz) im Farbplot aufziehen –\n"
-            "der Dialog öffnet sich danach mit diesem Bereich wieder.")
-        self.btn_roi.setEnabled(bool(roi_moeglich))
-        self.btn_roi.clicked.connect(self._roi_geklickt)
-        roi_zeile.addWidget(self.btn_roi)
         self.btn_zoom = QtWidgets.QPushButton("Zoom-Ausschnitt übernehmen")
         self.btn_zoom.setToolTip("Sichtbaren Ausschnitt des Farbplots als Bereich verwenden.")
         self.btn_zoom.setEnabled(zoom_bereich is not None)
@@ -154,10 +116,7 @@ class AuswahlDialog(QtWidgets.QDialog):
         self.bereich_hinweis = QtWidgets.QLabel("")
         self.bereich_hinweis.setWordWrap(True)
         form_b.addRow("", self.bereich_hinweis)
-        if roi_bereich is not None:
-            self.setze_bereich(*roi_bereich)
-            self.bereich_hinweis.setText("Bereich = im Farbplot aufgezogenes Rechteck (ROI).")
-        elif zoom_bereich is not None:
+        if zoom_bereich is not None:
             self.setze_bereich(*zoom_bereich)
             self.bereich_hinweis.setText("Bereich = sichtbarer Farbplot-Ausschnitt (Zoom).")
 
@@ -168,33 +127,6 @@ class AuswahlDialog(QtWidgets.QDialog):
             "Frequenzbaender (GHz), die NICHT ausgewertet werden - mehrere mit ';' trennen.")
         form_b.addRow("Frequenz-Ausschluesse (GHz):", self.ausschluss)
         lay.addWidget(grp_b)
-
-        # --- Resonanzen je Linescan (Moden) ----------------------------------
-        grp_m = QtWidgets.QGroupBox("Resonanzen je Linescan")
-        form_m = QtWidgets.QFormLayout(grp_m)
-        self.moden_combo = RuhigeComboBox()
-        self.moden_combo.addItem("1 – klassisch (eine Resonanz)", 1)
-        self.moden_combo.addItem("2 – zwei nahe Resonanzen", 2)
-        for k in range(3, 7):
-            self.moden_combo.addItem(f"{k} Resonanzen", k)
-        self.moden_combo.setToolTip(
-            "Anzahl simultan gefitteter Resonanzen je Linescan.\n"
-            "1 = klassischer Auto-Fit; 2 = zwei nahe Dips (z. B. zwei magnetische Moden).")
-        index_m = self.moden_combo.findData(max(1, min(6, int(n_moden))))
-        self.moden_combo.setCurrentIndex(max(0, index_m))
-        form_m.addRow("Anzahl:", self.moden_combo)
-        self.chk_zweistufig = QtWidgets.QCheckBox(
-            "Erweitert: erst klassischer Auto-Fit (1 Resonanz), dann weitere Resonanzen ergänzen")
-        self.chk_zweistufig.setToolTip(
-            "Stufe 1: klassischer Ein-Moden-Fit (robuste Fenstersuche, Hauptmode).\n"
-            "Stufe 2: je Linescan weitere Resonanzen aus dem Residuum ergänzen und alle\n"
-            "Moden simultan fitten. Gelingt Stufe 2 nicht, bleibt das klassische Ergebnis\n"
-            "stehen – keine Phantom-Resonanzen auf Ein-Moden-Daten.")
-        self.chk_zweistufig.setChecked(bool(zweistufig))
-        form_m.addRow("", self.chk_zweistufig)
-        self.moden_combo.currentIndexChanged.connect(self._moden_geaendert)
-        self._moden_geaendert()
-        lay.addWidget(grp_m)
 
         self.zusammenfassung = QtWidgets.QLabel("")
         self.zusammenfassung.setWordWrap(True)
@@ -214,10 +146,6 @@ class AuswahlDialog(QtWidgets.QDialog):
         self.ausschluss.textChanged.connect(self._aktualisiere_zusammenfassung)
         self._aktualisiere_zusammenfassung()
 
-    def n_moden(self) -> int:
-        """Gewaehlte Anzahl Resonanzen je Linescan (1 = klassisch)."""
-        return int(self.moden_combo.currentData() or 1)
-
     def setze_bereich(self, feld_min: float, feld_max: float,
                       f_min_ghz: float, f_max_ghz: float) -> None:
         """Feld-/Frequenzbereich (T, GHz) in die Eingabefelder uebernehmen."""
@@ -234,25 +162,6 @@ class AuswahlDialog(QtWidgets.QDialog):
         if self._zoom_bereich is not None:
             self.setze_bereich(*self._zoom_bereich)
             self.bereich_hinweis.setText("Bereich = sichtbarer Farbplot-Ausschnitt (Zoom).")
-
-    def _roi_geklickt(self) -> None:
-        """Dialog mit ROI_AUFZIEHEN beenden; Eingaben bleiben als Zwischenstand."""
-        try:
-            self._zwischenstand = self.auswahl()
-        except ValueError:
-            self._zwischenstand = None
-        self.done(self.ROI_AUFZIEHEN)
-
-    def zwischenstand(self) -> Auswertungsauswahl | None:
-        """Eingaben beim Klick auf "ROI im Farbplot aufziehen …" (Vorbelegung danach)."""
-        return self._zwischenstand
-
-    def zweistufig(self) -> bool:
-        """Erweiterte Option: erst klassisch fitten, dann weitere Moden ergaenzen."""
-        return self.n_moden() > 1 and self.chk_zweistufig.isChecked()
-
-    def _moden_geaendert(self, *_args) -> None:
-        self.chk_zweistufig.setEnabled(self.n_moden() > 1)
 
     def auswahl(self) -> Auswertungsauswahl:
         """Aktuelle Auswahl aus den Dialogfeldern (wirft ValueError bei Parsefehler)."""

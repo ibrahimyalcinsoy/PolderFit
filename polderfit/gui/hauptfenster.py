@@ -59,17 +59,17 @@ from ..io import (
     pruefe_datensatz,
     schreibe_ergebnis_tdms,
 )
-from ..fit.batch import (Ausschlusszone, StapelErgebnis, fitte_alle, fitte_neu, leerer_stapel,
-                         fenster_anteil, FENSTER_ANTEIL_WARNUNG)
+from ..fit.batch import (Ausschlusszone, StapelErgebnis, fitte_alle, fitte_mode, fitte_neu,
+                         leerer_stapel, fenster_anteil, FENSTER_ANTEIL_WARNUNG)
 from ..fit.fenster_steuerung import (
-    Grenzgerade,
     entferne_ausschlusszone,
     fitte_bereich,
-    band_geraden, fitte_geraden_bereich, zaehle_abgedeckt,
+    fitte_korridor, zaehle_korridor,
     fuege_ausschlusszone_hinzu,
     _fitte_neu_mit_nachfenster,
 )
-from ..fit.linescan_fit import BEWERTUNG_TEXTE, hauptmode_wechseln
+from ..fit.korridor import Korridor, korridor_aus_linie
+from ..fit.linescan_fit import BEWERTUNG_TEXTE
 from ..fit.parameter import PhysikParameter
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv, kittel_llg_flach
 from ..persistenz.einstellungen import (
@@ -83,16 +83,16 @@ from ..persistenz.einstellungen import (
     standard_pfad,
 )
 from ..persistenz.projekt import (
-    grenzgeraden_aus_sitzung,
+    korridore_aus_sitzung,
     lade_sitzung,
     speichere_sitzung,
     stelle_stapel_wieder_her,
 )
-from ..auswertung.moden import auswertung_je_mode, max_moden, zuordnung_moden
+from ..auswertung.moden import auswertung_je_mode
 from ..auswertung.uebersicht import auswertung_kittel_llg
 from ..fit.auswahl import Auswertungsauswahl
 from .ausreisser_panel import AusreisserPanel
-from .auswahl_dialog import AuswahlDialog, RoiAnfrage
+from .auswahl_dialog import AuswahlDialog
 from .parameter_dialog import ParameterDialog
 from .auswertung_fenster import AuswertungsFenster
 from .bereichsfit_dialog import BereichsFitDialog
@@ -121,8 +121,8 @@ _MODUS_TEXTE = {
     "bereich": "Modus: Bereich neu fitten – Rechteck aufziehen · Esc bricht ab",
     "zone": "Modus: Ausschlusszone – Rechteck aufziehen · Esc bricht ab",
     "ausreisser": "Modus: Ausreißer markieren – Punkt anklicken oder Kasten aufziehen · Esc beendet",
-    "gerade": "Modus: Grenzgerade – zwei Punkte klicken · Esc bricht ab",
-    "band": "Modus: Moden-Band – zwei Punkte entlang der Mode klicken · Esc bricht ab",
+    "korridor": "Modus: Korridor anlegen – zwei Punkte entlang der Resonanz klicken · Esc bricht ab",
+    "anker": "Modus: Anker setzen – Klick setzt die nähere Korridorgrenze · Esc beendet",
 }
 
 #: Verzoegerung der Auto-Sicherung nach der letzten Aenderung (ms).
@@ -144,18 +144,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.datensatz_voll = None
         # Zuletzt benutzte Auswertungsauswahl (Jumper/Bereich) als Vorbelegung.
         self._letzte_auswahl: Auswertungsauswahl | None = None
-        #: ROI-Rechteck fuer den Auto-Fit-Dialog laeuft: (fertig, abgebrochen).
-        self._roi_rueckruf = None
         #: Voreinstellungen (Datei -> Einstellungen); beim Start aus dem
         #: Konfigurationsverzeichnis geladen.
         self._einstellungen, self._einstellungen_geladen = lade_standard()
         # Zuletzt benutzte Bereichs-Fit-Optionen (Vorbelegung des Dialogs).
         self._bereich_modus: str = self._einstellungen.bereichsfit.get("modus", "ueberschreiben")
         self._bereich_breite: int | None = self._einstellungen.bereichsfit.get("breite_punkte")
-        # Zuletzt benutzter Frequenz- (Hz) und Feldbereich (T) des Grenzgeraden-
+        # Zuletzt benutzter Frequenz- (Hz) und Feldbereich (T) des Korridor-
         # Fits: Vorbelegung beim naechsten Aufruf, mit neuem Datensatz verworfen.
         self._bereich_frequenz: tuple[float, float] | None = None
         self._bereich_feld: tuple[float, float] | None = None
+        self._bereich_schritt: int = 1
         #: Einstellbare physikalische Parameter (g-Faktor/gamma, Geometrie,
         #: Fensterfaktor, Schwellen, alpha-Grenzen, Moden) - Dialog: Strg+P.
         self._physik = self._einstellungen.physik_parameter()
@@ -181,17 +180,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.zonenpanel = ZonenPanel(
             zone_umschalten=self._zone_modus,
             zone_entfernen=self._zone_entfernen,
-            gerade_umschalten=self._gerade_modus,
-            gerade_seite=self._gerade_seite,
-            gerade_entfernen=self._gerade_entfernen,
-            geraden_fit=self._geraden_fit,
-            gerade_mode=self._gerade_mode,
-            band_umschalten=self._band_modus,
-            n_moden_geaendert=self._setze_n_moden,
+            korridor_umschalten=self._korridor_modus,
+            anker_umschalten=self._anker_modus,
+            korridor_gewaehlt=self._korridor_gewaehlt,
+            korridor_entfernen=self._korridor_entfernen,
+            anker_entfernen=self._anker_entfernen,
+            korridor_fit=self._korridor_fit,
         )
-        #: Grenzgeraden (Fit-Bereich); bleiben ueber Auto-Fits erhalten,
-        #: werden mit einem neuen Datensatz verworfen.
-        self._grenzgeraden: list[Grenzgerade] = []
+        #: Korridore je Mode - die EINZIGE Quelle des Moden-Zustands (Zahl der
+        #: Moden = Zahl der Korridore); bleiben ueber Auto-Fits erhalten, werden
+        #: mit einem neuen Datensatz verworfen.
+        self._korridore: list[Korridor] = []
+        #: Mode, die das Linescan-Panel zeigt (Korridorliste im Panel).
+        self._mode_aktiv: int = 1
         self.ausreisserpanel = AusreisserPanel(
             wieder_aufnehmen=self._ausreisser_wieder_aufnehmen,
             rueckgaengig=self._rueckgaengig,
@@ -204,9 +205,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Ausreisser, Bewertungen und Nachfits; ein neuer Auto-Fit/Datensatz leert ihn.
         self._undo_stapel: list[tuple[str, object, object]] = []
         self._redo_stapel: list[tuple[str, object, object]] = []
-        #: Kopien der Grenzgeraden im zuletzt angezeigten Zustand (Vorher-
-        #: Schnappschuss fuer Undo - Endpunkt-Drags mutieren die Objekte live).
-        self._geraden_schatten: list[Grenzgerade] = []
+        #: Kopien der Korridore im zuletzt angezeigten Zustand (Vorher-
+        #: Schnappschuss fuer Undo - Anker-Drags mutieren die Objekte live).
+        self._korridor_schatten: list[Korridor] = []
         self.tracepanel = TracePanel()
 
         # Auto-Sicherung des Arbeitsstands (zeitversetzt nach jeder Aenderung).
@@ -277,24 +278,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_naechstes_problem.setToolTip("Zum nächsten gelb/rot markierten Fit springen.")
         self.btn_neu = QtWidgets.QPushButton("Neu fitten")
         self.btn_neu.setToolTip(
-            "Diese Frequenz mit dem aktuellen Fenster neu fitten (mit der\n"
-            "gewählten Anzahl Resonanzen). Gilt danach als vom Nutzer bestätigt.")
-        self.spin_moden = RuhigeSpinBox()
-        self.spin_moden.setRange(1, 6)
-        self.spin_moden.setPrefix("Res.: ")
-        self.spin_moden.setSuffix(" ×")
-        self.spin_moden.setValue(max(1, int(self._physik.n_moden)))
-        self.spin_moden.setToolTip(
-            "Anzahl simultan gefitteter Resonanzen für 'Nochmal fitten' und\n"
-            "das Grenzen-Ziehen (1 = Standard, 2 = Doppel-Dip).")
-        self.btn_hauptmode = QtWidgets.QPushButton("Hauptmode ↻")
-        self.btn_hauptmode.setToolTip(
-            "Bei mehreren Resonanzen: die nächste Mode zur Hauptmode machen\n"
-            "(B_res/ΔH/α für Kittel/LLG und Export).")
-        self.btn_hauptmode.setToolTip(
-            "Bei mehreren Resonanzen: die nächste Mode zur Hauptmode machen\n"
-            "(B_res/ΔH/α für Kittel/LLG und Export).")
-        self.btn_hauptmode.clicked.connect(self._hauptmode_wechseln)
+            "Diese Frequenz (gewählte Mode) mit dem aktuellen Fenster bzw. Korridor\n"
+            "neu fitten.")
+        self.mode_label = QtWidgets.QLabel("M1")
+        self.mode_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.mode_label.setToolTip("Angezeigte Mode (Korridorliste im Panel „Korridore & Zonen“).")
         # Vollbereich-Umschalter direkt am Linescan-Panel (gespiegelt mit der
         # Menue-Aktion akt_vollbereich; Verbindung in _baue_aktionen).
         self.chk_vollbereich = QtWidgets.QCheckBox("ganzer Feldsweep")
@@ -304,17 +292,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_weiter.clicked.connect(lambda: self._navigiere(+1))
         self.btn_neu.clicked.connect(self._neu_fitten)
         self.btn_naechstes_problem.clicked.connect(self._naechster_problemfit)
-        for b in (self.btn_zurueck, self.btn_weiter, self.btn_naechstes_problem, self.btn_neu,
-                  self.btn_hauptmode, self.spin_moden):
+        for b in (self.btn_zurueck, self.btn_weiter, self.btn_naechstes_problem, self.btn_neu):
             b.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
             b.setMinimumWidth(60)
         # Drei Spalten: passt auch bei 430 px Panelbreite ohne abgeschnittene Texte.
         steuer.addWidget(self.btn_zurueck, 0, 0)
         steuer.addWidget(self.btn_weiter, 0, 1)
         steuer.addWidget(self.btn_naechstes_problem, 0, 2)
-        steuer.addWidget(self.btn_neu, 1, 0)
-        steuer.addWidget(self.spin_moden, 1, 1)
-        steuer.addWidget(self.btn_hauptmode, 1, 2)
+        steuer.addWidget(self.btn_neu, 1, 0, 1, 2)
+        steuer.addWidget(self.mode_label, 1, 2)
         # Bewertungszeile: Status-Chip (Farbe wie im Farbplot) + Auswahlliste
         # (Strg+1/2/3, Strg+I).
         self.status_label = QtWidgets.QLabel("–")
@@ -492,14 +478,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "Optionen (Frequenz/Feld von … bis …, Modus, Fensterbreite, Resonanzen) "
             "folgen im Dialog. Funktioniert auch ohne Auto-Fit. Esc bricht ab.")
         self.akt_bereich.toggled.connect(self._bereich_umschalten)
-        self.akt_gerade = A("Grenzgerade einzeichnen", self)
-        self.akt_gerade.setShortcut(QtGui.QKeySequence("Ctrl+L"))
-        self.akt_gerade.setCheckable(True)
-        self.akt_gerade.setToolTip(
-            "Modus: zwei Punkte im Farbplot klicken → Gerade mit grüner (Fit-) und "
-            "roter (Ignorier-)Seite; danach im Panel „Zonen & Grenzgeraden“ den "
-            "grünen Bereich fitten. Funktioniert direkt nach dem Laden.")
-        self.akt_gerade.toggled.connect(self._gerade_modus)
+        self.akt_korridor = A("Korridor anlegen", self)
+        self.akt_korridor.setShortcut(QtGui.QKeySequence("Ctrl+L"))
+        self.akt_korridor.setCheckable(True)
+        self.akt_korridor.setToolTip(
+            "Modus: zwei Punkte entlang der Resonanz im Farbplot klicken → Korridor "
+            "± Breite für die nächste Mode; danach im Panel „Korridore & Zonen“ "
+            "den Korridor fitten. Funktioniert direkt nach dem Laden.")
+        self.akt_korridor.toggled.connect(self._korridor_modus)
         self.akt_zone = A("Ausschlusszone einzeichnen", self)
         self.akt_zone.setCheckable(True)
         self.akt_zone.setToolTip(
@@ -683,7 +669,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.funktionen_menue = mb.addMenu("Fun&ktionen")
         self.funktionen_menue.addAction(self.akt_fit)
         self.funktionen_menue.addAction(self.akt_bereich)
-        self.funktionen_menue.addAction(self.akt_gerade)
+        self.funktionen_menue.addAction(self.akt_korridor)
         self.funktionen_menue.addAction(self.akt_zone)
         self.funktionen_menue.addSeparator()
         self.funktionen_menue.addAction(self.akt_ausreisser)
@@ -843,7 +829,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_zonen_dock(self):
         """Fit-Werkzeuge (links): Grenzgeraden und Ausschlusszonen."""
-        dock = QtWidgets.QDockWidget("Zonen & Grenzgeraden", self)
+        dock = QtWidgets.QDockWidget("Korridore & Zonen", self)
         dock.setObjectName("zonen_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
@@ -972,7 +958,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Vom Modus-Manager der Matrix gemeldet: Anzeige und Umschalter syncen."""
         for aktion, name in ((self.akt_bereich, "bereich"),
                              (self.akt_ausreisser, "ausreisser"),
-                             (self.akt_gerade, "gerade"),
+                             (self.akt_korridor, "korridor"),
                              (self.akt_zone, "zone")):
             soll = (modus == name)
             if aktion.isChecked() != soll:
@@ -980,15 +966,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 aktion.setChecked(soll)
                 aktion.blockSignals(False)
         self.zonenpanel.setze_modus_aktiv(modus == "zone")
-        self.zonenpanel.setze_gerade_modus_aktiv(modus == "gerade")
-        self.zonenpanel.setze_band_modus_aktiv(modus == "band")
+        self.zonenpanel.setze_korridor_modus_aktiv(modus == "korridor")
+        self.zonenpanel.setze_anker_modus_aktiv(modus == "anker")
         if modus is None:
             self.modus_label.setVisible(False)
             self.statusBar().showMessage("Modus beendet.", 4000)
-            if self._roi_rueckruf is not None:
-                # Rechteck-Modus meldet erst das Ende, dann das Rechteck: Abbruch
-                # (Esc) erst pruefen, wenn der Rueckruf Gelegenheit hatte.
-                QtCore.QTimer.singleShot(0, self._roi_abbruch_pruefen)
         else:
             text = _MODUS_TEXTE.get(modus, modus)
             self.modus_label.setText(text.split(" – ")[0])
@@ -1039,133 +1021,174 @@ class Hauptfenster(QtWidgets.QMainWindow):
                   "aufziehen (Esc bricht ab).", "info")
         self.matrix.starte_ausschluss_zeichnen(self._zone_gezeichnet)
 
-    def _gerade_modus(self, an: bool):
-        """Umschalter des Grenzgeraden-Zeichenmodus (zwei Klicks; auch ohne Auto-Fit)."""
+    # --- Korridore (Moden) ---------------------------------------------------------
+    def _korridor_modus(self, an: bool):
+        """Umschalter des Werkzeugs "Korridor anlegen" (zwei Klicks; auch ohne Auto-Fit)."""
         if not an:
-            if self.matrix.modus == "gerade":
+            if self.matrix.modus == "korridor":
                 self.matrix.beende_modus()
             return
         if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
-            self.zonenpanel.setze_gerade_modus_aktiv(False)
-            self.akt_gerade.setChecked(False)
+            self.zonenpanel.setze_korridor_modus_aktiv(False)
+            self.akt_korridor.setChecked(False)
             return
         self._dock_schmal_halten(self.zonen_dock, breite=300)
-        self._log("Grenzgerade: zwei Punkte im Farbplot klicken – danach an den "
-                  "Endpunkten ziehbar; Doppelklick auf die Linie wechselt die "
-                  "grüne (Fit-)Seite. Esc bricht ab.", "info")
-        self.matrix.starte_gerade_zeichnen(self._gerade_gezeichnet)
+        self.matrix.starte_korridor_zeichnen(self._korridor_gezeichnet)
 
-    def _gerade_gezeichnet(self, punkte):
-        """Callback nach zwei Klicks: neue Grenzgerade anlegen und anzeigen."""
-        (b1, f1_ghz), (b2, f2_ghz) = punkte
-        vorher = self._geraden_schatten
-        self._grenzgeraden.append(Grenzgerade(b1=float(b1), f1=f1_ghz * 1e9,
-                                              b2=float(b2), f2=f2_ghz * 1e9,
-                                              mode=self.zonenpanel.mode_neu()))
-        self._zeige_geraden()
-        self._merke_geraden_aenderung("Grenzgerade eingefügt", vorher)
-        mode = self._grenzgeraden[-1].mode
-        self._log(f"Grenzgerade eingefügt{f' (Mode {mode})' if self.stapel and self.stapel.n_moden > 1 else ''}: "
-                  f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
-                  f"Grüner Saum = wird gefittet; Seite per Doppelklick oder im Panel "
-                  f"wechseln; dann „{self.zonenpanel.btn_geraden_fit.text()}“.", "ok")
-
-    def _band_modus(self, an: bool):
-        """Band-Werkzeug (mehrere Moden): zwei Klicks entlang der Mode -> Band ± Breite."""
-        if not an:
-            if self.matrix.modus == "band":
-                self.matrix.beende_modus()
-            return
-        if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
-            self.zonenpanel.setze_band_modus_aktiv(False)
-            return
-        self._dock_schmal_halten(self.zonen_dock, breite=300)
-        self._log(f"Band für Mode {self.zonenpanel.mode_neu()} (automatisch vergeben): zwei "
-                  f"Punkte entlang der Mode im Farbplot klicken – das Band "
-                  f"±{self.zonenpanel.bandbreite_T()*1e3:.0f} mT entsteht als zwei Geraden "
-                  "dieser Mode (Seiten automatisch). Esc bricht ab.", "info")
-        self.matrix.starte_band_zeichnen(self._band_gezeichnet)
-
-    def _band_gezeichnet(self, punkte):
-        """Callback des Band-Werkzeugs: zwei Geraden (± Breite) fuer die gewaehlte Mode."""
+    def _korridor_gezeichnet(self, punkte):
+        """Callback nach zwei Klicks: neuen Korridor (naechste Mode) anlegen."""
         (b1, f1_ghz), (b2, f2_ghz) = punkte
         mode = self.zonenpanel.mode_neu()
         halbbreite = self.zonenpanel.bandbreite_T()
         try:
-            neue = band_geraden(float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9,
-                                halbbreite, mode=mode)
+            neu = korridor_aus_linie(mode, float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9,
+                                     halbbreite)
         except ValueError as exc:
-            self._log(f"Band: {exc}", "warn")
+            self._log(f"Korridor: {exc}", "warn")
             return
-        vorher = self._geraden_schatten
-        self._grenzgeraden.extend(neue)
-        self._zeige_geraden()
-        self._merke_geraden_aenderung(f"Band Mode {mode} eingefügt", vorher)
-        naechste = self.zonenpanel.mode_neu()
-        self._log(f"Band für Mode {mode} eingefügt: ±{halbbreite*1e3:.0f} mT um "
+        vorher = self._korridor_schatten
+        self._korridore.append(neu)
+        self._mode_aktiv = mode
+        self.zonenpanel.setze_mode_aktiv(mode)
+        self._zeige_korridore()
+        self._merke_korridor_aenderung(f"Korridor M{mode} angelegt", vorher)
+        self._log(f"Korridor M{mode} angelegt: ±{halbbreite*1e3:.0f} mT um "
                   f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
-                  f"Jetzt „{self.zonenpanel.btn_geraden_fit.text()}“"
-                  + (f" – oder erst das Band für Mode {naechste} einzeichnen."
-                     if naechste > mode else "."), "ok")
+                  "Anker setzen/ziehen zum Nachführen; dann „Korridor fitten …“.", "ok")
+        self._zeige_aktuellen()
 
-    def _zeige_geraden(self):
-        """Synchronisiert Geraden-Overlay (Farbplot), Panel-Liste und Schatten."""
-        self.zonenpanel.setze_geraden(self._grenzgeraden)
-        self.matrix.zeige_grenzgeraden(self._grenzgeraden,
-                                       endpunkt_geaendert=self._gerade_geaendert,
-                                       seite_gewechselt=self._gerade_seite)
-        self._geraden_schatten = self._geraden_kopie()
+    def _anker_modus(self, an: bool):
+        """Umschalter des Werkzeugs "Anker setzen" (Klick; Modus bleibt aktiv)."""
+        if not an:
+            if self.matrix.modus == "anker":
+                self.matrix.beende_modus()
+            return
+        if self.zonenpanel.korridor_aktiv() is None:
+            self.zonenpanel.setze_anker_modus_aktiv(False)
+            self._log("Anker setzen: zuerst einen Korridor anlegen.", "warn")
+            return
+        if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
+            self.zonenpanel.setze_anker_modus_aktiv(False)
+            return
+        self.matrix.starte_anker_setzen(self._anker_geklickt)
 
-    def _merke_geraden_aenderung(self, beschreibung: str,
-                                 vorher: list[Grenzgerade]) -> None:
-        """Registriert eine Geraden-Aenderung (``vorher`` = Schatten-Kopien)."""
-        nachher = self._geraden_schatten
+    def _anker_geklickt(self, punkt):
+        """Klick im Anker-Modus: naehere Grenze des aktiven Korridors bei dieser
+        Frequenz auf das geklickte Feld setzen (Anker anlegen/ersetzen)."""
+        korridor = self.zonenpanel.korridor_aktiv()
+        if korridor is None:
+            return
+        b, f_ghz = float(punkt[0]), float(punkt[1])
+        f = f_ghz * 1e9
+        grenzen = korridor.grenzen(f)
+        if grenzen is None:
+            lo, hi = b - self.zonenpanel.bandbreite_T(), b + self.zonenpanel.bandbreite_T()
+        else:
+            lo, hi = grenzen
+            if abs(b - lo) <= abs(b - hi):
+                lo = b
+            else:
+                hi = b
+        if hi <= lo:
+            self._log("Anker: Grenzen würden sich kreuzen – nicht übernommen.", "warn")
+            return
+        vorher = self._korridor_schatten
+        toleranz = self._frequenz_toleranz()
+        korridor.anker_setzen(f, lo, hi, toleranz_hz=toleranz)
+        self._zeige_korridore()
+        self._merke_korridor_aenderung(f"Anker M{korridor.mode} gesetzt", vorher)
+        self._log(f"Anker M{korridor.mode} bei {f_ghz:.3f} GHz: {lo:.4f} – {hi:.4f} T.", "ok")
+        self._zeige_aktuellen()
+
+    def _frequenz_toleranz(self) -> float:
+        """Halber Frequenzschritt des Datensatzes (Anker bei derselben Frequenz ersetzen)."""
+        ds = self.stapel.datensatz if self.stapel is not None else self.datensatz_voll
+        if ds is None:
+            return 0.0
+        f = np.asarray(ds.frequenzen, dtype=float)
+        if f.size < 2:
+            return 0.0
+        return 0.5 * float(np.min(np.diff(np.sort(f))))
+
+    def _anker_gezogen(self, mode: int, index: int, seite: str, b: float):
+        """Anker im Farbplot gezogen (Objekt bereits mutiert): Undo + Panel syncen."""
+        vorher = self._korridor_schatten
+        self.zonenpanel.setze_korridore(self._korridore, self._korridor_statistik())
+        self._korridor_schatten = self._korridore_kopie()
+        self._merke_korridor_aenderung(f"Anker M{mode} verschoben", vorher)
+        self._zeige_aktuellen()
+
+    def _korridor_gewaehlt(self, mode: int):
+        """Zeile der Korridorliste gewaehlt: Linescan-Panel zeigt diese Mode."""
+        self._mode_aktiv = max(1, int(mode))
+        self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv)
+        self._zeige_aktuellen()
+
+    def _korridor_entfernen(self, mode: int):
+        korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
+        if korridor is None:
+            return
+        vorher = self._korridor_schatten
+        fits_vorher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
+                       if self.stapel is not None else {})
+        self._korridore.remove(korridor)
+        if self.stapel is not None and int(mode) >= 2:
+            self.stapel.mode_entfernen(int(mode))
+        self._mode_aktiv = 1
+        self.zonenpanel.setze_mode_aktiv(1)
+        self._zeige_korridore()
+        nachher = self._korridor_schatten
+        fits_nachher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
+                        if self.stapel is not None else {})
+        self._merke_aenderung(
+            f"Korridor M{mode} entfernt",
+            lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
+            lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
+        self._aktualisiere_overlay()
+        self._zeige_aktuellen()
+        self._auswertung_nachziehen()
+        self._log(f"Korridor M{mode} entfernt (samt Fits dieser Mode).", "info")
+
+    def _anker_entfernen(self, mode: int, index: int):
+        korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
+        if korridor is None or not (0 <= index < len(korridor.anker)):
+            return
+        vorher = self._korridor_schatten
+        korridor.anker_entfernen(index)
+        self._zeige_korridore()
+        self._merke_korridor_aenderung(f"Anker M{mode} entfernt", vorher)
+        self._zeige_aktuellen()
+
+    def _korridor_statistik(self) -> dict:
+        """``{mode: (n_gefittet, n_problematisch)}`` fuer die Korridorliste."""
+        st = self.stapel
+        if st is None:
+            return {}
+        stat = {}
+        for mode in [1] + [int(k.mode) for k in self._korridore]:
+            liste = st.ergebnisse_mode(mode)
+            n_fit = sum(1 for e in liste if e.gefittet)
+            n_prob = sum(1 for e in liste if e.gefittet and e.problematisch)
+            stat[mode] = (n_fit, n_prob)
+        return stat
+
+    def _zeige_korridore(self):
+        """Synchronisiert Korridor-Overlay (Farbplot), Panel-Liste und Schatten."""
+        self.zonenpanel.setze_korridore(self._korridore, self._korridor_statistik())
+        self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv,
+                                    anker_geaendert=self._anker_gezogen)
+        self._korridor_schatten = self._korridore_kopie()
+
+    def _merke_korridor_aenderung(self, beschreibung: str, vorher: list) -> None:
+        """Registriert eine Korridor-Aenderung (``vorher`` = Schatten-Kopien)."""
+        nachher = self._korridor_schatten
         self._merke_aenderung(beschreibung,
-                              lambda v=vorher: self._geraden_setzen(v),
-                              lambda n=nachher: self._geraden_setzen(n))
-        self._auswertung_nachziehen()   # Moden-Zuordnung haengt an den Baendern
+                              lambda v=vorher: self._korridore_setzen(v),
+                              lambda n=nachher: self._korridore_setzen(n))
+        self._auswertung_nachziehen()
 
-    def _gerade_geaendert(self, index: int, b1: float, f1_ghz: float,
-                          b2: float, f2_ghz: float):
-        """Endpunkt im Farbplot gezogen: Geometrie uebernehmen."""
-        if not (0 <= index < len(self._grenzgeraden)):
-            return
-        vorher = self._geraden_schatten
-        g = self._grenzgeraden[index]
-        g.b1, g.f1, g.b2, g.f2 = float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9
-        self.zonenpanel.setze_geraden(self._grenzgeraden)
-        self._geraden_schatten = self._geraden_kopie()
-        self._merke_geraden_aenderung("Grenzgerade verschoben", vorher)
-
-    def _gerade_seite(self, index: int):
-        """Gruene (Fit-)Seite der Geraden wechseln (Doppelklick/Panel)."""
-        if not (0 <= index < len(self._grenzgeraden)):
-            return
-        vorher = self._geraden_schatten
-        self._grenzgeraden[index].seite_wechseln()
-        self._zeige_geraden()
-        self._merke_geraden_aenderung("Grenzgerade: Seite gewechselt", vorher)
-        self._log("Grenzgerade: Seiten getauscht (grün = wird gefittet).", "info")
-
-    def _gerade_mode(self, index: int, mode: int):
-        """Gerade einer anderen Mode zuordnen (n_moden > 1: je Mode ein Band)."""
-        if not (0 <= index < len(self._grenzgeraden)):
-            return
-        vorher = self._geraden_schatten
-        self._grenzgeraden[index].mode = max(1, int(mode))
-        self._zeige_geraden()
-        self._merke_geraden_aenderung("Grenzgerade: Mode geändert", vorher)
-        self._log(f"Grenzgerade {index + 1} gehört jetzt zu Mode "
-                  f"{self._grenzgeraden[index].mode}.", "info")
-
-    def _gerade_entfernen(self, index: int):
-        if not (0 <= index < len(self._grenzgeraden)):
-            return
-        vorher = self._geraden_schatten
-        del self._grenzgeraden[index]
-        self._zeige_geraden()
-        self._merke_geraden_aenderung("Grenzgerade entfernt", vorher)
-        self._log("Grenzgerade entfernt.", "info")
+    def _korridor_fuer(self, mode: int):
+        return next((k for k in self._korridore if int(k.mode) == int(mode)), None)
 
     def _daten_bereich(self) -> tuple[float, float, float, float]:
         """(feld_min, feld_max, f_min_ghz, f_max_ghz) des Stapel-Datensatzes."""
@@ -1198,105 +1221,80 @@ class Hauptfenster(QtWidgets.QMainWindow):
         freq = freq or (f_min_ghz, f_max_ghz)
         return (feld[0], feld[1], freq[0], freq[1]), gemerkt
 
-    def _geraden_fit(self):
-        """Fitten des gruenen Bereichs aller Grenzgeraden (mit Optionen; auch ohne Auto-Fit)."""
+    def _korridor_fit(self, mode: int | None):
+        """Korridor(e) fitten: je Frequenz ein Einzelfit auf den Punkten des
+        Korridors (``mode``; ``None`` = alle Korridore nacheinander)."""
         if self.stapel is None:
-            self._log("Grenzgeraden-Fit: bitte zuerst eine TDMS-Datei laden.", "warn")
+            self._log("Korridor-Fit: bitte zuerst eine TDMS-Datei laden.", "warn")
             return
-        if not self._grenzgeraden:
-            self._log("Grenzgeraden-Fit: bitte zuerst eine Gerade einzeichnen.", "warn")
+        korridore = ([k for k in self._korridore if int(k.mode) == int(mode)]
+                     if mode is not None else list(self._korridore))
+        if not korridore:
+            self._log("Korridor-Fit: bitte zuerst einen Korridor anlegen.", "warn")
             return
         if self._job_laeuft or not self._mapping_vorhanden():
             return
         stapel = self.stapel
-        geraden = list(self._grenzgeraden)
-        # Modenzahl dieses Fits = Zahl der bisher eingezeichneten Baender (sukzessiv:
-        # Mode 1 allein -> Ein-Moden-Fit, mit Band 2 -> zwei Moden gleichzeitig).
-        n_eff = self.zonenpanel.n_moden_effektiv()
-        moden_modus = n_eff > 1
-        # Vorpruefung: schneiden sich die gruenen Seiten ueberhaupt irgendwo?
-        if zaehle_abgedeckt(stapel, geraden, n_moden=n_eff) == 0:
-            if stapel.n_moden == 1 and len(geraden) >= 3:
-                grund = ("„Resonanzen je Linescan“ steht auf 1, daher gehören alle Geraden zu "
-                         "Mode 1. Für mehrere Moden im Panel erhöhen – dann bekommt jedes "
-                         "weitere Band automatisch die nächste Mode.")
-            else:
-                grund = ("Die grünen Seiten der Geraden schneiden sich in keinem Linescan – "
-                         "Seite per Doppelklick auf die Linie tauschen oder „Band einzeichnen“ "
-                         "verwenden.")
-            text = "Grenzgeraden-Fit: kein Linescan im grünen Bereich. " + grund
+        abgedeckt = {k.mode: zaehle_korridor(stapel, k) for k in korridore}
+        if all(n == 0 for n in abgedeckt.values()):
+            text = "Korridor-Fit: der Korridor liegt an keiner Frequenz im Datenbereich."
             self._log(text, "warn")
             self.statusBar().showMessage(text)
-            self._dock_schmal_halten(self.zonen_dock, breite=300)
             return
         (b_von, b_bis, f_von_ghz, f_bis_ghz), gemerkt = self._geraden_bereich_vorgabe()
+        namen = ", ".join(f"M{k.mode}" for k in korridore)
         dialog = BereichsFitDialog(
             b_von, b_bis, f_von_ghz, f_bis_ghz,
-            modus_vorgabe=self._bereich_modus, breite_vorgabe=self._bereich_breite,
-            titel=f"Moden 1–{n_eff} fitten" if moden_modus else "Grünen Bereich fitten",
-            info_text=((f"{len(geraden)} Grenzgerade(n), Bänder für Mode 1–{n_eff}: jede "
-                        "Mode wird nur in ihrem Band gesucht, alle Moden werden gleichzeitig "
-                        "gefittet (Überlagerung berücksichtigt)."
-                        if moden_modus else
-                        f"{len(geraden)} Grenzgerade(n): Im GRÜNEN Bereich werden "
-                        "Fenstersuche und Fit ausgeführt; die rote Seite bleibt unangetastet.")
-                       + " Frequenz-/Feldbereich unten grenzt zusätzlich ein"
-                       + (" (vorbelegt: zuletzt benutzter Bereich)." if gemerkt else ".")),
-            daten_bereich=self._daten_bereich(),
-            n_moden=n_eff,
-            moden_hinweis=(f"aus den eingezeichneten Bändern: Mode 1–{n_eff}. Eine höhere "
-                           "Zahl fittet weitere Moden ohne Band (frei) mit."
-                           if stapel.n_moden > 1 else None),
-            parent=self)
+            modus_vorgabe=self._bereich_modus, breite_vorgabe=None,
+            titel=f"Korridor {namen} fitten",
+            info_text=(f"Korridor {namen}: je Frequenz ein Einzelfit nur auf den Messpunkten "
+                       f"im Korridor ({', '.join(f'M{m}: {n} Frequenzen' for m, n in abgedeckt.items())})."),
+            daten_bereich=self._daten_bereich(), mit_feld=False, mit_breite=False,
+            schritt_vorgabe=self._bereich_schritt, parent=self)
         if not dialog.exec():
-            self._log("Grenzgeraden-Fit abgebrochen.", "info")
+            self._log("Korridor-Fit abgebrochen.", "info")
             return
         modus = dialog.modus()
-        breite = dialog.breite_punkte()
         f_von, f_bis = dialog.frequenz_bereich()
-        b_von, b_bis = dialog.feld_bereich()
-        self._bereich_modus, self._bereich_breite = modus, breite
-        self._bereich_frequenz, self._bereich_feld = (f_von, f_bis), (b_von, b_bis)
-        n_fit = max(1, int(dialog.n_moden()))
-        if n_fit > self._physik.n_moden:
-            self._setze_n_moden(n_fit)   # nur anheben - die Einstellung ist die Obergrenze
-        if n_fit > 1 and moden_modus:
-            moden = sorted({min(g.mode, n_fit) for g in geraden})
-            self._log(f"Grenzgeraden-Fit mit {n_fit} Resonanzen: Bänder für Mode {moden}"
-                      + (" (weitere Moden frei)" if n_fit > n_eff else "")
-                      + " – alle Moden gleichzeitig.", "info")
-        elif n_fit > 1:
-            self._log(f"Grenzgeraden-Fit mit {n_fit} Resonanzen im grünen Bereich (ohne "
-                      "Bänder je Mode – Startwerte automatisch).", "info")
-        # Undo-Schnappschuss ueber alle Fits (jede Frequenz kann betroffen sein).
+        schritt = dialog.schritt()
+        self._bereich_modus = modus
+        self._bereich_frequenz = (f_von, f_bis)
+        self._bereich_schritt = schritt
         fits_vorher = self._fit_zustand(range(len(stapel.ergebnisse)))
 
         def aufgabe(melde):
-            def fortschritt(k, n, erg):
-                melde(k, n, self._fortschritt_text(k, n, erg),
-                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
-            return fitte_geraden_bereich(stapel, geraden, modus=modus,
-                                         breite_faktor=self._physik.breite_faktor,
-                                         breite_punkte=breite,
-                                         fortschritt=fortschritt,
-                                         frequenz_min=f_von, frequenz_max=f_bis,
-                                         feld_min=b_von, feld_max=b_bis,
-                                         abbruch=melde.abgebrochen,
-                                         n_moden=n_fit)
+            neu_alle, ueber_alle = [], []
+            for nr, korridor in enumerate(korridore):
+                def fortschritt(k, n, erg, _m=korridor.mode):
+                    melde(k, n, self._fortschritt_text(k, n, erg),
+                          daten=(erg.frequenz, erg.B_res, F.status_von(erg)),
+                          phase=f"Korridor M{_m}")
+                neu, ueber = fitte_korridor(stapel, korridor, modus=modus,
+                                            fortschritt=fortschritt,
+                                            frequenz_min=f_von, frequenz_max=f_bis,
+                                            abbruch=melde.abgebrochen, schritt=schritt)
+                neu_alle.extend(neu)
+                ueber_alle.extend(ueber)
+                if melde.abgebrochen():
+                    break
+            return neu_alle, ueber_alle
 
         def bei_fertig(res):
             neu, uebersprungen = res
-            self._nach_nachfit(neu, fits_vorher, "Grenzgeraden-Fit")
-            probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
-            breite_text = f", Breite {breite} Punkte" if breite else ""
-            text = (f"Grenzgeraden-Fit ({len(geraden)} Gerade(n), "
-                    f"{f_von/1e9:.2f}–{f_bis/1e9:.2f} GHz{breite_text}): "
-                    f"{len(neu)} gefittet, {len(probleme)} problematisch, "
-                    f"{len(uebersprungen)} übersprungen (rote Seite/außerhalb/ohne Daten).")
+            self._nach_nachfit(neu, fits_vorher, f"Korridor-Fit {namen}")
+            probleme = 0
+            for korridor in korridore:
+                liste = stapel.ergebnisse_mode(korridor.mode)
+                probleme += sum(1 for i in set(neu) if liste[i].gefittet and liste[i].problematisch)
+            jumper = f", jede {schritt}. Frequenz" if schritt > 1 else ""
+            text = (f"Korridor-Fit {namen} ({f_von/1e9:.2f}–{f_bis/1e9:.2f} GHz{jumper}): "
+                    f"{len(neu)} gefittet, {probleme} problematisch, "
+                    f"{len(set(uebersprungen))} übersprungen.")
             self._log(text, "warn" if probleme else "ok")
             self.statusBar().showMessage(text)
+            self._zeige_korridore()
 
-        self._starte_job(aufgabe, bei_fertig, "Grenzgeraden-Fit läuft …", live="ergaenzen")
+        self._starte_job(aufgabe, bei_fertig, f"Korridor-Fit {namen} läuft …", live="ergaenzen")
 
     @staticmethod
     def _fortschritt_text(k, n, erg) -> str:
@@ -1393,12 +1391,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
             else "Wiederholen")
 
     # Schnappschuss-Helfer -----------------------------------------------------
-    def _geraden_kopie(self) -> list[Grenzgerade]:
-        return [replace(g) for g in self._grenzgeraden]
+    def _korridore_kopie(self) -> list[Korridor]:
+        return [k.kopie() for k in self._korridore]
 
-    def _geraden_setzen(self, geraden: list[Grenzgerade]) -> None:
-        self._grenzgeraden = [replace(g) for g in geraden]
-        self._zeige_geraden()
+    def _korridore_setzen(self, korridore: list[Korridor]) -> None:
+        self._korridore = [k.kopie() for k in korridore]
+        if self._mode_aktiv != 1 and self._korridor_fuer(self._mode_aktiv) is None:
+            self._mode_aktiv = 1
+            self.zonenpanel.setze_mode_aktiv(1)
+        self._zeige_korridore()
         self._auswertung_nachziehen()
 
     def _auswertung_nachziehen(self) -> None:
@@ -1408,20 +1409,24 @@ class Hauptfenster(QtWidgets.QMainWindow):
             fenster.aktualisiere()
 
     def _fit_zustand(self, indizes) -> dict:
-        """Referenz-Schnappschuss der Fits an ``indizes`` (Fenster/Ergebnis/Beschnitt)."""
+        """Referenz-Schnappschuss der Fits an ``indizes`` (Fenster/Ergebnis/Beschnitt
+        der Mode 1 plus Ergebnisse aller weiteren Moden)."""
         st = self.stapel
-        return {int(i): (st.fenster[i], st.ergebnisse[i], st.zugeschnitten[i])
+        return {int(i): (st.fenster[i], st.ergebnisse[i], st.zugeschnitten[i],
+                         {k: liste[i] for k, liste in st.nebenmoden.items() if i < len(liste)})
                 for i in indizes if 0 <= i < len(st.ergebnisse)}
 
     def _fit_zustand_setzen(self, zustand: dict) -> None:
         st = self.stapel
         if st is None:
             return
-        for i, (fenster, ergebnis, beschnitt) in zustand.items():
+        for i, (fenster, ergebnis, beschnitt, moden) in zustand.items():
             if i < len(st.ergebnisse):
                 st.fenster[i] = fenster
                 st.ergebnisse[i] = ergebnis
                 st.zugeschnitten[i] = beschnitt
+                for k, erg_k in moden.items():
+                    st.ergebnisse_mode(k)[i] = erg_k
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
         if self._auswertungsfenster is not None:
@@ -1460,7 +1465,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _setze_bedienelemente(self, an: bool) -> None:
         """Sperrt/entsperrt Aktionen und Navigation waehrend eines Hintergrund-Jobs."""
-        for aktion in (self.akt_laden, self.akt_fit, self.akt_bereich, self.akt_gerade,
+        for aktion in (self.akt_laden, self.akt_fit, self.akt_bereich, self.akt_korridor,
                        self.akt_zone, self.akt_ausreisser, self.akt_kittel, self.akt_tdms,
                        self.akt_xlsx, self.akt_csv, self.akt_alles_speichern,
                        self.akt_kittel_export, self.akt_farbplot_bild, self.akt_matrix_csv,
@@ -1470,7 +1475,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                        self.akt_einst_laden, self.akt_einst_reset):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
-                      self.btn_naechstes_problem, self.btn_hauptmode, self.bewertung_combo):
+                      self.btn_naechstes_problem, self.bewertung_combo):
             knopf.setEnabled(an)
 
     # --- Job-Steuerung (Hintergrund-Thread) -------------------------------
@@ -1825,9 +1830,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.stapel = self._leerer_stapel(datensatz)
         self.aktueller_index = 0
         self.zonenpanel.setze_zonen([])
-        self._grenzgeraden = []
-        self._geraden_schatten = []
-        self.zonenpanel.setze_geraden([])
+        self._korridore = []
+        self._korridor_schatten = []
+        self._mode_aktiv = 1
+        self.zonenpanel.setze_mode_aktiv(1)
+        self._zeige_korridore()
         self._bereich_frequenz = self._bereich_feld = None  # datensatzbezogen
         self._undo_verwerfen()  # alte Zustaende gehoeren zum alten Datensatz
         self.linescan_dock.setVisible(False)
@@ -1841,7 +1848,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         p = self._physik
         return leerer_stapel(datensatz, gamma=p.gamma, r2_schwelle=p.r2_schwelle,
                              alpha_max=p.alpha_max, nachfenster_faktor=p.nachfenster_faktor,
-                             alpha_plausibel=p.alpha_plausibel_wirksam, n_moden=p.n_moden,
+                             alpha_plausibel=p.alpha_plausibel_wirksam,
                              nachfit_bestaetigen=p.nachfit_bestaetigen,
                              breite_faktor=p.breite_faktor)
 
@@ -1855,69 +1862,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "'TDMS laden' öffnen und die Kanäle den Rollen zuordnen.")
         return False
 
-    def _frage_auswahl(self, vorbelegung=None, roi_bereich=None, moden_vorgabe=None):
+    def _frage_auswahl(self):
         """Zeigt vor der Auswertung den Jumper-/Bereichs-Dialog (Frequenz/Feld von … bis …).
 
-        Liefert die :class:`Auswertungsauswahl`, ``None`` (abgebrochen) oder eine
-        :class:`RoiAnfrage`, wenn der Nutzer zuerst eine ROI im Farbplot aufziehen
-        will. ``roi_bereich`` = aufgezogenes Rechteck (Vorbelegung), ``vorbelegung``
-        = Eingaben vor dem ROI-Umweg, ``moden_vorgabe`` = ``(n_moden, zweistufig)``.
+        Liefert die :class:`Auswertungsauswahl` oder ``None`` (abgebrochen).
         """
-        n_moden, zweistufig = (moden_vorgabe if moden_vorgabe is not None
-                               else (self._physik.n_moden, self._physik.auto_fit_zweistufig))
-        dialog = AuswahlDialog(self.datensatz_voll,
-                               vorbelegung if vorbelegung is not None else self._letzte_auswahl,
-                               parent=self, n_moden=n_moden, zweistufig=zweistufig,
-                               zoom_bereich=self.matrix.sichtbarer_bereich(),
-                               roi_moeglich=True, roi_bereich=roi_bereich)
-        code = dialog.exec()
-        if code == AuswahlDialog.ROI_AUFZIEHEN:
-            return RoiAnfrage(dialog.zwischenstand(), dialog.n_moden(), dialog.zweistufig())
-        if not code:
+        dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self,
+                               zoom_bereich=self.matrix.sichtbarer_bereich())
+        if not dialog.exec():
             return None
         auswahl = dialog.auswahl()
         self._letzte_auswahl = auswahl
-        self._setze_n_moden(dialog.n_moden())
-        if dialog.zweistufig() != self._physik.auto_fit_zweistufig:
-            self._physik = replace(self._physik, auto_fit_zweistufig=dialog.zweistufig())
-            self._einstellungen.physik = self._physik.als_dict()
-        if dialog.n_moden() > 1:
-            self._log(f"Auto-Fit mit {dialog.n_moden()} Resonanzen je Linescan"
-                      + (" – zweistufig (erst klassisch, dann Moden ergänzen)."
-                         if dialog.zweistufig() else " (simultan)."), "info")
         if not auswahl.ist_neutral:
             self._log("Auswertungsauswahl: "
                       + auswahl.beschreibung(self.datensatz_voll), "info")
         return auswahl
-
-    def _roi_im_farbplot(self, fertig, abgebrochen) -> None:
-        """ROI fuer den Auto-Fit: Rechteck im Farbplot aufziehen; danach
-        ``fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)``, bei Esc ``abgebrochen()``."""
-        if not self._modus_start_erlaubt():
-            abgebrochen()
-            return
-        self._roi_rueckruf = (fertig, abgebrochen)
-
-        def rechteck(feld_min, feld_max, f_min_ghz, f_max_ghz):
-            self._roi_rueckruf = None
-            self._log(f"ROI übernommen: {feld_min:.3f}–{feld_max:.3f} T, "
-                      f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz.", "ok")
-            fertig(feld_min, feld_max, f_min_ghz, f_max_ghz)
-
-        self.matrix.starte_bereichs_fit(rechteck)
-        text = ("ROI für den Auto-Fit: Rechteck (Feld × Frequenz) im Farbplot aufziehen – "
-                "danach öffnet sich der Auto-Fit-Dialog wieder (Esc bricht ab).")
-        self._log(text, "info")
-        self.statusBar().showMessage(text)
-
-    def _roi_abbruch_pruefen(self) -> None:
-        """Rechteck-Modus endete ohne Rechteck (Esc): Dialog ohne ROI wieder oeffnen."""
-        rueckruf = self._roi_rueckruf
-        if rueckruf is None:
-            return
-        self._roi_rueckruf = None
-        self._log("ROI abgebrochen – Auto-Fit-Dialog ohne Rechteck.", "info")
-        rueckruf[1]()
 
     # --- Physikalische Parameter --------------------------------------------
     def _physik_dialog(self):
@@ -1931,9 +1890,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Setzt neue Parameter und rechnet die Kittel/LLG-Auswertung neu."""
         self._physik = parameter
         self._einstellungen.physik = parameter.als_dict()
-        self.spin_moden.blockSignals(True)
-        self.spin_moden.setValue(max(1, int(parameter.n_moden)))
-        self.spin_moden.blockSignals(False)
         if not leise:
             self._log("Physikalische Parameter: " + parameter.beschreibung(), "ok")
         if self.stapel is not None:
@@ -1945,7 +1901,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
             st.alpha_max = parameter.alpha_max
             st.alpha_plausibel = parameter.alpha_plausibel_wirksam
             st.nachfenster_faktor = parameter.nachfenster_faktor
-            st.n_moden = max(1, int(parameter.n_moden))
             st.nachfit_bestaetigen = parameter.nachfit_bestaetigen
             if not leise and st.index_gefittet():
                 self._log("Hinweis: bestehende Einzelfits bleiben unverändert – "
@@ -1954,21 +1909,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
         self._autosicherung_anstossen()
-
-    def _setze_n_moden(self, n: int) -> None:
-        """Modenanzahl aus einem Dialog uebernehmen (Stapel + Parameter + Spin)."""
-        n = max(1, int(n))
-        if n != self._physik.n_moden:
-            self._physik = replace(self._physik, n_moden=n)
-            self._einstellungen.physik = self._physik.als_dict()
-            self._log(f"Resonanzen je Linescan: {n}.", "info")
-        if self.stapel is not None:
-            self.stapel.n_moden = n
-        self.spin_moden.blockSignals(True)
-        self.spin_moden.setValue(n)
-        self.spin_moden.blockSignals(False)
-        self.zonenpanel.setze_n_moden(n)
-        self._auswertung_nachziehen()
 
     # --- Auto-Fit --------------------------------------------------------------
     def _nach_autofit(self, stapel: StapelErgebnis) -> None:
@@ -1979,6 +1919,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Neuer Stapel: Ausschlusszonen beginnen leer.
         self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
         self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
+        self._zeige_korridore()
         self.aktueller_index = 0
         # Fuer den Korrekturlauf: NUR das Linescan-Panel einblenden (schmal
         # geklemmt, der Farbplot bleibt das groesste Element).
@@ -1989,32 +1930,22 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._autosicherung_anstossen()
 
     def _auto_fit(self):
-        self._auto_fit_fortsetzen()
-
-    def _auto_fit_fortsetzen(self, vorbelegung=None, roi_bereich=None, moden_vorgabe=None):
-        """Auto-Fit mit Dialog; ``roi_bereich``/``vorbelegung``/``moden_vorgabe``
-        kommen aus dem ROI-Umweg (Rechteck im Farbplot, siehe :meth:`_roi_im_farbplot`)."""
+        """Auto-Fit mit Dialog (Bereich, Jumper). Mode 1 mit Korridor: Fit nur im
+        Korridor; sonst AutoWindow-Fenstersuche wie in der validierten Basis."""
         if self.stapel is None or self.datensatz_voll is None:
             QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
             return
         if not self._mapping_vorhanden():
             return
         datensatz = self.datensatz_voll
-        auswahl = self._frage_auswahl(vorbelegung=vorbelegung, roi_bereich=roi_bereich,
-                                      moden_vorgabe=moden_vorgabe)
+        auswahl = self._frage_auswahl()
         if auswahl is None:
             return
-        if isinstance(auswahl, RoiAnfrage):
-            anfrage = auswahl
-            self._roi_im_farbplot(
-                fertig=lambda b0, b1, f0, f1: self._auto_fit_fortsetzen(
-                    vorbelegung=anfrage.auswahl, roi_bereich=(b0, b1, f0, f1),
-                    moden_vorgabe=(anfrage.n_moden, anfrage.zweistufig)),
-                abgebrochen=lambda: self._auto_fit_fortsetzen(
-                    vorbelegung=anfrage.auswahl,
-                    moden_vorgabe=(anfrage.n_moden, anfrage.zweistufig)))
-            return
         physik = self._physik
+        korridor_m1 = self._korridor_fuer(1)
+        if korridor_m1 is not None:
+            self._log("Auto-Fit: Mode 1 hat einen Korridor – gefittet wird nur darin "
+                      "(keine Fenstersuche).", "info")
 
         def aufgabe(melde):
             n = len(datensatz.linescans)
@@ -2028,14 +1959,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 melde(i + 1, total, self._fortschritt_text(i + 1, total, erg) if zeige else "",
                       daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
 
-            def fortschritt_moden(i, total, erg):
-                zeige = (i == 0) or (i + 1 == total) or ((i + 1) % schritt == 0)
-                n_m = len(erg.moden) if erg.moden else 1
-                melde(i + 1, total,
-                      f"  {i + 1}/{total}  f={erg.frequenz / 1e9:6.2f} GHz  {n_m} Resonanz(en)"
-                      if zeige else "",
-                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Moden ergänzen")
-
             return fitte_alle(datensatz, gamma=physik.gamma,
                               breite_faktor=physik.breite_faktor,
                               r2_schwelle=physik.r2_schwelle,
@@ -2044,22 +1967,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               alpha_max=physik.alpha_max,
                               nachfenster_faktor=physik.nachfenster_faktor,
                               alpha_plausibel=physik.alpha_plausibel_wirksam,
-                              n_moden=physik.n_moden,
                               nachfit_bestaetigen=physik.nachfit_bestaetigen,
                               fortschritt_fenster=fortschritt_fenster,
                               abbruch=melde.abgebrochen,
-                              zweistufig=physik.auto_fit_zweistufig,
-                              fortschritt_moden=fortschritt_moden)
+                              korridor=korridor_m1)
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
             n_fit = len(stapel.index_gefittet())
             n_prob = len(stapel.index_problematisch())
             art = "ok" if n_prob == 0 else "warn"
-            if stapel.zweistufig:
-                n_mehr = sum(1 for e in stapel.ergebnisse if e.moden and len(e.moden) > 1)
-                self._log(f"Zweistufig: bei {n_mehr} von {n_fit} Linescans weitere Resonanzen "
-                          f"ergänzt (Rest: klassisches Ergebnis).", "info")
+            if len(self._korridore) > 1:
+                self._log("Weitere Moden: Korridore sind erhalten, ihre Fits bitte über "
+                          "„Korridor fitten …“ neu rechnen.", "info")
             if n_fit < len(stapel.ergebnisse):
                 self._log(f"Auto-Fit abgebrochen: {n_fit} von {len(stapel.ergebnisse)} "
                           f"Frequenzen gefittet, {n_prob} problematisch – der Rest bleibt "
@@ -2082,8 +2002,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dialog = BereichsFitDialog(feld_min, feld_max, f_min_ghz, f_max_ghz,
                                    modus_vorgabe=self._bereich_modus,
                                    breite_vorgabe=self._bereich_breite,
-                                   daten_bereich=self._daten_bereich(),
-                                   n_moden=stapel.n_moden, parent=self)
+                                   daten_bereich=self._daten_bereich(), parent=self)
         if not dialog.exec():
             self._log("Bereichs-Fit abgebrochen.", "info")
             return
@@ -2092,7 +2011,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
         f_min, f_max = dialog.frequenz_bereich()
         feld_min, feld_max = dialog.feld_bereich()
         self._bereich_modus, self._bereich_breite = modus, breite
-        self._setze_n_moden(dialog.n_moden())
         betroffen_vorab = [int(i) for i in np.flatnonzero(
             (stapel.datensatz.frequenzen >= f_min)
             & (stapel.datensatz.frequenzen <= f_max))]
@@ -2139,9 +2057,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
                   f"Status: {F.STATUS_TEXTE.get(status, status)}"]
         if e.problem_gruende and status not in ("gut", "bestaetigt"):
             zeilen.append("Gründe: " + ", ".join(e.problem_gruende))
-        if e.n_moden > 1:
-            weitere = ", ".join(f"{m['B_res']:.4f} T / {m['dH']*1e3:.1f} mT" for m in e.moden[1:])
-            zeilen.append(f"{e.n_moden} Moden; weitere: {weitere}")
+        for k in sorted(self.stapel.nebenmoden):
+            ek = self.stapel.nebenmoden[k][i]
+            if ek.gefittet:
+                zeilen.append(f"M{k}: B_res = {ek.B_res:.4f} T, µ₀ΔH = {ek.dH_mT:.2f} mT")
         return "<br>".join(zeilen)
 
     def _aktualisiere_overlay(self):
@@ -2155,14 +2074,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         ausgeschlossen[gueltige] = True
         status = self._status_liste()
         info = [self._tooltip_text(i, s) for i, s in enumerate(status)]
-        max_moden = max((e.n_moden for e in st.ergebnisse), default=1)
         nebenmoden = None
-        if max_moden > 1:
-            nebenmoden = []
-            for k in range(1, max_moden):
-                nebenmoden.append(np.array([
-                    e.moden[k]["B_res"] if (e.gefittet and len(e.moden) > k) else np.nan
-                    for e in st.ergebnisse], dtype=float))
+        if st.nebenmoden:
+            nebenmoden = [np.array([e.B_res if e.gefittet else np.nan for e in liste], dtype=float)
+                          for k, liste in sorted(st.nebenmoden.items())]
         self.matrix.aktualisiere_resonanz(st.datensatz.frequenzen, bres, problem,
                                           ausgeschlossen, status=status, info=info,
                                           nebenmoden=nebenmoden)
@@ -2174,9 +2089,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         i = int(np.clip(self.aktueller_index, 0, len(self.stapel.ergebnisse) - 1))
         self.aktueller_index = i
         voll = self.stapel.datensatz.linescans[i]
-        unten, oben = self.stapel.fenster[i]
-        e = self.stapel.ergebnisse[i]
-        status = F.status_von(e, ignoriert=self.stapel.ist_ausreisser(i))
+        mode = self._mode_aktiv
+        e = self.stapel.ergebnisse_mode(mode)[i]
+        unten, oben = self._fenster_der_mode(i, mode, e)
+        self.mode_label.setText(f"M{mode}")
+        status = F.status_von(e, ignoriert=self.stapel.ist_ausreisser(i)
+                              or self.stapel.ist_ausreisser_mode(i, mode))
         self.fitansicht.zeige(voll, unten, oben, e, status=status)
         # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
         # enthalten als die angezeigte Matrix.
@@ -2186,7 +2104,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.status_label.setObjectName(f"status_{status}")
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
-        self.btn_hauptmode.setEnabled(e.gefittet and e.n_moden > 1)
         # Auswahlliste auf den wirksamen Zustand stellen (ohne Rueckruf).
         art = "ignorieren" if status == "ignoriert" and self.stapel.ist_ausreisser(i) else e.bewertung
         self._bewertung_blockiert = True
@@ -2207,6 +2124,22 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 f"{e.problem_text}")
         self.label_info.setText(text)
         self.statusBar().showMessage(text)
+
+    def _fenster_der_mode(self, i: int, mode: int, e) -> tuple[float, float]:
+        """Fenster der angezeigten Mode: Mode 1 = Stapelfenster; sonst das Fenster
+        des Ergebnisses, davor der Korridor bei dieser Frequenz, sonst Stapelfenster."""
+        st = self.stapel
+        if mode == 1:
+            return st.fenster[i]
+        if e.gefittet and np.isfinite(e.B_fenster_min) and np.isfinite(e.B_fenster_max):
+            return float(e.B_fenster_min), float(e.B_fenster_max)
+        korridor = self._korridor_fuer(mode)
+        ls = st.datensatz.linescans[i]
+        if korridor is not None and ls.feld.size:
+            g = korridor.grenzen_im_bereich(ls.frequenz, float(ls.feld.min()), float(ls.feld.max()))
+            if g is not None:
+                return g
+        return st.fenster[i]
 
     def _navigiere(self, schritt: int):
         if not self.stapel or not self.stapel.ergebnisse:
@@ -2249,8 +2182,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not st or not st.ergebnisse or self._job_laeuft:
             return
         i = self.aktueller_index
-        e = st.ergebnisse[i]
+        mode = self._mode_aktiv
+        e = st.ergebnisse_mode(mode)[i]
         if art == "ignorieren":
+            if mode != 1:
+                if st.ist_ausreisser_mode(i, mode):
+                    self._ausreisser_mode_wieder_aufnehmen([(i, mode)])
+                elif e.gefittet:
+                    self._ausreisser_mode_gewaehlt([(i, mode)])
+                self._zeige_aktuellen()
+                return
             if st.ist_ausreisser(i):
                 self._ausreisser_wieder_aufnehmen([i])
             else:
@@ -2263,10 +2204,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not e.gefittet:
             self._log("Bewertung: diese Frequenz ist noch nicht gefittet.", "warn")
             return
-        if st.ist_ausreisser(i):
+        if mode == 1 and st.ist_ausreisser(i):
             self._ausreisser_wieder_aufnehmen([i])
         vorher = self._fit_zustand([i])
-        neu = st.bewerte(i, art)
+        neu = st.bewerte(i, art, mode=mode)
         nachher = self._fit_zustand([i])
         self._merke_aenderung(
             f"Bewertung „{BEWERTUNG_TEXTE.get(neu.bewertung, art)}“ (f={e.frequenz/1e9:.2f} GHz)",
@@ -2301,25 +2242,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._auswertungsfenster.aktualisiere()
         self._log(f"{len(indizes)} Bewertung(en) auf automatisch zurückgesetzt.", "ok")
 
-    def _hauptmode_wechseln(self) -> None:
-        st = self.stapel
-        if not st or not st.ergebnisse:
-            return
-        i = self.aktueller_index
-        e = st.ergebnisse[i]
-        if not e.gefittet or e.n_moden < 2:
-            return
-        vorher = self._fit_zustand([i])
-        st.ergebnisse[i] = hauptmode_wechseln(e, 1)
-        nachher = self._fit_zustand([i])
-        self._merke_aenderung(f"Hauptmode gewechselt (f={e.frequenz/1e9:.2f} GHz)",
-                              lambda: self._fit_zustand_setzen(vorher),
-                              lambda: self._fit_zustand_setzen(nachher))
-        self._aktualisiere_overlay()
-        self._zeige_aktuellen()
-        if self._auswertungsfenster is not None:
-            self._auswertungsfenster.aktualisiere()
-
     # --- Nachfitten einzelner Frequenzen ------------------------------------------
     def _grenzen_geaendert(self, unten: float, oben: float):
         """Callback aus dem Linescan-Panel: neue Bandgrenzen -> sofort neu fitten."""
@@ -2327,9 +2249,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         i = self.aktueller_index
         fits_vorher = self._fit_zustand([i])
-        erg = _fitte_neu_mit_nachfenster(self.stapel, i, unten, oben,
-                                         n_moden=int(self.spin_moden.value()),
-                                         bestaetigen=None)
+        erg = self._nachfit_aktuelle_mode(i, unten, oben)
+        if erg is None:
+            return
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
             f"Grenzen gezogen (f={erg.frequenz/1e9:.2f} GHz)",
@@ -2346,6 +2268,32 @@ class Hauptfenster(QtWidgets.QMainWindow):
                   "warn" if erg.problematisch else "ok")
         self._warne_fenster_zu_breit(i)
 
+    def _nachfit_aktuelle_mode(self, i: int, unten: float, oben: float):
+        """Einzelfrequenz-Nachfit der angezeigten Mode mit Fenster ``[unten, oben]``.
+
+        Hat die Mode einen Korridor, wird das Fenster als Anker bei dieser Frequenz
+        in den Korridor uebernommen (Grenzen ziehen = Korridor nachfuehren) und im
+        Korridor gefittet; sonst (Mode 1 ohne Korridor) klassischer Nachfit mit
+        Nachfenster-Durchgang im gruenen Fenster.
+        """
+        st = self.stapel
+        mode = self._mode_aktiv
+        korridor = self._korridor_fuer(mode)
+        if korridor is None and mode != 1:
+            self._log(f"Mode {mode}: kein Korridor – bitte zuerst einen Korridor anlegen.", "warn")
+            return None
+        if korridor is not None:
+            vorher = self._korridor_schatten
+            f = st.datensatz.linescans[i].frequenz
+            korridor.anker_setzen(f, unten, oben, toleranz_hz=self._frequenz_toleranz())
+            self._zeige_korridore()
+            self._merke_korridor_aenderung(f"Anker M{mode} aus Grenzen", vorher)
+            erg = fitte_mode(st, i, korridor, bestaetigen=None)
+            if erg is None:
+                self._log("Korridor bei dieser Frequenz leer.", "warn")
+            return erg
+        return _fitte_neu_mit_nachfenster(st, i, unten, oben, bestaetigen=None)
+
     def _warne_fenster_zu_breit(self, i: int) -> None:
         """Ein Fenster ueber (fast) den ganzen Sweep ueberschaetzt µ₀ΔH systematisch."""
         if not self.stapel:
@@ -2361,11 +2309,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not self.stapel or not self.stapel.ergebnisse:
             return
         i = self.aktueller_index
-        unten, oben = self.stapel.fenster[i]
+        mode = self._mode_aktiv
+        unten, oben = self._fenster_der_mode(i, mode, self.stapel.ergebnisse_mode(mode)[i])
         fits_vorher = self._fit_zustand([i])
-        erg = _fitte_neu_mit_nachfenster(self.stapel, i, unten, oben,
-                                         n_moden=int(self.spin_moden.value()),
-                                         bestaetigen=None)
+        erg = self._nachfit_aktuelle_mode(i, unten, oben)
+        if erg is None:
+            return
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
             f"Nochmal gefittet (f={erg.frequenz/1e9:.2f} GHz)",
@@ -2386,7 +2335,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 ausreisser_rueckgaengig=self._rueckgaengig,
                 geometrie=self._physik.geometrie,
                 hole_parameter=lambda: self._physik,
-                hole_geraden=lambda: self._grenzgeraden,
                 ausreisser_mode_markieren=self._ausreisser_mode_gewaehlt,
                 parent=self)
             self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
@@ -2464,30 +2412,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         werte["verarbeitung"] = self.verarbeitung.kette().beschreibung()
         return werte
 
-    def _moden_zuordnung(self):
-        """Zweig-Zuordnung der Resonanzen (Baender der Grenzgeraden, sonst Feldordnung)."""
-        st = self.stapel
-        try:
-            bereich = st.datensatz.feld_bereich()
-        except Exception:
-            bereich = None
-        return zuordnung_moden(st.ergebnisse, self._grenzgeraden, st.n_moden, feld_bereich=bereich)
-
     def _global_parameter_moden(self) -> dict:
-        """Kittel/LLG je Mode (nur bei mehreren Resonanzen) fuer das Blatt 'Global':
+        """Kittel/LLG je Mode (nur bei mehreren Moden) fuer das Blatt 'Global':
         ``mode<k>_kittel_*``, ``mode<k>_llg_*``, ``mode<k>_n_punkte``."""
         st = self.stapel
         werte: dict = {}
-        if st is None or max_moden(st.ergebnisse) <= 1:
+        if st is None or len(st.moden_vorhanden()) <= 1:
             return werte
         p = self._physik
         try:
-            zuordnung = self._moden_zuordnung()
-            werte["moden_zuordnung"] = ("Moden-Baender (Grenzgeraden)" if zuordnung.regel == "band"
-                                       else "aufsteigend nach Resonanzfeld")
             reihen = auswertung_je_mode(
-                st.ergebnisse, range(1, zuordnung.n_moden + 1), zuordnung, st.ausreisser,
-                st.ausreisser_moden, geometrie=p.geometrie, gamma_fest=p.gamma_fest,
+                st, st.moden_vorhanden(), geometrie=p.geometrie, gamma_fest=p.gamma_fest,
                 gamma_start=p.gamma, r2_min=p.r2_min, gewichtet=p.gewichtet)
             for k, reihe in reihen.items():
                 werte[f"mode{k}_n_punkte"] = reihe.n
@@ -2510,25 +2445,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
             einst.append({"Groesse": "auswertungsauswahl",
                           "Wert": str(st.datensatz.meta.get("auswertungsauswahl"))})
         zonen = [{"Typ": "Ausschlusszone", **z.als_dict()} for z in (st.ausschlusszonen if st else [])]
-        zonen += [{"Typ": "Grenzgerade", "b1_T": g.b1, "f1_Hz": g.f1, "b2_T": g.b2, "f2_Hz": g.f2,
-                   "gruen_positiv": g.gruen_positiv} for g in self._grenzgeraden]
+        zonen += [{"Typ": "Korridor", "mode": k.mode, "f_Hz": a.f, "b_links_T": a.b_links,
+                   "b_rechts_T": a.b_rechts} for k in self._korridore for a in k.anker]
         ausreisser = [{"index": i, "frequenz_Hz": st.ergebnisse[i].frequenz,
                        "B_res_T": st.ergebnisse[i].B_res}
                       for i in (st.ausreisser if st else []) if i < len(st.ergebnisse)]
         if st is not None and st.ausreisser_moden:
-            zuordnung = self._moden_zuordnung()
             for i, k in st.ausreisser_moden:
                 if i >= len(st.ergebnisse):
                     continue
-                e = st.ergebnisse[i]
-                pos = zuordnung.position(i, k)
-                b = (e.moden[pos]["B_res"] if (pos is not None and e.moden and pos < len(e.moden))
-                     else np.nan)
+                e = st.ergebnisse_mode(int(k))[i]
                 ausreisser.append({"index": i, "mode": int(k), "frequenz_Hz": e.frequenz,
-                                   "B_res_T": b})
+                                   "B_res_T": e.B_res if e.gefittet else np.nan})
         return {
             "Einstellungen": pd.DataFrame(einst),
-            "Zonen_Geraden": pd.DataFrame(zonen) if zonen else pd.DataFrame(columns=["Typ"]),
+            "Zonen_Korridore": pd.DataFrame(zonen) if zonen else pd.DataFrame(columns=["Typ"]),
             "Ausreisser": pd.DataFrame(ausreisser) if ausreisser else pd.DataFrame(columns=["index"]),
         }
 
@@ -2551,7 +2482,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                              nur_gefittete=bool(opt.get("nur_gefittete", True)),
                              verwendet=self._kittel_indizes(),
                              zusatzblaetter=self._zusatzblaetter() if opt.get("zusatzblaetter", True) else None,
-                             zugeschnitten=self.stapel.zugeschnitten)
+                             zugeschnitten=self.stapel.zugeschnitten,
+                             nebenmoden=self.stapel.nebenmoden)
         self.statusBar().showMessage(f"Excel gespeichert: {pfad}")
         self._log(f"Excel gespeichert: {os.path.basename(pfad)}", "ok")
         return pfad
@@ -2876,12 +2808,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 return None
         speichere_sitzung(self.stapel, pfad, physik=self._physik.als_dict(),
                           verarbeitung=self.verarbeitung.kette().als_dict(),
-                          grenzgeraden=self._grenzgeraden)
+                          korridore=self._korridore)
         self._log(f"Projekt gespeichert: {os.path.basename(pfad)} "
                   f"({len(self.stapel.index_gefittet())} Fits, "
                   f"{len(self.stapel.ausreisser)} Ausreißer, "
                   f"{len(self.stapel.ausschlusszonen)} Zonen, "
-                  f"{len(self._grenzgeraden)} Grenzgeraden).", "ok")
+                  f"{len(self._korridore)} Korridore).", "ok")
         return pfad
 
     def _autosicherung_anstossen(self) -> None:
@@ -2896,7 +2828,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             pfad = autosicherung_pfad()
             speichere_sitzung(self.stapel, str(pfad), physik=self._physik.als_dict(),
                               verarbeitung=self.verarbeitung.kette().als_dict(),
-                              grenzgeraden=self._grenzgeraden)
+                              korridore=self._korridore)
             self._log(f"Auto-Sicherung geschrieben ({pfad.name}).", "auto")
         except Exception as exc:  # nie den Arbeitsfluss stoeren
             self._log(f"Auto-Sicherung fehlgeschlagen: {exc}", "warn")
@@ -2952,13 +2884,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
                 reduziert, _indizes = auswahl.reduziere(voll)
             melde(0, 0, "Stelle Fits mit gespeicherten Fenstern wieder her …", phase="Fits")
+            b_min, b_max = reduziert.feld_bereich()
+            korridore = korridore_aus_sitzung(daten, b_min, b_max)
             stapel = stelle_stapel_wieder_her(
-                daten, reduziert,
+                daten, reduziert, korridore=korridore,
                 fortschritt=lambda k, n, e: melde(k, n, "", phase="Fits wiederherstellen"))
-            return (voll, stapel)
+            return (voll, stapel, korridore)
 
         def bei_fertig(res):
-            voll, stapel = res
+            voll, stapel, korridore = res
             if isinstance(daten.get("physik"), dict):
                 self._physik_uebernehmen(PhysikParameter.aus_dict(daten["physik"]), leise=True)
             if isinstance(daten.get("verarbeitung"), dict):
@@ -2981,8 +2915,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
             mat, ext = self.matrix.thumbnail()
             self.navigator.zeige(mat, ext)
             self.navigator_dock.setVisible(False)
-            self._grenzgeraden = grenzgeraden_aus_sitzung(daten)
-            self._zeige_geraden()
+            self._korridore = korridore
+            self._mode_aktiv = 1
+            self.zonenpanel.setze_mode_aktiv(1)
+            self._zeige_korridore()
             self._aktualisiere_overlay()
             self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
             self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
@@ -2996,7 +2932,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                       f"{len(stapel.index_gefittet())} Fits wiederhergestellt, "
                       f"{len(stapel.ausreisser)} Ausreißer, "
                       f"{len(stapel.ausschlusszonen)} Zonen, "
-                      f"{len(self._grenzgeraden)} Grenzgeraden.", "ok")
+                      f"{len(self._korridore)} Korridore.", "ok")
             self.statusBar().showMessage(
                 f"Projekt geladen ({len(stapel.index_gefittet())} Fits).")
 

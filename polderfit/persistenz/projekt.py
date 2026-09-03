@@ -8,10 +8,10 @@ Fitparameter. Die Rohdaten werden nicht dupliziert, sondern beim Laden erneut
 aus der TDMS-Quelle gelesen; die Fits werden mit den gespeicherten Fenstern
 deterministisch neu gerechnet.
 
-Format-Version 3: zusaetzlich physikalische Parameter, Verarbeitungskette des
-Farbplots, Grenzgeraden, Nutzer-Bewertung je Fit ("bestaetigt"/"verworfen"),
-Platzhalter (nicht gefittete Frequenzen) und Modenanzahl je Fit. Versionen 1
-und 2 werden weiterhin gelesen.
+Format-Version 4: Korridore je Mode (:mod:`polderfit.fit.korridor`) und die
+Ergebnisse weiterer Moden (``nebenmoden``); Version 3 (Grenzgeraden, Modenzahl
+je Fit) wird beim Laden in Korridore migriert, Versionen 1 und 2 werden
+weiterhin gelesen.
 
 Bewusst NICHT gespeichert: Zoom-Ausschnitt, Fenster-/Dock-Layout oder
 Achsengeometrie - ein verklemmtes Layout darf nie in eine Datei wandern.
@@ -22,17 +22,17 @@ from __future__ import annotations
 from .. import PROGRAMMNAME
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
 
 from ..fit.batch import NACHFENSTER_FAKTOR_STANDARD, Ausschlusszone, StapelErgebnis
+from ..fit.korridor import Korridor, korridore_aus_grenzgeraden
 from ..fit.kriterien import ALPHA_MAX
 from ..fit.linescan_fit import BEWERTUNGEN, FitErgebnis
 from ..physik.konstanten import GAMMA_STANDARD
 
-PROJEKT_VERSION = 3
+PROJEKT_VERSION = 4
 
 
 def _zahl(x):
@@ -47,12 +47,12 @@ def _zahl(x):
 
 def sitzung_als_dict(stapel: StapelErgebnis, physik: dict | None = None,
                      verarbeitung: dict | None = None,
-                     grenzgeraden: list | None = None) -> dict:
+                     korridore: list | None = None) -> dict:
     """Serialisierbarer Sitzungszustand (siehe Modulkopf).
 
     ``physik``: ``PhysikParameter.als_dict()``; ``verarbeitung``:
-    ``Verarbeitungskette.als_dict()``; ``grenzgeraden``: Liste von
-    :class:`~polderfit.fit.fenster_steuerung.Grenzgerade`.
+    ``Verarbeitungskette.als_dict()``; ``korridore``: Liste von
+    :class:`~polderfit.fit.korridor.Korridor`.
     """
     meta = stapel.datensatz.meta
     return {
@@ -68,28 +68,32 @@ def sitzung_als_dict(stapel: StapelErgebnis, physik: dict | None = None,
         "alpha_max": stapel.alpha_max,
         "alpha_plausibel": stapel.alpha_plausibel,
         "nachfenster_faktor": stapel.nachfenster_faktor,
-        "n_moden": int(stapel.n_moden),
         "nachfit_bestaetigen": bool(stapel.nachfit_bestaetigen),
         "physik": dict(physik) if physik else None,
         "verarbeitung": dict(verarbeitung) if verarbeitung else None,
-        "grenzgeraden": [asdict(g) for g in (grenzgeraden or [])],
+        "korridore": [k.als_dict() for k in (korridore or [])],
         "fenster": [[float(u), float(o)] for (u, o) in stapel.fenster],
         "ausschlusszonen": [z.als_dict() for z in stapel.ausschlusszonen],
         "ausreisser": [int(i) for i in stapel.ausreisser],
         "ausreisser_moden": [[int(i), int(k)] for i, k in stapel.ausreisser_moden],
         "ergebnisse": [
-            {k: _zahl(v) for k, v in e.als_zeile(hauptmode_nur=True).items()}
+            {k: _zahl(v) for k, v in e.als_zeile().items()}
             for e in stapel.ergebnisse
         ],
+        "nebenmoden": {
+            str(mode): [{k: _zahl(v) for k, v in e.als_zeile().items()} for e in liste]
+            for mode, liste in sorted(stapel.nebenmoden.items())
+            if any(e.gefittet for e in liste)
+        },
     }
 
 
 def speichere_sitzung(stapel: StapelErgebnis, pfad: str, physik: dict | None = None,
                       verarbeitung: dict | None = None,
-                      grenzgeraden: list | None = None) -> None:
+                      korridore: list | None = None) -> None:
     """Serialisiert den Stapelzustand nach JSON (UTF-8); atomar (erst .tmp)."""
     daten = sitzung_als_dict(stapel, physik=physik, verarbeitung=verarbeitung,
-                             grenzgeraden=grenzgeraden)
+                             korridore=korridore)
     ziel = Path(pfad)
     tmp = ziel.with_name(ziel.name + ".tmp")
     tmp.write_text(json.dumps(daten, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -105,16 +109,19 @@ def lade_sitzung(pfad: str) -> dict:
     return json.loads(Path(pfad).read_text(encoding="utf-8"))
 
 
-def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> StapelErgebnis:
+def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
+                             korridore: list | None = None) -> StapelErgebnis:
     """Baut den Stapel aus Sitzungsdaten + frisch geladenem Datensatz wieder auf.
 
     ``datensatz`` muss bereits gemappt und (falls die Sitzung eine
     Auswertungsauswahl enthielt) identisch reduziert sein - die Fensterliste
     der Sitzung muss zur Linescan-Anzahl passen. Alle Linescans werden mit den
     gespeicherten Fenstern (und aktiven Ausschlusszonen) deterministisch neu
-    gefittet; anschliessend werden die Ausreisser-Markierungen uebernommen.
+    gefittet; weitere Moden (``nebenmoden``) je Frequenz in ihrem Korridor
+    (``korridore``; sonst mit dem gespeicherten Fenster der Mode);
+    anschliessend werden die Ausreisser-Markierungen uebernommen.
     """
-    from ..fit.batch import fitte_neu  # spaeter Import vermeidet Zyklen
+    from ..fit.batch import fitte_mode, fitte_neu  # spaeter Import vermeidet Zyklen
 
     fenster = [tuple(f) for f in daten.get("fenster", [])]
     if len(fenster) != len(datensatz.linescans):
@@ -132,7 +139,6 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> Stapel
         alpha_plausibel=(float(alpha_plausibel) if alpha_plausibel else None),
         nachfenster_faktor=float(daten.get("nachfenster_faktor",
                                            NACHFENSTER_FAKTOR_STANDARD)),
-        n_moden=max(1, int(daten.get("n_moden", 1))),
         nachfit_bestaetigen=bool(daten.get("nachfit_bestaetigen", True)),
         fenster=fenster,
         ausschlusszonen=[Ausschlusszone.aus_dict(z)
@@ -151,9 +157,7 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> Stapel
             ergebnis = FitErgebnis.platzhalter(ls.frequenz, ls.feld)
             stapel.ergebnisse[i] = ergebnis
         else:
-            n_moden = zeile.get("n_moden") if zeile else None
-            ergebnis = fitte_neu(stapel, i, bestaetigen=False,
-                                 n_moden=(int(n_moden) if n_moden else None))
+            ergebnis = fitte_neu(stapel, i, bestaetigen=False)
             # fitte_neu markiert nachbearbeitet - beim Wiederherstellen zaehlt
             # aber der GESPEICHERTE Bearbeitungsstand, nicht der Neuaufbau.
             ergebnis.nachbearbeitet = bool(zeile.get("nachbearbeitet", False)) if zeile else False
@@ -162,6 +166,34 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> Stapel
                 ergebnis = stapel.bewerte(i, bewertung)
         if fortschritt is not None:
             fortschritt(i + 1, len(fenster), ergebnis)
+
+    # Weitere Moden: je Frequenz im Korridor der Mode (sonst gespeichertes Fenster).
+    korridor_je_mode = {int(k.mode): k for k in (korridore or [])}
+    for mode_text, zeilen in (daten.get("nebenmoden") or {}).items():
+        try:
+            mode = int(mode_text)
+        except (TypeError, ValueError):
+            continue
+        if mode < 2 or len(zeilen) != len(fenster):
+            continue
+        liste = stapel.ergebnisse_mode(mode)
+        korridor = korridor_je_mode.get(mode)
+        for i, zeile in enumerate(zeilen):
+            if not zeile or not zeile.get("gefittet", True):
+                continue
+            ergebnis = None
+            if korridor is not None:
+                ergebnis = fitte_mode(stapel, i, korridor, bestaetigen=False)
+            if ergebnis is None:
+                lo, hi = zeile.get("B_fenster_min_T"), zeile.get("B_fenster_max_T")
+                if lo is None or hi is None:
+                    continue
+                ergebnis = fitte_neu(stapel, i, feld_unten=float(lo), feld_oben=float(hi),
+                                     bestaetigen=False, mode=mode)
+            ergebnis.nachbearbeitet = bool(zeile.get("nachbearbeitet", False))
+            bewertung = zeile.get("bewertung", "auto")
+            if bewertung in BEWERTUNGEN and bewertung != "auto":
+                liste[i] = stapel.bewerte(i, bewertung, mode=mode)
 
     n = len(fenster)
     stapel.ausreisser = sorted(
@@ -172,16 +204,22 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None) -> Stapel
     return stapel
 
 
-def grenzgeraden_aus_sitzung(daten: dict) -> list:
-    """Grenzgeraden einer Sitzung (Version >= 3) als Objekte; sonst ``[]``."""
-    from ..fit.fenster_steuerung import Grenzgerade  # spaeter Import vermeidet Zyklen
-    geraden = []
-    for g in daten.get("grenzgeraden", []) or []:
+def korridore_aus_sitzung(daten: dict, feld_min: float = -1e6,
+                          feld_max: float = 1e6) -> list:
+    """Korridore einer Sitzung: Version >= 4 direkt, Version 3 (Grenzgeraden je
+    Mode) migriert ueber :func:`korridore_aus_grenzgeraden`; sonst ``[]``."""
+    korridore = []
+    for k in daten.get("korridore", []) or []:
         try:
-            geraden.append(Grenzgerade(b1=float(g["b1"]), f1=float(g["f1"]),
-                                       b2=float(g["b2"]), f2=float(g["f2"]),
-                                       gruen_positiv=bool(g.get("gruen_positiv", True)),
-                                       mode=max(1, int(g.get("mode", 1)))))
+            korridore.append(Korridor.aus_dict(k))
         except (KeyError, TypeError, ValueError):
             continue
-    return geraden
+    if korridore:
+        return korridore
+    geraden = daten.get("grenzgeraden", []) or []
+    if geraden:
+        try:
+            return korridore_aus_grenzgeraden(geraden, feld_min, feld_max)
+        except (KeyError, TypeError, ValueError):
+            return []
+    return []

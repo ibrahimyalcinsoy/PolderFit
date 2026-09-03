@@ -4,9 +4,10 @@
 Gespeichert werden alle Groessen des Einzelfits – Resonanzfeld und
 Linienbreite in **Tesla und Millitesla**, Gilbert-Daempfung, Amplitude/Phase
 und komplexe Amplitude, Offsets/Steigungen, alle Guetemasse, Fitfenster,
-Status/Bewertung und (bei mehreren Moden) die Parameter aller weiteren
-Resonanzen – zusammen mit den uebergreifenden Auswerteergebnissen (Kittel/LLG)
-und optionalen Zusatzblaettern (Einstellungen, Zonen/Grenzgeraden, Ausreisser).
+Status/Bewertung – zusammen mit den uebergreifenden Auswerteergebnissen
+(Kittel/LLG) und optionalen Zusatzblaettern (Einstellungen, Zonen/Korridore,
+Ausreisser). Weitere Moden (Korridor-Fits) bekommen je Mode ein eigenes Blatt
+``Einzelfits_M<k>``.
 
 Welche Spaltengruppen exportiert werden, ist waehlbar (:data:`SPALTEN_GRUPPEN`;
 Standard: alle) und als Voreinstellung speicherbar
@@ -21,7 +22,6 @@ import pandas as pd
 from ..fit.linescan_fit import FitErgebnis
 
 #: Spaltengruppen des Einzelfit-Exports: Schluessel -> (Titel, Spalten).
-#: Die Gruppe ``nebenmoden`` enthaelt alle Spalten mit Moden-Suffix ``_2``, ``_3`` …
 SPALTEN_GRUPPEN: dict[str, tuple[str, list[str]]] = {
     "kern": ("Resonanzfeld & Linienbreite (T und mT), α", [
         "frequenz_Hz", "frequenz_GHz", "B_res_T", "B_res_mT", "B_res_err_T",
@@ -35,17 +35,11 @@ SPALTEN_GRUPPEN: dict[str, tuple[str, list[str]]] = {
         "chi2_red", "signalhub"]),
     "fenster": ("Fitfenster", ["B_fenster_min_T", "B_fenster_max_T", "n_punkte_fenster"]),
     "status": ("Status & Bewertung", [
-        "bewertung", "problematisch", "problematisch_auto", "problem_gruende",
+        "mode", "bewertung", "problematisch", "problematisch_auto", "problem_gruende",
         "nachbearbeitet", "gefittet", "erfolg", "kovarianz_ok", "ausreisser",
         "im_kittel_verwendet", "meldung"]),
-    "nebenmoden": ("Weitere Resonanzen (Moden 2…n)", ["n_moden"]),
     "temperatur": ("Temperatur", ["temperatur_K"]),
 }
-
-
-def _ist_nebenmoden_spalte(name: str) -> bool:
-    teile = name.split("_")
-    return any(t.isdigit() and int(t) >= 2 for t in teile)
 
 
 def spalten_fuer(gruppen: list[str] | None, verfuegbar: list[str]) -> list[str]:
@@ -58,10 +52,6 @@ def spalten_fuer(gruppen: list[str] | None, verfuegbar: list[str]) -> list[str]:
         for name in SPALTEN_GRUPPEN[gruppe][1]:
             if name in verfuegbar and name not in spalten:
                 spalten.append(name)
-        if gruppe == "nebenmoden":
-            for name in verfuegbar:
-                if _ist_nebenmoden_spalte(name) and name not in spalten:
-                    spalten.append(name)
     return spalten
 
 
@@ -143,14 +133,23 @@ def exportiere_excel(
     verwendet: list[int] | None = None,
     zusatzblaetter: dict[str, pd.DataFrame] | None = None,
     zugeschnitten=None,
+    nebenmoden: dict | None = None,
 ) -> None:
-    """Schreibt Parameter (Blatt 'Einzelfits'), Kittel/LLG (Blatt 'Global') und
-    optionale Zusatzblaetter (z. B. 'Einstellungen', 'Zonen_Geraden', 'Ausreisser')."""
+    """Schreibt Parameter (Blatt 'Einzelfits'), je weiterer Mode ein Blatt
+    'Einzelfits_M<k>' (``nebenmoden``: ``{mode: [FitErgebnis]}``), Kittel/LLG
+    (Blatt 'Global') und optionale Zusatzblaetter (z. B. 'Einstellungen',
+    'Zonen_Korridore', 'Ausreisser')."""
     tab = parameter_tabelle(ergebnisse, ausreisser, spalten=spalten,
                             nur_gefittete=nur_gefittete, verwendet=verwendet,
                             zugeschnitten=zugeschnitten)
     with pd.ExcelWriter(pfad, engine="openpyxl") as writer:
         tab.to_excel(writer, sheet_name="Einzelfits", index=False)
+        for mode, liste in sorted((nebenmoden or {}).items()):
+            if not any(e.gefittet for e in liste):
+                continue
+            tab_m = parameter_tabelle(liste, ausreisser, spalten=spalten,
+                                      nur_gefittete=nur_gefittete)
+            tab_m.to_excel(writer, sheet_name=f"Einzelfits_M{int(mode)}", index=False)
         _global_tabelle(global_param).to_excel(writer, sheet_name="Global", index=False)
         for name, blatt in (zusatzblaetter or {}).items():
             if blatt is None:
@@ -181,10 +180,10 @@ def kittel_llg_tabelle(info: dict | None, gewichtet: bool = False,
                        mode: int | None = None, mode_text: str = "") -> pd.DataFrame:
     """Physikalische Parameter des Kittel-/LLG-Fits als Tabelle (Wert, 1σ, Einheit)
     - Felder in Tesla UND Millitesla. ``mode``/``mode_text``: Auswertung je
-    Mode (Zweig-Nummer und Zuordnungsregel als erste Zeile)."""
+    Mode (Korridor-Nummer als erste Zeile)."""
     zeilen = []
     if mode is not None:
-        zeilen.append(("Mode", "Hauptmode" if int(mode) == 0 else int(mode), mode_text, ""))
+        zeilen.append(("Mode", int(mode), mode_text, ""))
     if info is not None:
         kit, llg = info["kittel"], info["llg"]
         g_err = kit.get("g_faktor_err", np.nan)
@@ -219,8 +218,7 @@ def kittel_llg_punkte_tabelle(ergebnisse: list[FitErgebnis], ausreisser: list[in
     """Alle Punkte der Kittel-/LLG-Auswertung mit Einzelfehlern (T und mT).
 
     ``indizes``: Stapel-Indizes der uebergebenen Ergebnisse (Standard: Position
-    in der Liste) - fuer die Auswertung je Mode, wo ``ergebnisse`` die Kopien
-    mit Mode ``mode`` als Hauptmode sind (Spalte ``mode``)."""
+    in der Liste) - fuer die Auswertung je Mode (Spalte ``mode``)."""
     gesperrt = set(ausreisser or [])
     benutzt = set(verwendet or [])
     if indizes is None:

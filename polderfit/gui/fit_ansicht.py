@@ -2,9 +2,9 @@
 """Interaktives Linescan-Panel: Re und Im gleichzeitig + Fit, verschiebbare Grenzen.
 
 Zeigt fuer die aktuell gewaehlte Frequenz Real- und Imaginaerteil von S21 gegen
-das Feld, ueberlagert die Fitkurve (bei mehreren Moden zusaetzlich jede Mode
-einzeln) und stellt zwei frei verschiebbare vertikale Linien (Bandgrenzen)
-bereit. Beim Verschieben wird ein Callback ausgeloest, der den Datensatz mit
+das Feld, ueberlagert die Fitkurve der GEWAEHLTEN Mode (andere Moden erscheinen
+nur als Korridor im Farbplot) und stellt zwei frei verschiebbare vertikale
+Linien (Fenstergrenzen) bereit. Beim Verschieben wird ein Callback ausgeloest, der den Datensatz mit
 den neuen Grenzen neu fittet ("rumfitten").
 
 Farben nach :mod:`polderfit.gui.farben`: Messdaten in neutralen Serienfarben,
@@ -39,7 +39,6 @@ _HALO = [pe.Stroke(linewidth=GRENZ_LW + 2.0, foreground="white"), pe.Normal()]
 _FARBE_RE = F.TEXT_BLAU
 _FARBE_IM = "#B35C00"
 _FARBE_FIT = F.TEXT
-_FARBEN_MODEN = ("#6B6F76", "#9A6BB5", "#3C8DAD", "#B08A2E")
 
 
 class FitAnsicht(FigureCanvasQTAgg):
@@ -115,17 +114,6 @@ class FitAnsicht(FigureCanvasQTAgg):
             farbe_res = F.STATUS_FARBEN.get(status, (F.SIGNAL_GRUEN, ""))[0]
             if farbe_res == "none":
                 farbe_res = F.SIGNAL_GRUEN
-            # Einzelne Moden (nur bei n > 1) als duenne gestrichelte Linien.
-            if ergebnis.n_moden > 1 and ergebnis.fitkurven_moden:
-                for k, kurve in enumerate(ergebnis.fitkurven_moden):
-                    farbe = _FARBEN_MODEN[k % len(_FARBEN_MODEN)]
-                    self.ax_re.plot(ergebnis.feld, kurve.real, "--", color=farbe, lw=0.9,
-                                    label=f"Mode {k + 1}" + (" (Hauptmode)" if k == 0 else ""))
-                    self.ax_im.plot(ergebnis.feld, kurve.imag, "--", color=farbe, lw=0.9)
-                for k, mode in enumerate(ergebnis.moden[1:], start=1):
-                    farbe = _FARBEN_MODEN[k % len(_FARBEN_MODEN)]
-                    for ax in (self.ax_re, self.ax_im):
-                        ax.axvline(mode["B_res"], color=farbe, ls=":", lw=0.9, zorder=2)
             self.ax_re.plot(ergebnis.feld, ergebnis.fitkurve.real, "-", color=_FARBE_FIT,
                             lw=1.4, label="Fit Re")
             self.ax_im.plot(ergebnis.feld, ergebnis.fitkurve.imag, "-", color=_FARBE_FIT,
@@ -157,11 +145,11 @@ class FitAnsicht(FigureCanvasQTAgg):
         # Zwei explizite Zeilen: tight_layout misst mehrzeilige Titel korrekt,
         # ein automatischer Umbruch (wrap) wuerde in die Achse hineinragen.
         titel = f"{linescan.frequenz/1e9:.3f} GHz"
+        if ergebnis is not None and int(getattr(ergebnis, "mode", 1)) > 1:
+            titel += f" · M{int(ergebnis.mode)}"
         if ergebnis is not None and ergebnis.gefittet:
             titel += (f" · B_res {ergebnis.B_res:.4f} T ({ergebnis.B_res_mT:.1f} mT)\n"
                       f"µ₀ΔH {ergebnis.dH_mT:.2f} mT · α {ergebnis.alpha:.2e} · R² {ergebnis.R2:.4f}")
-            if ergebnis.n_moden > 1:
-                titel += f" · {ergebnis.n_moden} Moden"
         elif ergebnis is not None:
             titel += "\nnoch nicht gefittet – Grenzen ziehen fittet diese Frequenz"
         self.ax_re.set_title(titel, fontsize=9)
@@ -176,7 +164,7 @@ class FitAnsicht(FigureCanvasQTAgg):
         self._tight_layout_sicher()
         # Dezenter Bedienhinweis (nach tight_layout, damit er nicht verschoben wird).
         self._hinweis = self.figur.text(
-            0.995, 0.004, "grüne Linien ziehen, um das Band zu ändern",
+            0.995, 0.004, "grüne Linien ziehen = Fenster ändern",
             ha="right", va="bottom", fontsize=7.5, color=GRENZ_FARBE, alpha=0.85)
         self._hinweis.set_in_layout(False)
         self.draw_idle()

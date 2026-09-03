@@ -16,13 +16,11 @@ Dieses Modul ist die gemeinsame Basis fuer das Rechteck-Nachfitten
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import numpy as np
 
-from ..physik.fitmodell import startwerte_in_bereichen
-from .autowindows import auto_fenster_intervalle, schneide_band
-from .batch import Ausschlusszone, StapelErgebnis, fitte_neu, nachfenster
+from .autowindows import auto_fenster_intervalle
+from .batch import Ausschlusszone, StapelErgebnis, fitte_mode, fitte_neu, nachfenster
+from .korridor import Korridor
 
 #: Gueltige Modi fuer das Ueberschreib-Verhalten beim Neu-Fitten.
 MODI = ("ueberschreiben", "ergaenzen")
@@ -258,12 +256,8 @@ def _fitte_mit_intervallen(
     breite_punkte: int | None = None,
     fortschritt=None,
     abbruch=None,
-    n_moden: int | None = None,
 ) -> tuple[list[int], list[int]]:
-    """Gemeinsamer Kern von Rechteck- und Grenzgeraden-Fit.
-
-    ``n_moden``: Resonanzen je Linescan fuer diese Fits (``None`` =
-    Stapel-Einstellung).
+    """Kern des Rechteck-Fits (Mode 1).
 
     ``abbruch()`` (optional) wird nach jedem Fit abgefragt; bei ``True`` werden
     die restlichen Indizes uebersprungen (unveraendert) und gemeldet.
@@ -299,8 +293,7 @@ def _fitte_mit_intervallen(
         if grenzen is None:  # zu wenige Messpunkte im Intervall
             uebersprungen.append(i)
             continue
-        ergebnis = _fitte_neu_mit_nachfenster(stapel, i, grenzen[0], grenzen[1],
-                                              n_moden=n_moden)
+        ergebnis = _fitte_neu_mit_nachfenster(stapel, i, grenzen[0], grenzen[1])
         neu_gefittet.append(i)
         if fortschritt is not None:
             fortschritt(k + 1, len(reihenfolge), ergebnis)
@@ -309,7 +302,7 @@ def _fitte_mit_intervallen(
 
 
 def _fitte_neu_mit_nachfenster(stapel: StapelErgebnis, i: int,
-                               unten: float, oben: float, n_moden: int | None = None,
+                               unten: float, oben: float,
                                bestaetigen: bool | None = False):
     """``fitte_neu`` mit anschliessendem zweiten Durchgang auf
     ``B_res +/- stapel.nachfenster_faktor * dH`` (wie im Auto-Fit, siehe
@@ -320,228 +313,58 @@ def _fitte_neu_mit_nachfenster(stapel: StapelErgebnis, i: int,
     # keine Einzelfreigabe durch den Nutzer: die Kriterien entscheiden (Bewertung
     # "auto"). Bestaetigt wird nur ein gezielter Eingriff an EINER Frequenz
     # (Grenzen ziehen, Nochmal fitten) oder die explizite Bewertung.
-    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=bestaetigen,
-                         n_moden=n_moden)
+    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=bestaetigen)
     eng = nachfenster(stapel.datensatz.linescans[i], ergebnis, (unten, oben),
                       stapel.nachfenster_faktor)
     if eng is None:
         return ergebnis
-    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1], bestaetigen=bestaetigen,
-                        n_moden=n_moden)
+    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1], bestaetigen=bestaetigen)
     if zweites.erfolg and not zweites.problematisch:
         return zweites
-    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=bestaetigen,
-                     n_moden=n_moden)
+    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=bestaetigen)
 
 
-@dataclass
-class Grenzgerade:
-    """Gerade Grenzlinie im (Feld, Frequenz)-Raum mit gruener (Neu-Fit-)Seite.
-
-    Interaktiv wie in einem Textprogramm eingefuegt (zwei Klicks, an den
-    Endpunkten ziehbar -> verschieben/rotieren). Die GRUENE Seite wird beim
-    Grenzgeraden-Fit neu gefittet, die ROTE ignoriert; mit zwei Geraden
-    entsteht ein Band. Die Gerade ist unendlich (die Endpunkte sind nur die
-    Handgriffe); die Seite ist ueber das Vorzeichen des Kreuzprodukts
-    ``(P - P1) x (P2 - P1)`` definiert (``gruen_positiv``).
-    """
-
-    b1: float
-    f1: float          # Hz
-    b2: float
-    f2: float          # Hz
-    gruen_positiv: bool = True
-    #: Resonanz (Mode), zu der die Gerade gehoert - bei ``n_moden > 1`` bilden
-    #: die Geraden einer Mode ihr Band (n Moden = 2n Geraden).
-    mode: int = 1
-
-    def seite_wechseln(self) -> None:
-        self.gruen_positiv = not self.gruen_positiv
-
-    def erlaubtes_intervall(self, frequenz: float, feld_min: float,
-                            feld_max: float) -> tuple[float, float] | None:
-        """Feldintervall der gruenen Seite bei fester Frequenz (oder ``None``).
-
-        Kreuzprodukt ``cross(B) = (B - b1)*(f2 - f1) - (f - f1)*(b2 - b1)`` ist
-        linear in ``B``; die gruene Halbebene schneidet die Horizontale
-        ``f = const`` in einer Halbgeraden (bzw. ganz/gar nicht, wenn die
-        Gerade frequenz-konstant liegt).
-        """
-        db, df = self.b2 - self.b1, self.f2 - self.f1
-        if df == 0.0:
-            cross = -(frequenz - self.f1) * db
-            ok = (cross >= 0.0) == self.gruen_positiv or cross == 0.0
-            return (feld_min, feld_max) if ok else None
-        b_grenze = self.b1 + (frequenz - self.f1) * db / df
-        # cross(B) = (B - b_grenze) * df -> Vorzeichen haengt von df ab.
-        gruen_oberhalb = self.gruen_positiv == (df > 0.0)
-        if gruen_oberhalb:
-            lo, hi = max(feld_min, b_grenze), feld_max
-        else:
-            lo, hi = feld_min, min(feld_max, b_grenze)
-        return (lo, hi) if hi > lo else None
-
-
-def band_geraden(b1: float, f1: float, b2: float, f2: float, halbbreite: float,
-                 mode: int = 1) -> list[Grenzgerade]:
-    """Zwei Grenzgeraden parallel zur Linie ``(b1, f1)-(b2, f2)`` (f in Hz), im
-    Feld um ``+-halbbreite`` (T) versetzt, gruene Seiten nach innen: das Band um
-    eine Mode. Werkzeug "Band einzeichnen" der GUI (eine Linie + Breite statt
-    zwei Geraden mit Seitenwahl)."""
-    if f1 == f2:
-        raise ValueError("Die Bandlinie braucht zwei verschiedene Frequenzen.")
-    halbbreite = abs(float(halbbreite))
-    f_m = 0.5 * (f1 + f2)
-    b_m = b1 + (b2 - b1) * (f_m - f1) / (f2 - f1)
-    geraden = []
-    for vorzeichen in (-1.0, 1.0):
-        g = Grenzgerade(b1=float(b1) + vorzeichen * halbbreite, f1=float(f1),
-                        b2=float(b2) + vorzeichen * halbbreite, f2=float(f2),
-                        mode=max(1, int(mode)))
-        erlaubt = g.erlaubtes_intervall(f_m, -1e6, 1e6)
-        if erlaubt is None or not (erlaubt[0] <= b_m <= erlaubt[1]):
-            g.seite_wechseln()
-        geraden.append(g)
-    return geraden
-
-
-def zaehle_abgedeckt(stapel: StapelErgebnis, geraden: list[Grenzgerade],
-                     n_moden: int | None = None) -> int:
-    """Anzahl Linescans mit nicht-leerem gruenen Bereich (bzw. nicht-leeren
-    Moden-Baendern) - Vorpruefung der GUI vor dem Grenzgeraden-Fit: 0 heisst
-    "die gruenen Seiten schneiden sich nirgends". ``n_moden`` wie in
-    :func:`fitte_geraden_bereich`."""
-    if not geraden:
-        return 0
-    n_moden = max(1, int(stapel.n_moden if n_moden is None else n_moden))
-    moden_modus = n_moden > 1 and any(int(getattr(g, "mode", 1)) > 1 for g in geraden)
+def zaehle_korridor(stapel: StapelErgebnis, korridor: Korridor,
+                    frequenz_min: float | None = None,
+                    frequenz_max: float | None = None) -> int:
+    """Anzahl Linescans, bei denen der Korridor nicht leer ist (Vorpruefung)."""
     anzahl = 0
     for ls in stapel.datensatz.linescans:
-        lo, hi = float(ls.feld.min()), float(ls.feld.max())
-        if hi <= lo:
+        if frequenz_min is not None and ls.frequenz < frequenz_min:
             continue
-        if moden_modus:
-            ok = _moden_baender(geraden, n_moden, ls.frequenz, lo, hi) is not None
-        else:
-            erlaubt: tuple[float, float] | None = (lo, hi)
-            for g in geraden:
-                if erlaubt is None:
-                    break
-                erlaubt = g.erlaubtes_intervall(ls.frequenz, erlaubt[0], erlaubt[1])
-            ok = erlaubt is not None
-        anzahl += int(ok)
+        if frequenz_max is not None and ls.frequenz > frequenz_max:
+            continue
+        if not ls.feld.size:
+            continue
+        if korridor.gilt(ls.frequenz, float(ls.feld.min()), float(ls.feld.max())):
+            anzahl += 1
     return anzahl
 
 
-def _moden_baender(geraden, n_moden: int, frequenz: float, lo: float, hi: float):
-    """Je Mode 1..n das Feldband (Schnitt der gruenen Seiten ihrer Geraden) bei
-    ``frequenz``; Moden ohne Geraden -> ``None`` (frei). Liefert ``(fenster,
-    baender)`` - ``fenster`` = Huelle der Baender plus 50 % Rand (Untergrund fuer
-    den Fit) - oder ``None``, wenn ein Band bei dieser Frequenz leer ist.
-    Geraden mit ``mode > n`` zaehlen zur Mode ``n``."""
-    baender: list = []
-    for k in range(1, n_moden + 1):
-        gk = [g for g in geraden
-              if min(max(int(getattr(g, "mode", 1)), 1), n_moden) == k]
-        if not gk:
-            baender.append(None)
-            continue
-        erlaubt: tuple[float, float] | None = (lo, hi)
-        for g in gk:
-            if erlaubt is None:
-                break
-            erlaubt = g.erlaubtes_intervall(frequenz, erlaubt[0], erlaubt[1])
-        if erlaubt is None:
-            return None
-        baender.append(erlaubt)
-    definiert = [b for b in baender if b is not None]
-    h_lo, h_hi = min(b[0] for b in definiert), max(b[1] for b in definiert)
-    rand = 0.5 * (h_hi - h_lo)
-    return (max(lo, h_lo - rand), min(hi, h_hi + rand)), baender
-
-
-def _fitte_moden_baender(stapel: StapelErgebnis, eintraege: dict, modus: str = "ueberschreiben",
-                         fortschritt=None, abbruch=None,
-                         n_moden: int | None = None) -> tuple[list[int], list[int]]:
-    """Grenzgeraden-Fit je Mode: ``eintraege[i] = (fenster, baender)``. Kein
-    Fenstersuchlauf - das Fenster ist die Huelle der Baender; Startwerte je Band
-    (:func:`startwerte_in_bereichen`), ``B_res_k`` im Fit auf sein Band
-    beschraenkt. Liefert ``(neu_gefittet, uebersprungen)``."""
-    _pruefe_modus(modus)
-    n = max(1, int(stapel.n_moden if n_moden is None else n_moden))
-    neu: list[int] = []
-    uebersprungen: list[int] = []
-    reihenfolge = sorted(eintraege)
-    for k, i in enumerate(reihenfolge):
-        if abbruch is not None and abbruch():
-            uebersprungen.extend(reihenfolge[k:])
-            break
-        if (modus == "ergaenzen" and stapel.ergebnisse
-                and not stapel.ergebnisse[i].problematisch):
-            uebersprungen.append(i)
-            continue
-        fenster, baender = eintraege[i]
-        ls = stapel.datensatz.linescans[i]
-        beschnitten = schneide_band(ls, fenster[0], fenster[1])
-        if beschnitten.feld.size < 4 * n:
-            uebersprungen.append(i)
-            continue
-        try:
-            starts = startwerte_in_bereichen(beschnitten.feld, beschnitten.s21,
-                                             2.0 * np.pi * ls.frequenz, stapel.gamma,
-                                             baender, alpha_max=stapel.alpha_max)
-        except Exception:
-            starts = None
-        ergebnis = fitte_neu(stapel, i, feld_unten=fenster[0], feld_oben=fenster[1],
-                             startwerte=starts, n_moden=n, bereiche=baender,
-                             bestaetigen=False)
-        neu.append(i)
-        if fortschritt is not None:
-            fortschritt(k + 1, len(reihenfolge), ergebnis)
-    return neu, sorted(uebersprungen)
-
-
-def fitte_geraden_bereich(
+def fitte_korridor(
     stapel: StapelErgebnis,
-    geraden: list[Grenzgerade],
+    korridor: Korridor,
     modus: str = "ueberschreiben",
-    breite_faktor: float = 8.0,
-    breite_punkte: int | None = None,
     fortschritt=None,
+    abbruch=None,
     frequenz_min: float | None = None,
     frequenz_max: float | None = None,
-    feld_min: float | None = None,
-    feld_max: float | None = None,
-    abbruch=None,
-    n_moden: int | None = None,
+    schritt: int = 1,
 ) -> tuple[list[int], list[int]]:
-    """Fittet alle Linescans im GRUENEN Bereich der Grenzgeraden neu.
+    """Fittet die Mode des Korridors an allen Frequenzen, an denen der Korridor
+    nicht leer ist - je Frequenz ein Einzelfit NUR auf den Punkten im Korridor
+    (:func:`polderfit.fit.batch.fitte_mode`). Kein Summenfit, keine
+    Fenstersuche: der Korridor IST das Fenster.
 
-    Je Frequenz ergibt der Schnitt der gruenen Halbebenen (aller Geraden) mit
-    dem Datenbereich ein Feldintervall; leere Intervalle werden uebersprungen.
-    Fenstersuche und Fit laufen ueber :func:`_fitte_mit_intervallen` (mit
-    Stationaer-Abzug). ``frequenz_min/max`` (Hz) und ``feld_min/max`` (T)
-    schraenken den Bereich zusaetzlich ein ("Frequenz von … bis …").
-    Liefert ``(neu_gefittet, uebersprungen)``. Funktioniert auch auf einem
-    Stapel ohne Auto-Fit (:func:`polderfit.fit.batch.leerer_stapel`).
-
-    **Mehrere Resonanzen** (``n_moden > 1`` und mindestens eine Gerade mit
-    ``mode > 1``): Die Geraden jeder Mode bilden ihr eigenes Band (n Moden =
-    2n Geraden). Je Frequenz wird Mode k nur in ihrem Band gesucht (Startwert =
-    Maximum im Band, ``B_res_k`` im Fit darauf beschraenkt), Moden ohne Geraden
-    sind frei; das Fit-Fenster ist die Huelle aller Baender plus 50 % Rand.
-    ``breite_punkte`` wird in diesem Fall nicht verwendet. ``n_moden`` (Standard:
-    ``stapel.n_moden``) ist die Modenzahl DIESES Fits - beim sukzessiven
-    Einzeichnen der Baender die Zahl der bisher eingezeichneten Moden, damit
-    Mode 1 allein als Ein-Moden-Fit laeuft und erst mit Band 2 zwei Moden
-    gleichzeitig gefittet werden.
+    ``schritt`` (Jumper): nur jede ``schritt``-te Frequenz des Bereichs fitten.
+    ``modus='ergaenzen'``: nur Frequenzen, die fuer diese Mode noch nicht gut
+    gefittet sind. ``abbruch()`` wird nach jedem Fit abgefragt. Liefert
+    ``(neu_gefittet, uebersprungen)``.
     """
-    if not geraden:
-        return [], []
-    n_moden = max(1, int(stapel.n_moden if n_moden is None else n_moden))
-    moden_modus = n_moden > 1 and any(int(getattr(g, "mode", 1)) > 1 for g in geraden)
-    intervalle: dict[int, tuple[float, float]] = {}
-    baender_je_index: dict = {}
+    _pruefe_modus(modus)
+    schritt = max(1, int(schritt))
+    liste = stapel.ergebnisse_mode(korridor.mode)
+    kandidaten: list[int] = []
     uebersprungen: list[int] = []
     for i, ls in enumerate(stapel.datensatz.linescans):
         if frequenz_min is not None and ls.frequenz < frequenz_min:
@@ -550,38 +373,26 @@ def fitte_geraden_bereich(
         if frequenz_max is not None and ls.frequenz > frequenz_max:
             uebersprungen.append(i)
             continue
-        lo, hi = float(ls.feld.min()), float(ls.feld.max())
-        if feld_min is not None:
-            lo = max(lo, float(feld_min))
-        if feld_max is not None:
-            hi = min(hi, float(feld_max))
-        if hi <= lo:
+        if not ls.feld.size or not korridor.gilt(ls.frequenz, float(ls.feld.min()),
+                                                 float(ls.feld.max())):
             uebersprungen.append(i)
             continue
-        if moden_modus:
-            eintrag = _moden_baender(geraden, n_moden, ls.frequenz, lo, hi)
-            if eintrag is None:
-                uebersprungen.append(i)
-            else:
-                baender_je_index[i] = eintrag
-            continue
-        erlaubt: tuple[float, float] | None = (lo, hi)
-        for gerade in geraden:
-            if erlaubt is None:
-                break
-            erlaubt = gerade.erlaubtes_intervall(ls.frequenz, erlaubt[0], erlaubt[1])
-        if erlaubt is None:
+        kandidaten.append(i)
+    reihenfolge = kandidaten[::schritt]
+    uebersprungen.extend(i for i in kandidaten if i not in set(reihenfolge))
+    neu: list[int] = []
+    for k, i in enumerate(reihenfolge):
+        if abbruch is not None and abbruch():
+            uebersprungen.extend(reihenfolge[k:])
+            break
+        if modus == "ergaenzen" and liste[i].gefittet and not liste[i].problematisch:
             uebersprungen.append(i)
             continue
-        intervalle[i] = erlaubt
-    if moden_modus:
-        neu, weitere = _fitte_moden_baender(stapel, baender_je_index, modus=modus,
-                                            fortschritt=fortschritt, abbruch=abbruch,
-                                            n_moden=n_moden)
-    else:
-        neu, weitere = _fitte_mit_intervallen(stapel, intervalle, modus=modus,
-                                              breite_faktor=breite_faktor,
-                                              breite_punkte=breite_punkte,
-                                              fortschritt=fortschritt, abbruch=abbruch,
-                                              n_moden=n_moden)
-    return neu, sorted(uebersprungen + weitere)
+        ergebnis = fitte_mode(stapel, i, korridor, bestaetigen=False)
+        if ergebnis is None:
+            uebersprungen.append(i)
+            continue
+        neu.append(i)
+        if fortschritt is not None:
+            fortschritt(k + 1, len(reihenfolge), ergebnis)
+    return neu, sorted(set(uebersprungen))

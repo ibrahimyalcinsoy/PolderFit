@@ -58,12 +58,6 @@ class PhysikParameter:
     #: Zweiter Fit-Durchgang: Fitfenster = B_res +/- Faktor * Linienbreite des
     #: ersten Durchgangs (0 = aus). Macht die Linienbreite fensterunabhaengig.
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD
-    #: Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard;
-    #: 2 = Doppel-Dip, z. B. nanostrukturiertes CoFe).
-    n_moden: int = 1
-    #: Auto-Fit bei n_moden > 1 zweistufig: erst klassischer Ein-Moden-Fit
-    #: (robuste Fenstersuche, Hauptmode), dann weitere Resonanzen ergaenzen.
-    auto_fit_zweistufig: bool = False
     #: Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) automatisch als
     #: "gut – vom Nutzer bestaetigt" bewerten (Bereichs-/Grenzgeraden-Fits ueber
     #: viele Frequenzen nicht - dort entscheiden die Kriterien).
@@ -83,12 +77,11 @@ class PhysikParameter:
         fest = ", γ fest" if self.gamma_fest else ""
         plausibel = (f"{self.alpha_plausibel:g}" if self.alpha_plausibel > 0
                      else f"auto ({self.alpha_max / 2:g})")
-        moden = f", {self.n_moden} Moden" if self.n_moden > 1 else ""
         return (f"g={self.g_faktor:.4f} (γ={self.gamma:.4e} rad/(s·T)){fest}, "
                 f"Geometrie {self.geometrie}, Fensterfaktor {self.breite_faktor:g}, "
                 f"R²-Schwelle {self.r2_schwelle:g}, R²-Min (Kittel) {self.r2_min:g}, "
                 f"α max {self.alpha_max:g}, α plausibel {plausibel}, "
-                f"Nachfenster ±{self.nachfenster_faktor:g}·ΔH{moden}, "
+                f"Nachfenster ±{self.nachfenster_faktor:g}·ΔH, "
                 f"Kittel/LLG {'gewichtet' if self.gewichtet else 'ungewichtet'}, "
                 f"Nachfits {'bestätigen' if self.nachfit_bestaetigen else 'automatisch bewerten'}")
 
@@ -106,7 +99,6 @@ class PhysikParameter:
             if name in daten and daten[name] is not None:
                 werte[name] = daten[name]
         p = cls(**werte)
-        p.n_moden = max(1, int(p.n_moden))
         if p.geometrie not in GEOMETRIEN:
             p.geometrie = "oop"
         return p

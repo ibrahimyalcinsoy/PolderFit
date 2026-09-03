@@ -1,11 +1,12 @@
 # Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
-"""Optionen-Dialog des Bereichs-/Grenzgeraden-Fits.
+"""Optionen-Dialog des Bereichs-/Korridor-Fits.
 
 Fragt Modus (ueberschreiben/ergaenzen), optional eine feste Fensterbreite in
 Punkten und den auszuwertenden Bereich ab: **Frequenz von … bis …** und
 **Feld von … bis …** - beim Rechteck mit dessen Werten vorbelegt (editierbar),
-beim Grenzgeraden-Fit mit dem zuletzt benutzten Bereich (sonst dem ganzen
-Datenbereich). Eingaben mit Punkt oder Komma sind gleichwertig.
+beim Korridor-Fit mit dem zuletzt benutzten Bereich (sonst dem ganzen
+Datenbereich); dort zusaetzlich der Jumper "jede n-te Frequenz". Eingaben mit
+Punkt oder Komma sind gleichwertig.
 """
 
 from __future__ import annotations
@@ -30,10 +31,14 @@ class BereichsFitDialog(QtWidgets.QDialog):
                  breite_vorgabe: int | None = None,
                  info_text: str | None = None, titel: str | None = None,
                  daten_bereich: tuple[float, float, float, float] | None = None,
-                 n_moden: int = 1, moden_hinweis: str | None = None,
+                 mit_feld: bool = True, mit_breite: bool = True,
+                 schritt_vorgabe: int | None = None,
                  parent=None):
         """``daten_bereich`` = (feld_min, feld_max, f_min_ghz, f_max_ghz) der
-        ganzen Messung (Grenzen der Eingabefelder); fehlt es, gilt das Rechteck."""
+        ganzen Messung (Grenzen der Eingabefelder); fehlt es, gilt das Rechteck.
+        ``mit_feld``/``mit_breite``: Feldgrenzen bzw. feste Fensterbreite anbieten
+        (beim Korridor-Fit nicht - der Korridor ist das Fenster). ``schritt_vorgabe``:
+        Jumper "jede n-te Frequenz" anbieten (``None`` = ausblenden)."""
         super().__init__(parent)
         self.setWindowTitle(titel or "Bereich neu fitten")
         lay = QtWidgets.QVBoxLayout(self)
@@ -83,20 +88,19 @@ class BereichsFitDialog(QtWidgets.QDialog):
                            "Obere Feldgrenze des Neu-Fits (µ₀H in Tesla).")
         form.addRow("Frequenz von:", self.f_von)
         form.addRow("Frequenz bis:", self.f_bis)
-        form.addRow("Feld von:", self.b_von)
-        form.addRow("Feld bis:", self.b_bis)
-
-        self.moden_spin = RuhigeSpinBox()
-        self.moden_spin.setRange(1, 6)
-        self.moden_spin.setValue(max(1, int(n_moden)))
-        self.moden_spin.setToolTip(
-            "Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard;\n"
-            "2 = zwei nahe Dips, z. B. nanostrukturiertes CoFe).")
-        form.addRow("Resonanzen je Linescan:", self.moden_spin)
-        if moden_hinweis:
-            hinweis = QtWidgets.QLabel(moden_hinweis)
-            hinweis.setWordWrap(True)
-            form.addRow("", hinweis)
+        if mit_feld:
+            form.addRow("Feld von:", self.b_von)
+            form.addRow("Feld bis:", self.b_bis)
+        self.schritt_spin = RuhigeSpinBox()
+        self.schritt_spin.setRange(1, 1000)
+        self.schritt_spin.setValue(max(1, int(schritt_vorgabe or 1)))
+        self.schritt_spin.setPrefix("jede ")
+        self.schritt_spin.setSuffix(". Frequenz")
+        self.schritt_spin.setToolTip(
+            "Jumper: nur jede n-te Frequenz des Bereichs fitten (schneller;\n"
+            "1 = alle Frequenzen).")
+        if schritt_vorgabe is not None:
+            form.addRow("Jumper:", self.schritt_spin)
         lay.addLayout(form)
 
         breite_zeile = QtWidgets.QHBoxLayout()
@@ -115,7 +119,12 @@ class BereichsFitDialog(QtWidgets.QDialog):
         breite_zeile.addWidget(self.chk_breite)
         breite_zeile.addWidget(self.breite_spin)
         breite_zeile.addStretch(1)
-        lay.addLayout(breite_zeile)
+        if mit_breite:
+            lay.addLayout(breite_zeile)
+        else:
+            self.chk_breite.setChecked(False)
+            self.chk_breite.setVisible(False)
+            self.breite_spin.setVisible(False)
 
         knoepfe = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
@@ -142,5 +151,6 @@ class BereichsFitDialog(QtWidgets.QDialog):
         a, b = float(self.b_von.value()), float(self.b_bis.value())
         return (min(a, b), max(a, b))
 
-    def n_moden(self) -> int:
-        return int(self.moden_spin.value())
+    def schritt(self) -> int:
+        """Jumper: jede n-te Frequenz (1 = alle)."""
+        return max(1, int(self.schritt_spin.value()))

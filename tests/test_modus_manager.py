@@ -52,8 +52,8 @@ def test_modi_schliessen_sich_gegenseitig_aus(app):
     m = _ansicht()
     m.starte_bereichs_fit(lambda *a: None)
     assert m.modus == "bereich"
-    m.starte_gerade_zeichnen(lambda p: None)
-    assert m.modus == "gerade"         # Bereichs-Fit wurde beendet
+    m.starte_korridor_zeichnen(lambda p: None)
+    assert m.modus == "korridor"         # Bereichs-Fit wurde beendet
     m.setze_ausreisser_modus(True, gewaehlt=lambda i: None)
     assert m.modus == "ausreisser"     # Gerade wurde beendet
     m.starte_ausschluss_zeichnen(lambda *a: None)
@@ -74,7 +74,7 @@ def test_escape_bricht_jeden_modus_ab(app):
     m = _ansicht()
     for starten in (lambda: m.starte_bereichs_fit(lambda *a: None),
                     lambda: m.starte_ausschluss_zeichnen(lambda *a: None),
-                    lambda: m.starte_gerade_zeichnen(lambda p: None),
+                    lambda: m.starte_korridor_zeichnen(lambda p: None),
                     lambda: m.setze_ausreisser_modus(True, gewaehlt=lambda i: None)):
         starten()
         assert m.modus is not None
@@ -86,9 +86,9 @@ def test_gerade_halb_gestartet_laesst_sich_abbrechen(app):
     """Frueherer Bug: nach EINEM Klick eines Zwei-Punkt-Modus gab es keinen Ausweg mehr."""
     m = _ansicht()
     punkte = []
-    m.starte_gerade_zeichnen(punkte.append)
+    m.starte_korridor_zeichnen(punkte.append)
     m._on_press(_ev(m.ax, xdata=2.8, ydata=10.0))   # erster von zwei Klicks
-    assert m.modus == "gerade" and not punkte
+    assert m.modus == "korridor" and not punkte
     m._on_key(_ev(m.ax, key="escape"))
     assert m.modus is None
     assert m._punkt_liste == [] and m._punkt_marker == []
@@ -102,9 +102,9 @@ def test_moduswechsel_werden_gemeldet(app):
     meldungen = []
     m = _ansicht(meldungen)
     m.starte_bereichs_fit(lambda *a: None)
-    m.starte_gerade_zeichnen(lambda p: None)
+    m.starte_korridor_zeichnen(lambda p: None)
     m.beende_modus()
-    assert meldungen == ["bereich", "gerade", None]
+    assert meldungen == ["bereich", "korridor", None]
 
 
 def test_neuer_datensatz_setzt_modus_zurueck(app):
@@ -169,8 +169,8 @@ def test_hauptfenster_modus_ohne_fits_abgewiesen(app):
     assert w.akt_ausreisser.isChecked() is False
     w.akt_bereich.setChecked(True)
     assert w.akt_bereich.isChecked() is False
-    w.akt_gerade.setChecked(True)
-    assert w.akt_gerade.isChecked() is False
+    w.akt_korridor.setChecked(True)
+    assert w.akt_korridor.isChecked() is False
     w.akt_zone.setChecked(True)
     assert w.akt_zone.isChecked() is False
     assert w.matrix.modus is None

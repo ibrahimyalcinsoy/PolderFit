@@ -37,3 +37,4 @@ name = "PolderFit"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+norecursedirs = ["tests/veraltet"]

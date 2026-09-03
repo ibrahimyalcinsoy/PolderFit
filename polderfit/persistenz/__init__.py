@@ -20,7 +20,7 @@ from .einstellungen import (
     standard_pfad,
 )
 from .projekt import (
-    grenzgeraden_aus_sitzung,
+    korridore_aus_sitzung,
     lade_sitzung,
     sitzung_als_dict,
     speichere_sitzung,
@@ -46,5 +46,5 @@ __all__ = [
     "sitzung_als_dict",
     "lade_sitzung",
     "stelle_stapel_wieder_her",
-    "grenzgeraden_aus_sitzung",
+    "korridore_aus_sitzung",
 ]

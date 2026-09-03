@@ -13,8 +13,6 @@ from __future__ import annotations
 import numpy as np
 from PySide6 import QtWidgets
 
-from ..auswertung.moden import zuordnung_moden
-
 
 class AusreisserPanel(QtWidgets.QWidget):
     """Liste + Bedienung der Ausreisser-Ausschluesse.
@@ -38,16 +36,12 @@ class AusreisserPanel(QtWidgets.QWidget):
         lay.setContentsMargins(10, 8, 10, 10)
         lay.setSpacing(8)
 
-        hinweis = QtWidgets.QLabel(
-            "Funktionen → „Ausreißer markieren“ (Strg+M): Punkte im Farbplot "
-            "anklicken oder per Kasten markieren. Markierte Punkte gelten als "
-            "„ignoriert“ (grau) und fehlen in Darstellung und Kittel-/LLG-Fit. "
-            "Im Kittel-Fenster (Strg+K) in einer Mode-Ansicht entfernte Punkte "
-            "fehlen nur in der Auswertung dieser Mode.")
-        hinweis.setWordWrap(True)
-        lay.addWidget(hinweis)
-
-        self.anzahl_label = QtWidgets.QLabel("Keine Ausreisser markiert.")
+        self.anzahl_label = QtWidgets.QLabel("Keine Ausreißer markiert.")
+        self.anzahl_label.setToolTip(
+            "Ausreißer markieren: Strg+M, dann Punkte im Farbplot anklicken oder per\n"
+            "Kasten markieren (Klick auf einen grauen Punkt nimmt ihn wieder auf).\n"
+            "Ignorierte Punkte fehlen in Darstellung und Kittel/LLG-Fit. Im Kittel-\n"
+            "Fenster in einer Mode-Ansicht entfernte Punkte fehlen nur dort.")
         lay.addWidget(self.anzahl_label)
 
         self.liste = QtWidgets.QListWidget()
@@ -56,7 +50,7 @@ class AusreisserPanel(QtWidgets.QWidget):
 
         knopfreihe = QtWidgets.QHBoxLayout()
         self.btn_wieder = QtWidgets.QPushButton("Wieder aufnehmen")
-        self.btn_wieder.setToolTip("Ausgewaehlte Punkte wieder in die Auswertung aufnehmen.")
+        self.btn_wieder.setToolTip("Ausgewählte Punkte wieder in die Auswertung aufnehmen.")
         self.btn_wieder.clicked.connect(self._wieder_geklickt)
         knopfreihe.addWidget(self.btn_wieder)
         self.btn_alle = QtWidgets.QPushButton("Alle wieder aufnehmen")
@@ -64,7 +58,7 @@ class AusreisserPanel(QtWidgets.QWidget):
         knopfreihe.addWidget(self.btn_alle)
         lay.addLayout(knopfreihe)
 
-        self.btn_rueckgaengig = QtWidgets.QPushButton("Rueckgaengig (letzter Schritt)")
+        self.btn_rueckgaengig = QtWidgets.QPushButton("Rückgängig (letzter Schritt)")
         self.btn_rueckgaengig.clicked.connect(
             lambda: self._cb_rueckgaengig and self._cb_rueckgaengig())
         lay.addWidget(self.btn_rueckgaengig)
@@ -84,23 +78,20 @@ class AusreisserPanel(QtWidgets.QWidget):
                 + ("  (problematisch)" if e.problematisch else ""))
         paare = list(getattr(stapel, "ausreisser_moden", []) or []) if stapel is not None else []
         if paare:
-            zuordnung = zuordnung_moden(stapel.ergebnisse, n_moden=getattr(stapel, "n_moden", 1))
             for i, k in paare:
                 if not (0 <= i < len(stapel.ergebnisse)):
                     continue
-                e = stapel.ergebnisse[i]
-                pos = zuordnung.position(i, k)
-                b = (e.moden[pos]["B_res"] if (pos is not None and e.moden and pos < len(e.moden))
-                     else np.nan)
+                e = stapel.ergebnisse_mode(int(k))[i]
+                b = e.B_res if e.gefittet else np.nan
                 self._eintraege.append(("mode", int(i), int(k)))
                 self.liste.addItem(
                     f"#{i} · Mode {k}:  f = {e.frequenz / 1e9:7.3f} GHz,  "
                     f"B_res = {b:.4f} T  (nur Kittel/LLG dieser Mode)")
         n = len(self._indizes)
-        text = ("Keine Ausreisser markiert." if n == 0
-                else f"{n} Punkt(e) ausgeschlossen - fehlen in Darstellung und Kittel/LLG.")
+        text = ("Keine Ausreißer markiert." if n == 0
+                else f"{n} Punkt(e) ignoriert.")
         if paare:
-            text += f" Zusaetzlich {len(paare)} Punkt(e) nur je Mode ausgeschlossen."
+            text += f" {len(paare)} nur je Mode."
         self.anzahl_label.setText(text)
 
     def gewaehlte_indizes(self) -> list[int]:
@@ -115,9 +106,9 @@ class AusreisserPanel(QtWidgets.QWidget):
 
     def _wieder_geklickt(self) -> None:
         indizes = self.gewaehlte_indizes()
+        paare = self.gewaehlte_moden_paare()   # vor dem Rueckruf: er leert die Liste
         if indizes and self._cb_wieder is not None:
             self._cb_wieder(indizes)
-        paare = self.gewaehlte_moden_paare()
         if paare and self._cb_wieder_moden is not None:
             self._cb_wieder_moden(paare)
 

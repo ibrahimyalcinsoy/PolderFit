@@ -1,181 +1,164 @@
 # Copyright (c) 2026 Ibrahim Yalcinsoy. Alle Rechte vorbehalten.
-"""Bedienpanel der Nachfit-Bereiche: Ausschlusszonen und Grenzgeraden.
+"""Bedienpanel der Korridore (Moden) und Ausschlusszonen.
+
+*Korridore*: je Mode ein Feldband entlang der Resonanz (Ankerpunkte an wenigen
+Frequenzen, dazwischen linear; :mod:`polderfit.fit.korridor`). Die Liste M1..Mn
+ist die EINZIGE Quelle des Moden-Zustands; die gewaehlte Zeile ist die Mode,
+die das Linescan-Panel zeigt. Werkzeuge: Korridor anlegen (2 Klicks entlang der
+Resonanz), Anker setzen (Klick), Anker/Korridor entfernen, Korridor fitten.
 
 *Ausschlusszonen* nehmen Messpunkte (Rechteck Feld x Frequenz) aus allen
 (Nach-)Fits aus - z. B. ein stoerendes, feldparalleles Artefakt.
 
-*Grenzgeraden* werden wie in einem Textprogramm eingefuegt (zwei Klicks im
-Farbplot, danach an den Endpunkten ziehbar -> verschieben/rotieren). Die
-GRUENE Seite wird beim Grenzgeraden-Fit neu gefittet, die ROTE ignoriert;
-mit zwei Geraden entsteht ein Band. Beide Zeichenwerkzeuge laufen als
-exklusive Interaktionsmodi (Modus-Manager des Hauptfensters); die Knoepfe
-zeigen den aktiven Modus als gedrueckten Zustand.
-
-Kernlogik: :mod:`polderfit.fit.fenster_steuerung`.
+Wenig Text im Panel; Erklaerungen als Tooltips.
 """
 
 from __future__ import annotations
 
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
-from .widgets import RuhigeComboBox, RuhigeSpinBox
+from .widgets import RuhigeSpinBox
 
 
 class ZonenPanel(QtWidgets.QWidget):
-    """Listen und Steuerung der Ausschlusszonen und Grenzgeraden.
+    """Korridorliste, Werkzeuge und Ausschlusszonen.
 
     Callbacks des Hauptfensters:
 
-    * ``zone_umschalten(an: bool)`` – Zonen-Zeichenmodus starten/abbrechen
-    * ``zone_entfernen(index: int)``
-    * ``gerade_umschalten(an: bool)`` – Geraden-Zeichenmodus starten/abbrechen
-    * ``gerade_seite(index: int)`` – gruene Seite der Geraden wechseln
-    * ``gerade_entfernen(index: int)``
-    * ``geraden_fit()`` – gruenen Bereich neu fitten
-    * ``band_umschalten(an: bool)`` – Band-Werkzeug (n Moden) starten/abbrechen
-    * ``n_moden_geaendert(n: int)`` – Resonanzen je Linescan im Panel gewaehlt
-    * ``gerade_mode(index, mode)`` – Gerade einer Mode zuordnen
+    * ``zone_umschalten(an)`` / ``zone_entfernen(index)``
+    * ``korridor_umschalten(an)`` – Werkzeug "Korridor anlegen" (2 Klicks)
+    * ``anker_umschalten(an)`` – Werkzeug "Anker setzen" (Klick)
+    * ``korridor_gewaehlt(mode)`` – Zeile in der Korridorliste gewaehlt
+    * ``korridor_entfernen(mode)``
+    * ``anker_entfernen(mode, index)``
+    * ``korridor_fit(mode | None)`` – Korridor fitten (``None`` = alle)
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
-                 gerade_umschalten=None, gerade_seite=None,
-                 gerade_entfernen=None, geraden_fit=None, gerade_mode=None,
-                 band_umschalten=None, n_moden_geaendert=None, parent=None):
+                 korridor_umschalten=None, anker_umschalten=None,
+                 korridor_gewaehlt=None, korridor_entfernen=None,
+                 anker_entfernen=None, korridor_fit=None, parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
-        self._cb_gerade_umschalten = gerade_umschalten
-        self._cb_gerade_seite = gerade_seite
-        self._cb_gerade_entfernen = gerade_entfernen
-        self._cb_geraden_fit = geraden_fit
-        self._cb_gerade_mode = gerade_mode
-        self._cb_band_umschalten = band_umschalten
-        self._cb_n_moden_geaendert = n_moden_geaendert
-        self._n_moden = 1
-        self._geraden: list = []
+        self._cb_korridor_umschalten = korridor_umschalten
+        self._cb_anker_umschalten = anker_umschalten
+        self._cb_korridor_gewaehlt = korridor_gewaehlt
+        self._cb_korridor_entfernen = korridor_entfernen
+        self._cb_anker_entfernen = anker_entfernen
+        self._cb_korridor_fit = korridor_fit
+        self._korridore: list = []
+        self._mode_aktiv: int = 1
+        self._blockiert = False
 
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 10)
         lay.setSpacing(8)
 
-        # --- Grenzgeraden / Moden-Baender ---------------------------------------
-        grp_geraden = QtWidgets.QGroupBox("Grenzgeraden (Neu-Fit-Bereich)")
-        geraden_lay = QtWidgets.QVBoxLayout(grp_geraden)
+        # --- Korridore (Moden) ---------------------------------------------------
+        grp_k = QtWidgets.QGroupBox("Korridore (Moden)")
+        grp_k.setToolTip(
+            "Je Mode ein Korridor entlang der Resonanz. Jede Mode wird NUR auf den\n"
+            "Messpunkten ihres Korridors gefittet (Einzelfit, kein Summenfit).\n"
+            "Ohne Korridor gilt für Mode 1 das AutoWindow-Fenster des Auto-Fits.\n"
+            "Die gewählte Zeile ist die Mode im Linescan-Panel.")
+        k_lay = QtWidgets.QVBoxLayout(grp_k)
 
-        # Resonanzen je Linescan - EINE sichtbare Stelle; synchron mit dem
-        # Auto-Fit-Dialog und "Res." im Linescan-Panel (Hauptfenster._setze_n_moden).
-        moden_zeile = QtWidgets.QHBoxLayout()
-        moden_zeile.addWidget(QtWidgets.QLabel("Resonanzen je Linescan:"))
-        self.n_moden_combo = RuhigeComboBox()
-        self.n_moden_combo.addItem("1 – eine Mode (klassisch)", 1)
-        self.n_moden_combo.addItem("2 – zwei Moden", 2)
-        for k in range(3, 7):
-            self.n_moden_combo.addItem(f"{k} Moden", k)
-        self.n_moden_combo.setToolTip(
-            "Anzahl simultan gefitteter Resonanzen je Linescan (gilt für Auto-Fit,\n"
-            "Neu fitten und Grenzgeraden-Fit). Bei > 1: je Mode ein Band einzeichnen.")
-        self.n_moden_combo.currentIndexChanged.connect(self._n_moden_gewaehlt)
-        moden_zeile.addWidget(self.n_moden_combo, 1)
-        geraden_lay.addLayout(moden_zeile)
+        self.korridor_liste = QtWidgets.QListWidget()
+        self.korridor_liste.setMaximumHeight(96)
+        self.korridor_liste.setToolTip("Gewählte Zeile = Mode im Linescan-Panel.")
+        self.korridor_liste.currentRowChanged.connect(self._zeile_gewaehlt)
+        k_lay.addWidget(self.korridor_liste)
 
-        self.hinweis_g = QtWidgets.QLabel()
-        self.hinweis_g.setWordWrap(True)
-        geraden_lay.addWidget(self.hinweis_g)
-
-        # Band je Mode (nur bei > 1 Resonanz sichtbar): Mode, Breite, Einzeichnen.
-        self.band_box = QtWidgets.QWidget()
-        band_lay = QtWidgets.QVBoxLayout(self.band_box)
-        band_lay.setContentsMargins(0, 0, 0, 0)
-        band_zeile = QtWidgets.QHBoxLayout()
-        band_zeile.addWidget(QtWidgets.QLabel("Bandbreite ±"))
+        zeile1 = QtWidgets.QHBoxLayout()
+        self.btn_neu = QtWidgets.QPushButton("Korridor anlegen")
+        self.btn_neu.setCheckable(True)
+        self.btn_neu.setToolTip(
+            "Zwei Punkte entlang der Resonanz im Farbplot klicken → neuer Korridor\n"
+            "± Breite (nächste Mode-Nummer). Esc oder erneuter Klick bricht ab.")
+        self.btn_neu.toggled.connect(self._korridor_umgeschaltet)
+        zeile1.addWidget(self.btn_neu, 1)
         self.breite_spin = RuhigeSpinBox()
         self.breite_spin.setRange(1, 500)
         self.breite_spin.setValue(10)
+        self.breite_spin.setPrefix("± ")
         self.breite_spin.setSuffix(" mT")
-        self.breite_spin.setToolTip(
-            "Halbe Bandbreite um die eingezeichnete Linie; die Mode wird nur darin gesucht.")
-        band_zeile.addWidget(self.breite_spin)
-        band_zeile.addStretch(1)
-        band_lay.addLayout(band_zeile)
-        self.btn_band = QtWidgets.QPushButton("Band einzeichnen (2 Klicks entlang der Mode)")
-        self.btn_band.setCheckable(True)
-        self.btn_band.setToolTip(
-            "Zwei Punkte entlang der Mode klicken; das Band ± Breite entsteht als zwei\n"
-            "Geraden, Seiten automatisch. Die Mode-Nummer wird automatisch vergeben:\n"
-            "erstes Band = Mode 1, nächstes Band = Mode 2 … Esc oder erneuter Klick bricht ab.")
-        self.btn_band.toggled.connect(self._band_umgeschaltet)
-        band_lay.addWidget(self.btn_band)
-        self.band_status = QtWidgets.QLabel("")
-        self.band_status.setWordWrap(True)
-        band_lay.addWidget(self.band_status)
-        geraden_lay.addWidget(self.band_box)
+        self.breite_spin.setToolTip("Halbe Korridorbreite beim Anlegen (eng halten).")
+        zeile1.addWidget(self.breite_spin)
+        k_lay.addLayout(zeile1)
 
-        self.btn_gerade = QtWidgets.QPushButton("Gerade einzeichnen (2 Klicks)")
-        self.btn_gerade.setCheckable(True)
-        self.btn_gerade.setToolTip(
-            "Einzelne Grenzgerade: grüne Seite wird gefittet, rote ignoriert\n"
-            "(Doppelklick auf die Linie tauscht). Esc oder erneuter Klick bricht ab.")
-        self.btn_gerade.toggled.connect(self._gerade_umgeschaltet)
-        geraden_lay.addWidget(self.btn_gerade)
+        zeile2 = QtWidgets.QHBoxLayout()
+        self.btn_anker = QtWidgets.QPushButton("Anker setzen")
+        self.btn_anker.setCheckable(True)
+        self.btn_anker.setToolTip(
+            "Klick im Farbplot setzt am gewählten Korridor bei dieser Frequenz die\n"
+            "nähere Grenze auf das geklickte Feld (Anker). Anker im Farbplot ziehbar.\n"
+            "Mehrere Klicks möglich; Esc beendet.")
+        self.btn_anker.toggled.connect(self._anker_umgeschaltet)
+        zeile2.addWidget(self.btn_anker, 1)
+        self.btn_entfernen = QtWidgets.QPushButton("Entfernen")
+        self.btn_entfernen.setToolTip("Gewählten Korridor samt Fits dieser Mode entfernen.")
+        self.btn_entfernen.clicked.connect(self._entfernen_geklickt)
+        zeile2.addWidget(self.btn_entfernen)
+        k_lay.addLayout(zeile2)
 
-        self.geraden_liste = QtWidgets.QListWidget()
-        self.geraden_liste.setMaximumHeight(110)
-        geraden_lay.addWidget(self.geraden_liste)
+        zeile3 = QtWidgets.QHBoxLayout()
+        self.btn_fit = QtWidgets.QPushButton("Korridor fitten …")
+        self.btn_fit.setToolTip(
+            "Gewählte Mode an allen Frequenzen im Korridor fitten (Einzelfit je\n"
+            "Frequenz, nur Punkte im Korridor). Dialog: Frequenzbereich, Modus, Jumper.")
+        self.btn_fit.clicked.connect(lambda: self._cb_korridor_fit and self._cb_korridor_fit(self.mode_aktiv()))
+        zeile3.addWidget(self.btn_fit, 1)
+        self.btn_fit_alle = QtWidgets.QPushButton("Alle")
+        self.btn_fit_alle.setToolTip("Alle Korridore nacheinander fitten.")
+        self.btn_fit_alle.clicked.connect(lambda: self._cb_korridor_fit and self._cb_korridor_fit(None))
+        zeile3.addWidget(self.btn_fit_alle)
+        k_lay.addLayout(zeile3)
 
-        zeile = QtWidgets.QHBoxLayout()
-        self.btn_gerade_seite = QtWidgets.QPushButton("Seite wechseln")
-        self.btn_gerade_seite.setToolTip(
-            "Grüne (Fit-) und rote (ignorierte) Seite der gewählten Geraden tauschen.\n"
-            "Geht auch per Doppelklick auf die Linie.")
-        self.btn_gerade_seite.clicked.connect(self._gerade_seite_geklickt)
-        zeile.addWidget(self.btn_gerade_seite)
-        self.btn_gerade_mode = QtWidgets.QPushButton("Mode ändern")
-        self.btn_gerade_mode.setToolTip(
-            "Gewählte Gerade der nächsten Mode zuordnen (1 → 2 → … → 1).")
-        self.btn_gerade_mode.clicked.connect(self._gerade_mode_geklickt)
-        zeile.addWidget(self.btn_gerade_mode)
-        self.btn_gerade_entfernen = QtWidgets.QPushButton("Entfernen")
-        self.btn_gerade_entfernen.clicked.connect(self._gerade_entfernen_geklickt)
-        zeile.addWidget(self.btn_gerade_entfernen)
-        geraden_lay.addLayout(zeile)
-
-        self.btn_geraden_fit = QtWidgets.QPushButton("Grünen Bereich fitten …")
-        self.btn_geraden_fit.setToolTip(
-            "Fenstersuche und Fit im grünen Bereich aller Geraden bzw. in den Bändern\n"
-            "der Moden (alle bisher eingezeichneten Moden gleichzeitig); im Dialog:\n"
-            "Frequenz/Feld von … bis …, Modus, Fensterbreite.")
-        self.btn_geraden_fit.clicked.connect(
-            lambda: self._cb_geraden_fit and self._cb_geraden_fit())
-        geraden_lay.addWidget(self.btn_geraden_fit)
-        lay.addWidget(grp_geraden)
-        self._moden_ansicht_aktualisieren()
+        # Details (Anker des gewaehlten Korridors) - erst bei Bedarf sichtbar.
+        self.btn_details = QtWidgets.QToolButton()
+        self.btn_details.setText("Anker")
+        self.btn_details.setCheckable(True)
+        self.btn_details.setArrowType(QtCore.Qt.RightArrow)
+        self.btn_details.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.btn_details.setAutoRaise(True)
+        self.btn_details.toggled.connect(self._details_umschalten)
+        k_lay.addWidget(self.btn_details)
+        self.details_box = QtWidgets.QWidget()
+        d_lay = QtWidgets.QVBoxLayout(self.details_box)
+        d_lay.setContentsMargins(0, 0, 0, 0)
+        self.anker_liste = QtWidgets.QListWidget()
+        self.anker_liste.setMaximumHeight(90)
+        self.anker_liste.setToolTip("Anker des gewählten Korridors: Frequenz, linke/rechte Grenze.")
+        d_lay.addWidget(self.anker_liste)
+        self.btn_anker_entfernen = QtWidgets.QPushButton("Anker entfernen")
+        self.btn_anker_entfernen.clicked.connect(self._anker_entfernen_geklickt)
+        d_lay.addWidget(self.btn_anker_entfernen)
+        self.details_box.setVisible(False)
+        k_lay.addWidget(self.details_box)
+        lay.addWidget(grp_k)
 
         # --- Ausschlusszonen --------------------------------------------------
         grp_zonen = QtWidgets.QGroupBox("Ausschlusszonen")
+        grp_zonen.setToolTip(
+            "Messpunkte in einer Zone (Rechteck Feld × Frequenz) werden aus ALLEN\n"
+            "(Nach-)Fits ausgenommen; betroffene Linescans rechnen sofort neu.")
         zonen_lay = QtWidgets.QVBoxLayout(grp_zonen)
-        hinweis_z = QtWidgets.QLabel(
-            "Messpunkte in einer Zone werden aus ALLEN (Nach-)Fits ausgenommen; "
-            "bereits gefittete Linescans im Band rechnen sofort neu.")
-        hinweis_z.setWordWrap(True)
-        zonen_lay.addWidget(hinweis_z)
-
-        self.btn_zone = QtWidgets.QPushButton("Zone im Farbplot einzeichnen")
+        self.btn_zone = QtWidgets.QPushButton("Zone einzeichnen")
         self.btn_zone.setCheckable(True)
-        self.btn_zone.setToolTip(
-            "Modus starten und Rechteck im Farbplot aufziehen.\n"
-            "Esc oder erneuter Klick bricht ab.")
+        self.btn_zone.setToolTip("Rechteck im Farbplot aufziehen. Esc oder erneuter Klick bricht ab.")
         self.btn_zone.toggled.connect(self._zone_umgeschaltet)
         zonen_lay.addWidget(self.btn_zone)
-
         self.zonen_liste = QtWidgets.QListWidget()
-        self.zonen_liste.setMaximumHeight(110)
+        self.zonen_liste.setMaximumHeight(90)
         zonen_lay.addWidget(self.zonen_liste)
-
-        self.btn_zone_entfernen = QtWidgets.QPushButton("Gewaehlte Zone entfernen")
+        self.btn_zone_entfernen = QtWidgets.QPushButton("Zone entfernen")
+        self.btn_zone_entfernen.setToolTip("Gewählte (sonst zuletzt gezeichnete) Zone entfernen.")
         self.btn_zone_entfernen.clicked.connect(self._zone_entfernen_geklickt)
         zonen_lay.addWidget(self.btn_zone_entfernen)
         lay.addWidget(grp_zonen)
         lay.addStretch(1)
+        self._aktualisiere_knoepfe()
 
     # --- Zustand ---------------------------------------------------------------
     def setze_zonen(self, zonen) -> None:
@@ -186,134 +169,80 @@ class ZonenPanel(QtWidgets.QWidget):
                 f"{zone.feld_min:.3f}–{zone.feld_max:.3f} T, "
                 f"{zone.frequenz_min/1e9:.2f}–{zone.frequenz_max/1e9:.2f} GHz")
 
-    def setze_geraden(self, geraden) -> None:
-        """Fuellt die Geradenliste (Handgriffe + gruene Seite; bei >1 Resonanz die Mode).
+    def setze_korridore(self, korridore, statistik: dict | None = None) -> None:
+        """Fuellt die Korridorliste (``statistik[mode] = (n_gefittet, n_problematisch)``).
 
-        Neu hinzugekommene Geraden werden vorgewaehlt (die zuletzt gesetzte),
-        damit "Seite wechseln"/"Mode"/"Entfernen" ohne Klick in die Liste auf
-        die neueste Gerade wirken.
+        Ohne Korridore steht eine Zeile "M1 – AutoWindow" (Mode 1 ohne Korridor).
+        Die aktive Mode bleibt, wenn sie noch existiert; sonst Mode 1.
         """
-        n_vorher = len(self._geraden)
-        gewaehlt = self.geraden_liste.currentRow()
-        self._geraden = list(geraden)
-        if len(self._geraden) > n_vorher or gewaehlt < 0:
-            gewaehlt = len(self._geraden) - 1
-        self.geraden_liste.clear()
-        for gerade in geraden:
-            seite = "+" if gerade.gruen_positiv else "−"
-            praefix = (f"M{int(getattr(gerade, 'mode', 1))} · "
-                       if self._n_moden > 1 else "")
-            self.geraden_liste.addItem(
-                f"{praefix}({gerade.b1:.3f} T, {gerade.f1/1e9:.2f} GHz) – "
-                f"({gerade.b2:.3f} T, {gerade.f2/1e9:.2f} GHz)  · grün: {seite}")
-        if 0 <= gewaehlt < self.geraden_liste.count():
-            self.geraden_liste.setCurrentRow(gewaehlt)
-        self._moden_ansicht_aktualisieren()
+        self._korridore = list(korridore)
+        statistik = statistik or {}
+        self._blockiert = True
+        self.korridor_liste.clear()
+        moden = [int(k.mode) for k in self._korridore]
+        if 1 not in moden:
+            self.korridor_liste.addItem(self._zeile_text(1, None, statistik.get(1)))
+            self.korridor_liste.item(0).setData(QtCore.Qt.UserRole, 1)
+        for k in self._korridore:
+            item = QtWidgets.QListWidgetItem(self._zeile_text(k.mode, k, statistik.get(k.mode)))
+            item.setData(QtCore.Qt.UserRole, int(k.mode))
+            self.korridor_liste.addItem(item)
+        if self._mode_aktiv not in moden and self._mode_aktiv != 1:
+            self._mode_aktiv = 1
+        for r in range(self.korridor_liste.count()):
+            if self.korridor_liste.item(r).data(QtCore.Qt.UserRole) == self._mode_aktiv:
+                self.korridor_liste.setCurrentRow(r)
+                break
+        self._blockiert = False
+        self._anker_liste_fuellen()
+        self._aktualisiere_knoepfe()
 
-    def setze_n_moden(self, n: int) -> None:
-        """Resonanzen je Linescan (vom Hauptfenster): Auswahl, Band-Werkzeug und
-        Liste umschalten - ohne Rueckruf."""
-        self._n_moden = max(1, int(n))
-        index = self.n_moden_combo.findData(min(self._n_moden, 6))
-        if index >= 0 and index != self.n_moden_combo.currentIndex():
-            self.n_moden_combo.blockSignals(True)
-            self.n_moden_combo.setCurrentIndex(index)
-            self.n_moden_combo.blockSignals(False)
-        self.setze_geraden(self._geraden)
-
-    def _n_moden_gewaehlt(self, *_args) -> None:
-        n = int(self.n_moden_combo.currentData() or 1)
-        if self._cb_n_moden_geaendert is not None:
-            self._cb_n_moden_geaendert(n)
+    @staticmethod
+    def _zeile_text(mode: int, korridor, stat) -> str:
+        if korridor is None:
+            text = f"M{mode} · AutoWindow (kein Korridor)"
         else:
-            self.setze_n_moden(n)
+            n = len(korridor.anker)
+            text = f"M{mode} · {n} Anker"
+        if stat:
+            n_fit, n_prob = stat
+            text += f" · {n_fit} Fits" + (f" ({n_prob} ⚠)" if n_prob else "")
+        return text
 
-    def bandbreite_T(self) -> float:
-        """Halbe Bandbreite des Band-Werkzeugs in Tesla."""
-        return float(self.breite_spin.value()) / 1e3
+    def mode_aktiv(self) -> int:
+        return int(self._mode_aktiv)
 
-    def setze_band_modus_aktiv(self, an: bool) -> None:
-        """Synchronisiert den Band-Knopf mit dem Modus-Manager (ohne Rueckruf)."""
-        self._knopf_syncen(self.btn_band, an)
+    def setze_mode_aktiv(self, mode: int) -> None:
+        self._mode_aktiv = max(1, int(mode))
+        self.setze_korridore(self._korridore)
 
-    def _band_umgeschaltet(self, an: bool) -> None:
-        if self._cb_band_umschalten is not None:
-            self._cb_band_umschalten(bool(an))
-
-    def _mode_von(self, gerade) -> int:
-        """Mode einer Geraden, an die eingestellte Modenzahl geklemmt."""
-        return min(max(int(getattr(gerade, "mode", 1)), 1), self._n_moden)
-
-    def n_moden_effektiv(self) -> int:
-        """Zahl der Moden, fuer die Geraden/Baender existieren (hoechste Mode-Nummer;
-        1 ohne Geraden) - die Modenzahl des naechsten Grenzgeraden-Fits."""
-        return max((self._mode_von(g) for g in self._geraden), default=1)
-
-    def _moden_ansicht_aktualisieren(self) -> None:
-        """Ein-Moden-Ansicht (klassisch) oder Moden-Ansicht (n > 1, sukzessive Baender)."""
-        mehrere = self._n_moden > 1
-        self.band_box.setVisible(mehrere)
-        self.btn_gerade_mode.setVisible(mehrere)
-        if mehrere:
-            n_eff = self.n_moden_effektiv()
-            self.btn_geraden_fit.setText(f"Moden 1–{n_eff} fitten …" if n_eff > 1
-                                         else "Mode 1 fitten …")
-            self.hinweis_g.setText(
-                f"Ablauf bei {self._n_moden} Moden – nacheinander: Band um Mode 1 "
-                "einzeichnen („Band einzeichnen“ oder zwei Geraden) → fitten → Band um "
-                "Mode 2 → fitten (alle bisherigen Moden gleichzeitig, Überlagerung wird "
-                "berücksichtigt) → … Die Mode-Nummer wird automatisch vergeben (zwei "
-                "Geraden = ein Band = eine Mode). Kittel/LLG je Mode: Strg+K.")
-            teile = []
-            for k in range(1, self._n_moden + 1):
-                anzahl = sum(1 for g in self._geraden if self._mode_von(g) == k)
-                teile.append(f"M{k} {'✓' if anzahl >= 2 else '–'} ({anzahl})")
-            self.band_status.setText(
-                "Bänder: " + " · ".join(teile)
-                + f"  →  nächste Gerade/Band: Mode {self.mode_neu()}")
-        else:
-            self.btn_geraden_fit.setText("Grünen Bereich fitten …")
-            self.hinweis_g.setText(
-                "Gerade per zwei Klicks einfügen, an den Endpunkten ziehen "
-                "(verschieben/rotieren). Grüner Saum = wird gefittet, roter Saum = wird "
-                "ignoriert; Doppelklick auf die Linie wechselt die Seite. Zwei Geraden "
-                "ergeben ein Band. Funktioniert direkt nach dem Laden – ohne Auto-Fit "
-                "wird nur der grüne Bereich gefittet.")
+    def korridor_aktiv(self):
+        """Korridor der aktiven Mode (oder ``None``)."""
+        for k in self._korridore:
+            if int(k.mode) == self._mode_aktiv:
+                return k
+        return None
 
     def mode_neu(self) -> int:
-        """Mode der naechsten Gerade / des naechsten Bands - automatisch vergeben.
+        """Nummer des naechsten Korridors (lueckenlos)."""
+        return max((int(k.mode) for k in self._korridore), default=0) + 1
 
-        Zwei Geraden bilden ein Band (= eine Mode). Ist das Band der hoechsten
-        Mode vollstaendig (mindestens zwei Geraden), beginnt die naechste Mode -
-        bis zur eingestellten Modenzahl ("Resonanzen je Linescan"); danach
-        gehoeren weitere Geraden zur letzten Mode. Bei einer Resonanz immer 1.
-        """
-        if self._n_moden <= 1 or not self._geraden:
-            return 1
-        k = self.n_moden_effektiv()
-        anzahl = sum(1 for g in self._geraden if self._mode_von(g) == k)
-        return min(k + 1, self._n_moden) if anzahl >= 2 else k
+    def bandbreite_T(self) -> float:
+        """Halbe Korridorbreite beim Anlegen in Tesla."""
+        return float(self.breite_spin.value()) / 1e3
 
-    def _gerade_zeile(self) -> int:
-        """Ausgewaehlte Gerade - ohne Auswahl die zuletzt gesetzte (-1 = keine)."""
-        zeile = self.geraden_liste.currentRow()
-        if zeile < 0 and self._geraden:
-            zeile = len(self._geraden) - 1
-        return zeile
+    def gewaehlter_anker(self) -> int:
+        return int(self.anker_liste.currentRow())
 
-    def _gerade_mode_geklickt(self) -> None:
-        zeile = self._gerade_zeile()
-        if 0 <= zeile < len(self._geraden) and self._cb_gerade_mode is not None:
-            aktuell = int(getattr(self._geraden[zeile], "mode", 1))
-            self._cb_gerade_mode(zeile, aktuell % self._n_moden + 1)
-
+    # --- Modus-Synchronisation (ohne Rueckruf) ---------------------------------
     def setze_modus_aktiv(self, an: bool) -> None:
-        """Synchronisiert den Zonen-Knopf mit dem Modus-Manager (ohne Rueckruf)."""
         self._knopf_syncen(self.btn_zone, an)
 
-    def setze_gerade_modus_aktiv(self, an: bool) -> None:
-        """Synchronisiert den Geraden-Knopf mit dem Modus-Manager (ohne Rueckruf)."""
-        self._knopf_syncen(self.btn_gerade, an)
+    def setze_korridor_modus_aktiv(self, an: bool) -> None:
+        self._knopf_syncen(self.btn_neu, an)
+
+    def setze_anker_modus_aktiv(self, an: bool) -> None:
+        self._knopf_syncen(self.btn_anker, an)
 
     @staticmethod
     def _knopf_syncen(knopf: QtWidgets.QPushButton, an: bool) -> None:
@@ -323,25 +252,65 @@ class ZonenPanel(QtWidgets.QWidget):
             knopf.blockSignals(False)
 
     # --- intern ------------------------------------------------------------------
+    def _aktualisiere_knoepfe(self) -> None:
+        hat = self.korridor_aktiv() is not None
+        self.btn_anker.setEnabled(hat)
+        self.btn_entfernen.setEnabled(hat)
+        self.btn_fit.setEnabled(hat)
+        self.btn_fit_alle.setEnabled(bool(self._korridore))
+        self.btn_anker_entfernen.setEnabled(hat and self.anker_liste.count() > 0)
+
+    def _anker_liste_fuellen(self) -> None:
+        self.anker_liste.clear()
+        k = self.korridor_aktiv()
+        if k is not None:
+            for a in k.anker:
+                self.anker_liste.addItem(
+                    f"{a.f/1e9:.3f} GHz: {a.b_links:.4f} – {a.b_rechts:.4f} T")
+            if k.anker:
+                self.anker_liste.setCurrentRow(len(k.anker) - 1)
+
+    def _details_umschalten(self, an: bool) -> None:
+        self.btn_details.setArrowType(QtCore.Qt.DownArrow if an else QtCore.Qt.RightArrow)
+        self.details_box.setVisible(bool(an))
+
+    def _zeile_gewaehlt(self, zeile: int) -> None:
+        if self._blockiert or zeile < 0:
+            return
+        item = self.korridor_liste.item(zeile)
+        mode = int(item.data(QtCore.Qt.UserRole) or 1)
+        if mode == self._mode_aktiv:
+            return
+        self._mode_aktiv = mode
+        self._anker_liste_fuellen()
+        self._aktualisiere_knoepfe()
+        if self._cb_korridor_gewaehlt is not None:
+            self._cb_korridor_gewaehlt(mode)
+
+    def _korridor_umgeschaltet(self, an: bool) -> None:
+        if self._cb_korridor_umschalten is not None:
+            self._cb_korridor_umschalten(bool(an))
+
+    def _anker_umgeschaltet(self, an: bool) -> None:
+        if self._cb_anker_umschalten is not None:
+            self._cb_anker_umschalten(bool(an))
+
+    def _entfernen_geklickt(self) -> None:
+        if self.korridor_aktiv() is not None and self._cb_korridor_entfernen is not None:
+            self._cb_korridor_entfernen(self._mode_aktiv)
+
+    def _anker_entfernen_geklickt(self) -> None:
+        zeile = self.anker_liste.currentRow()
+        if zeile >= 0 and self.korridor_aktiv() is not None and self._cb_anker_entfernen is not None:
+            self._cb_anker_entfernen(self._mode_aktiv, zeile)
+
     def _zone_umgeschaltet(self, an: bool) -> None:
         if self._cb_zone_umschalten is not None:
             self._cb_zone_umschalten(bool(an))
 
     def _zone_entfernen_geklickt(self) -> None:
         zeile = self.zonen_liste.currentRow()
+        if zeile < 0 and self.zonen_liste.count():
+            zeile = self.zonen_liste.count() - 1
         if zeile >= 0 and self._cb_zone_entfernen is not None:
             self._cb_zone_entfernen(zeile)
-
-    def _gerade_umgeschaltet(self, an: bool) -> None:
-        if self._cb_gerade_umschalten is not None:
-            self._cb_gerade_umschalten(bool(an))
-
-    def _gerade_seite_geklickt(self) -> None:
-        zeile = self._gerade_zeile()
-        if zeile >= 0 and self._cb_gerade_seite is not None:
-            self._cb_gerade_seite(zeile)
-
-    def _gerade_entfernen_geklickt(self) -> None:
-        zeile = self._gerade_zeile()
-        if zeile >= 0 and self._cb_gerade_entfernen is not None:
-            self._cb_gerade_entfernen(zeile)

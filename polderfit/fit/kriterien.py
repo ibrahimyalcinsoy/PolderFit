@@ -57,6 +57,13 @@ B_RES_REL_UNSICHERHEIT_MAX: float = 0.02
 #: hart problematisch zu markieren war eine der bekannten "Problemfit"-Ursachen.
 RMSE_NORM_EXZELLENT: float = 0.10
 
+#: Mindestzahl Messpunkte im Fitfenster/Korridor: 8 Parameter plus Sicherheitsmarge.
+MIN_PUNKTE_FIT: int = 12
+
+#: Eine Linie mit mu0*dH unter diesem Vielfachen des Feldschritts ist nicht
+#: aufgeloest (Nadel-Linie auf 1-2 Messpunkten) und gilt als problematisch.
+DH_MIN_FELDSCHRITTE: float = 1.5
+
 
 def an_grenze(wert: float, unten: float, oben: float, rel: float = GRENZ_NAEHE_REL) -> bool:
     """True, wenn ``wert`` innerhalb ``rel`` des Schrankenabstands an einer Schranke liegt."""
@@ -97,8 +104,7 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
     Standard-Plausibilitaetsgrenze ``alpha_max/2`` fuer Kriterium d - fuer
     "exotische" Proben mit real breiten Linien (nanostrukturiertes CoFe,
     FeCr2S4) sonst dauernd "alpha unphysikalisch". Ein Wert ``<= 0``/``None``
-    bedeutet Automatik. Bei mehreren Moden (``erg.moden``) werden die
-    Kriterien b-d fuer JEDE Mode geprueft.
+    bedeutet Automatik.
 
     Ein Fit ist problematisch, wenn EINE der folgenden Bedingungen zutrifft:
 
@@ -107,7 +113,9 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
     c) B_res ausserhalb des Feldfensters,
     d) alpha ausserhalb des plausiblen Bereichs,
     e) keine Konvergenz / keine Kovarianz (keine Unsicherheiten bestimmbar),
-    f) relative Parameter-Unsicherheit zu gross.
+    f) relative Parameter-Unsicherheit zu gross,
+    g) zu wenige Messpunkte im Fenster/Korridor (:data:`MIN_PUNKTE_FIT`),
+    h) Linie nicht aufgeloest (:data:`DH_MIN_FELDSCHRITTE`).
     """
     gruende: list[str] = []
     if not getattr(erg, "gefittet", True):
@@ -127,28 +135,34 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
         if not exzellent:
             gruende.append("keine Unsicherheiten")
 
-    # Alle Moden pruefen (Hauptmode = die Felder des Ergebnisses selbst).
-    moden = getattr(erg, "moden", None) or []
-    kandidaten = [(erg.alpha, erg.phi, erg.B_res)] + [
-        (m.get("alpha", np.nan), m.get("phi", np.nan), m.get("B_res", np.nan))
-        for m in moden[1:]]
-    for alpha, phi, b_res in kandidaten:
-        # (b) Parameter an Schranke
-        if an_grenze(alpha, ALPHA_MIN, alpha_max):
-            gruende.append("alpha an Grenze")
-        if an_grenze(phi, PHI_MIN, PHI_MAX):
-            gruende.append("phi an Grenze")
-        if np.isfinite(erg.B_fenster_min) and an_grenze(b_res, erg.B_fenster_min,
-                                                        erg.B_fenster_max):
-            gruende.append("B_res am Fensterrand")
-        # (c) B_res ausserhalb des Feldfensters
-        if np.isfinite(erg.B_fenster_min) and np.isfinite(b_res) and (
-            b_res < erg.B_fenster_min or b_res > erg.B_fenster_max
-        ):
-            gruende.append("B_res ausserhalb Fenster")
-        # (d) alpha unphysikalisch
-        if np.isfinite(alpha) and alpha > plausibel:
-            gruende.append("alpha unphysikalisch")
+    alpha, phi, b_res = erg.alpha, erg.phi, erg.B_res
+    # (b) Parameter an Schranke
+    if an_grenze(alpha, ALPHA_MIN, alpha_max):
+        gruende.append("alpha an Grenze")
+    if an_grenze(phi, PHI_MIN, PHI_MAX):
+        gruende.append("phi an Grenze")
+    if np.isfinite(erg.B_fenster_min) and an_grenze(b_res, erg.B_fenster_min,
+                                                    erg.B_fenster_max):
+        gruende.append("B_res am Fensterrand")
+    # (c) B_res ausserhalb des Feldfensters
+    if np.isfinite(erg.B_fenster_min) and np.isfinite(b_res) and (
+        b_res < erg.B_fenster_min or b_res > erg.B_fenster_max
+    ):
+        gruende.append("B_res ausserhalb Fenster")
+    # (d) alpha unphysikalisch
+    if np.isfinite(alpha) and alpha > plausibel:
+        gruende.append("alpha unphysikalisch")
+
+    # (g) zu wenige Punkte, (h) Linie nicht aufgeloest - beides aus dem
+    # Feldgitter des gefitteten Ausschnitts.
+    feld = getattr(erg, "feld", None)
+    n_punkte = int(np.size(feld)) if feld is not None else 0
+    if 0 < n_punkte < MIN_PUNKTE_FIT:
+        gruende.append("zu wenige Punkte")
+    if n_punkte >= 2:
+        schritt = float(np.ptp(np.asarray(feld, dtype=float))) / (n_punkte - 1)
+        if schritt > 0 and np.isfinite(erg.dH) and erg.dH < DH_MIN_FELDSCHRITTE * schritt:
+            gruende.append("Linie nicht aufgelöst")
 
     # (a) Residuum (primaer: normiertes Residuum, skalenfrei)
     if (not np.isfinite(erg.rmse_norm)) or erg.rmse_norm > RMSE_NORM_SCHWELLE:

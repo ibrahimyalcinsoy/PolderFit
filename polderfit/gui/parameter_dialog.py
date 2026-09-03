@@ -143,17 +143,6 @@ class ParameterDialog(QtWidgets.QDialog):
             "0 = aus (nur ein Durchgang auf dem Detektionsfenster).")
         form.addRow("Nachfenster (± ΔH-Vielfache):", self.nachfenster_spin)
 
-        self.moden_spin = RuhigeSpinBox()
-        self.moden_spin.setRange(1, 6)
-        self.moden_spin.setValue(max(1, int(parameter.n_moden)))
-        self.moden_spin.setToolTip(
-            "Anzahl simultan gefitteter Resonanzen je Linescan.\n"
-            "1 = Standard (eine Polder-Linie). 2 = zwei nahe Dips (z. B.\n"
-            "nanostrukturiertes CoFe mit großer Linienbreite); alle Moden\n"
-            "werden gleichzeitig mit gemeinsamem Untergrund gefittet, die\n"
-            "stärkste ist die Hauptmode (Kittel/LLG), alle stehen im Export.")
-        form.addRow("Resonanzen je Linescan:", self.moden_spin)
-
         self.gewicht_combo = RuhigeComboBox()
         self.gewicht_combo.addItems(["ungewichtet (Standard)", "gewichtet (GUM, w = 1/u²)"])
         self.gewicht_combo.setCurrentIndex(1 if parameter.gewichtet else 0)
@@ -207,7 +196,6 @@ class ParameterDialog(QtWidgets.QDialog):
         self.alpha_max_spin.setValue(standard.alpha_max)
         self.alpha_plausibel_spin.setValue(standard.alpha_plausibel)
         self.nachfenster_spin.setValue(standard.nachfenster_faktor)
-        self.moden_spin.setValue(standard.n_moden)
         self.gewicht_combo.setCurrentIndex(1 if standard.gewichtet else 0)
         self.chk_bestaetigen.setChecked(standard.nachfit_bestaetigen)
 
@@ -224,7 +212,6 @@ class ParameterDialog(QtWidgets.QDialog):
             alpha_max=float(self.alpha_max_spin.value()),
             alpha_plausibel=float(self.alpha_plausibel_spin.value()),
             nachfenster_faktor=float(self.nachfenster_spin.value()),
-            n_moden=int(self.moden_spin.value()),
             gewichtet=self.gewicht_combo.currentIndex() == 1,
             nachfit_bestaetigen=self.chk_bestaetigen.isChecked(),
         )

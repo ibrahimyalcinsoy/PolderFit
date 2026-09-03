@@ -15,9 +15,10 @@ import numpy as np
 
 from ..io.datensatz import Linescan, Messdatensatz
 from ..physik.konstanten import GAMMA_STANDARD
-from ..physik.fitmodell import Startwerte, s21_modell_multi, schaetze_startwerte_multi
+from ..physik.fitmodell import Startwerte
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
+from .korridor import Korridor
 from .kriterien import ALPHA_MAX
 from .linescan_fit import FitErgebnis, fitte_linescan, setze_bewertung
 
@@ -115,15 +116,17 @@ class StapelErgebnis:
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD
     #: Plausibilitaetsgrenze "alpha unphysikalisch" (None = alpha_max/2).
     alpha_plausibel: float | None = None
-    #: Anzahl simultan gefitteter Resonanzen je Linescan (1 = Standard).
-    n_moden: int = 1
-    #: Auto-Fit lief zweistufig (klassisch, danach Moden ergaenzt; siehe fitte_alle).
-    zweistufig: bool = False
     #: Manuelle Nachfits automatisch als "gut - vom Nutzer bestaetigt" bewerten.
     nachfit_bestaetigen: bool = True
+    #: Fitfenster je Frequenz (Mode 1; das "gruene Fenster").
     fenster: list[tuple[float, float]] = field(default_factory=list)
+    #: Ergebnisse der Mode 1 je Frequenz (Hauptmode: Overlay, Problemliste, Export).
     ergebnisse: list[FitErgebnis] = field(default_factory=list)
     zugeschnitten: list[Linescan] = field(default_factory=list)
+    #: Ergebnisse weiterer Moden: ``{mode: [FitErgebnis je Frequenz]}`` (Mode >= 2),
+    #: je Mode ein Einzelfit auf den Punkten ihres Korridors (siehe
+    #: :func:`fitte_mode`); nicht gefittete Frequenzen sind Platzhalter.
+    nebenmoden: dict = field(default_factory=dict)
     #: Interaktiv eingezeichnete Ausschlusszonen (wirken auf alle Nachfits).
     ausschlusszonen: list[Ausschlusszone] = field(default_factory=list)
     #: Als Ausreisser markierte Stapel-Indizes: aus Darstellung UND allen
@@ -134,6 +137,35 @@ class StapelErgebnis:
     #: :mod:`polderfit.auswertung.moden`); der Linescan selbst und seine
     #: anderen Moden bleiben in der Auswertung.
     ausreisser_moden: list[tuple[int, int]] = field(default_factory=list)
+
+    # --- Moden ---------------------------------------------------------------
+    def ergebnisse_mode(self, mode: int) -> list[FitErgebnis]:
+        """Ergebnisliste der Mode ``mode`` (1 = ``ergebnisse``; sonst Platzhalter
+        anlegen, falls noch nicht vorhanden)."""
+        mode = max(1, int(mode))
+        if mode == 1:
+            return self.ergebnisse
+        liste = self.nebenmoden.get(mode)
+        if liste is None or len(liste) != len(self.datensatz.linescans):
+            liste = [FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=mode)
+                     for ls in self.datensatz.linescans]
+            self.nebenmoden[mode] = liste
+        return liste
+
+    def moden_vorhanden(self) -> list[int]:
+        """Mode-Nummern mit mindestens einem gefitteten Ergebnis (immer mit 1)."""
+        moden = [1]
+        for k in sorted(self.nebenmoden):
+            if any(e.gefittet for e in self.nebenmoden[k]):
+                moden.append(int(k))
+        return moden
+
+    def mode_entfernen(self, mode: int) -> None:
+        """Ergebnisse einer Nebenmode verwerfen (z. B. Korridor geloescht)."""
+        if int(mode) >= 2:
+            self.nebenmoden.pop(int(mode), None)
+            self.ausreisser_moden = [(i, k) for i, k in self.ausreisser_moden
+                                     if int(k) != int(mode)]
 
     def ist_ausreisser(self, index: int) -> bool:
         return index in self.ausreisser
@@ -195,10 +227,12 @@ class StapelErgebnis:
         """Indizes mit echtem Fitergebnis (keine Platzhalter)."""
         return [i for i, e in enumerate(self.ergebnisse) if e.gefittet]
 
-    def bewerte(self, index: int, bewertung: str) -> FitErgebnis:
-        """Setzt die Nutzer-Bewertung des Fits ``index`` (Kopie, Undo-sicher)."""
-        neu = setze_bewertung(self.ergebnisse[index], bewertung)
-        self.ergebnisse[index] = neu
+    def bewerte(self, index: int, bewertung: str, mode: int = 1) -> FitErgebnis:
+        """Setzt die Nutzer-Bewertung des Fits ``index`` der Mode ``mode``
+        (Kopie, Undo-sicher)."""
+        liste = self.ergebnisse_mode(mode)
+        neu = setze_bewertung(liste[index], bewertung)
+        liste[index] = neu
         return neu
 
     def problem_statistik(self) -> dict[str, int]:
@@ -250,7 +284,8 @@ def fitte_mit_nachfenster(
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
     alpha_plausibel: float | None = None,
-    n_moden: int = 1,
+    mode: int = 1,
+    B_res_vorgabe: float | None = None,
 ) -> tuple[FitErgebnis, Linescan, tuple[float, float]]:
     """Einzelfit in ``fenster``, dann verengter zweiter Durchgang (siehe
     :data:`NACHFENSTER_FAKTOR_STANDARD`).
@@ -262,13 +297,14 @@ def fitte_mit_nachfenster(
     unten, oben = fenster
     beschnitten = schneide_band(linescan, unten, oben)
     ergebnis = fitte_linescan(beschnitten, gamma, alpha_max=alpha_max,
-                              alpha_plausibel=alpha_plausibel, n_moden=n_moden)
+                              alpha_plausibel=alpha_plausibel, mode=mode,
+                              B_res_vorgabe=B_res_vorgabe)
     eng = nachfenster(linescan, ergebnis, (unten, oben), nachfenster_faktor)
     if eng is None:
         return ergebnis, beschnitten, (unten, oben)
     beschnitten2 = schneide_band(linescan, eng[0], eng[1])
     ergebnis2 = fitte_linescan(beschnitten2, gamma, alpha_max=alpha_max,
-                               alpha_plausibel=alpha_plausibel, n_moden=n_moden)
+                               alpha_plausibel=alpha_plausibel, mode=mode)
     if ergebnis2.erfolg and not ergebnis2.problematisch:
         return ergebnis2, beschnitten2, eng
     return ergebnis, beschnitten, (unten, oben)
@@ -286,12 +322,10 @@ def fitte_alle(
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
     alpha_plausibel: float | None = None,
-    n_moden: int = 1,
     nachfit_bestaetigen: bool = True,
     fortschritt_fenster=None,
     abbruch=None,
-    zweistufig: bool = False,
-    fortschritt_moden=None,
+    korridor: Korridor | None = None,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -311,32 +345,35 @@ def fitte_alle(
     ``alpha_max``: harte obere alpha-Schranke der Einzelfits.
     ``nachfenster_faktor``: zweiter Fit-Durchgang auf ``B_res +/- Faktor*dH``
     (siehe :data:`NACHFENSTER_FAKTOR_STANDARD`; 0 = nur ein Durchgang).
-    ``zweistufig`` (nur bei ``n_moden > 1``): Stufe 1 ist der klassische
-    Ein-Moden-Auto-Fit (robuste Fenstersuche, Hauptmode), Stufe 2 ergaenzt je
-    Linescan weitere Resonanzen (:func:`ergaenze_moden`; Fortschritt ueber
-    ``fortschritt_moden(i, n, ergebnis)``). Gelingt Stufe 2 an einem Linescan
-    nicht, bleibt dort das klassische Ergebnis stehen.
+    ``korridor`` (optional): Korridor der Mode 1 - dann wird je Frequenz NUR
+    im Korridor gefittet (Fenster = Korridor, keine Fenstersuche); Frequenzen
+    ohne Korridor bleiben Platzhalter. Weitere Moden: :func:`fitte_mode`.
     """
     if auswahl is not None and not auswahl.ist_neutral:
         datensatz, indizes = auswahl.reduziere(datensatz)
         if zentren is not None:
             zentren = np.asarray(zentren)[indizes]
 
-    if zentren is not None:
+    if korridor is not None and korridor.definiert:
+        fenster = []
+        for ls in datensatz.linescans:
+            g = (korridor.grenzen_im_bereich(ls.frequenz, float(ls.feld.min()),
+                                             float(ls.feld.max()))
+                 if ls.feld.size else None)
+            fenster.append(g if g is not None else (np.nan, np.nan))
+    elif zentren is not None:
         fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor,
                                      alpha_erwartet=alpha_erwartet)
     else:
         fenster = auto_fenster_alle(datensatz, gamma, breite_faktor,
                                     fortschritt=fortschritt_fenster)
     stapel = StapelErgebnis(
-        datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=fenster,
+        datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=list(fenster),
         alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
-        alpha_plausibel=alpha_plausibel, n_moden=max(1, int(n_moden)),
+        alpha_plausibel=alpha_plausibel,
         nachfit_bestaetigen=nachfit_bestaetigen,
     )
     n = len(datensatz.linescans)
-    zweistufig_aktiv = bool(zweistufig) and stapel.n_moden > 1
-    fenster_auto = list(fenster)   # stapel.fenster wird unten je Index ueberschrieben
     for i, ls in enumerate(datensatz.linescans):
         if abbruch is not None and abbruch():
             # Rest als Platzhalter: der Stapel bleibt konsistent und nutzbar.
@@ -344,137 +381,38 @@ def fitte_alle(
                 stapel.zugeschnitten.append(rest)
                 stapel.ergebnisse.append(FitErgebnis.platzhalter(rest.frequenz, rest.feld))
             break
+        if not np.all(np.isfinite(fenster[i])):
+            # Ausserhalb des Korridors: nicht gefittet.
+            stapel.fenster[i] = ((float(ls.feld.min()), float(ls.feld.max()))
+                                 if ls.feld.size else (0.0, 0.0))
+            stapel.zugeschnitten.append(ls)
+            stapel.ergebnisse.append(FitErgebnis.platzhalter(ls.frequenz, ls.feld))
+            continue
         ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
             ls, fenster[i], gamma, alpha_max=alpha_max,
-            nachfenster_faktor=nachfenster_faktor, alpha_plausibel=alpha_plausibel,
-            n_moden=1 if zweistufig_aktiv else stapel.n_moden)
+            nachfenster_faktor=nachfenster_faktor, alpha_plausibel=alpha_plausibel)
         stapel.fenster[i] = verwendet
         stapel.zugeschnitten.append(beschnitten)
         stapel.ergebnisse.append(ergebnis)
         if fortschritt is not None:
             fortschritt(i, n, ergebnis)
-    if zweistufig_aktiv:
-        stapel.zweistufig = True
-        for i in range(len(stapel.ergebnisse)):
-            if abbruch is not None and abbruch():
-                break
-            ergebnis = ergaenze_moden(stapel, i, stapel.n_moden, fenster=fenster_auto[i])
-            if fortschritt_moden is not None:
-                fortschritt_moden(i, n, ergebnis)
     return stapel
 
 
-#: Stufe 2 des zweistufigen Auto-Fits: eine weitere Mode gilt nur als echt, wenn
-#: das normierte Residuum um mindestens diesen Faktor unter dem Ein-Moden-Fit liegt.
-PHANTOM_FAKTOR = 0.95
-
-
-def ergaenze_moden(
-    stapel: StapelErgebnis,
-    index: int,
-    n_moden: int,
-    fenster: tuple[float, float] | None = None,
-) -> FitErgebnis:
-    """Stufe 2 des zweistufigen Auto-Fits: weitere Resonanzen ergaenzen.
-
-    Ausgangspunkt ist das klassische Ein-Moden-Ergebnis an ``index``. Mode 1
-    startet bei diesem Ergebnis, die ``n_moden - 1`` weiteren bei den Maxima
-    des Residuums (Messung minus Mode 1, ausserhalb +-FWHM der Hauptmode);
-    danach werden alle Moden simultan im Fenster ``fenster`` gefittet (Standard:
-    Stapelfenster; das breitere von beiden gilt, damit Nachbarmoden Platz haben).
-
-    Uebernommen wird der Mehr-Moden-Fit nur, wenn er erfolgreich, nicht
-    problematisch, mit der klassischen Hauptmode vertraeglich
-    (``|B_res - B_res_klassisch| <= max(FWHM, 2 Feldschritte)``) und deutlich
-    besser als der Ein-Moden-Fit im selben Fenster ist (:data:`PHANTOM_FAKTOR`);
-    unter mehreren Startwert-Kandidaten gewinnt das kleinste Residuum. Sonst bleibt
-    das klassische Ergebnis unveraendert (``moden`` = nur die Hauptmode) -
-    so entstehen auf Ein-Moden-Daten keine Phantom-Resonanzen. Liefert das
-    Ergebnis am Index.
-    """
-    klassisch = stapel.ergebnisse[index]
-    n_moden = max(1, int(n_moden))
-    if (n_moden < 2 or not getattr(klassisch, "gefittet", True) or not klassisch.erfolg
-            or not np.isfinite(klassisch.B_res)):
-        return klassisch
-    ls = stapel.datensatz.linescans[index]
-    st_unten, st_oben = stapel.fenster[index]
-    unten, oben = fenster if fenster is not None else (st_unten, st_oben)
-    unten, oben = min(float(unten), float(st_unten)), max(float(oben), float(st_oben))
-    beschnitten = schneide_band(ls, unten, oben)
-    if stapel.ausschlusszonen:
-        beschnitten = ohne_ausschlusszonen(beschnitten, stapel.ausschlusszonen)
-    B = np.asarray(beschnitten.feld, dtype=float)
-    if B.size < 4 * n_moden:
-        return klassisch
-    s21 = beschnitten.s21
-    omega = 2.0 * np.pi * float(ls.frequenz)
-    B_ref = float(np.mean(B))
-    # Untergrund des klassischen Fits bezieht sich auf dessen Fenstermitte.
-    B_ref_klassisch = float(np.mean(stapel.zugeschnitten[index].feld))
-    untergrund = dict(
-        off_re=float(klassisch.off_re + klassisch.slope_re * (B_ref - B_ref_klassisch)),
-        off_im=float(klassisch.off_im + klassisch.slope_im * (B_ref - B_ref_klassisch)),
-        slope_re=float(klassisch.slope_re), slope_im=float(klassisch.slope_im))
-    mode1 = s21_modell_multi(B, [(klassisch.B_res, klassisch.alpha, klassisch.A, klassisch.phi)],
-                             0.0, 0.0, 0.0, 0.0, omega, stapel.gamma, B_ref)
-    rest = s21 - mode1
-    fwhm = float(np.sqrt(3.0) * klassisch.dH) if np.isfinite(klassisch.dH) else 0.0
-    schritt = float(np.ptp(B)) / max(B.size - 1, 1)
-    toleranz = max(fwhm, 2.0 * schritt)
-    maske = np.abs(B - klassisch.B_res) > toleranz
-    grenzen = dict(B_min=float(B.min()), B_max=float(B.max()))
-    seed = Startwerte(B_res=float(klassisch.B_res), alpha=float(klassisch.alpha),
-                      A=float(klassisch.A), phi=float(klassisch.phi), **untergrund, **grenzen)
-
-    # Startwert-Kandidaten fuer die weiteren Moden: (a) Rohdaten ausserhalb der
-    # Hauptmode (unverzerrt, findet getrennte Nachbarlinien), (b) Residuum
-    # ausserhalb, (c) Residuum im ganzen Fenster (ueberlappende Moden).
-    versuche = []
-    if np.count_nonzero(maske) >= 4 * (n_moden - 1):
-        versuche += [(B[maske], s21[maske]), (B[maske], rest[maske])]
-    versuche.append((B, rest))
-    kandidaten: list[list[Startwerte]] = []
-    for Bk, sk in versuche:
-        try:
-            weitere = schaetze_startwerte_multi(Bk, sk, omega, stapel.gamma, n_moden - 1,
-                                                alpha_max=stapel.alpha_max)
-        except Exception:
+def _nachbar_b_res(ergebnisse: list, i: int, fenster) -> float | None:
+    """Resonanzfeld des naechsten gut gefitteten Nachbarn (erst links, dann
+    rechts), falls es im Fenster liegt - Rueckfall-Startwert fuer den
+    Korridor-Fit, wenn der lokale Dip nicht zum Ziel fuehrt."""
+    for j in (i - 1, i + 1):
+        if not (0 <= j < len(ergebnisse)):
             continue
-        starts = [seed] + [replace(sw, **untergrund, **grenzen) for sw in weitere]
-        lage = tuple(round(sw.B_res / max(schritt, 1e-9)) for sw in starts[1:])
-        if all(lage != tuple(round(sw.B_res / max(schritt, 1e-9)) for sw in k[1:]) for k in kandidaten):
-            kandidaten.append(starts)
-    if not kandidaten:
-        return klassisch
-
-    # Vergleichsbasis: Ein-Moden-Fit im SELBEN Fenster (Phantom-Filter).
-    if (unten, oben) == (float(st_unten), float(st_oben)):
-        basis = klassisch
-    else:
-        basis = fitte_linescan(beschnitten, stapel.gamma, startwerte=seed,
-                               alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
-                               n_moden=1)
-    basis_rmse = float(basis.rmse_norm) if np.isfinite(basis.rmse_norm) else np.inf
-
-    beste = None
-    for starts in kandidaten:
-        ergebnis = fitte_linescan(beschnitten, stapel.gamma, startwerte=starts,
-                                  alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
-                                  n_moden=n_moden)
-        if not (ergebnis.erfolg and not ergebnis.problematisch and np.isfinite(ergebnis.B_res)
-                and abs(ergebnis.B_res - klassisch.B_res) <= toleranz):
+        e = ergebnisse[j]
+        if not (getattr(e, "gefittet", False) and e.erfolg and not e.problematisch):
             continue
-        if not (np.isfinite(ergebnis.rmse_norm) and ergebnis.rmse_norm <= PHANTOM_FAKTOR * basis_rmse):
-            continue   # keine echte Verbesserung gegenueber einer Mode -> Phantom
-        if beste is None or ergebnis.rmse_norm < beste.rmse_norm:
-            beste = ergebnis
-    if beste is None:
-        return klassisch
-    stapel.fenster[index] = (unten, oben)
-    stapel.zugeschnitten[index] = beschnitten
-    stapel.ergebnisse[index] = beste
-    return beste
+        b = float(e.B_res)
+        if fenster is not None and fenster[0] < b < fenster[1]:
+            return b
+    return None
 
 
 def leerer_stapel(
@@ -484,7 +422,6 @@ def leerer_stapel(
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
     alpha_plausibel: float | None = None,
-    n_moden: int = 1,
     nachfit_bestaetigen: bool = True,
     breite_faktor: float = 8.0,
 ) -> StapelErgebnis:
@@ -505,7 +442,7 @@ def leerer_stapel(
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle,
         alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
-        alpha_plausibel=alpha_plausibel, n_moden=max(1, int(n_moden)),
+        alpha_plausibel=alpha_plausibel,
         nachfit_bestaetigen=nachfit_bestaetigen,
     )
     try:
@@ -550,14 +487,15 @@ def fitte_neu(
     startwerte: Startwerte | None = None,
     B_res_vorgabe: float | None = None,
     bestaetigen: bool | None = None,
-    n_moden: int | None = None,
-    bereiche: list | None = None,
+    mode: int = 1,
 ) -> FitErgebnis:
     """Fittet einen einzelnen Datensatz neu (manuelles Nachfitten).
 
     Optional mit neuen Bandgrenzen, expliziten Startwerten oder nur neuem
     Resonanzfeld. Aktualisiert den Stapel an Position ``index`` und gibt das
-    neue Ergebnis zurueck.
+    neue Ergebnis zurueck. ``mode >= 2``: Ergebnis landet in
+    ``stapel.ergebnisse_mode(mode)``; ``stapel.fenster`` (Mode 1) bleibt
+    unveraendert, das Fenster der Mode steht im Ergebnis (``B_fenster_min/max``).
 
     ``bestaetigen``: das Ergebnis als "gut - vom Nutzer bestaetigt" bewerten
     (nur wenn der Fit ein Ergebnis liefert). ``None`` = Stapel-Einstellung
@@ -565,32 +503,89 @@ def fitte_neu(
     Frequenz - Grenzen ziehen, Nochmal fitten - gilt als Freigabe des Nutzers;
     die Kriterien bleiben in ``problematisch_auto`` einsehbar). Bereichs-/
     Grenzgeraden-Fits ueber viele Frequenzen, Zonen-Nachrechnungen und das
-    Wiederherstellen einer Sitzung uebergeben ``False``. ``n_moden``: Anzahl Resonanzen fuer diesen Fit
-    (``None`` = Stapel-Einstellung). ``bereiche``: je Mode ``(lo, hi)``/``None`` -
-    Feldbereich der jeweiligen Resonanz (Grenzgeraden-Baender je Mode).
+    Wiederherstellen einer Sitzung uebergeben ``False``.
     """
+    mode = max(1, int(mode))
     ls = stapel.datensatz.linescans[index]
-    unten, oben = stapel.fenster[index]
+    liste = stapel.ergebnisse_mode(mode)
+    if mode == 1:
+        unten, oben = stapel.fenster[index]
+    else:
+        alt = liste[index]
+        unten, oben = alt.B_fenster_min, alt.B_fenster_max
+        if not (np.isfinite(unten) and np.isfinite(oben)):
+            unten, oben = stapel.fenster[index]
     if feld_unten is not None:
         unten = feld_unten
     if feld_oben is not None:
         oben = feld_oben
-    stapel.fenster[index] = (unten, oben)
+    if mode == 1:
+        stapel.fenster[index] = (unten, oben)
 
     beschnitten = schneide_band(ls, unten, oben)
     if stapel.ausschlusszonen:
         beschnitten = ohne_ausschlusszonen(beschnitten, stapel.ausschlusszonen)
     ergebnis = fitte_linescan(
         beschnitten, stapel.gamma, startwerte=startwerte, B_res_vorgabe=B_res_vorgabe,
-        alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
-        n_moden=stapel.n_moden if n_moden is None else max(1, int(n_moden)),
-        bereiche=bereiche,
+        alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel, mode=mode,
     )
     ergebnis.nachbearbeitet = True
     if bestaetigen is None:
         bestaetigen = bool(stapel.nachfit_bestaetigen)
     if bestaetigen:
         ergebnis = setze_bewertung(ergebnis, "bestaetigt")
-    stapel.zugeschnitten[index] = beschnitten
-    stapel.ergebnisse[index] = ergebnis
+    if mode == 1:
+        stapel.zugeschnitten[index] = beschnitten
+    liste[index] = ergebnis
+    return ergebnis
+
+
+def fitte_mode(
+    stapel: StapelErgebnis,
+    index: int,
+    korridor: Korridor,
+    bestaetigen: bool | None = False,
+) -> FitErgebnis | None:
+    """Einzelfit der Mode ``korridor.mode`` an Frequenz ``index`` AUSSCHLIESSLICH
+    auf den Messpunkten im Korridor (Punkte ausserhalb sind maskiert, nicht
+    mitmodelliert), mit Nachfenster-Durchgang ``B_res +/- Faktor*dH`` innerhalb
+    des Korridors. Startwert ``B_res``: lokaler Dip im Korridor (Startwert-
+    Schaetzung), sonst das Ergebnis der Nachbarfrequenz. Liefert ``None``, wenn
+    der Korridor bei dieser Frequenz leer ist (Ergebnis bleibt Platzhalter).
+    """
+    ls = stapel.datensatz.linescans[index]
+    if not ls.feld.size:
+        return None
+    grenzen = korridor.grenzen_im_bereich(ls.frequenz, float(ls.feld.min()),
+                                          float(ls.feld.max()))
+    if grenzen is None:
+        return None
+    mode = korridor.mode
+    liste = stapel.ergebnisse_mode(mode)
+    vorgabe = _nachbar_b_res(liste, index, grenzen)
+    # 1. Durchgang: Startwert aus dem lokalen Dip im Korridor.
+    ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
+                         bestaetigen=bestaetigen, mode=mode)
+    if ergebnis.problematisch and vorgabe is not None:
+        # Rueckfall: Startwert vom Nachbarn - nur uebernehmen, wenn besser.
+        zweiter = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
+                            B_res_vorgabe=vorgabe, bestaetigen=bestaetigen, mode=mode)
+        if not (zweiter.problematisch and not ergebnis.problematisch) and (
+                not zweiter.problematisch
+                or (np.isfinite(zweiter.rmse_norm) and (not np.isfinite(ergebnis.rmse_norm)
+                                                        or zweiter.rmse_norm < ergebnis.rmse_norm))):
+            ergebnis = zweiter
+        else:
+            ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
+                                 bestaetigen=bestaetigen, mode=mode)
+    # 2. Durchgang: Nachfenster innerhalb des Korridors.
+    eng = nachfenster(ls, ergebnis, grenzen, stapel.nachfenster_faktor)
+    if eng is not None:
+        b_start = float(ergebnis.B_res)
+        zweites = fitte_neu(stapel, index, feld_unten=eng[0], feld_oben=eng[1],
+                            bestaetigen=bestaetigen, mode=mode)
+        if zweites.erfolg and not zweites.problematisch:
+            return zweites
+        ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
+                             B_res_vorgabe=b_start, bestaetigen=bestaetigen, mode=mode)
     return ergebnis

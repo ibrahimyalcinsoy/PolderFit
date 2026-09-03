@@ -57,37 +57,18 @@ def _fenster_mit_stapel(n=10):
 def test_gerade_einfuegen_undo_redo(app):
     w, _ = _fenster_mit_stapel()
     assert w.akt_rueckgaengig.isEnabled() is False
-    w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
-    assert len(w._grenzgeraden) == 1
+    w._korridor_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
+    assert len(w._korridore) == 1
     assert w.akt_rueckgaengig.isEnabled() is True
-    assert "Grenzgerade" in w.akt_rueckgaengig.text()
+    assert "Korridor" in w.akt_rueckgaengig.text()
 
     w._rueckgaengig()
-    assert w._grenzgeraden == []
+    assert w._korridore == []
     assert w.akt_wiederholen.isEnabled() is True
 
     w._wiederholen()
-    assert len(w._grenzgeraden) == 1
-    assert abs(w._grenzgeraden[0].b1 - 2.7) < 1e-9
-
-
-def test_gerade_seite_und_endpunkt_undo(app):
-    w, _ = _fenster_mit_stapel()
-    w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
-    w._gerade_seite(0)
-    assert w._grenzgeraden[0].gruen_positiv is False
-    w._rueckgaengig()
-    assert w._grenzgeraden[0].gruen_positiv is True
-
-    # Endpunkt-Drag: Matrix mutiert das Objekt live, dann kommt der Callback.
-    g = w._grenzgeraden[0]
-    g.b2, g.f2 = 3.4, 45e9
-    w._gerade_geaendert(0, g.b1, g.f1 / 1e9, 3.4, 45.0)
-    assert abs(w._grenzgeraden[0].b2 - 3.4) < 1e-9
-    w._rueckgaengig()
-    assert abs(w._grenzgeraden[0].b2 - 3.2) < 1e-9   # alter Endpunkt zurueck
-    w._wiederholen()
-    assert abs(w._grenzgeraden[0].b2 - 3.4) < 1e-9
+    assert len(w._korridore) == 1
+    assert abs(w._korridore[0].anker[0].b_links - (2.7 - w.zonenpanel.bandbreite_T())) < 1e-9
 
 
 def test_ausreisser_undo_redo(app):
@@ -146,7 +127,7 @@ def test_zone_undo_ohne_neurechnung(app):
 
 def test_neuer_datensatz_leert_undo(app):
     w, _ = _fenster_mit_stapel()
-    w._gerade_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
+    w._korridor_gezeichnet([(2.7, 10.0), (3.2, 40.0)])
     assert w.akt_rueckgaengig.isEnabled()
     w._undo_verwerfen()
     assert w.akt_rueckgaengig.isEnabled() is False

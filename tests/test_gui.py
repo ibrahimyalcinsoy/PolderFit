@@ -67,7 +67,7 @@ def test_menueleiste_haelt_alle_aktionen(app):
     assert {"&Datei", "&Bearbeiten", "Fun&ktionen", "&Ansicht", "&Hilfe"} <= set(menues)
     # Jede Aktion muss in mindestens einem Menue haengen.
     in_menue = {a for m in menues.values() for a in m.actions()}
-    for aktion in (w.akt_laden, w.akt_fit, w.akt_gerade, w.akt_zone, w.akt_bereich,
+    for aktion in (w.akt_laden, w.akt_fit, w.akt_korridor, w.akt_zone, w.akt_bereich,
                    w.akt_ausreisser, w.akt_kittel, w.akt_physik, w.akt_tdms, w.akt_xlsx,
                    w.akt_csv, w.akt_alles_speichern, w.akt_kittel_export,
                    w.akt_farbplot_bild, w.akt_matrix_csv, w.akt_spalten,
@@ -100,7 +100,7 @@ def test_eine_leiste_ohne_redundante_toolbar(app):
     assert w.btn_laden.defaultAction() is w.akt_laden
 
     im_funktionen = set(w.funktionen_menue.actions())
-    for aktion in (w.akt_fit, w.akt_bereich, w.akt_gerade, w.akt_zone, w.akt_ausreisser,
+    for aktion in (w.akt_fit, w.akt_bereich, w.akt_korridor, w.akt_zone, w.akt_ausreisser,
                    w.akt_kittel, w.akt_physik):
         assert aktion in im_funktionen
     # "Resonanz vorgeben" (Dispersions-Seed) ist entfernt.
@@ -109,7 +109,7 @@ def test_eine_leiste_ohne_redundante_toolbar(app):
     assert w.akt_xlsx not in im_funktionen
     assert w.akt_vollbereich not in im_funktionen
     # Interaktive Modi sind checkbar (sichtbarer Aktiv-Zustand).
-    for aktion in (w.akt_gerade, w.akt_zone, w.akt_bereich, w.akt_ausreisser):
+    for aktion in (w.akt_korridor, w.akt_zone, w.akt_bereich, w.akt_ausreisser):
         assert aktion.isCheckable()
     assert w.akt_vollbild.shortcut().toString() == "F11"
     assert w.akt_beenden.shortcut().toString() == "Ctrl+Q"   # auch unter Windows belegt
@@ -257,7 +257,7 @@ def test_matrix_zwei_punkt_modus_gerade(app):
     got = {}
     m = MatrixAnsicht()
     m.zeige(_mini_datensatz(10))
-    m.starte_gerade_zeichnen(lambda p: got.__setitem__("p", p))
+    m.starte_korridor_zeichnen(lambda p: got.__setitem__("p", p))
     m._on_press(_ev(m.ax, xdata=2.0, ydata=10.0))   # erster Punkt
     assert "p" not in got                            # noch nicht fertig
     m._on_press(_ev(m.ax, xdata=3.0, ydata=40.0))   # zweiter Punkt -> Callback

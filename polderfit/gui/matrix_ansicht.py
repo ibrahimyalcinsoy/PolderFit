@@ -10,7 +10,7 @@ Die Resonanzpunkte tragen ihren Status in Farbe UND Form (DIN EN 60073 /
 DIN EN ISO 9241-125, siehe :mod:`polderfit.gui.farben`): gruener Punkt = guter
 Fit (blauer Rand = vom Nutzer bestaetigt), gelbes Dreieck = problematisch,
 rotes Kreuz = Fit fehlgeschlagen, grauer Ring = ignoriert (Ausreisser), gruene
-Raute = weitere Resonanz (Nebenmode). Beim Ueberfahren eines Punkts erscheint
+Raute = Resonanz einer weiteren Mode (Korridor-Fit). Beim Ueberfahren eines Punkts erscheint
 ein Tooltip mit Frequenz, B_res, Linienbreite in mT, alpha, R² und Status.
 
 Bedienung:
@@ -65,30 +65,27 @@ _ZOOM_RAUS = 1.25
 _BOX_SCHWELLE_REL = 0.02
 
 #: Alle bekannten Interaktionsmodi (zentrale Verwaltung, exklusiv).
-MODI = ("bereich", "zone", "ausreisser", "gerade", "band")
+MODI = ("bereich", "zone", "ausreisser", "korridor", "anker")
 
 #: Mauszeiger je Modus.
 _MODUS_CURSOR = {
     "bereich": QtCore.Qt.CrossCursor,
     "zone": QtCore.Qt.CrossCursor,
     "ausreisser": QtCore.Qt.PointingHandCursor,
-    "gerade": QtCore.Qt.CrossCursor,
-    "band": QtCore.Qt.CrossCursor,
+    "korridor": QtCore.Qt.CrossCursor,
+    "anker": QtCore.Qt.CrossCursor,
 }
 
 #: Modi, die ueber ZWEI Klicks zwei Punkte einsammeln.
-_ZWEI_PUNKT_MODI = ("gerade", "band")
+_ZWEI_PUNKT_MODI = ("korridor",)
 
-#: Farben der Grenzgeraden-Seiten (gruen = wird neu gefittet, rot = ignoriert).
-_GERADE_GRUEN = F.SIGNAL_GRUEN
-_GERADE_ROT = F.SIGNAL_ROT
-#: Breite des Seitensaums in Achsen-Anteilen.
-_GERADE_SAUM = 0.025
-#: Linienfarbe je Mode (Grenzgeraden bei mehreren Resonanzen; Mode 1 = Textfarbe).
+#: Linienfarbe je Mode (Korridore; Mode 1 = Textfarbe).
 _MODE_FARBEN = F.MODE_FARBEN
-#: Relative Trefferdistanz fuer Endpunkt-Griffe bzw. Doppelklick auf die Linie.
+#: Fuellung der Korridore (Achsen-Alpha) - aktiver Korridor kraeftiger.
+_KORRIDOR_ALPHA = 0.10
+_KORRIDOR_ALPHA_AKTIV = 0.20
+#: Relative Trefferdistanz fuer Anker-Griffe.
 _GRIFF_TOLERANZ = 0.035
-_LINIEN_TOLERANZ = 0.02
 #: Relative Trefferdistanz fuer Hover-Tooltip / Ausreisser-Klick auf Punkte.
 _PUNKT_TOLERANZ = 0.03
 
@@ -160,11 +157,11 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._zonen_patches: list = []
         # Grenzgeraden (Anzeige + Endpunkt-Drag): Objekte mit b1/f1/b2/f2 (Hz)
         # und gruen_positiv; Seitensaeume gruen/rot je Fit-/Ignorier-Seite.
-        self._geraden: list = []
-        self._geraden_artists: list = []
-        self._gerade_geaendert_cb = None   # (index, b1, f1_ghz, b2, f2_ghz)
-        self._gerade_seite_cb = None       # (index)
-        self._drag_endpunkt = None         # (geraden_index, "p1"|"p2")
+        self._korridore = []
+        self._korridor_aktiv = 1
+        self._korridor_artists: list = []
+        self._anker_cb = None              # (mode, anker_index, seite, b)
+        self._drag_anker = None            # (korridor_index, anker_index, seite)
         # Ausreisser-Overlay-Zustand.
         self._res_ausgeschlossen = None
         # Hinweis-Banner (laufender Hintergrund-Job).
@@ -192,7 +189,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
 
         ``callback`` haengt vom Modus ab:
 
-        * ``"gerade"``   – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
+        * ``"korridor"`` – ``callback(punkte)`` mit ``[(B1, f1_GHz), (B2, f2_GHz)]``
+        * ``"anker"``    – ``callback((B, f_GHz))``, mehrfach (Modus bleibt aktiv)
         * ``"bereich"``  – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
         * ``"zone"``     – ``callback(feld_min, feld_max, f_min_ghz, f_max_ghz)``
         * ``"ausreisser"`` – ``callback(indizes)``, mehrfach (Modus bleibt aktiv)
@@ -243,17 +241,16 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         """Zonen-Modus: naechstes Rechteck wird als Ausschlusszone gemeldet."""
         self.starte_modus("zone", fertig)
 
-    def starte_gerade_zeichnen(self, fertig) -> None:
-        """Geraden-Modus: die naechsten zwei Klicks definieren eine Grenzgerade.
-
-        ``fertig(punkte)`` erhaelt ``[(B1, f1_GHz), (B2, f2_GHz)]``.
+    def starte_korridor_zeichnen(self, fertig) -> None:
+        """Korridor-Modus: zwei Klicks entlang der Resonanz definieren die Linie
+        eines neuen Korridors; ``fertig(punkte)`` erhaelt ``[(B1, f1_GHz), (B2, f2_GHz)]``.
         """
-        self.starte_modus("gerade", fertig)
+        self.starte_modus("korridor", fertig)
 
-    def starte_band_zeichnen(self, fertig) -> None:
-        """Band-Modus (mehrere Moden): zwei Klicks entlang einer Mode; ``fertig(punkte)``
-        wie beim Geraden-Modus - das Hauptfenster macht daraus zwei Geraden +- Breite."""
-        self.starte_modus("band", fertig)
+    def starte_anker_setzen(self, geklickt) -> None:
+        """Anker-Modus: jeder Klick meldet ``geklickt((B, f_GHz))``; der Modus
+        bleibt aktiv (Esc beendet)."""
+        self.starte_modus("anker", geklickt)
 
     def setze_ausreisser_modus(self, an: bool, gewaehlt=None) -> None:
         """Schaltet den (dauerhaften) Ausreisser-Markiermodus um.
@@ -285,8 +282,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_aktiv = False
         # Neuer Datensatz: Overlays und Modi des alten verwerfen.
         self._zonen = []
-        self._geraden = []
-        self._drag_endpunkt = None
+        self._korridore = []
+        self._drag_anker = None
         self.beende_modus()
         self._render()
 
@@ -390,7 +387,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # Neuzeichnen verwerfen (remove() auf toten Artists wuerde werfen).
         self._zonen_patches = []
         self._punkt_marker = []
-        self._geraden_artists = []
+        self._korridor_artists = []
         self.ax.clear()
         self.ax.grid(False)
         # Robuste Farbgrenzen: einzelne Ausreisser (nach dd haeufig) duerfen die
@@ -430,8 +427,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         hinweis.set_in_layout(False)
         if self._zonen:
             self._zeichne_zonen()
-        if self._geraden:
-            self._zeichne_geraden()
+        if self._korridore:
+            self._zeichne_korridore()
         self._hinweis_artist = None
         if self._hinweis_text:
             self._zeichne_hinweis()
@@ -783,165 +780,111 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self._zonen_patches.append(patch)
         self.draw_idle()
 
-    # --- Grenzgeraden (Anzeige + Endpunkt-Drag) -------------------------------
-    def zeige_grenzgeraden(self, geraden, endpunkt_geaendert=None,
-                           seite_gewechselt=None) -> None:
-        """Zeichnet die Grenzgeraden mit gruenem/rotem Seitensaum.
+    # --- Korridore (Anzeige + Anker-Drag) --------------------------------------
+    def zeige_korridore(self, korridore, aktiv: int = 1, anker_geaendert=None) -> None:
+        """Zeichnet die Korridore (Feldband je Mode entlang der Frequenz).
 
-        ``geraden``: Objekte mit ``b1/f1/b2/f2`` (f in Hz) und ``gruen_positiv``
-        (:class:`polderfit.fit.fenster_steuerung.Grenzgerade`). Die Endpunkte
-        sind ziehbar (verschieben/rotieren); nach dem Loslassen wird
-        ``endpunkt_geaendert(index, b1, f1_ghz, b2, f2_ghz)`` gerufen.
-        Doppelklick auf eine Linie ruft ``seite_gewechselt(index)``.
+        ``korridore``: :class:`polderfit.fit.korridor.Korridor`-Objekte; ``aktiv``:
+        Mode-Nummer des hervorgehobenen Korridors. Anker sind waagerecht ziehbar;
+        nach dem Loslassen wird ``anker_geaendert(mode, anker_index, seite, b)``
+        gerufen (``seite`` = ``"links"``/``"rechts"``).
         """
-        self._geraden = list(geraden)
-        if endpunkt_geaendert is not None:
-            self._gerade_geaendert_cb = endpunkt_geaendert
-        if seite_gewechselt is not None:
-            self._gerade_seite_cb = seite_gewechselt
-        self._zeichne_geraden()
+        self._korridore = list(korridore)
+        self._korridor_aktiv = int(aktiv)
+        if anker_geaendert is not None:
+            self._anker_cb = anker_geaendert
+        self._zeichne_korridore()
 
     def _fraktion(self, x: float, y: float) -> tuple[float, float]:
         """Datenkoordinaten (T, GHz) -> Achsen-Anteile des Extents."""
         fx0, fx1, fy0, fy1 = self._extent
         return ((x - fx0) / (fx1 - fx0 or 1.0), (y - fy0) / (fy1 - fy0 or 1.0))
 
-    def _aus_fraktion(self, u: float, v: float) -> tuple[float, float]:
+    def _korridor_polygon(self, korridor):
+        """Stuetzstellen (f_GHz, links, rechts) des Korridors ueber den Extent."""
         fx0, fx1, fy0, fy1 = self._extent
-        return (fx0 + u * (fx1 - fx0), fy0 + v * (fy1 - fy0))
-
-    def _unendliche_linie_im_extent(self, p1, p2):
-        """Schnittsegment der unendlichen Geraden p1->p2 mit dem Extent-Rechteck.
-
-        Punkte in Datenkoordinaten (T, GHz); Liang-Barsky ueber t in (-inf, inf).
-        """
-        fx0, fx1, fy0, fy1 = self._extent
-        (x1, y1), (x2, y2) = p1, p2
-        dx, dy = x2 - x1, y2 - y1
-        if dx == 0.0 and dy == 0.0:
-            return None
-        tmin, tmax = -1e18, 1e18
-        for p, q0, q1 in ((dx, fx0 - x1, fx1 - x1), (dy, fy0 - y1, fy1 - y1)):
-            if p == 0.0:
-                if q0 * q1 > 0:  # Linie liegt komplett ausserhalb dieses Bandes
-                    return None
+        f_stuetz = sorted({fy0, fy1} | {a.f / 1e9 for a in korridor.anker
+                                        if fy0 <= a.f / 1e9 <= fy1})
+        punkte = []
+        for f_ghz in f_stuetz:
+            g = korridor.grenzen(f_ghz * 1e9)
+            if g is None:
                 continue
-            t0, t1 = q0 / p, q1 / p
-            if t0 > t1:
-                t0, t1 = t1, t0
-            tmin, tmax = max(tmin, t0), min(tmax, t1)
-        if tmax <= tmin:
-            return None
-        return (x1 + tmin * dx, y1 + tmin * dy, x1 + tmax * dx, y1 + tmax * dy)
+            punkte.append((f_ghz, g[0], g[1]))
+        return punkte
 
-    def _zeichne_geraden(self) -> None:
+    def _zeichne_korridore(self) -> None:
         from matplotlib.patches import Polygon
-        for artist in self._geraden_artists:
+        for artist in self._korridor_artists:
             artist.remove()
-        self._geraden_artists = []
-        if self._extent is None or not self._geraden:
+        self._korridor_artists = []
+        if self._extent is None or not self._korridore:
             self.draw_idle()
             return
-        for gerade in self._geraden:
-            p1 = (float(gerade.b1), float(gerade.f1) / 1e9)
-            p2 = (float(gerade.b2), float(gerade.f2) / 1e9)
-            seg = self._unendliche_linie_im_extent(p1, p2)
-            if seg is None:
-                continue
-            x0, y0, x1, y1 = seg
-            # Seitensaeume in Achsen-Anteilen (Feld- und Frequenzspanne
-            # unterscheiden sich um Groessenordnungen).
-            a = np.array(self._fraktion(x0, y0))
-            b = np.array(self._fraktion(x1, y1))
-            richtung = b - a
-            laenge = float(np.hypot(*richtung)) or 1.0
-            normale = np.array([-richtung[1], richtung[0]]) / laenge
-            # Welche Seite ist gruen? Testpunkt auf +normale auswerten.
-            mitte = 0.5 * (a + b) + _GERADE_SAUM * normale
-            tb, tf_ghz = self._aus_fraktion(*mitte)
-            cross = ((tb - gerade.b1) * (gerade.f2 - gerade.f1)
-                     - (tf_ghz * 1e9 - gerade.f1) * (gerade.b2 - gerade.b1))
-            plus_ist_gruen = (cross >= 0.0) == bool(gerade.gruen_positiv)
-            for vorzeichen, farbe, alpha in (
-                    (+1.0, _GERADE_GRUEN if plus_ist_gruen else _GERADE_ROT, 0.28),
-                    (-1.0, _GERADE_ROT if plus_ist_gruen else _GERADE_GRUEN, 0.28)):
-                ecken_frak = [a, b,
-                              b + vorzeichen * _GERADE_SAUM * normale,
-                              a + vorzeichen * _GERADE_SAUM * normale]
-                ecken = [self._aus_fraktion(u, v) for u, v in ecken_frak]
+        for korridor in self._korridore:
+            mode = int(korridor.mode)
+            aktiv = mode == self._korridor_aktiv
+            farbe = _MODE_FARBEN.get(mode, F.TEXT) if mode > 1 else F.TEXT
+            punkte = self._korridor_polygon(korridor)
+            if len(punkte) >= 2:
+                ecken = ([(li, f) for f, li, _re in punkte]
+                         + [(re, f) for f, _li, re in reversed(punkte)])
                 patch = self.ax.add_patch(Polygon(
                     ecken, closed=True, facecolor=farbe, edgecolor="none",
-                    alpha=alpha, zorder=5, label="_gerade_saum"))
-                self._geraden_artists.append(patch)
-            mode = int(getattr(gerade, "mode", 1))
-            farbe_linie = _MODE_FARBEN.get(mode, F.TEXT) if mode > 1 else F.TEXT
-            linie = self.ax.plot([x0, x1], [y0, y1], "-", color=farbe_linie,
-                                 lw=1.6, zorder=6, label="_gerade")[0]
-            linie.set_path_effects(
-                [pe.Stroke(linewidth=3.0, foreground="#FFFFFFAA"), pe.Normal()])
-            self._geraden_artists.append(linie)
-            if mode > 1:
-                text = self.ax.text(0.5 * (x0 + x1), 0.5 * (y0 + y1), f"M{mode}",
-                                    color=farbe_linie, fontsize=8, fontweight="bold",
-                                    ha="center", va="bottom", zorder=7, label="_gerade_mode")
+                    alpha=_KORRIDOR_ALPHA_AKTIV if aktiv else _KORRIDOR_ALPHA,
+                    zorder=5, label="_korridor"))
+                self._korridor_artists.append(patch)
+                for seite in (1, 2):
+                    linie = self.ax.plot([p[seite] for p in punkte], [p[0] for p in punkte],
+                                         "-", color=farbe, lw=1.8 if aktiv else 1.1,
+                                         zorder=6, label="_korridor_rand")[0]
+                    linie.set_path_effects(
+                        [pe.Stroke(linewidth=3.0, foreground="#FFFFFFAA"), pe.Normal()])
+                    self._korridor_artists.append(linie)
+                fm, lm, rm = punkte[len(punkte) // 2]
+                text = self.ax.text(0.5 * (lm + rm), fm, f"M{mode}", color=farbe,
+                                    fontsize=8, fontweight="bold", ha="center",
+                                    va="bottom", zorder=7, label="_korridor_mode")
                 text.set_path_effects(
                     [pe.Stroke(linewidth=2.5, foreground="#FFFFFFCC"), pe.Normal()])
-                self._geraden_artists.append(text)
-            griffe = self.ax.plot([p1[0], p2[0]], [p1[1], p2[1]], "s",
-                                  color=F.SIGNAL_BLAU, mec="white", mew=1.2, ms=9,
-                                  ls="", zorder=9, label="_gerade_griff")[0]
-            self._geraden_artists.append(griffe)
+                self._korridor_artists.append(text)
+            if korridor.anker:
+                xs = [a.b_links for a in korridor.anker] + [a.b_rechts for a in korridor.anker]
+                ys = [a.f / 1e9 for a in korridor.anker] * 2
+                griffe = self.ax.plot(xs, ys, "s", color=F.SIGNAL_BLAU if aktiv else farbe,
+                                      mec="white", mew=1.2, ms=8 if aktiv else 6, ls="",
+                                      zorder=9, label="_korridor_anker")[0]
+                self._korridor_artists.append(griffe)
         self.draw_idle()
 
-    def _finde_geraden_endpunkt(self, event):
-        """(geraden_index, "p1"|"p2") des Endpunkts nahe der Maus, sonst None."""
-        if not self._geraden or self._extent is None:
+    def _finde_anker_griff(self, event):
+        """``(korridor_index, anker_index, seite)`` des Ankers nahe der Maus, sonst None."""
+        if not self._korridore or self._extent is None:
             return None
         if event.xdata is None or event.ydata is None:
             return None
         eu, ev = self._fraktion(event.xdata, event.ydata)
         bester = None
         bester_abstand = _GRIFF_TOLERANZ
-        for gi, gerade in enumerate(self._geraden):
-            for name, bb, ff in (("p1", gerade.b1, gerade.f1),
-                                 ("p2", gerade.b2, gerade.f2)):
-                u, v = self._fraktion(float(bb), float(ff) / 1e9)
-                abstand = float(np.hypot(eu - u, ev - v))
-                if abstand <= bester_abstand:
-                    bester = (gi, name)
-                    bester_abstand = abstand
+        for ki, korridor in enumerate(self._korridore):
+            for ai, anker in enumerate(korridor.anker):
+                for seite, bb in (("links", anker.b_links), ("rechts", anker.b_rechts)):
+                    u, v = self._fraktion(float(bb), float(anker.f) / 1e9)
+                    abstand = float(np.hypot(eu - u, ev - v))
+                    if abstand <= bester_abstand:
+                        bester = (ki, ai, seite)
+                        bester_abstand = abstand
         return bester
 
-    def _finde_gerade_linie(self, event):
-        """Index der Grenzgeraden nahe der Maus (Punkt-Linien-Abstand), sonst None."""
-        if not self._geraden or self._extent is None:
-            return None
-        if event.xdata is None or event.ydata is None:
-            return None
-        p = np.array(self._fraktion(event.xdata, event.ydata))
-        for gi, gerade in enumerate(self._geraden):
-            a = np.array(self._fraktion(float(gerade.b1), float(gerade.f1) / 1e9))
-            b = np.array(self._fraktion(float(gerade.b2), float(gerade.f2) / 1e9))
-            richtung = b - a
-            laenge = float(np.hypot(*richtung))
-            if laenge <= 0:
-                continue
-            einheit = richtung / laenge
-            abstand = abs(float(einheit[0] * (p - a)[1] - einheit[1] * (p - a)[0]))
-            if abstand <= _LINIEN_TOLERANZ:
-                return gi
-        return None
-
-    def _endpunkt_bewegen(self, event) -> None:
-        gi, name = self._drag_endpunkt
-        if event.xdata is None or event.ydata is None or gi >= len(self._geraden):
+    def _anker_bewegen(self, event) -> None:
+        ki, ai, seite = self._drag_anker
+        if event.xdata is None or ki >= len(self._korridore):
             return
-        gerade = self._geraden[gi]
-        if name == "p1":
-            gerade.b1, gerade.f1 = float(event.xdata), float(event.ydata) * 1e9
-        else:
-            gerade.b2, gerade.f2 = float(event.xdata), float(event.ydata) * 1e9
-        self._zeichne_geraden()
+        korridor = self._korridore[ki]
+        if ai >= len(korridor.anker):
+            return
+        korridor.anker_verschieben(ai, seite, float(event.xdata))
+        self._zeichne_korridore()
 
     # --- Punkte finden (Hover / Ausreisser) ----------------------------------
     def _sichtbare_resonanzpunkte(self) -> np.ndarray:
@@ -1013,7 +956,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             fertig(min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
 
     def _zwei_punkt_klick(self, event) -> None:
-        """Zwei-Punkt-Modus (Grenzgerade): Klicks sammeln, nach dem zweiten melden."""
+        """Zwei-Punkt-Modus (Korridor): Klicks sammeln, nach dem zweiten melden."""
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             return
         self._punkt_liste.append((float(event.xdata), float(event.ydata)))  # (B [T], f [GHz])
@@ -1033,24 +976,22 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         if event.inaxes != self.ax or self._freq_achse is None:
             return
         self.setFocus()
-        if self._modus in _ZWEI_PUNKT_MODI:   # Gerade: Klick sammelt Punkte
+        if self._modus in _ZWEI_PUNKT_MODI:   # Korridor: Klick sammelt Punkte
             self._zwei_punkt_klick(event)
+            return
+        if self._modus == "anker":
+            if event.xdata is not None and event.ydata is not None and self._modus_cb is not None:
+                self._modus_cb((float(event.xdata), float(event.ydata)))
             return
         if getattr(event, "dblclick", False):
             self._press_xy = None
-            # Doppelklick auf eine Grenzgerade wechselt die gruene Seite;
-            # sonst wie gehabt: Zoom zuruecksetzen.
-            treffer = self._finde_gerade_linie(event)
-            if treffer is not None and self._gerade_seite_cb is not None:
-                self._gerade_seite_cb(treffer)
-                return
             self._zoom_zuruecksetzen()
             return
-        # Endpunkt einer Grenzgerade anfassen (nur ausserhalb der Modi).
+        # Anker eines Korridors anfassen (nur ausserhalb der Modi).
         if self._modus is None:
-            griff = self._finde_geraden_endpunkt(event)
+            griff = self._finde_anker_griff(event)
             if griff is not None:
-                self._drag_endpunkt = griff
+                self._drag_anker = griff
                 self.setCursor(QtCore.Qt.ClosedHandCursor)
                 return
         if event.xdata is None or event.ydata is None:
@@ -1060,9 +1001,9 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._box_corner = None
 
     def _on_move(self, event):
-        if self._drag_endpunkt is not None:
+        if self._drag_anker is not None:
             if event.inaxes == self.ax:
-                self._endpunkt_bewegen(event)
+                self._anker_bewegen(event)
             return
         if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
             if not self._box_aktiv:
@@ -1070,7 +1011,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 self._hover(event)
             return
         if self._press_xy is None and self._modus is None \
-                and self._finde_geraden_endpunkt(event) is not None:
+                and self._finde_anker_griff(event) is not None:
             self.setCursor(QtCore.Qt.OpenHandCursor)   # Griff in Reichweite
             return
         if self._press_xy is not None:
@@ -1099,14 +1040,15 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self.setCursor(QtCore.Qt.CrossCursor)  # Hinweis: Kästchen aufziehbar
 
     def _on_release(self, event):
-        if self._drag_endpunkt is not None:
-            gi, _name = self._drag_endpunkt
-            self._drag_endpunkt = None
+        if self._drag_anker is not None:
+            ki, ai, seite = self._drag_anker
+            self._drag_anker = None
             self.unsetCursor()
-            if gi < len(self._geraden) and self._gerade_geaendert_cb is not None:
-                g = self._geraden[gi]
-                self._gerade_geaendert_cb(gi, float(g.b1), float(g.f1) / 1e9,
-                                          float(g.b2), float(g.f2) / 1e9)
+            if ki < len(self._korridore) and self._anker_cb is not None:
+                k = self._korridore[ki]
+                if ai < len(k.anker):
+                    b = k.anker[ai].b_links if seite == "links" else k.anker[ai].b_rechts
+                    self._anker_cb(int(k.mode), ai, seite, float(b))
             return
         if self._press_xy is None:
             return
