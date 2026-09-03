@@ -164,12 +164,12 @@ def test_alpha_obergrenze_wirkt_in_fitte_alle_und_fitte_neu():
     st.alpha_max = ALPHA_MAX
     erg2 = fitte_neu(st, 0)
     assert erg2.alpha <= ALPHA_MAX + 1e-12
-    # Kriterien melden "alpha an Grenze" (problematisch_auto); der manuelle
-    # Nachfit gilt aber standardmaessig als vom Nutzer freigegeben.
+    # Kriterien melden "alpha an Grenze"; ein Nachfit wird standardmaessig von
+    # den Kriterien bewertet (nicht automatisch bestaetigt, P1-4).
     assert erg2.problematisch_auto and "alpha an Grenze" in erg2.problem_gruende
-    assert erg2.bewertung == "bestaetigt" and not erg2.problematisch
-    erg3 = fitte_neu(st, 0, bestaetigen=False)
-    assert erg3.problematisch and erg3.bewertung == "auto"
+    assert erg2.bewertung == "auto" and erg2.problematisch
+    erg3 = fitte_neu(st, 0, bestaetigen=True)
+    assert not erg3.problematisch and erg3.bewertung == "bestaetigt"
 
 
 # ---------------------------------------------------------------------------

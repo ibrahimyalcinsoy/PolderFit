@@ -116,8 +116,9 @@ class StapelErgebnis:
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD
     #: Plausibilitaetsgrenze "alpha unphysikalisch" (None = alpha_max/2).
     alpha_plausibel: float | None = None
-    #: Manuelle Nachfits automatisch als "gut - vom Nutzer bestaetigt" bewerten.
-    nachfit_bestaetigen: bool = True
+    #: Manuelle Nachfits automatisch als "gut - vom Nutzer bestaetigt" bewerten
+    #: (Standard aus: die Kriterien entscheiden, bestaetigt wird explizit).
+    nachfit_bestaetigen: bool = False
     #: Fitfenster je Frequenz (Mode 1; das "gruene Fenster").
     fenster: list[tuple[float, float]] = field(default_factory=list)
     #: Ergebnisse der Mode 1 je Frequenz (Hauptmode: Overlay, Problemliste, Export).
@@ -322,7 +323,7 @@ def fitte_alle(
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
     alpha_plausibel: float | None = None,
-    nachfit_bestaetigen: bool = True,
+    nachfit_bestaetigen: bool = False,
     fortschritt_fenster=None,
     abbruch=None,
     korridor: Korridor | None = None,
@@ -422,7 +423,7 @@ def leerer_stapel(
     alpha_max: float = ALPHA_MAX,
     nachfenster_faktor: float = NACHFENSTER_FAKTOR_STANDARD,
     alpha_plausibel: float | None = None,
-    nachfit_bestaetigen: bool = True,
+    nachfit_bestaetigen: bool = False,
     breite_faktor: float = 8.0,
 ) -> StapelErgebnis:
     """Stapel OHNE Fits: je Frequenz ein Platzhalter und das AutoWindow-Fenster.
@@ -499,11 +500,9 @@ def fitte_neu(
 
     ``bestaetigen``: das Ergebnis als "gut - vom Nutzer bestaetigt" bewerten
     (nur wenn der Fit ein Ergebnis liefert). ``None`` = Stapel-Einstellung
-    ``nachfit_bestaetigen`` (Standard an: ein gezielter Eingriff an EINER
-    Frequenz - Grenzen ziehen, Nochmal fitten - gilt als Freigabe des Nutzers;
-    die Kriterien bleiben in ``problematisch_auto`` einsehbar). Bereichs-/
-    Grenzgeraden-Fits ueber viele Frequenzen, Zonen-Nachrechnungen und das
-    Wiederherstellen einer Sitzung uebergeben ``False``.
+    ``nachfit_bestaetigen`` (Standard AUS: auch ein Nachfit wird von den
+    Kriterien bewertet; bestaetigt wird explizit ueber die Bewertung - sonst
+    verschwinden Problemfits durch blosses "Neu fitten" aus der Liste).
     """
     mode = max(1, int(mode))
     ls = stapel.datensatz.linescans[index]

@@ -1344,8 +1344,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         self.matrix.setze_ausreisser_modus(True, gewaehlt=self._ausreisser_gewaehlt)
         self._dock_schmal_halten(self.ausreisser_dock, breite=300)
-        self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten "
-                  "aufziehen. Esc oder erneutes Auslösen beendet den Modus.", "info")
+        self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten aufziehen "
+                  "(Klick auf einen grauen Punkt nimmt ihn wieder auf). Esc beendet.", "info")
+        if self.akt_problemfits.isChecked():
+            text = ("Problemfits sind ausgeblendet und damit nicht markierbar – "
+                    "Ansicht → Problemfits ausblenden abschalten.")
+            self._log(text, "warn")
+            self.statusBar().showMessage(text, 8000)
 
     # --- Rueckgaengig / Wiederholen (zentraler Stapel) ------------------------
     def _merke_aenderung(self, beschreibung: str, vorher, nachher) -> None:
@@ -1529,14 +1534,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._job_i = 0
         self._job_n = 0
         self._job_abgebrochen = False
-        self._hinweis_zuletzt = 0.0   # letzter Farbplot-Hinweis (Voll-Neuzeichnen!)
         # Live-Vorschau: Frequenz -> (B_res, Status); Zeichnen entprellt.
-        self._live: dict[float, tuple[float, str]] = {}
-        self._live_aktiv = False
-        self._live_timer = QtCore.QTimer(self)
-        self._live_timer.setSingleShot(True)
-        self._live_timer.setInterval(300)
-        self._live_timer.timeout.connect(self._live_zeichnen)
 
     def _starte_job(self, funktion, bei_fertig, titel: str,
                     abbrechbar: bool = True, live: str | None = None) -> None:
@@ -1577,16 +1575,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.matrix.zeige_hinweis(f"{titel}\nFortschritt in der Statusleiste; Ergebnis am Ende")
         self.statusBar().showMessage(f"{titel} – das Programm arbeitet, Fortschritt in "
                                      "Statusleiste und Aktivität.")
-        # Live-Vorschau vorbereiten.
-        self._live_aktiv = live is not None
-        self._live = {}
-        if live == "ergaenzen" and self.stapel is not None:
-            for i, e in enumerate(self.stapel.ergebnisse):
-                if e.gefittet and np.isfinite(e.B_res):
-                    self._live[float(e.frequenz)] = (
-                        float(e.B_res), F.status_von(e, ignoriert=self.stapel.ist_ausreisser(i)))
-        elif live == "neu":
-            self.matrix.aktualisiere_resonanz(np.array([]), np.array([]))
+        if live == "neu":
+            self.matrix.aktualisiere_resonanz(np.array([]), np.array([]))   # altes Overlay weg
         # Aktivitaet nur fuer die Dauer des Jobs einblenden (unten, flach) -
         # war sie schon offen (manuell), bleibt sie es auch danach.
         self._aktivitaet_war_sichtbar = self.aktivitaet_dock.isVisible()
@@ -1669,38 +1659,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._log(text, art)
 
     def _auf_zwischenstand(self, daten) -> None:
-        """Fertiger Einzelfit aus dem Worker: nur vormerken (kein Zeichnen waehrend
-        des Jobs, siehe :meth:`_auf_fortschritt`); gezeichnet wird am Ende."""
-        if not self._live_aktiv:
-            return
-        try:
-            frequenz, b_res, status = daten
-        except (TypeError, ValueError):
-            return
-        if b_res is not None and np.isfinite(b_res):
-            self._live[float(frequenz)] = (float(b_res), str(status))
-        elif float(frequenz) in self._live:
-            del self._live[float(frequenz)]
-
-    def _live_zeichnen(self) -> None:
-        """Vorschau der vorgemerkten Punkte im Farbplot (nur ausserhalb eines Jobs)."""
-        if not self._live_aktiv or self.datensatz_voll is None or self._job_laeuft:
-            return
-        if not self._live:
-            return
-        frequenzen = np.array(sorted(self._live), dtype=float)
-        bres = np.array([self._live[f][0] for f in frequenzen], dtype=float)
-        status = [self._live[f][1] for f in frequenzen]
-        problem = np.array([st_ in ("problem", "fehler") for st_ in status], dtype=bool)
-        ausgeschlossen = np.array([st_ == "ignoriert" for st_ in status], dtype=bool)
-        self.matrix.aktualisiere_resonanz(frequenzen, bres, problem, ausgeschlossen, status=status)
+        """Fertiger Einzelfit aus dem Worker - gezeichnet wird erst nach dem Job
+        (kein Farbplot-Neuzeichnen waehrend eines Jobs, siehe _auf_fortschritt)."""
+        return
 
     def _job_anzeige_beenden(self) -> None:
         """Sichtbare Job-Rueckmeldung zuruecknehmen (vor bei_fertig - das darf Dialoge oeffnen)."""
         self._spinner_timer.stop()
-        self._live_timer.stop()
-        self._live_aktiv = False
-        self._live = {}
         while QtWidgets.QApplication.overrideCursor() is not None:
             QtWidgets.QApplication.restoreOverrideCursor()
         for w in (self.status_spinner, self.status_job, self.status_fortschritt,
@@ -2230,10 +2195,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self._bewertung_blockiert:
             return
         art = self.bewertung_combo.itemData(index)
-        st = self.stapel
-        if art == "ignorieren" and st is not None and st.ist_ausreisser(self.aktueller_index):
-            return  # schon ignoriert
-        self._bewerte_aktuellen(art)
+        self._bewerte_aktuellen(art)   # "ignorieren" schaltet um (wie Strg+I)
 
     def _bewerte_aktuellen(self, art: str) -> None:
         """Bewertung des aktuellen Fits setzen (gut/problematisch/auto/ignorieren).
@@ -2769,10 +2731,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
                               lambda n=nachher: self._ausreisser_setzen(n))
 
     def _ausreisser_gewaehlt(self, indizes: list[int]):
-        """Callback aus Farbplot/Auswertungsfenster: Punkte ignorieren (Echtzeit)."""
+        """Callback aus Farbplot/Auswertungsfenster: Punkte ignorieren (Echtzeit).
+
+        Bereits ignorierte (grau angezeigte) Punkte werden durch den Klick wieder
+        aufgenommen - der Klick schaltet um."""
         if not self.stapel or not indizes:
             return
         neu = [i for i in indizes if not self.stapel.ist_ausreisser(i)]
+        zurueck = [i for i in indizes if self.stapel.ist_ausreisser(i)]
+        if zurueck and not neu:
+            self._ausreisser_wieder_aufnehmen(zurueck)
+            return
         if not neu:
             return
         vorher = list(self.stapel.ausreisser)

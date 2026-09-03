@@ -61,7 +61,7 @@ class PhysikParameter:
     #: Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) automatisch als
     #: "gut – vom Nutzer bestaetigt" bewerten (Bereichs-/Grenzgeraden-Fits ueber
     #: viele Frequenzen nicht - dort entscheiden die Kriterien).
-    nachfit_bestaetigen: bool = True
+    nachfit_bestaetigen: bool = False
 
     @property
     def gamma(self) -> float:
