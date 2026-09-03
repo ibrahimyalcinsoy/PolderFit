@@ -168,7 +168,8 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
             fortschritt(i + 1, len(fenster), ergebnis)
 
     # Weitere Moden: je Frequenz im Korridor der Mode (sonst gespeichertes Fenster).
-    korridor_je_mode = {int(k.mode): k for k in (korridore or [])}
+    korridor_je_mode = {int(m): k for k in (korridore or []) for m in k.moden}
+    bereits = set()
     for mode_text, zeilen in (daten.get("nebenmoden") or {}).items():
         try:
             mode = int(mode_text)
@@ -182,8 +183,12 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
             if not zeile or not zeile.get("gefittet", True):
                 continue
             ergebnis = None
-            if korridor is not None:
-                ergebnis = fitte_mode(stapel, i, korridor, bestaetigen=False)
+            if korridor is not None and (id(korridor), i) not in bereits:
+                bereits.add((id(korridor), i))
+                fitte_mode(stapel, i, korridor, bestaetigen=False)   # fittet alle Dips
+                ergebnis = liste[i] if liste[i].gefittet else None
+            elif korridor is not None:
+                ergebnis = liste[i] if liste[i].gefittet else None
             if ergebnis is None:
                 lo, hi = zeile.get("B_fenster_min_T"), zeile.get("B_fenster_max_T")
                 if lo is None or hi is None:

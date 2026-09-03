@@ -32,12 +32,14 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``korridor_entfernen(mode)``
     * ``anker_entfernen(mode, index)``
     * ``korridor_fit(mode | None)`` – Korridor fitten (``None`` = alle)
+    * ``dips_geaendert(mode, n)`` – Zahl der Resonanzen (Dips) im Korridor
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
                  korridor_umschalten=None, anker_umschalten=None,
                  korridor_gewaehlt=None, korridor_entfernen=None,
-                 anker_entfernen=None, korridor_fit=None, parent=None):
+                 anker_entfernen=None, korridor_fit=None, dips_geaendert=None,
+                 parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
@@ -47,6 +49,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_korridor_entfernen = korridor_entfernen
         self._cb_anker_entfernen = anker_entfernen
         self._cb_korridor_fit = korridor_fit
+        self._cb_dips_geaendert = dips_geaendert
         self._korridore: list = []
         self._mode_aktiv: int = 1
         self._blockiert = False
@@ -86,6 +89,21 @@ class ZonenPanel(QtWidgets.QWidget):
         self.breite_spin.setToolTip("Halbe Korridorbreite beim Anlegen (eng halten).")
         zeile1.addWidget(self.breite_spin)
         k_lay.addLayout(zeile1)
+
+        zeile_d = QtWidgets.QHBoxLayout()
+        lbl_d = QtWidgets.QLabel("Resonanzen im Korridor:")
+        lbl_d.setToolTip(
+            "Vorgabe: so viele Dips liegen in diesem Korridor. Bei > 1 wird der Korridor\n"
+            "je Frequenz zwischen den Dips hart getrennt (Hard Crop) und jeder Dip einzeln\n"
+            "gefittet - kein Summenfit. Jeder Dip bekommt eine eigene Mode-Nummer.")
+        zeile_d.addWidget(lbl_d, 1)
+        self.dips_spin = RuhigeSpinBox()
+        self.dips_spin.setRange(1, 4)
+        self.dips_spin.setValue(1)
+        self.dips_spin.setToolTip(lbl_d.toolTip())
+        self.dips_spin.valueChanged.connect(self._dips_gewaehlt)
+        zeile_d.addWidget(self.dips_spin)
+        k_lay.addLayout(zeile_d)
 
         zeile2 = QtWidgets.QHBoxLayout()
         self.btn_anker = QtWidgets.QPushButton("Anker setzen")
@@ -179,7 +197,7 @@ class ZonenPanel(QtWidgets.QWidget):
         statistik = statistik or {}
         self._blockiert = True
         self.korridor_liste.clear()
-        moden = [int(k.mode) for k in self._korridore]
+        moden = [int(m) for k in self._korridore for m in k.moden]
         if 1 not in moden:
             self.korridor_liste.addItem(self._zeile_text(1, None, statistik.get(1)))
             self.korridor_liste.item(0).setData(QtCore.Qt.UserRole, 1)
@@ -187,6 +205,14 @@ class ZonenPanel(QtWidgets.QWidget):
             item = QtWidgets.QListWidgetItem(self._zeile_text(k.mode, k, statistik.get(k.mode)))
             item.setData(QtCore.Qt.UserRole, int(k.mode))
             self.korridor_liste.addItem(item)
+            for j, m in enumerate(k.moden[1:], start=2):
+                stat = statistik.get(m)
+                text = f"   ↳ M{m} · Dip {j} von {len(k.moden)}"
+                if stat:
+                    text += f" · {stat[0]} Fits" + (f" ({stat[1]} ⚠)" if stat[1] else "")
+                sub = QtWidgets.QListWidgetItem(text)
+                sub.setData(QtCore.Qt.UserRole, int(m))
+                self.korridor_liste.addItem(sub)
         if self._mode_aktiv not in moden and self._mode_aktiv != 1:
             self._mode_aktiv = 1
         for r in range(self.korridor_liste.count()):
@@ -204,6 +230,8 @@ class ZonenPanel(QtWidgets.QWidget):
         else:
             n = len(korridor.anker)
             text = f"M{mode} · {n} Anker"
+            if korridor.n_dips > 1:
+                text += f" · {korridor.n_dips} Dips"
         if stat:
             n_fit, n_prob = stat
             text += f" · {n_fit} Fits" + (f" ({n_prob} ⚠)" if n_prob else "")
@@ -217,15 +245,15 @@ class ZonenPanel(QtWidgets.QWidget):
         self.setze_korridore(self._korridore)
 
     def korridor_aktiv(self):
-        """Korridor der aktiven Mode (oder ``None``)."""
+        """Korridor, zu dem die aktive Mode gehoert (auch als weiterer Dip), oder ``None``."""
         for k in self._korridore:
-            if int(k.mode) == self._mode_aktiv:
+            if k.enthaelt_mode(self._mode_aktiv):
                 return k
         return None
 
     def mode_neu(self) -> int:
-        """Nummer des naechsten Korridors (lueckenlos)."""
-        return max((int(k.mode) for k in self._korridore), default=0) + 1
+        """Naechste freie Mode-Nummer (ueber alle Korridore und Dips)."""
+        return max((int(m) for k in self._korridore for m in k.moden), default=0) + 1
 
     def bandbreite_T(self) -> float:
         """Halbe Korridorbreite beim Anlegen in Tesla."""
@@ -254,6 +282,11 @@ class ZonenPanel(QtWidgets.QWidget):
     # --- intern ------------------------------------------------------------------
     def _aktualisiere_knoepfe(self) -> None:
         hat = self.korridor_aktiv() is not None
+        k = self.korridor_aktiv()
+        self.dips_spin.blockSignals(True)
+        self.dips_spin.setValue(int(k.n_dips) if k is not None else 1)
+        self.dips_spin.blockSignals(False)
+        self.dips_spin.setEnabled(hat)
         self.btn_anker.setEnabled(hat)
         self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
@@ -295,14 +328,21 @@ class ZonenPanel(QtWidgets.QWidget):
         if self._cb_anker_umschalten is not None:
             self._cb_anker_umschalten(bool(an))
 
+    def _dips_gewaehlt(self, n: int) -> None:
+        k = self.korridor_aktiv()
+        if k is not None and self._cb_dips_geaendert is not None:
+            self._cb_dips_geaendert(int(k.mode), int(n))
+
     def _entfernen_geklickt(self) -> None:
-        if self.korridor_aktiv() is not None and self._cb_korridor_entfernen is not None:
-            self._cb_korridor_entfernen(self._mode_aktiv)
+        k = self.korridor_aktiv()
+        if k is not None and self._cb_korridor_entfernen is not None:
+            self._cb_korridor_entfernen(int(k.mode))
 
     def _anker_entfernen_geklickt(self) -> None:
         zeile = self.anker_liste.currentRow()
-        if zeile >= 0 and self.korridor_aktiv() is not None and self._cb_anker_entfernen is not None:
-            self._cb_anker_entfernen(self._mode_aktiv, zeile)
+        k = self.korridor_aktiv()
+        if zeile >= 0 and k is not None and self._cb_anker_entfernen is not None:
+            self._cb_anker_entfernen(int(k.mode), zeile)
 
     def _zone_umgeschaltet(self, an: bool) -> None:
         if self._cb_zone_umschalten is not None:

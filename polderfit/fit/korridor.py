@@ -43,11 +43,29 @@ class Korridor:
 
     mode: int = 1
     anker: list[Anker] = field(default_factory=list)
+    #: Vom Nutzer vorgegebene Zahl der Resonanzen (Dips) IM Korridor. Bei > 1
+    #: wird der Korridor je Frequenz zwischen den n prominentesten Dips hart
+    #: getrennt ("hard crop") und jedes Stueck einzeln gefittet - kein Summenfit.
+    n_dips: int = 1
+    #: Mode-Nummern dieses Korridors: ``moden[0] == mode`` (Dip 1), danach die
+    #: Nummern der weiteren Dips (vom Hauptfenster vergeben).
+    moden: list = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.mode = max(1, int(self.mode))
         self.anker = [a if isinstance(a, Anker) else Anker(**a) for a in self.anker]
+        self.n_dips = max(1, int(self.n_dips))
+        self.moden = [int(m) for m in self.moden]
+        if not self.moden or self.moden[0] != self.mode:
+            self.moden = [self.mode] + [m for m in self.moden if m != self.mode]
         self._sortieren()
+
+    def mode_von_dip(self, j: int) -> int | None:
+        """Mode-Nummer des ``j``-ten Dips (0-basiert) oder ``None``."""
+        return self.moden[j] if 0 <= j < len(self.moden) else None
+
+    def enthaelt_mode(self, mode: int) -> bool:
+        return int(mode) in self.moden
 
     # --- Anker pflegen --------------------------------------------------------
     def _sortieren(self) -> None:
@@ -153,17 +171,21 @@ class Korridor:
 
     # --- Serialisierung -------------------------------------------------------
     def als_dict(self) -> dict:
-        return {"mode": int(self.mode), "anker": [a.als_dict() for a in self.anker]}
+        return {"mode": int(self.mode), "anker": [a.als_dict() for a in self.anker],
+                "n_dips": int(self.n_dips), "moden": [int(m) for m in self.moden]}
 
     @classmethod
     def aus_dict(cls, daten: dict) -> "Korridor":
         return cls(mode=int(daten.get("mode", 1)),
                    anker=[Anker(float(a["f"]), float(a["b_links"]), float(a["b_rechts"]))
-                          for a in daten.get("anker", [])])
+                          for a in daten.get("anker", [])],
+                   n_dips=int(daten.get("n_dips", 1)),
+                   moden=[int(m) for m in daten.get("moden", [])])
 
     def kopie(self) -> "Korridor":
         return Korridor(mode=self.mode,
-                        anker=[Anker(a.f, a.b_links, a.b_rechts) for a in self.anker])
+                        anker=[Anker(a.f, a.b_links, a.b_rechts) for a in self.anker],
+                        n_dips=self.n_dips, moden=list(self.moden))
 
 
 def korridor_aus_linie(mode: int, b1: float, f1: float, b2: float, f2: float,
@@ -220,3 +242,45 @@ def korridore_aus_grenzgeraden(geraden: list[dict], feld_min: float,
     for k, kor in enumerate(korridore, start=1):   # luecken­los nummerieren
         kor.mode = k
     return korridore
+
+
+def dip_segmente(feld: np.ndarray, s21: np.ndarray, n: int,
+                 min_punkte: int = 6) -> list[tuple[float, float]]:
+    """Harte Trennung eines Korridor-Ausschnitts in bis zu ``n`` Feldsegmente,
+    eines je Resonanz (Dip): Segmentgrenzen liegen im Minimum des
+    untergrundbereinigten Signalbetrags zwischen benachbarten Dips (die ``n``
+    prominentesten Maxima des Betrags). Liefert ``[(lo, hi), …]`` aufsteigend
+    im Feld; weniger Eintraege, wenn weniger Dips gefunden werden.
+    """
+    from scipy.signal import find_peaks
+    from .autowindows import _detrend_residuum
+
+    B = np.asarray(feld, dtype=float)
+    n = max(1, int(n))
+    if B.size < 2:
+        return []
+    lo, hi = float(B.min()), float(B.max())
+    if n == 1 or B.size < 2 * min_punkte:
+        return [(lo, hi)]
+    rein = _detrend_residuum(B, np.asarray(s21))
+    reihenfolge = np.argsort(B)
+    Bs, rs = B[reihenfolge], rein[reihenfolge]
+    spitzen, eig = find_peaks(rs, distance=max(2, min_punkte // 2), prominence=0.0)
+    if spitzen.size == 0:
+        return [(lo, hi)]
+    prominenz = eig.get("prominences", np.zeros(spitzen.size))
+    beste = spitzen[np.argsort(prominenz)[::-1][:n]]
+    beste = np.sort(beste)
+    segmente = []
+    start = 0
+    for k in range(len(beste)):
+        if k + 1 < len(beste):
+            a, b = int(beste[k]), int(beste[k + 1])
+            trenn = a + int(np.argmin(rs[a:b + 1]))
+            ende = trenn
+        else:
+            ende = Bs.size - 1
+        if ende - start + 1 >= min_punkte:
+            segmente.append((float(Bs[start]), float(Bs[ende])))
+        start = ende
+    return segmente if segmente else [(lo, hi)]

@@ -5,7 +5,7 @@ Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, `
 | Werkzeug | Aufruf | Wirkung |
 |---|---|---|
 | Auto-Fit (alle) | `F5` | Dialog: Frequenz/Feld von … bis … (Standard: alles), Jumper; Fenstersuche + Fit je Frequenz für Mode 1, danach alle Korridore M2…Mn |
-| Korridore | `Strg+L` oder Panel *Korridore & Zonen*, 2 Klicks entlang der Resonanz | Korridor ± Breite für die nächste Mode; Anker setzen (Klick) oder ziehen führt ihn nach (linear interpoliert); „Korridor fitten …“ = Einzelfit je Frequenz NUR auf den Punkten im Korridor (harte Grenze, kein Summenfit); Dialog: Frequenzbereich, Modus, Jumper |
+| Korridore | `Strg+L` oder Panel *Korridore & Zonen*, 2 Klicks entlang der Resonanz | Korridor ± Breite für die nächste Mode; Anker setzen (Klick) oder ziehen führt ihn nach (linear interpoliert); „Korridor fitten …“ = Einzelfit je Frequenz NUR auf den Punkten im Korridor (harte Grenze, kein Summenfit); Dialog: Frequenzbereich, Modus, Jumper. „Resonanzen im Korridor“ = n: je Frequenz harte Trennung zwischen den n Dips, jeder Dip einzeln gefittet (Nachbar-Dip abgezogen), eigene Mode je Dip |
 | Bereich neu fitten (Rechteck) | `Strg+B` | derselbe Dialog (Bereich editierbar); `B_res` bleibt im Bereich |
 | Grenzen im Linescan ziehen | Fit-Panel (erscheint mit erstem Fit oder Klick in die Karte) | Einzelfrequenz, Fit sofort; Zahl der Resonanzen wählbar |
 | Ausschlusszone | Panel, Rechteck | Punkte aus allen (Nach-)Fits; schraffiert; einzeln entfernbar |

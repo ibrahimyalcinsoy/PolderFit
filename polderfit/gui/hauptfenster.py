@@ -187,6 +187,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             korridor_entfernen=self._korridor_entfernen,
             anker_entfernen=self._anker_entfernen,
             korridor_fit=self._korridor_fit,
+            dips_geaendert=self._dips_geaendert,
         )
         #: Korridore je Mode - die EINZIGE Quelle des Moden-Zustands (Zahl der
         #: Moden = Zahl der Korridore); bleiben ueber Auto-Fits erhalten, werden
@@ -1147,8 +1148,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         fits_vorher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
                        if self.stapel is not None else {})
         self._korridore.remove(korridor)
-        if self.stapel is not None and int(mode) >= 2:
-            self.stapel.mode_entfernen(int(mode))
+        if self.stapel is not None:
+            for m in korridor.moden:
+                if int(m) >= 2:
+                    self.stapel.mode_entfernen(int(m))
         self._mode_aktiv = 1
         self.zonenpanel.setze_mode_aktiv(1)
         self._zeige_korridore()
@@ -1180,7 +1183,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if st is None:
             return {}
         stat = {}
-        for mode in [1] + [int(k.mode) for k in self._korridore]:
+        for mode in [1] + [int(m) for k in self._korridore for m in k.moden]:
             liste = st.ergebnisse_mode(mode)
             n_fit = sum(1 for e in liste if e.gefittet)
             n_prob = sum(1 for e in liste if e.gefittet and e.problematisch)
@@ -1203,7 +1206,47 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._auswertung_nachziehen()
 
     def _korridor_fuer(self, mode: int):
-        return next((k for k in self._korridore if int(k.mode) == int(mode)), None)
+        """Korridor, zu dem ``mode`` gehoert (Hauptdip oder weiterer Dip)."""
+        return next((k for k in self._korridore if k.enthaelt_mode(int(mode))), None)
+
+    def _dips_geaendert(self, mode: int, n: int):
+        """Vorgabe "n Resonanzen im Korridor": weitere Dips bekommen eigene, freie
+        Mode-Nummern; beim Verringern werden deren Ergebnisse verworfen."""
+        korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
+        if korridor is None:
+            return
+        n = max(1, int(n))
+        if n == korridor.n_dips and len(korridor.moden) == n:
+            return
+        vorher = self._korridor_schatten
+        fits_vorher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
+                       if self.stapel is not None else {})
+        entfernt = korridor.moden[n:]
+        korridor.moden = korridor.moden[:n]
+        while len(korridor.moden) < n:
+            korridor.moden.append(self.zonenpanel.mode_neu())
+            self.zonenpanel.setze_korridore(self._korridore)   # mode_neu sieht die neue Nummer
+        korridor.n_dips = n
+        if self.stapel is not None:
+            for m in entfernt:
+                self.stapel.mode_entfernen(m)
+        if self._mode_aktiv in entfernt:
+            self._mode_aktiv = korridor.mode
+            self.zonenpanel.setze_mode_aktiv(self._mode_aktiv)
+        self._zeige_korridore()
+        nachher = self._korridor_schatten
+        fits_nachher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
+                        if self.stapel is not None else {})
+        self._merke_aenderung(
+            f"Korridor M{mode}: {n} Resonanz(en)",
+            lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
+            lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
+        self._aktualisiere_overlay()
+        self._auswertung_nachziehen()
+        self._log(f"Korridor M{mode}: {n} Resonanz(en) vorgegeben"
+                  + (f" – Moden {', '.join(f'M{m}' for m in korridor.moden)}; je Frequenz wird "
+                     "zwischen den Dips hart getrennt und jeder Dip einzeln gefittet."
+                     if n > 1 else "."), "info")
 
     def _daten_bereich(self) -> tuple[float, float, float, float]:
         """(feld_min, feld_max, f_min_ghz, f_max_ghz) des Stapel-Datensatzes."""
@@ -1242,7 +1285,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self.stapel is None:
             self._log("Korridor-Fit: bitte zuerst eine TDMS-Datei laden.", "warn")
             return
-        korridore = ([k for k in self._korridore if int(k.mode) == int(mode)]
+        korridore = ([k for k in self._korridore if k.enthaelt_mode(int(mode))]
                      if mode is not None else list(self._korridore))
         if not korridore:
             self._log("Korridor-Fit: bitte zuerst einen Korridor anlegen.", "warn")
@@ -1305,8 +1348,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._nach_nachfit(neu, fits_vorher, f"Korridor-Fit {namen}")
             probleme = 0
             for korridor in korridore:
-                liste = stapel.ergebnisse_mode(korridor.mode)
-                probleme += sum(1 for i in set(neu) if liste[i].gefittet and liste[i].problematisch)
+                for m in korridor.moden:
+                    liste = stapel.ergebnisse_mode(m)
+                    probleme += sum(1 for i in set(neu) if liste[i].gefittet and liste[i].problematisch)
             jumper = f", jede {schritt}. Frequenz" if schritt > 1 else ""
             text = (f"Korridor-Fit {namen} ({f_von/1e9:.2f}–{f_bis/1e9:.2f} GHz{jumper}): "
                     f"{len(neu)} gefittet, {probleme} problematisch, "
@@ -1930,7 +1974,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         physik = self._physik
         korridor_m1 = self._korridor_fuer(1)
-        weitere = [k for k in self._korridore if int(k.mode) >= 2]
+        weitere = [k for k in self._korridore if int(k.mode) >= 2 or k.n_dips > 1]
         if korridor_m1 is not None:
             self._log("Auto-Fit: Mode 1 hat einen Korridor – gefittet wird nur darin "
                       "(keine Fenstersuche).", "info")

@@ -15,10 +15,10 @@ import numpy as np
 
 from ..io.datensatz import Linescan, Messdatensatz
 from ..physik.konstanten import GAMMA_STANDARD
-from ..physik.fitmodell import Startwerte
+from ..physik.fitmodell import Startwerte, s21_modell
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
-from .korridor import Korridor
+from .korridor import Korridor, dip_segmente
 from .kriterien import ALPHA_MAX
 from .linescan_fit import FitErgebnis, fitte_linescan, setze_bewertung
 
@@ -489,8 +489,13 @@ def fitte_neu(
     B_res_vorgabe: float | None = None,
     bestaetigen: bool | None = None,
     mode: int = 1,
+    linescan: Linescan | None = None,
 ) -> FitErgebnis:
     """Fittet einen einzelnen Datensatz neu (manuelles Nachfitten).
+
+    ``linescan`` (optional) ersetzt die Messdaten dieser Frequenz (z. B. nach
+    Abzug der Nachbar-Resonanzen beim Mehr-Dip-Korridor); Fenster und Listen
+    beziehen sich weiter auf ``index``.
 
     Optional mit neuen Bandgrenzen, expliziten Startwerten oder nur neuem
     Resonanzfeld. Aktualisiert den Stapel an Position ``index`` und gibt das
@@ -505,7 +510,7 @@ def fitte_neu(
     verschwinden Problemfits durch blosses "Neu fitten" aus der Liste).
     """
     mode = max(1, int(mode))
-    ls = stapel.datensatz.linescans[index]
+    ls = linescan if linescan is not None else stapel.datensatz.linescans[index]
     liste = stapel.ergebnisse_mode(mode)
     if mode == 1:
         unten, oben = stapel.fenster[index]
@@ -545,12 +550,16 @@ def fitte_mode(
     korridor: Korridor,
     bestaetigen: bool | None = False,
 ) -> FitErgebnis | None:
-    """Einzelfit der Mode ``korridor.mode`` an Frequenz ``index`` AUSSCHLIESSLICH
+    """Einzelfit der Mode(n) des Korridors an Frequenz ``index`` AUSSCHLIESSLICH
     auf den Messpunkten im Korridor (Punkte ausserhalb sind maskiert, nicht
     mitmodelliert), mit Nachfenster-Durchgang ``B_res +/- Faktor*dH`` innerhalb
     des Korridors. Startwert ``B_res``: lokaler Dip im Korridor (Startwert-
-    Schaetzung), sonst das Ergebnis der Nachbarfrequenz. Liefert ``None``, wenn
-    der Korridor bei dieser Frequenz leer ist (Ergebnis bleibt Platzhalter).
+    Schaetzung), sonst das Ergebnis der Nachbarfrequenz.
+
+    ``korridor.n_dips > 1``: der Korridor wird bei dieser Frequenz zwischen den
+    n prominentesten Dips hart getrennt (:func:`dip_segmente`); Segment j wird
+    als Einzelfit in die Mode ``korridor.moden[j]`` gefittet. Liefert das
+    Ergebnis der ersten Mode, ``None`` bei leerem Korridor.
     """
     ls = stapel.datensatz.linescans[index]
     if not ls.feld.size:
@@ -559,16 +568,65 @@ def fitte_mode(
                                           float(ls.feld.max()))
     if grenzen is None:
         return None
-    mode = korridor.mode
+    if korridor.n_dips <= 1 or len(korridor.moden) <= 1:
+        return _fitte_mode_im_fenster(stapel, index, korridor.mode, grenzen, bestaetigen)
+    ausschnitt = schneide_band(ls, grenzen[0], grenzen[1])
+    if stapel.ausschlusszonen:
+        ausschnitt = ohne_ausschlusszonen(ausschnitt, stapel.ausschlusszonen)
+    segmente = dip_segmente(ausschnitt.feld, ausschnitt.s21, len(korridor.moden))
+    ergebnisse: dict[int, FitErgebnis] = {}
+    # Durchgang 1: jeder Dip in seinem Segment (harte Trennung).
+    for j, mode in enumerate(korridor.moden):
+        if j < len(segmente):
+            ergebnisse[mode] = _fitte_mode_im_fenster(stapel, index, mode, segmente[j],
+                                                      bestaetigen)
+        else:
+            erg = FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=mode)
+            erg.meldung = "Dip im Korridor nicht gefunden"
+            stapel.ergebnisse_mode(mode)[index] = erg
+    # Durchgang 2: Ausläufer der Nachbar-Dips (Resonanzanteil des Durchgangs 1)
+    # abziehen und jeden Dip in seinem Segment erneut einzeln fitten - weiter
+    # kein Summenfit, aber die Segmente werden vom Nachbarn befreit.
+    if len(segmente) > 1:
+        omega = 2.0 * np.pi * ls.frequenz
+        for j, mode in enumerate(korridor.moden[:len(segmente)]):
+            rest = np.asarray(ls.s21, dtype=complex).copy()
+            for m2, e2 in ergebnisse.items():
+                if m2 == mode or not (e2.gefittet and e2.erfolg and np.isfinite(e2.B_res)):
+                    continue
+                rest -= s21_modell(ls.feld, e2.B_res, e2.alpha, e2.A, e2.phi, 0.0, 0.0, 0.0, 0.0,
+                                   omega, stapel.gamma, float(np.mean(ls.feld)))
+            bereinigt = Linescan(frequenz=ls.frequenz, feld=ls.feld, re=rest.real, im=rest.imag,
+                                 feld_before=getattr(ls, "feld_before", None),
+                                 feld_after=getattr(ls, "feld_after", None),
+                                 temperatur=getattr(ls, "temperatur", None))
+            neu = _fitte_mode_im_fenster(stapel, index, mode, segmente[j], bestaetigen,
+                                         linescan=bereinigt)
+            alt = ergebnisse[mode]
+            if not (neu.erfolg and not neu.problematisch) and (alt.erfolg and not alt.problematisch):
+                stapel.ergebnisse_mode(mode)[index] = alt   # Durchgang 1 war besser
+            else:
+                ergebnisse[mode] = neu
+    return ergebnisse.get(korridor.moden[0])
+
+
+def _fitte_mode_im_fenster(stapel: StapelErgebnis, index: int, mode: int,
+                           grenzen: tuple[float, float],
+                           bestaetigen: bool | None, linescan: Linescan | None = None) -> FitErgebnis:
+    """Einzelfit einer Mode im harten Fenster ``grenzen`` mit Nachbar-Rueckfall
+    und Nachfenster-Durchgang (siehe :func:`fitte_mode`). ``linescan``: ersetzt
+    die Messdaten (Nachbar-Dips abgezogen)."""
+    ls = linescan if linescan is not None else stapel.datensatz.linescans[index]
     liste = stapel.ergebnisse_mode(mode)
     vorgabe = _nachbar_b_res(liste, index, grenzen)
-    # 1. Durchgang: Startwert aus dem lokalen Dip im Korridor.
+    # 1. Durchgang: Startwert aus dem lokalen Dip im Fenster.
     ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
-                         bestaetigen=bestaetigen, mode=mode)
+                         bestaetigen=bestaetigen, mode=mode, linescan=linescan)
     if ergebnis.problematisch and vorgabe is not None:
         # Rueckfall: Startwert vom Nachbarn - nur uebernehmen, wenn besser.
         zweiter = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
-                            B_res_vorgabe=vorgabe, bestaetigen=bestaetigen, mode=mode)
+                            B_res_vorgabe=vorgabe, bestaetigen=bestaetigen, mode=mode,
+                            linescan=linescan)
         if not (zweiter.problematisch and not ergebnis.problematisch) and (
                 not zweiter.problematisch
                 or (np.isfinite(zweiter.rmse_norm) and (not np.isfinite(ergebnis.rmse_norm)
@@ -576,15 +634,16 @@ def fitte_mode(
             ergebnis = zweiter
         else:
             ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
-                                 bestaetigen=bestaetigen, mode=mode)
-    # 2. Durchgang: Nachfenster innerhalb des Korridors.
+                                 bestaetigen=bestaetigen, mode=mode, linescan=linescan)
+    # 2. Durchgang: Nachfenster innerhalb des Fensters.
     eng = nachfenster(ls, ergebnis, grenzen, stapel.nachfenster_faktor)
     if eng is not None:
         b_start = float(ergebnis.B_res)
         zweites = fitte_neu(stapel, index, feld_unten=eng[0], feld_oben=eng[1],
-                            bestaetigen=bestaetigen, mode=mode)
+                            bestaetigen=bestaetigen, mode=mode, linescan=linescan)
         if zweites.erfolg and not zweites.problematisch:
             return zweites
         ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
-                             B_res_vorgabe=b_start, bestaetigen=bestaetigen, mode=mode)
+                             B_res_vorgabe=b_start, bestaetigen=bestaetigen, mode=mode,
+                             linescan=linescan)
     return ergebnis

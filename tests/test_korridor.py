@@ -70,3 +70,35 @@ def test_projekt_rundlauf_mit_nebenmoden(synthetischer_datensatz, tmp_path):
     assert [k.mode for k in kk] == [2]
     for i in neu:
         assert st2.ergebnisse_mode(2)[i].B_res == pytest.approx(st.ergebnisse_mode(2)[i].B_res)
+
+
+def test_zwei_dips_im_korridor_hard_crop():
+    from polderfit.fit.batch import leerer_stapel, fitte_mode
+    from polderfit.io.datensatz import Linescan, Messdatensatz
+    from polderfit.physik.fitmodell import s21_modell
+    from polderfit.physik.konstanten import GAMMA_STANDARD as g
+    B = np.linspace(1.0, 3.65, 2400)   # 1.1 mT Schritt, wie reale Linescans (~2.5 mT)
+    linescans = []
+    for f in np.linspace(6e9, 30e9, 6):
+        w = 2 * np.pi * f
+        b1 = 1.37 + w / g
+        s = (s21_modell(B, b1, 6e-3, 0.02, 0.5, 0, 0, 0, 0, w, g, float(B.mean()))
+             + s21_modell(B, b1 + 0.04, 6e-3, 0.015, 0.5, 0, 0, 0, 0, w, g, float(B.mean()))
+             + 0.2 + 0.1j)
+        linescans.append(Linescan(frequenz=float(f), feld=B.copy(), re=s.real, im=s.imag))
+    d = Messdatensatz(quelle="synth2", format_typ="unsortiert", linescans=linescans)
+    st = leerer_stapel(d)
+    f = d.frequenzen
+    k = Korridor(mode=1, n_dips=2, moden=[1, 2],
+                 anker=[Anker(f[0], 1.37 + 2 * np.pi * f[0] / g - 0.03, 1.37 + 2 * np.pi * f[0] / g + 0.07),
+                        Anker(f[-1], 1.37 + 2 * np.pi * f[-1] / g - 0.03, 1.37 + 2 * np.pi * f[-1] / g + 0.07)])
+    for i in range(len(f)):
+        fitte_mode(st, i, k)
+    for i in range(len(f)):
+        b1 = 1.37 + 2 * np.pi * f[i] / g
+        e1, e2 = st.ergebnisse[i], st.ergebnisse_mode(2)[i]
+        assert e1.gefittet and e2.gefittet
+        assert abs(e1.B_res - b1) < 2e-3 and abs(e2.B_res - (b1 + 0.04)) < 2e-3
+        assert not e1.problematisch and not e2.problematisch
+        assert e1.feld.max() <= e2.feld.min() + 1e-9      # harte Trennung, keine Ueberlappung
+    assert st.moden_vorhanden() == [1, 2]
