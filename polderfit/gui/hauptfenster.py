@@ -191,6 +191,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             dips_geaendert=self._dips_geaendert,
             trenner_umschalten=self._trenner_modus,
             trenner_loeschen=self._trenner_loeschen,
+            breite_geaendert=self._korridor_breite_geaendert,
         )
         #: Korridore je Mode - die EINZIGE Quelle des Moden-Zustands (Zahl der
         #: Moden = Zahl der Korridore); bleiben ueber Auto-Fits erhalten, werden
@@ -1272,6 +1273,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _korridor_fuer(self, mode: int):
         """Korridor, zu dem ``mode`` gehoert (Hauptdip oder weiterer Dip)."""
         return next((k for k in self._korridore if k.enthaelt_mode(int(mode))), None)
+
+    def _korridor_breite_geaendert(self, mode: int, halbbreite: float):
+        """Spinbox "± mT": Breite des gewaehlten Korridors sofort anpassen (Undo)."""
+        korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
+        if korridor is None or not korridor.anker:
+            return
+        alt = korridor.halbbreite()
+        if alt is not None and abs(alt - halbbreite) < 1e-9:
+            return
+        vorher = self._korridor_schatten
+        korridor.breite_setzen(halbbreite)
+        self._zeige_korridore()
+        self._merke_korridor_aenderung(f"Korridor M{mode}: ±{halbbreite*1e3:.0f} mT", vorher)
+        self._zeige_aktuellen()
 
     def _dips_geaendert(self, mode: int, n: int, methode: str = "trennung"):
         """Vorgabe "n Resonanzen im Korridor": weitere Dips bekommen eigene, freie

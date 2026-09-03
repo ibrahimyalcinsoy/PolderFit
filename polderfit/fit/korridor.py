@@ -171,6 +171,19 @@ class Korridor:
         lo, hi = sorted((a.b_links, a.b_rechts))
         a.b_links, a.b_rechts = lo, hi
 
+    def breite_setzen(self, halbbreite: float) -> None:
+        """Alle Anker auf ``Mitte +- halbbreite`` (T) setzen (Korridorbreite aendern)."""
+        h = abs(float(halbbreite))
+        for a in self.anker:
+            m = 0.5 * (a.b_links + a.b_rechts)
+            a.b_links, a.b_rechts = m - h, m + h
+
+    def halbbreite(self) -> float | None:
+        """Mittlere halbe Breite ueber alle Anker (T) oder ``None``."""
+        if not self.anker:
+            return None
+        return float(np.mean([0.5 * (a.b_rechts - a.b_links) for a in self.anker]))
+
     def naechster_anker(self, f: float) -> int | None:
         if not self.anker:
             return None

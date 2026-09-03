@@ -37,13 +37,15 @@ class ZonenPanel(QtWidgets.QWidget):
       Korridor und Verfahren (``"trennung"``/``"summe"``)
     * ``trenner_umschalten(an)`` – Trennlinie im Linescan-Panel setzen (Klick)
     * ``trenner_loeschen()`` – Trennlinien an der angezeigten Frequenz loeschen
+    * ``breite_geaendert(mode, halbbreite_T)`` – Breite des gewaehlten Korridors
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
                  korridor_umschalten=None, anker_umschalten=None,
                  korridor_gewaehlt=None, korridor_entfernen=None,
                  anker_entfernen=None, korridor_fit=None, dips_geaendert=None,
-                 trenner_umschalten=None, trenner_loeschen=None, parent=None):
+                 trenner_umschalten=None, trenner_loeschen=None, breite_geaendert=None,
+                 parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
@@ -56,6 +58,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_dips_geaendert = dips_geaendert
         self._cb_trenner_umschalten = trenner_umschalten
         self._cb_trenner_loeschen = trenner_loeschen
+        self._cb_breite_geaendert = breite_geaendert
         self._korridore: list = []
         self._mode_aktiv: int = 1
         self._blockiert = False
@@ -92,7 +95,10 @@ class ZonenPanel(QtWidgets.QWidget):
         self.breite_spin.setValue(10)
         self.breite_spin.setPrefix("± ")
         self.breite_spin.setSuffix(" mT")
-        self.breite_spin.setToolTip("Halbe Korridorbreite beim Anlegen (eng halten).")
+        self.breite_spin.setToolTip(
+            "Halbe Korridorbreite (eng halten): gilt für den gewählten Korridor – Ändern\n"
+            "setzt alle seine Anker sofort auf Mitte ± Wert – und für neu angelegte.")
+        self.breite_spin.valueChanged.connect(self._breite_gewaehlt)
         zeile1.addWidget(self.breite_spin)
         k_lay.addLayout(zeile1)
 
@@ -327,6 +333,10 @@ class ZonenPanel(QtWidgets.QWidget):
         self.dips_spin.setValue(int(k.n_dips) if k is not None else 1)
         self.dips_spin.blockSignals(False)
         self.dips_spin.setEnabled(hat)
+        if k is not None and k.halbbreite() is not None:
+            self.breite_spin.blockSignals(True)
+            self.breite_spin.setValue(int(round(k.halbbreite() * 1e3)))
+            self.breite_spin.blockSignals(False)
         self.methode_combo.blockSignals(True)
         idx = self.methode_combo.findData(k.methode if k is not None else "trennung")
         self.methode_combo.setCurrentIndex(max(0, idx))
@@ -373,6 +383,11 @@ class ZonenPanel(QtWidgets.QWidget):
     def _anker_umgeschaltet(self, an: bool) -> None:
         if self._cb_anker_umschalten is not None:
             self._cb_anker_umschalten(bool(an))
+
+    def _breite_gewaehlt(self, wert: int) -> None:
+        k = self.korridor_aktiv()
+        if k is not None and self._cb_breite_geaendert is not None:
+            self._cb_breite_geaendert(int(k.mode), float(wert) / 1e3)
 
     def _dips_gewaehlt(self, *_args) -> None:
         k = self.korridor_aktiv()
