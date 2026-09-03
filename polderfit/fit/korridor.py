@@ -38,9 +38,9 @@ class Anker:
 
 
 #: Verfahren fuer mehrere Dips in einem Korridor (siehe :attr:`Korridor.methode`).
-METHODEN = ("trennung", "summe")
-METHODEN_TEXTE = {"trennung": "harte Trennung (je Dip einzeln)",
-                  "summe": "Summenfit (B_res je Dip im Segment)"}
+METHODEN = ("summe", "trennung")
+METHODEN_TEXTE = {"summe": "Summenfit (Standard; B_res je Dip im Segment)",
+                  "trennung": "harte Trennung (je Dip einzeln)"}
 
 
 @dataclass
@@ -59,7 +59,7 @@ class Korridor:
     #: Verfahren bei ``n_dips > 1``: ``"trennung"`` = harte Trennung, jeder Dip
     #: einzeln (Nachbar-Dip abgezogen); ``"summe"`` = Summenfit aller Dips auf
     #: den Korridorpunkten, jedes ``B_res_k`` hart auf sein Segment beschraenkt.
-    methode: str = "trennung"
+    methode: str = "summe"
     #: Manuelle Trennlinien zwischen den Dips: ``[{"f": Hz, "b": [T, …]}]`` -
     #: je Stuetzfrequenz ``n_dips - 1`` Feldwerte, dazwischen linear ueber der
     #: Frequenz interpoliert (harte Segmentgrenzen fuer alle Fits). Fehlen sie,
@@ -71,7 +71,7 @@ class Korridor:
         self.anker = [a if isinstance(a, Anker) else Anker(**a) for a in self.anker]
         self.n_dips = max(1, int(self.n_dips))
         if self.methode not in METHODEN:
-            self.methode = "trennung"
+            self.methode = "summe"
         self.moden = [int(m) for m in self.moden]
         if not self.moden or self.moden[0] != self.mode:
             self.moden = [self.mode] + [m for m in self.moden if m != self.mode]
@@ -267,7 +267,7 @@ class Korridor:
                           for a in daten.get("anker", [])],
                    n_dips=int(daten.get("n_dips", 1)),
                    moden=[int(m) for m in daten.get("moden", [])],
-                   methode=str(daten.get("methode", "trennung")),
+                   methode=str(daten.get("methode", "summe")),
                    trenner=[{"f": float(t["f"]), "b": [float(x) for x in t.get("b", [])]}
                             for t in daten.get("trenner", [])])
 

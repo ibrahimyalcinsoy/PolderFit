@@ -1303,7 +1303,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._merke_korridor_aenderung(f"Korridor M{mode}: ±{halbbreite*1e3:.0f} mT", vorher)
         self._zeige_aktuellen()
 
-    def _dips_geaendert(self, mode: int, n: int, methode: str = "trennung"):
+    def _dips_geaendert(self, mode: int, n: int, methode: str = "summe"):
         """Vorgabe "n Resonanzen im Korridor": weitere Dips bekommen eigene, freie
         Mode-Nummern; beim Verringern werden deren Ergebnisse verworfen."""
         korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)

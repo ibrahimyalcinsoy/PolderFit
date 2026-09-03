@@ -338,7 +338,7 @@ class ZonenPanel(QtWidgets.QWidget):
             self.breite_spin.setValue(int(round(k.halbbreite() * 1e3)))
             self.breite_spin.blockSignals(False)
         self.methode_combo.blockSignals(True)
-        idx = self.methode_combo.findData(k.methode if k is not None else "trennung")
+        idx = self.methode_combo.findData(k.methode if k is not None else "summe")
         self.methode_combo.setCurrentIndex(max(0, idx))
         self.methode_combo.blockSignals(False)
         self.methode_combo.setVisible(k is not None and k.n_dips > 1)
@@ -393,7 +393,7 @@ class ZonenPanel(QtWidgets.QWidget):
         k = self.korridor_aktiv()
         if k is not None and self._cb_dips_geaendert is not None:
             self._cb_dips_geaendert(int(k.mode), int(self.dips_spin.value()),
-                                    str(self.methode_combo.currentData() or "trennung"))
+                                    str(self.methode_combo.currentData() or "summe"))
         self.methode_combo.setVisible(k is not None and int(self.dips_spin.value()) > 1)
         self.trenner_box.setVisible(k is not None and int(self.dips_spin.value()) > 1)
 
