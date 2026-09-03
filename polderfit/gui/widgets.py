@@ -19,10 +19,8 @@ class _RuhigMixin:
 
     def _ruhig_einrichten(self) -> None:
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        # Sichtbare, klickbare Knoepfe unabhaengig vom Stylesheet: +/- statt
-        # Pfeil-Bildern (die das QSS sonst verschluckt).
-        if isinstance(self, QtWidgets.QAbstractSpinBox):
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
+        # Spin-Boxen bleiben ohne Stylesheet (stil.py): der Stil zeichnet die
+        # Pfeilknoepfe nativ, damit sie auf jeder Plattform klickbar sind.
 
     def wheelEvent(self, event):  # noqa: N802 (Qt-Name)
         if not self.hasFocus():

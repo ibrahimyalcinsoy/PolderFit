@@ -130,11 +130,12 @@ class ZonenPanel(QtWidgets.QWidget):
         zeile_t = QtWidgets.QHBoxLayout()
         self.btn_trenner = QtWidgets.QPushButton("Trennlinie setzen")
         self.btn_trenner.setCheckable(True)
-        self.btn_trenner.setToolTip(
+        self._trenner_tip = (
             "Im Linescan-Panel zwischen zwei Dips klicken → gelbe Trennlinie (harte\n"
-            "Grenze). Sie wandert entlang der Mode mit (linear über der Frequenz) und\n"
+            "Grenze). Sie wandert entlang der Mode mit (relativ zur Korridormitte) und\n"
             "gilt für alle Fits dieses Korridors; an anderen Frequenzen nachsetzen oder\n"
-            "ziehen, wenn sie abweicht. Erneuter Klick auf den Knopf beendet.")
+            "ziehen, wenn sie abweicht. Esc oder erneuter Klick auf den Knopf beendet.")
+        self.btn_trenner.setToolTip(self._trenner_tip)
         self.btn_trenner.toggled.connect(
             lambda an: self._cb_trenner_umschalten and self._cb_trenner_umschalten(bool(an)))
         zeile_t.addWidget(self.btn_trenner, 1)
@@ -145,7 +146,7 @@ class ZonenPanel(QtWidgets.QWidget):
         zeile_t.addWidget(self.btn_trenner_loeschen)
         self.trenner_box = QtWidgets.QWidget()
         self.trenner_box.setLayout(zeile_t)
-        self.trenner_box.setVisible(False)
+        self.trenner_box.setEnabled(False)
         k_lay.addWidget(self.trenner_box)
 
         zeile2 = QtWidgets.QHBoxLayout()
@@ -341,8 +342,11 @@ class ZonenPanel(QtWidgets.QWidget):
         idx = self.methode_combo.findData(k.methode if k is not None else "summe")
         self.methode_combo.setCurrentIndex(max(0, idx))
         self.methode_combo.blockSignals(False)
-        self.methode_combo.setVisible(k is not None and k.n_dips > 1)
-        self.trenner_box.setVisible(k is not None and k.n_dips > 1)
+        mehrere = k is not None and k.n_dips > 1
+        self.methode_combo.setVisible(mehrere)
+        self.trenner_box.setEnabled(mehrere)
+        self.btn_trenner.setToolTip(self._trenner_tip if mehrere else
+                                    "Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen.")
         self.btn_anker.setEnabled(hat)
         self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
@@ -395,7 +399,7 @@ class ZonenPanel(QtWidgets.QWidget):
             self._cb_dips_geaendert(int(k.mode), int(self.dips_spin.value()),
                                     str(self.methode_combo.currentData() or "summe"))
         self.methode_combo.setVisible(k is not None and int(self.dips_spin.value()) > 1)
-        self.trenner_box.setVisible(k is not None and int(self.dips_spin.value()) > 1)
+        self.trenner_box.setEnabled(k is not None and int(self.dips_spin.value()) > 1)
 
     def _entfernen_geklickt(self) -> None:
         k = self.korridor_aktiv()

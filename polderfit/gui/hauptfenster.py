@@ -934,6 +934,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 self.showMaximized()
 
     def _esc_gedrueckt(self) -> None:
+        if self.fitansicht.trenner_modus():
+            self._trenner_modus(False)
+            return
         if self.matrix.modus is not None:
             self.matrix.beende_modus()
         elif self.isFullScreen():
@@ -1130,9 +1133,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._log("Trennlinie: zuerst im Korridor mehr als eine Resonanz vorgeben.", "warn")
             return
         self.fitansicht.setze_trenner_modus(bool(an))
+        self.zonenpanel.setze_trenner_modus_aktiv(bool(an))
         self._zeige_aktuellen()
         if an:
             self._dock_schmal_halten(self.linescan_dock, breite=500)
+            text = ("Modus: Trennlinie setzen – im Linescan-Panel zwischen zwei Dips klicken "
+                    "(gelbe Linie ziehbar) · Esc beendet")
+            self.modus_label.setText("Modus: Trennlinie setzen")
+            self.modus_label.setVisible(True)
+            self.statusBar().showMessage(text)
+            self._log(text, "info")
+        elif self.matrix.modus is None:
+            self.modus_label.setVisible(False)
+            self.statusBar().showMessage("Modus beendet.", 4000)
 
     def _trenner_geaendert(self, positionen: list):
         """Trennlinien an der angezeigten Frequenz gesetzt/gezogen: in den Korridor

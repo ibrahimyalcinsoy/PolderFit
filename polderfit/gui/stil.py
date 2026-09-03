@@ -131,14 +131,14 @@ QProgressBar {{
 }}
 QProgressBar::chunk {{ background-color: {F.SIGNAL_BLAU}; border-radius: 3px; }}
 
-QPlainTextEdit, QTextBrowser, QListWidget, QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
+QPlainTextEdit, QTextBrowser, QListWidget, QLineEdit, QComboBox {{
     background-color: {F.PANEL};
     border: 1px solid {F.RAND};
     border-radius: 4px;
     selection-background-color: {F.HELL_BLAU};
     selection-color: {F.TEXT};
 }}
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{ border-color: {F.SIGNAL_BLAU}; }}
+QLineEdit:focus, QComboBox:focus {{ border-color: {F.SIGNAL_BLAU}; }}
 QListWidget::item:selected {{ background-color: {F.HELL_BLAU}; color: {F.TEXT_BLAU}; }}
 QStatusBar {{ background-color: {F.PANEL}; border-top: 1px solid {F.RAND}; color: {F.TEXT_SCHWACH}; }}
 QSplitter::handle {{ background-color: {F.RAND}; }}
