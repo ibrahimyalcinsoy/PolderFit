@@ -486,14 +486,21 @@ def leerer_stapel(
     alpha_plausibel: float | None = None,
     n_moden: int = 1,
     nachfit_bestaetigen: bool = True,
+    breite_faktor: float = 8.0,
 ) -> StapelErgebnis:
-    """Stapel OHNE Fits: je Frequenz ein Platzhalter und das volle Feldfenster.
+    """Stapel OHNE Fits: je Frequenz ein Platzhalter und das AutoWindow-Fenster.
 
     Damit funktionieren alle Nachfit-Werkzeuge (Grenzgeraden, Bereichs-Fit,
     Grenzen ziehen) auch direkt nach dem Laden - ohne vorherigen Auto-Fit.
     Nur die vom Nutzer bearbeiteten Frequenzen erhalten ein Ergebnis; der
     Rest bleibt als "nicht gefittet" unsichtbar und ausserhalb aller
     Auswertungen.
+
+    Das Fenster je Frequenz ist dasselbe wie in Phase 1 des Auto-Fits
+    (:func:`polderfit.fit.autowindows.auto_fenster_alle`, entlang der Mode),
+    NICHT der ganze Feldsweep: ein Nachfit ueber den vollen Sweep ueberschaetzt
+    die Linienbreite systematisch (bis +34 % gemessen, R^2 unauffaellig).
+    Schlaegt die Fenstersuche fehl, bleibt der volle Sweep als Rueckfall.
     """
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle,
@@ -501,14 +508,38 @@ def leerer_stapel(
         alpha_plausibel=alpha_plausibel, n_moden=max(1, int(n_moden)),
         nachfit_bestaetigen=nachfit_bestaetigen,
     )
-    for ls in datensatz.linescans:
-        if ls.feld.size:
+    try:
+        fenster = auto_fenster_alle(datensatz, gamma, breite_faktor)
+    except Exception:  # Fenstersuche darf das Laden nie verhindern
+        fenster = None
+    for k, ls in enumerate(datensatz.linescans):
+        if fenster is not None and k < len(fenster) and np.all(np.isfinite(fenster[k])):
+            stapel.fenster.append((float(fenster[k][0]), float(fenster[k][1])))
+        elif ls.feld.size:
             stapel.fenster.append((float(ls.feld.min()), float(ls.feld.max())))
         else:
             stapel.fenster.append((0.0, 0.0))
         stapel.zugeschnitten.append(ls)
         stapel.ergebnisse.append(FitErgebnis.platzhalter(ls.frequenz, ls.feld))
     return stapel
+
+
+def fenster_anteil(stapel: StapelErgebnis, index: int) -> float:
+    """Anteil des Fitfensters am Feldsweep (0..1) - Warnschwelle siehe
+    :data:`FENSTER_ANTEIL_WARNUNG`."""
+    ls = stapel.datensatz.linescans[index]
+    B = np.asarray(ls.feld, dtype=float)
+    if B.size < 2 or not np.isfinite(B).any():
+        return 0.0
+    spanne = float(np.nanmax(B) - np.nanmin(B))
+    if spanne <= 0:
+        return 0.0
+    unten, oben = stapel.fenster[index]
+    return max(0.0, min(1.0, (float(oben) - float(unten)) / spanne))
+
+
+#: Ab diesem Fensteranteil am Sweep wird vor ueberschaetzter Linienbreite gewarnt.
+FENSTER_ANTEIL_WARNUNG = 0.6
 
 
 def fitte_neu(

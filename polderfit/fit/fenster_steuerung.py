@@ -309,7 +309,8 @@ def _fitte_mit_intervallen(
 
 
 def _fitte_neu_mit_nachfenster(stapel: StapelErgebnis, i: int,
-                               unten: float, oben: float, n_moden: int | None = None):
+                               unten: float, oben: float, n_moden: int | None = None,
+                               bestaetigen: bool | None = False):
     """``fitte_neu`` mit anschliessendem zweiten Durchgang auf
     ``B_res +/- stapel.nachfenster_faktor * dH`` (wie im Auto-Fit, siehe
     :func:`polderfit.fit.batch.fitte_mit_nachfenster`). Faellt der Nachfit
@@ -319,17 +320,17 @@ def _fitte_neu_mit_nachfenster(stapel: StapelErgebnis, i: int,
     # keine Einzelfreigabe durch den Nutzer: die Kriterien entscheiden (Bewertung
     # "auto"). Bestaetigt wird nur ein gezielter Eingriff an EINER Frequenz
     # (Grenzen ziehen, Nochmal fitten) oder die explizite Bewertung.
-    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=False,
+    ergebnis = fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=bestaetigen,
                          n_moden=n_moden)
     eng = nachfenster(stapel.datensatz.linescans[i], ergebnis, (unten, oben),
                       stapel.nachfenster_faktor)
     if eng is None:
         return ergebnis
-    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1], bestaetigen=False,
+    zweites = fitte_neu(stapel, i, feld_unten=eng[0], feld_oben=eng[1], bestaetigen=bestaetigen,
                         n_moden=n_moden)
     if zweites.erfolg and not zweites.problematisch:
         return zweites
-    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=False,
+    return fitte_neu(stapel, i, feld_unten=unten, feld_oben=oben, bestaetigen=bestaetigen,
                      n_moden=n_moden)
 
 

@@ -59,13 +59,15 @@ from ..io import (
     pruefe_datensatz,
     schreibe_ergebnis_tdms,
 )
-from ..fit.batch import Ausschlusszone, StapelErgebnis, fitte_alle, fitte_neu, leerer_stapel
+from ..fit.batch import (Ausschlusszone, StapelErgebnis, fitte_alle, fitte_neu, leerer_stapel,
+                         fenster_anteil, FENSTER_ANTEIL_WARNUNG)
 from ..fit.fenster_steuerung import (
     Grenzgerade,
     entferne_ausschlusszone,
     fitte_bereich,
     band_geraden, fitte_geraden_bereich, zaehle_abgedeckt,
     fuege_ausschlusszone_hinzu,
+    _fitte_neu_mit_nachfenster,
 )
 from ..fit.linescan_fit import BEWERTUNG_TEXTE, hauptmode_wechseln
 from ..fit.parameter import PhysikParameter
@@ -1840,7 +1842,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         return leerer_stapel(datensatz, gamma=p.gamma, r2_schwelle=p.r2_schwelle,
                              alpha_max=p.alpha_max, nachfenster_faktor=p.nachfenster_faktor,
                              alpha_plausibel=p.alpha_plausibel_wirksam, n_moden=p.n_moden,
-                             nachfit_bestaetigen=p.nachfit_bestaetigen)
+                             nachfit_bestaetigen=p.nachfit_bestaetigen,
+                             breite_faktor=p.breite_faktor)
 
     def _mapping_vorhanden(self) -> bool:
         """Kein Fit auf ungemappten Daten: Zuordnung muss in den Metadaten stehen."""
@@ -2324,8 +2327,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         i = self.aktueller_index
         fits_vorher = self._fit_zustand([i])
-        erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben,
-                        n_moden=int(self.spin_moden.value()))
+        erg = _fitte_neu_mit_nachfenster(self.stapel, i, unten, oben,
+                                         n_moden=int(self.spin_moden.value()),
+                                         bestaetigen=None)
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
             f"Grenzen gezogen (f={erg.frequenz/1e9:.2f} GHz)",
@@ -2340,6 +2344,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
                   f"{'⚠ ' + erg.problem_text if erg.problematisch else '✓ ' + erg.problem_text}"
                   f" · B_res={erg.B_res:.4f} T, µ₀ΔH={erg.dH_mT:.2f} mT, R²={erg.R2:.4f}",
                   "warn" if erg.problematisch else "ok")
+        self._warne_fenster_zu_breit(i)
+
+    def _warne_fenster_zu_breit(self, i: int) -> None:
+        """Ein Fenster ueber (fast) den ganzen Sweep ueberschaetzt µ₀ΔH systematisch."""
+        if not self.stapel:
+            return
+        anteil = fenster_anteil(self.stapel, i)
+        if anteil >= FENSTER_ANTEIL_WARNUNG:
+            text = (f"Fenster umfasst {anteil:.0%} des Feldsweeps – Linienbreite wird "
+                    f"überschätzt. Grenzen enger an die Resonanz ziehen.")
+            self.statusBar().showMessage(text, 8000)
+            self._log(text, "warn")
 
     def _neu_fitten(self):
         if not self.stapel or not self.stapel.ergebnisse:
@@ -2347,8 +2363,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         i = self.aktueller_index
         unten, oben = self.stapel.fenster[i]
         fits_vorher = self._fit_zustand([i])
-        erg = fitte_neu(self.stapel, i, feld_unten=unten, feld_oben=oben,
-                        n_moden=int(self.spin_moden.value()))
+        erg = _fitte_neu_mit_nachfenster(self.stapel, i, unten, oben,
+                                         n_moden=int(self.spin_moden.value()),
+                                         bestaetigen=None)
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
             f"Nochmal gefittet (f={erg.frequenz/1e9:.2f} GHz)",
@@ -2358,6 +2375,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
+        self._warne_fenster_zu_breit(i)
 
     # --- Kittel/LLG ------------------------------------------------------------------
     def _auswertungsfenster_holen(self) -> AuswertungsFenster:
