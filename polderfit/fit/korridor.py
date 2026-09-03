@@ -60,6 +60,10 @@ class Korridor:
     #: einzeln (Nachbar-Dip abgezogen); ``"summe"`` = Summenfit aller Dips auf
     #: den Korridorpunkten, jedes ``B_res_k`` hart auf sein Segment beschraenkt.
     methode: str = "summe"
+    #: Optional: Zahl der Dips je Frequenz automatisch (1 … n_dips) per BIC
+    #: waehlen - Kandidaten mit 1..k Linien werden gefittet, das sparsamste
+    #: Modell, das die Daten erklaert, gewinnt (nur Summenfit).
+    dips_auto: bool = False
     #: Manuelle Trennlinien zwischen den Dips: ``[{"f": Hz, "b": [T, …]}]`` -
     #: je Stuetzfrequenz ``n_dips - 1`` Feldwerte, dazwischen linear ueber der
     #: Frequenz interpoliert (harte Segmentgrenzen fuer alle Fits). Fehlen sie,
@@ -256,7 +260,7 @@ class Korridor:
     def als_dict(self) -> dict:
         return {"mode": int(self.mode), "anker": [a.als_dict() for a in self.anker],
                 "n_dips": int(self.n_dips), "moden": [int(m) for m in self.moden],
-                "methode": self.methode,
+                "methode": self.methode, "dips_auto": bool(self.dips_auto),
                 "trenner": [{"f": float(t["f"]), "b": [float(x) for x in t["b"]]}
                             for t in self.trenner]}
 
@@ -268,6 +272,7 @@ class Korridor:
                    n_dips=int(daten.get("n_dips", 1)),
                    moden=[int(m) for m in daten.get("moden", [])],
                    methode=str(daten.get("methode", "summe")),
+                   dips_auto=bool(daten.get("dips_auto", False)),
                    trenner=[{"f": float(t["f"]), "b": [float(x) for x in t.get("b", [])]}
                             for t in daten.get("trenner", [])])
 
@@ -275,6 +280,7 @@ class Korridor:
         return Korridor(mode=self.mode,
                         anker=[Anker(a.f, a.b_links, a.b_rechts) for a in self.anker],
                         n_dips=self.n_dips, moden=list(self.moden), methode=self.methode,
+                        dips_auto=self.dips_auto,
                         trenner=[{"f": t["f"], "b": list(t["b"])} for t in self.trenner])
 
 

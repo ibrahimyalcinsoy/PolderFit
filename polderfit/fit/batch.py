@@ -574,6 +574,8 @@ def fitte_mode(
         return None
     if korridor.n_dips <= 1 or len(korridor.moden) <= 1:
         return _fitte_mode_im_fenster(stapel, index, korridor.mode, grenzen, bestaetigen)
+    if korridor.dips_auto and korridor.trennstellen(ls.frequenz) is None:
+        return _fitte_mode_bic(stapel, index, korridor, grenzen, bestaetigen)
     ausschnitt = schneide_band(ls, grenzen[0], grenzen[1])
     if stapel.ausschlusszonen:
         ausschnitt = ohne_ausschlusszonen(ausschnitt, stapel.ausschlusszonen)
@@ -690,7 +692,7 @@ def fitte_mode(
 
 
 def dip_positionen_iterativ(linescan: Linescan, n: int, gamma: float,
-                            alpha_max: float = ALPHA_MAX) -> list[float]:
+                            alpha_max: float = ALPHA_MAX, sortiert: bool = True) -> list[float]:
     """Resonanzfelder von bis zu ``n`` Dips im (bereits beschnittenen) Linescan
     durch sequentielles Abschaelen: Einzelfit einer Polder-Linie auf den
     aktuellen Daten, Resonanzanteil abziehen, naechsten Fit auf dem Rest.
@@ -716,7 +718,84 @@ def dip_positionen_iterativ(linescan: Linescan, n: int, gamma: float,
         gefunden.append(float(e.B_res))
         rest -= s21_modell(B, e.B_res, e.alpha, e.A, e.phi, 0.0, 0.0, 0.0, 0.0,
                            omega, gamma, float(np.mean(B)))
-    return sorted(gefunden)
+    return sorted(gefunden) if sortiert else gefunden
+
+
+def _modell_im_korridor(ergebnisse: list, B: np.ndarray, omega: float, gamma: float) -> np.ndarray:
+    """Gesamtmodell (alle Linien + gemeinsamer Untergrund des ersten Ergebnisses)
+    auf dem Feldgitter ``B`` - zur Bewertung von Kandidaten auf denselben Punkten."""
+    e0 = ergebnisse[0]
+    B_ref = float(np.mean(e0.feld)) if e0.feld is not None else float(np.mean(B))
+    modell = s21_modell(B, e0.B_res, e0.alpha, e0.A, e0.phi, e0.off_re, e0.off_im,
+                        e0.slope_re, e0.slope_im, omega, gamma, B_ref)
+    for e in ergebnisse[1:]:
+        modell = modell + s21_modell(B, e.B_res, e.alpha, e.A, e.phi, 0.0, 0.0, 0.0, 0.0,
+                                     omega, gamma, B_ref)
+    return modell
+
+
+def _fitte_mode_bic(stapel: StapelErgebnis, index: int, korridor: Korridor,
+                    grenzen: tuple[float, float], bestaetigen: bool | None) -> FitErgebnis | None:
+    """Optionaler Zusatz zu :func:`fitte_mode`: Zahl der Dips je Frequenz per
+    BIC waehlen. Kandidaten k = 1 … n (Dips in Reihenfolge ihrer Staerke aus dem
+    Abschaelen) werden mit der unveraenderten Summenfit-Kette gerechnet
+    (``fitte_mode`` auf einer Korridor-Kopie mit festen Trennlinien); Bewertung
+    auf denselben Korridorpunkten mit BIC = N ln(chi^2/N) + p ln N, p = 4k + 4.
+    Das Modell mit kleinstem BIC wird uebernommen; nicht benoetigte Moden bleiben
+    an dieser Frequenz Platzhalter."""
+    ls = stapel.datensatz.linescans[index]
+    ausschnitt = schneide_band(ls, grenzen[0], grenzen[1])
+    if stapel.ausschlusszonen:
+        ausschnitt = ohne_ausschlusszonen(ausschnitt, stapel.ausschlusszonen)
+    B = np.asarray(ausschnitt.feld, dtype=float)
+    s21 = np.asarray(ausschnitt.s21)
+    if B.size < 4:
+        return None
+    omega = 2.0 * np.pi * ls.frequenz
+    positionen = dip_positionen_iterativ(ausschnitt, len(korridor.moden), stapel.gamma,
+                                         stapel.alpha_max, sortiert=False)
+    K = max(1, min(len(korridor.moden), len(positionen)))
+    N = 2 * B.size
+    kandidaten = []
+    for k in range(1, K + 1):
+        tmp = korridor.kopie()
+        tmp.dips_auto = False
+        tmp.methode = "summe"
+        tmp.n_dips = k
+        tmp.moden = list(korridor.moden[:k])
+        tmp.trenner = []
+        if k >= 2:
+            lagen = sorted(positionen[:k])
+            tmp.trenner_setzen(ls.frequenz, [0.5 * (a + b) for a, b in zip(lagen[:-1], lagen[1:])])
+        erg = fitte_mode(stapel, index, tmp, bestaetigen=bestaetigen)
+        if erg is None:
+            continue
+        ergebnisse = [stapel.ergebnisse_mode(m)[index] for m in tmp.moden]
+        if not all(e.gefittet and e.erfolg and np.isfinite(e.B_res) for e in ergebnisse):
+            continue
+        modell = _modell_im_korridor(ergebnisse, B, omega, stapel.gamma)
+        chi2 = float(np.sum(np.abs(modell - s21) ** 2))
+        p_par = 4 * k + 4
+        bic = N * np.log(max(chi2, 1e-300) / N) + p_par * np.log(N)
+        kandidaten.append((bic, k, [replace(e) for e in ergebnisse]))
+    if not kandidaten:
+        return None
+    bic_best, k_best, ergebnisse = min(kandidaten, key=lambda t: t[0])
+    # Gewinner in die Listen schreiben, uebrige Moden als Platzhalter.
+    for j, mode in enumerate(korridor.moden):
+        liste = stapel.ergebnisse_mode(mode)
+        if j < k_best:
+            e = ergebnisse[j]
+            e.meldung = (e.meldung + f" · BIC: {k_best} von {korridor.n_dips} Dips").strip(" ·")
+            liste[index] = e
+            if mode == 1:
+                stapel.fenster[index] = (float(e.B_fenster_min), float(e.B_fenster_max))
+                stapel.zugeschnitten[index] = ausschnitt
+        else:
+            ph = FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=mode)
+            ph.meldung = f"BIC: nur {k_best} Dip(s) nötig"
+            liste[index] = ph
+    return ergebnisse[0]
 
 
 def _fitte_mode_im_fenster(stapel: StapelErgebnis, index: int, mode: int,

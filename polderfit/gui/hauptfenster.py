@@ -1316,7 +1316,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._merke_korridor_aenderung(f"Korridor M{mode}: ±{halbbreite*1e3:.0f} mT", vorher)
         self._zeige_aktuellen()
 
-    def _dips_geaendert(self, mode: int, n: int, methode: str = "summe"):
+    def _dips_geaendert(self, mode: int, n: int, methode: str = "summe", auto: bool = False):
         """Vorgabe "n Resonanzen im Korridor": weitere Dips bekommen eigene, freie
         Mode-Nummern; beim Verringern werden deren Ergebnisse verworfen."""
         korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
@@ -1324,11 +1324,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         n = max(1, int(n))
         if n == korridor.n_dips and len(korridor.moden) == n:
-            if methode != korridor.methode:
+            if methode != korridor.methode or bool(auto) != bool(korridor.dips_auto):
                 korridor.methode = methode
+                korridor.dips_auto = bool(auto)
                 self._zeige_korridore()
-                self._log(f"Korridor M{mode}: Verfahren „{methode}“ – gilt ab dem nächsten "
-                          "Korridor-Fit.", "info")
+                self._log(f"Korridor M{mode}: Verfahren „{methode}“"
+                          + (", Anzahl automatisch (BIC)" if auto else "")
+                          + " – gilt ab dem nächsten Korridor-Fit.", "info")
             return
         vorher = self._korridor_schatten
         fits_vorher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
@@ -1340,6 +1342,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.zonenpanel.setze_korridore(self._korridore)   # mode_neu sieht die neue Nummer
         korridor.n_dips = n
         korridor.methode = methode
+        korridor.dips_auto = bool(auto)
         if self.stapel is not None:
             for m in entfernt:
                 self.stapel.mode_entfernen(m)

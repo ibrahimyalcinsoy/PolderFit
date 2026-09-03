@@ -151,3 +151,33 @@ def test_drei_dips_im_korridor_iterativ(methode):
         for m, bw in zip((1, 2, 3), wahr):
             e = st.ergebnisse_mode(m)[0]
             assert e.gefittet and abs(e.B_res - bw) < 1.5e-3, (methode, f, m, e.B_res, bw)
+
+
+def test_bic_waehlt_dipzahl_automatisch():
+    """Option dips_auto: bei zwei echten Dips und Vorgabe max. 3 bleibt Mode 3
+    Platzhalter; bei drei Dips werden alle drei gefittet."""
+    from polderfit.fit.batch import leerer_stapel, fitte_mode
+    from polderfit.io.datensatz import Linescan, Messdatensatz
+    from polderfit.physik.fitmodell import s21_modell
+    from polderfit.physik.konstanten import GAMMA_STANDARD as g
+    B = np.linspace(1.0, 3.65, 2400)
+    rng = np.random.default_rng(5)
+    f = 20e9
+    w = 2 * np.pi * f
+    b1 = 1.37 + w / g
+    for lagen in ([b1, b1 + 0.03], [b1, b1 + 0.025, b1 + 0.055]):
+        rein = sum(s21_modell(B, bk, 4e-3, A, 0.4, 0, 0, 0, 0, w, g, float(B.mean()))
+                   for bk, A in zip(lagen, (0.02, 0.012, 0.015)))
+        rausch = np.abs(rein).max() / 20.0
+        s = rein + 0.2 + 0.1j + rausch * (rng.normal(size=B.size) + 1j * rng.normal(size=B.size))
+        d = Messdatensatz(quelle="x", format_typ="unsortiert",
+                          linescans=[Linescan(frequenz=f, feld=B, re=s.real, im=s.imag)])
+        st = leerer_stapel(d)
+        k = Korridor(mode=1, n_dips=3, moden=[1, 2, 3], methode="summe", dips_auto=True,
+                     anker=[Anker(f, b1 - 0.03, b1 + 0.085)])
+        fitte_mode(st, 0, k)
+        gefittet = [m for m in (1, 2, 3) if st.ergebnisse_mode(m)[0].gefittet]
+        assert gefittet == list(range(1, len(lagen) + 1)), (len(lagen), gefittet)
+        for m, bw in zip(gefittet, lagen):
+            assert abs(st.ergebnisse_mode(m)[0].B_res - bw) < 1.5e-3
+        assert "BIC" in st.ergebnisse[0].meldung

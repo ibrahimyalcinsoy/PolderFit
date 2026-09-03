@@ -33,8 +33,8 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``korridor_entfernen(mode)``
     * ``anker_entfernen(mode, index)``
     * ``korridor_fit(mode | None)`` – Korridor fitten (``None`` = alle)
-    * ``dips_geaendert(mode, n, methode)`` – Zahl der Resonanzen (Dips) im
-      Korridor und Verfahren (``"trennung"``/``"summe"``)
+    * ``dips_geaendert(mode, n, methode, auto)`` – Zahl der Resonanzen (Dips) im
+      Korridor, Verfahren (``"summe"``/``"trennung"``), Anzahl automatisch (BIC)
     * ``trenner_umschalten(an)`` – Trennlinie im Linescan-Panel setzen (Klick)
     * ``trenner_loeschen()`` – Trennlinien an der angezeigten Frequenz loeschen
     * ``breite_geaendert(mode, halbbreite_T)`` – Breite des gewaehlten Korridors
@@ -127,6 +127,15 @@ class ZonenPanel(QtWidgets.QWidget):
         self.methode_combo.currentIndexChanged.connect(self._dips_gewaehlt)
         self.methode_combo.setVisible(False)
         k_lay.addWidget(self.methode_combo)
+        self.chk_dips_auto = QtWidgets.QCheckBox("Anzahl automatisch (BIC, max. n)")
+        self.chk_dips_auto.setToolTip(
+            "Zusatz zum Auto-/Korridor-Fit: je Frequenz werden 1 … n Linien gefittet und\n"
+            "das sparsamste Modell gewählt, das die Daten erklärt (BIC). Wo weniger Dips\n"
+            "sind, entfällt die überzählige Linie. Nur Summenfit; manuelle Trennlinien\n"
+            "haben Vorrang. Rechenzeit etwa 2–3-fach.")
+        self.chk_dips_auto.toggled.connect(self._dips_gewaehlt)
+        self.chk_dips_auto.setVisible(False)
+        k_lay.addWidget(self.chk_dips_auto)
         zeile_t = QtWidgets.QHBoxLayout()
         self.btn_trenner = QtWidgets.QPushButton("Trennlinie setzen")
         self.btn_trenner.setCheckable(True)
@@ -344,6 +353,10 @@ class ZonenPanel(QtWidgets.QWidget):
         self.methode_combo.blockSignals(False)
         mehrere = k is not None and k.n_dips > 1
         self.methode_combo.setVisible(mehrere)
+        self.chk_dips_auto.blockSignals(True)
+        self.chk_dips_auto.setChecked(bool(k.dips_auto) if k is not None else False)
+        self.chk_dips_auto.blockSignals(False)
+        self.chk_dips_auto.setVisible(mehrere)
         self.trenner_box.setEnabled(mehrere)
         self.btn_trenner.setToolTip(self._trenner_tip if mehrere else
                                     "Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen.")
@@ -397,8 +410,10 @@ class ZonenPanel(QtWidgets.QWidget):
         k = self.korridor_aktiv()
         if k is not None and self._cb_dips_geaendert is not None:
             self._cb_dips_geaendert(int(k.mode), int(self.dips_spin.value()),
-                                    str(self.methode_combo.currentData() or "summe"))
+                                    str(self.methode_combo.currentData() or "summe"),
+                                    bool(self.chk_dips_auto.isChecked()))
         self.methode_combo.setVisible(k is not None and int(self.dips_spin.value()) > 1)
+        self.chk_dips_auto.setVisible(k is not None and int(self.dips_spin.value()) > 1)
         self.trenner_box.setEnabled(k is not None and int(self.dips_spin.value()) > 1)
 
     def _entfernen_geklickt(self) -> None:
