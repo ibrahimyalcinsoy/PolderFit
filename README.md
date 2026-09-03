@@ -4,6 +4,20 @@ Auswertung breitbandiger FMR-Messungen: TDMS-Messdaten → je Frequenz `B_res`, 
 
 Dokumentation: <https://ibrahimyalcinsoy.github.io/PolderFit/> · Windows Schritt für Schritt (ohne Vorkenntnisse): [INSTALLATION_WINDOWS.md](INSTALLATION_WINDOWS.md)
 
+## Häufig gebraucht: neueste Version holen und starten
+
+Du bist in der Eingabeaufforderung **bereits im Ordner `PolderFit`** (sonst zuerst z. B. `cd %USERPROFILE%\PolderFit`). Dann diese Zeilen kopieren (Strg+C) und einfügen (Strg+V):
+
+```bat
+git fetch origin && git reset --hard origin/main && .venv\Scripts\activate && pip install -q -e ".[gui]" && polderfit
+```
+
+Nur starten (ohne Update):
+
+```bat
+.venv\Scripts\activate && polderfit
+```
+
 ## Installation unter Windows
 
 Voraussetzungen: [Python ≥ 3.11](https://www.python.org/downloads/windows/) (bei der Installation **„Add python.exe to PATH“** anhaken) und [Git](https://git-scm.com/download/win). Alle Befehle in der **Eingabeaufforderung** (Startmenü → `cmd` → Enter).
