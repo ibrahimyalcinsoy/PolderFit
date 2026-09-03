@@ -11,7 +11,7 @@ Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, `
 | Ausschlusszone | Panel, Rechteck | Punkte aus allen (Nach-)Fits; schraffiert; einzeln entfernbar |
 | Bewertung | `Strg+1/2/3`, `Strg+I`, Panel-Knöpfe | gut bestätigen / problematisch / automatisch / ignorieren ([Bewertung](bewertung.md)) |
 
-Auch Nachfits (Grenzen ziehen, „Neu fitten“) bewerten die **Kriterien**; „gut, bestätigt“ wird explizit über die Bewertung gesetzt (automatisches Bestätigen: Strg+P). Im Linescan-Panel zeigt „M1/M2 …“ die gewählte Mode; Grenzen ziehen setzt bei dieser Frequenz einen Anker des Korridors.
+Ein gezielter Nachfit an **einer** Frequenz (Grenzen ziehen, „Neu fitten“, Trennlinie) gilt als **vom Nutzer bestätigt** (grün mit blauem Rand; abschaltbar mit Strg+P); Korridor- und Bereichs-Fits über viele Frequenzen bewerten die Kriterien. Im Linescan-Panel zeigt „M1/M2 …“ die gewählte Mode; Grenzen ziehen setzt bei dieser Frequenz einen Anker des Korridors.
 
 Während eines Fits: Wartecursor, Statusleiste mit Phase (Fenstersuche → Einzelfits), Stand, verstrichener und geschätzter Restzeit, Banner im Farbplot, Live-Einzeichnen der fertigen Punkte; `Abbrechen` beendet nach dem laufenden Fit, der Rest bleibt „nicht gefittet“ (`fitte_alle(abbruch=…)`).
 

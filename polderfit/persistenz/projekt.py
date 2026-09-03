@@ -139,7 +139,7 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
         alpha_plausibel=(float(alpha_plausibel) if alpha_plausibel else None),
         nachfenster_faktor=float(daten.get("nachfenster_faktor",
                                            NACHFENSTER_FAKTOR_STANDARD)),
-        nachfit_bestaetigen=bool(daten.get("nachfit_bestaetigen", False)),
+        nachfit_bestaetigen=bool(daten.get("nachfit_bestaetigen", True)),
         fenster=fenster,
         ausschlusszonen=[Ausschlusszone.aus_dict(z)
                          for z in daten.get("ausschlusszonen", [])],

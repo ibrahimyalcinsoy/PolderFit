@@ -3386,8 +3386,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
               <span style="color:{F.TEXT_GRUEN}"><b>grün ●</b> gut</span> (blauer Rand = vom Nutzer
               bestätigt), <span style="color:{F.TEXT_GELB}"><b>gelb ▲</b> problematisch</span>
               (prüfen), <span style="color:{F.TEXT_ROT}"><b>rot ✕</b> Fit fehlgeschlagen</span>,
-              <span style="color:{F.TEXT_GRAU}"><b>grau ●</b> ignoriert</span>. Auch Nachfits
-              bewerten die Kriterien (automatisches Bestätigen: Strg+P). Kriterien kompakt als
+              <span style="color:{F.TEXT_GRAU}"><b>grau ●</b> ignoriert</span>. Ein gezielter
+              Nachfit an einer Frequenz (Grenzen ziehen, „Neu fitten“, Trennlinie) gilt als
+              bestätigt (abschaltbar: Strg+P); Korridor-/Bereichs-Fits bewerten die Kriterien. Kriterien kompakt als
               Kürzel im Linescan-Panel (Tooltip zeigt Details). Umbewerten: Auswahlliste im Linescan-Panel oder Strg+1 gut, Strg+2
               problematisch, Strg+3 automatisch, Strg+I ignorieren; Punkt im Farbplot
               überfahren zeigt f, B_res, µ₀ΔH in mT, α, R² und Status.</li>
