@@ -181,3 +181,20 @@ Positiv: Korridor-Fit ist schnell und nahezu eindeutig, auch bei schwierigen Dat
 | F-5 | Vorgabe an den Auto-Fit: „hier sind zwei (drei) Resonanzen“ als harte Randbedingung; nur danach suchen; dritte weiter entfernt ebenfalls per Hard Crop | Auto-Fit bei vorhandenen Korridoren: alle Korridore nacheinander fitten (M1..Mn), keine freie Suche außerhalb; Korridor-Anlage einfach halten (Tutor: eine globale Grenze je Mode, innerhalb jede gewünschte Mode fitten) |
 | F-6 | Jumper aktiv: Pfeiltasten im Farbplot springen auch auf nicht gefittete Frequenzen (Linescan-Panel zeigt ungefittete Punkte) | Option „ungefittete überspringen“ (Standard an, wenn Jumper > 1) |
 | F-7 (Beobachtung) | Auto-Fit ohne Korridor an der vermiedenen Kreuzung (28,5–31,5 GHz): AutoWindow springt zwischen den Ästen, Fenster 247 Punkte, viele Problemfits | Hinweis/Empfehlung im Protokoll: bei mehreren Moden Korridore anlegen; Fensterbreite gegenüber Sweep deckeln |
+
+## 7. Stand nach der zweiten Sitzung (2026-09-03, alles auf main)
+
+Erledigt: §6 F-1 … F-7 (F-4/F-5 durch Korridore = harte Grenzen in jedem Fit, Auto-Fit fittet
+alle Korridore); §5 offene Punkte 1–6 (P1-4/5/6/11, P2-1/2/3/5/6/7/8/13, Bezeichnungen,
+Hilfe), 7 neue GUI-Tests `tests/test_korridor_gui.py` (Suite 181 grün), Doku (README,
+docs/) auf Korridor-Konzept, Regressionsbericht `benchmark_ftf/REGRESSION_2026-09-03.md`
+(HEAD vs. 7c893e8 bitgleich, Einzelfits Δ = 0, Kittel/LLG z = 0).
+
+Offen:
+* Prüfung der Korridor-GUI am Bildschirm durch den Nutzer (Drag-Handhabung, Farben, F-1/F-3
+  im echten Betrieb).
+* Privates Handbuch (`handbuch/`, gitignored) noch nicht auf Korridore umgestellt.
+* P2-12 (Handbuch-Abbildungen ΔH-Achse) optional; `tests/veraltet/` kann nach Freigabe
+  gelöscht werden.
+* `physik/fitmodell.py`: Summenmodell (`s21_modell_multi` u. a.) bleibt ungenutzt im Code
+  (keine Änderung an physik/ ohne Rückfrage).
