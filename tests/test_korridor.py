@@ -72,7 +72,8 @@ def test_projekt_rundlauf_mit_nebenmoden(synthetischer_datensatz, tmp_path):
         assert st2.ergebnisse_mode(2)[i].B_res == pytest.approx(st.ergebnisse_mode(2)[i].B_res)
 
 
-def test_zwei_dips_im_korridor_hard_crop():
+@pytest.mark.parametrize("methode", ["trennung", "summe"])
+def test_zwei_dips_im_korridor_hard_crop(methode):
     from polderfit.fit.batch import leerer_stapel, fitte_mode
     from polderfit.io.datensatz import Linescan, Messdatensatz
     from polderfit.physik.fitmodell import s21_modell
@@ -89,7 +90,7 @@ def test_zwei_dips_im_korridor_hard_crop():
     d = Messdatensatz(quelle="synth2", format_typ="unsortiert", linescans=linescans)
     st = leerer_stapel(d)
     f = d.frequenzen
-    k = Korridor(mode=1, n_dips=2, moden=[1, 2],
+    k = Korridor(mode=1, n_dips=2, moden=[1, 2], methode=methode,
                  anker=[Anker(f[0], 1.37 + 2 * np.pi * f[0] / g - 0.03, 1.37 + 2 * np.pi * f[0] / g + 0.07),
                         Anker(f[-1], 1.37 + 2 * np.pi * f[-1] / g - 0.03, 1.37 + 2 * np.pi * f[-1] / g + 0.07)])
     for i in range(len(f)):
@@ -100,5 +101,8 @@ def test_zwei_dips_im_korridor_hard_crop():
         assert e1.gefittet and e2.gefittet
         assert abs(e1.B_res - b1) < 2e-3 and abs(e2.B_res - (b1 + 0.04)) < 2e-3
         assert not e1.problematisch and not e2.problematisch
-        assert e1.feld.max() <= e2.feld.min() + 1e-9      # harte Trennung, keine Ueberlappung
+        if methode == "trennung":
+            assert e1.feld.max() <= e2.feld.min() + 1e-9  # harte Trennung, keine Ueberlappung
+        else:
+            assert e1.B_fenster_max <= e2.B_fenster_min + 1e-9  # B_res-Schranken je Segment
     assert st.moden_vorhanden() == [1, 2]

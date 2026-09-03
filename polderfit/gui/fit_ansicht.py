@@ -114,6 +114,12 @@ class FitAnsicht(FigureCanvasQTAgg):
             farbe_res = F.STATUS_FARBEN.get(status, (F.SIGNAL_GRUEN, ""))[0]
             if farbe_res == "none":
                 farbe_res = F.SIGNAL_GRUEN
+            # Summenfit: Einzelbeitraege der Dips gestrichelt in Mode-Farbe.
+            for mode_k, kurve_k in (getattr(ergebnis, "beitraege", None) or []):
+                farbe_k = F.mode_farbe(int(mode_k)) if int(mode_k) > 1 else "#6B6F76"
+                self.ax_re.plot(ergebnis.feld, kurve_k.real, "--", color=farbe_k, lw=0.9,
+                                label=f"M{int(mode_k)}")
+                self.ax_im.plot(ergebnis.feld, kurve_k.imag, "--", color=farbe_k, lw=0.9)
             self.ax_re.plot(ergebnis.feld, ergebnis.fitkurve.real, "-", color=_FARBE_FIT,
                             lw=1.4, label="Fit Re")
             self.ax_im.plot(ergebnis.feld, ergebnis.fitkurve.imag, "-", color=_FARBE_FIT,

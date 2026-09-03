@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from PySide6 import QtCore, QtWidgets
 
-from .widgets import RuhigeSpinBox
+from ..fit.korridor import METHODEN_TEXTE
+from .widgets import RuhigeComboBox, RuhigeSpinBox
 
 
 class ZonenPanel(QtWidgets.QWidget):
@@ -32,7 +33,8 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``korridor_entfernen(mode)``
     * ``anker_entfernen(mode, index)``
     * ``korridor_fit(mode | None)`` – Korridor fitten (``None`` = alle)
-    * ``dips_geaendert(mode, n)`` – Zahl der Resonanzen (Dips) im Korridor
+    * ``dips_geaendert(mode, n, methode)`` – Zahl der Resonanzen (Dips) im
+      Korridor und Verfahren (``"trennung"``/``"summe"``)
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
@@ -104,6 +106,17 @@ class ZonenPanel(QtWidgets.QWidget):
         self.dips_spin.valueChanged.connect(self._dips_gewaehlt)
         zeile_d.addWidget(self.dips_spin)
         k_lay.addLayout(zeile_d)
+        self.methode_combo = RuhigeComboBox()
+        for schluessel, text in METHODEN_TEXTE.items():
+            self.methode_combo.addItem(text, schluessel)
+        self.methode_combo.setToolTip(
+            "harte Trennung: Korridor wird je Frequenz zwischen den Dips getrennt, jeder\n"
+            "Dip einzeln gefittet (Nachbar-Dip abgezogen).\n"
+            "Summenfit: alle Dips gemeinsam auf den Korridorpunkten, jedes B_res hart auf\n"
+            "sein Segment beschränkt (gemeinsamer Untergrund).")
+        self.methode_combo.currentIndexChanged.connect(self._dips_gewaehlt)
+        self.methode_combo.setVisible(False)
+        k_lay.addWidget(self.methode_combo)
 
         zeile2 = QtWidgets.QHBoxLayout()
         self.btn_anker = QtWidgets.QPushButton("Anker setzen")
@@ -287,6 +300,11 @@ class ZonenPanel(QtWidgets.QWidget):
         self.dips_spin.setValue(int(k.n_dips) if k is not None else 1)
         self.dips_spin.blockSignals(False)
         self.dips_spin.setEnabled(hat)
+        self.methode_combo.blockSignals(True)
+        idx = self.methode_combo.findData(k.methode if k is not None else "trennung")
+        self.methode_combo.setCurrentIndex(max(0, idx))
+        self.methode_combo.blockSignals(False)
+        self.methode_combo.setVisible(k is not None and k.n_dips > 1)
         self.btn_anker.setEnabled(hat)
         self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
@@ -328,10 +346,12 @@ class ZonenPanel(QtWidgets.QWidget):
         if self._cb_anker_umschalten is not None:
             self._cb_anker_umschalten(bool(an))
 
-    def _dips_gewaehlt(self, n: int) -> None:
+    def _dips_gewaehlt(self, *_args) -> None:
         k = self.korridor_aktiv()
         if k is not None and self._cb_dips_geaendert is not None:
-            self._cb_dips_geaendert(int(k.mode), int(n))
+            self._cb_dips_geaendert(int(k.mode), int(self.dips_spin.value()),
+                                    str(self.methode_combo.currentData() or "trennung"))
+        self.methode_combo.setVisible(k is not None and int(self.dips_spin.value()) > 1)
 
     def _entfernen_geklickt(self) -> None:
         k = self.korridor_aktiv()

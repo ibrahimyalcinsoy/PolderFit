@@ -20,7 +20,7 @@ from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
 from .korridor import Korridor, dip_segmente
 from .kriterien import ALPHA_MAX
-from .linescan_fit import FitErgebnis, fitte_linescan, setze_bewertung
+from .linescan_fit import FitErgebnis, fitte_linescan, fitte_linescan_summe, setze_bewertung
 
 #: Standard des zweiten Fit-Durchgangs: Fitfenster = B_res +/- Faktor * mu0*dH
 #: (Linienbreite aus dem ersten Durchgang). 0 schaltet den Durchgang ab.
@@ -584,29 +584,68 @@ def fitte_mode(
             erg = FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=mode)
             erg.meldung = "Dip im Korridor nicht gefunden"
             stapel.ergebnisse_mode(mode)[index] = erg
-    # Durchgang 2: Ausläufer der Nachbar-Dips (Resonanzanteil des Durchgangs 1)
-    # abziehen und jeden Dip in seinem Segment erneut einzeln fitten - weiter
-    # kein Summenfit, aber die Segmente werden vom Nachbarn befreit.
+    if korridor.methode == "summe" and len(segmente) > 1:
+        # Durchgang 2 (Summenfit): alle Dips gemeinsam auf den Korridorpunkten,
+        # B_res_k hart auf sein Segment beschraenkt, gemeinsamer Untergrund.
+        moden = list(korridor.moden[:len(segmente)])
+        try:
+            summe = fitte_linescan_summe(
+                ausschnitt, stapel.gamma, segmente, [ergebnisse.get(m) for m in moden], moden,
+                alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel)
+        except Exception:
+            summe = None
+        if summe is not None:
+            for mode, erg in zip(moden, summe):
+                erg.nachbearbeitet = True
+                if bestaetigen is None:
+                    bestaetigen_wirksam = bool(stapel.nachfit_bestaetigen)
+                else:
+                    bestaetigen_wirksam = bool(bestaetigen)
+                if bestaetigen_wirksam:
+                    erg = setze_bewertung(erg, "bestaetigt")
+                stapel.ergebnisse_mode(mode)[index] = erg
+                if mode == 1:
+                    stapel.fenster[index] = grenzen
+                    stapel.zugeschnitten[index] = ausschnitt
+                ergebnisse[mode] = erg
+        return ergebnisse.get(korridor.moden[0])
+    # Durchgang 2 (Trennung): Ausläufer der Nachbar-Dips (Resonanzanteil des
+    # Durchgangs 1) abziehen und jeden Dip in seinem Segment erneut einzeln
+    # fitten - kein Summenfit, aber die Segmente werden vom Nachbarn befreit.
+    # Zwei Runden: ein zunaechst schlechter Dip wird nicht abgezogen, sondern
+    # profitiert erst vom guten Nachbarn und verbessert diesen in Runde 2.
     if len(segmente) > 1:
         omega = 2.0 * np.pi * ls.frequenz
-        for j, mode in enumerate(korridor.moden[:len(segmente)]):
-            rest = np.asarray(ls.s21, dtype=complex).copy()
-            for m2, e2 in ergebnisse.items():
-                if m2 == mode or not (e2.gefittet and e2.erfolg and np.isfinite(e2.B_res)):
+        for _runde in range(2):
+            for j, mode in enumerate(korridor.moden[:len(segmente)]):
+                rest = np.asarray(ls.s21, dtype=complex).copy()
+                abgezogen = 0
+                for m2, e2 in ergebnisse.items():
+                    if m2 == mode or not (e2.gefittet and e2.erfolg and not e2.problematisch
+                                          and np.isfinite(e2.B_res)):
+                        continue
+                    rest -= s21_modell(ls.feld, e2.B_res, e2.alpha, e2.A, e2.phi, 0.0, 0.0,
+                                       0.0, 0.0, omega, stapel.gamma, float(np.mean(ls.feld)))
+                    abgezogen += 1
+                if not abgezogen:
                     continue
-                rest -= s21_modell(ls.feld, e2.B_res, e2.alpha, e2.A, e2.phi, 0.0, 0.0, 0.0, 0.0,
-                                   omega, stapel.gamma, float(np.mean(ls.feld)))
-            bereinigt = Linescan(frequenz=ls.frequenz, feld=ls.feld, re=rest.real, im=rest.imag,
-                                 feld_before=getattr(ls, "feld_before", None),
-                                 feld_after=getattr(ls, "feld_after", None),
-                                 temperatur=getattr(ls, "temperatur", None))
-            neu = _fitte_mode_im_fenster(stapel, index, mode, segmente[j], bestaetigen,
-                                         linescan=bereinigt)
-            alt = ergebnisse[mode]
-            if not (neu.erfolg and not neu.problematisch) and (alt.erfolg and not alt.problematisch):
-                stapel.ergebnisse_mode(mode)[index] = alt   # Durchgang 1 war besser
-            else:
-                ergebnisse[mode] = neu
+                bereinigt = Linescan(frequenz=ls.frequenz, feld=ls.feld, re=rest.real,
+                                     im=rest.imag,
+                                     feld_before=getattr(ls, "feld_before", None),
+                                     feld_after=getattr(ls, "feld_after", None),
+                                     temperatur=getattr(ls, "temperatur", None))
+                alt = ergebnisse[mode]
+                neu = _fitte_mode_im_fenster(stapel, index, mode, segmente[j], bestaetigen,
+                                             linescan=bereinigt)
+                alt_gut = alt.erfolg and not alt.problematisch
+                neu_gut = neu.erfolg and not neu.problematisch
+                besser = (neu_gut and not alt_gut) or (
+                    neu_gut == alt_gut and np.isfinite(neu.rmse_norm)
+                    and (not np.isfinite(alt.rmse_norm) or neu.rmse_norm <= alt.rmse_norm))
+                if besser:
+                    ergebnisse[mode] = neu
+                else:
+                    stapel.ergebnisse_mode(mode)[index] = alt
     return ergebnisse.get(korridor.moden[0])
 
 

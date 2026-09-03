@@ -37,6 +37,12 @@ class Anker:
         return {"f": self.f, "b_links": self.b_links, "b_rechts": self.b_rechts}
 
 
+#: Verfahren fuer mehrere Dips in einem Korridor (siehe :attr:`Korridor.methode`).
+METHODEN = ("trennung", "summe")
+METHODEN_TEXTE = {"trennung": "harte Trennung (je Dip einzeln)",
+                  "summe": "Summenfit (B_res je Dip im Segment)"}
+
+
 @dataclass
 class Korridor:
     """Feldband einer Mode entlang der Frequenz (siehe Modulkopf)."""
@@ -50,11 +56,17 @@ class Korridor:
     #: Mode-Nummern dieses Korridors: ``moden[0] == mode`` (Dip 1), danach die
     #: Nummern der weiteren Dips (vom Hauptfenster vergeben).
     moden: list = field(default_factory=list)
+    #: Verfahren bei ``n_dips > 1``: ``"trennung"`` = harte Trennung, jeder Dip
+    #: einzeln (Nachbar-Dip abgezogen); ``"summe"`` = Summenfit aller Dips auf
+    #: den Korridorpunkten, jedes ``B_res_k`` hart auf sein Segment beschraenkt.
+    methode: str = "trennung"
 
     def __post_init__(self) -> None:
         self.mode = max(1, int(self.mode))
         self.anker = [a if isinstance(a, Anker) else Anker(**a) for a in self.anker]
         self.n_dips = max(1, int(self.n_dips))
+        if self.methode not in METHODEN:
+            self.methode = "trennung"
         self.moden = [int(m) for m in self.moden]
         if not self.moden or self.moden[0] != self.mode:
             self.moden = [self.mode] + [m for m in self.moden if m != self.mode]
@@ -172,7 +184,8 @@ class Korridor:
     # --- Serialisierung -------------------------------------------------------
     def als_dict(self) -> dict:
         return {"mode": int(self.mode), "anker": [a.als_dict() for a in self.anker],
-                "n_dips": int(self.n_dips), "moden": [int(m) for m in self.moden]}
+                "n_dips": int(self.n_dips), "moden": [int(m) for m in self.moden],
+                "methode": self.methode}
 
     @classmethod
     def aus_dict(cls, daten: dict) -> "Korridor":
@@ -180,12 +193,13 @@ class Korridor:
                    anker=[Anker(float(a["f"]), float(a["b_links"]), float(a["b_rechts"]))
                           for a in daten.get("anker", [])],
                    n_dips=int(daten.get("n_dips", 1)),
-                   moden=[int(m) for m in daten.get("moden", [])])
+                   moden=[int(m) for m in daten.get("moden", [])],
+                   methode=str(daten.get("methode", "trennung")))
 
     def kopie(self) -> "Korridor":
         return Korridor(mode=self.mode,
                         anker=[Anker(a.f, a.b_links, a.b_rechts) for a in self.anker],
-                        n_dips=self.n_dips, moden=list(self.moden))
+                        n_dips=self.n_dips, moden=list(self.moden), methode=self.methode)
 
 
 def korridor_aus_linie(mode: int, b1: float, f1: float, b2: float, f2: float,
@@ -247,13 +261,16 @@ def korridore_aus_grenzgeraden(geraden: list[dict], feld_min: float,
 def dip_segmente(feld: np.ndarray, s21: np.ndarray, n: int,
                  min_punkte: int = 6) -> list[tuple[float, float]]:
     """Harte Trennung eines Korridor-Ausschnitts in bis zu ``n`` Feldsegmente,
-    eines je Resonanz (Dip): Segmentgrenzen liegen im Minimum des
-    untergrundbereinigten Signalbetrags zwischen benachbarten Dips (die ``n``
-    prominentesten Maxima des Betrags). Liefert ``[(lo, hi), …]`` aufsteigend
-    im Feld; weniger Eintraege, wenn weniger Dips gefunden werden.
+    eines je Resonanz (Dip).
+
+    Dip-Suche auf dem Betrag des Signals nach Abzug einer GERADEN (Grad 1 - ein
+    hoeheres Polynom wuerde in einem engen Korridor die breite Resonanz selbst
+    verschlucken), leicht geglaettet; die ``n`` prominentesten Maxima sind die
+    Dips, die Segmentgrenze liegt im Minimum dazwischen. Liefert ``[(lo, hi),
+    …]`` aufsteigend im Feld; weniger Eintraege, wenn weniger Dips gefunden
+    werden.
     """
     from scipy.signal import find_peaks
-    from .autowindows import _detrend_residuum
 
     B = np.asarray(feld, dtype=float)
     n = max(1, int(n))
@@ -262,22 +279,31 @@ def dip_segmente(feld: np.ndarray, s21: np.ndarray, n: int,
     lo, hi = float(B.min()), float(B.max())
     if n == 1 or B.size < 2 * min_punkte:
         return [(lo, hi)]
-    rein = _detrend_residuum(B, np.asarray(s21))
     reihenfolge = np.argsort(B)
-    Bs, rs = B[reihenfolge], rein[reihenfolge]
+    Bs = B[reihenfolge]
+    sig = np.asarray(s21)[reihenfolge]
+    # Untergrund-Gerade NUR aus den Raendern des Korridors (aeussere 20 % je
+    # Seite): eine Ausgleichsgerade ueber alle Punkte wuerde durch den breiten
+    # Dip laufen und sein Zentrum im Residuum ausloeschen.
+    rand = max(2, Bs.size // 5)
+    idx = np.r_[0:rand, Bs.size - rand:Bs.size]
+    cre = np.polyfit(Bs[idx], sig.real[idx], 1)
+    cim = np.polyfit(Bs[idx], sig.imag[idx], 1)
+    rs = np.abs((sig.real - np.polyval(cre, Bs)) + 1j * (sig.imag - np.polyval(cim, Bs)))
+    kern = min(5, max(1, Bs.size // 20) | 1)
+    if kern > 1:
+        rs = np.convolve(rs, np.ones(kern) / kern, mode="same")
     spitzen, eig = find_peaks(rs, distance=max(2, min_punkte // 2), prominence=0.0)
     if spitzen.size == 0:
         return [(lo, hi)]
     prominenz = eig.get("prominences", np.zeros(spitzen.size))
-    beste = spitzen[np.argsort(prominenz)[::-1][:n]]
-    beste = np.sort(beste)
+    beste = np.sort(spitzen[np.argsort(prominenz)[::-1][:n]])
     segmente = []
     start = 0
     for k in range(len(beste)):
         if k + 1 < len(beste):
             a, b = int(beste[k]), int(beste[k + 1])
-            trenn = a + int(np.argmin(rs[a:b + 1]))
-            ende = trenn
+            ende = a + int(np.argmin(rs[a:b + 1]))
         else:
             ende = Bs.size - 1
         if ende - start + 1 >= min_punkte:

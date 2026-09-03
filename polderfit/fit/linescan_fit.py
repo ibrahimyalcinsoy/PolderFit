@@ -26,7 +26,8 @@ from lmfit import Parameters, minimize
 
 from ..io.datensatz import Linescan
 from ..physik.konstanten import GAMMA_STANDARD
-from ..physik.fitmodell import Startwerte, residuum, s21_modell, schaetze_startwerte
+from ..physik.fitmodell import (Startwerte, moden_aus_params, residuum, residuum_multi,
+                                s21_modell, s21_modell_multi, schaetze_startwerte)
 from .kriterien import (
     ALPHA_MAX,
     ALPHA_MIN,
@@ -92,6 +93,9 @@ class FitErgebnis:
     temperatur: float | None = None
     #: Mode (Korridor-Nummer) dieses Ergebnisses; 1 = Hauptmode.
     mode: int = 1
+    #: Nur Summenfit: Einzelbeitraege ``[(mode, kurve_nur_diese_Linie_plus_Untergrund)]``
+    #: aller Dips des Korridors (Anzeige gestrichelt im Linescan-Panel).
+    beitraege: list = field(default=None, repr=False)
 
     # --- abgeleitete Groessen (Anzeige in mT) ------------------------------
     @property
@@ -424,3 +428,99 @@ def fitte_linescan(
         **masse,
     )
     return _abschliessen(erg, alpha_max, alpha_plausibel)
+
+
+def fitte_linescan_summe(
+    linescan: Linescan,
+    gamma: float,
+    segmente: list,
+    starts: list,
+    moden: list,
+    alpha_max: float = ALPHA_MAX,
+    alpha_plausibel: float | None = None,
+) -> list:
+    """Summenfit von ``n = len(segmente)`` Polder-Linien auf dem (bereits auf den
+    Korridor beschnittenen) Linescan mit HARTEN Schranken: ``B_res_k`` darf nur
+    innerhalb seines Segments ``segmente[k]`` liegen (Hard Crop aus
+    :func:`polderfit.fit.korridor.dip_segmente`), ``alpha_k`` in
+    ``[ALPHA_MIN, alpha_max]``; gemeinsamer linearer Untergrund. Startwerte
+    ``starts[k]`` = :class:`FitErgebnis` der Einzelfits je Segment (oder None).
+
+    Liefert je Mode ein :class:`FitErgebnis` (``mode = moden[k]``) mit den
+    Parametern dieser Linie, der Summenkurve als ``fitkurve`` und den Guetemassen
+    des Gesamtfits; ``B_fenster_min/max`` = Segmentgrenzen. Im Gegensatz zum
+    freien Summenfit ueber den ganzen Sweep ist das Problem durch Korridor und
+    Segment-Schranken gut konditioniert.
+    """
+    if not np.isfinite(alpha_max) or alpha_max <= ALPHA_MIN:
+        alpha_max = ALPHA_MAX
+    n = len(segmente)
+    omega = 2.0 * np.pi * linescan.frequenz
+    B = np.asarray(linescan.feld, dtype=float)
+    s21 = np.asarray(linescan.s21)
+    B_ref = float(np.mean(B))
+    temperatur = linescan.temperatur_mittel()
+
+    params = Parameters()
+    off_re = off_im = slope_re = slope_im = None
+    for k, (lo, hi) in enumerate(segmente, start=1):
+        st = starts[k - 1] if k - 1 < len(starts) else None
+        if st is not None and st.gefittet and np.isfinite(st.B_res):
+            b0, a0, A0, phi0 = float(st.B_res), float(st.alpha), float(st.A), float(st.phi)
+            if off_re is None and np.isfinite(st.off_re):
+                off_re, off_im, slope_re, slope_im = st.off_re, st.off_im, st.slope_re, st.slope_im
+        else:
+            sw = schaetze_startwerte(B[(B >= lo) & (B <= hi)], s21[(B >= lo) & (B <= hi)],
+                                     omega, gamma, None, alpha_max=alpha_max)
+            b0, a0, A0, phi0 = sw.B_res, sw.alpha, sw.A, sw.phi
+        params.add(f"B_res_{k}", value=float(np.clip(b0, lo, hi)), min=lo, max=hi)
+        params.add(f"alpha_{k}", value=float(np.clip(a0, ALPHA_MIN * 1.1, alpha_max * 0.9)),
+                   min=ALPHA_MIN, max=alpha_max)
+        params.add(f"A_{k}", value=float(A0))
+        params.add(f"phi_{k}", value=float(np.clip(phi0, PHI_MIN + 1e-6, PHI_MAX - 1e-6)),
+                   min=PHI_MIN, max=PHI_MAX)
+    if off_re is None:
+        sw = schaetze_startwerte(B, s21, omega, gamma, None, alpha_max=alpha_max)
+        off_re, off_im, slope_re, slope_im = sw.off_re, sw.off_im, sw.slope_re, sw.slope_im
+    params.add("off_re", value=float(off_re))
+    params.add("off_im", value=float(off_im))
+    params.add("slope_re", value=float(slope_re))
+    params.add("slope_im", value=float(slope_im))
+
+    ergebnis = minimize(residuum_multi, params, method="leastsq",
+                        args=(B, s21, omega, gamma, B_ref, n))
+    p = ergebnis.params
+    kurve = s21_modell_multi(B, moden_aus_params(p, n), p["off_re"].value, p["off_im"].value,
+                             p["slope_re"].value, p["slope_im"].value, omega, gamma, B_ref)
+    masse = _guetemasse(B, s21, kurve, p, B_ref, n_param=len(p))
+    kovarianz_ok = bool(getattr(ergebnis, "errorbars", False)) and p["B_res_1"].stderr is not None
+
+    def _err(name):
+        par = p[name]
+        return float(par.stderr) if par.stderr is not None else np.nan
+
+    untergrund = kurve - s21_modell_multi(B, moden_aus_params(p, n), 0.0, 0.0, 0.0, 0.0,
+                                          omega, gamma, B_ref)
+    beitraege = []
+    for k, (b_k, a_k, A_k, phi_k) in enumerate(moden_aus_params(p, n), start=1):
+        einzel = s21_modell_multi(B, [(b_k, a_k, A_k, phi_k)], 0.0, 0.0, 0.0, 0.0,
+                                  omega, gamma, B_ref) + untergrund
+        beitraege.append((int(moden[k - 1]), einzel))
+    resultate = []
+    for k, (lo, hi) in enumerate(segmente, start=1):
+        erg = FitErgebnis(
+            frequenz=linescan.frequenz, erfolg=bool(ergebnis.success),
+            B_res=float(p[f"B_res_{k}"].value), B_res_err=_err(f"B_res_{k}"),
+            alpha=float(p[f"alpha_{k}"].value), alpha_err=_err(f"alpha_{k}"),
+            dH=2.0 * omega * float(p[f"alpha_{k}"].value) / gamma,
+            dH_err=2.0 * omega * _err(f"alpha_{k}") / gamma,
+            A=float(p[f"A_{k}"].value), A_err=_err(f"A_{k}"),
+            phi=float(p[f"phi_{k}"].value), phi_err=_err(f"phi_{k}"),
+            off_re=float(p["off_re"].value), off_im=float(p["off_im"].value),
+            slope_re=float(p["slope_re"].value), slope_im=float(p["slope_im"].value),
+            B_fenster_min=float(lo), B_fenster_max=float(hi), kovarianz_ok=kovarianz_ok,
+            meldung=getattr(ergebnis, "message", ""), feld=B, fitkurve=kurve,
+            temperatur=temperatur, mode=int(moden[k - 1]), beitraege=beitraege, **masse,
+        )
+        resultate.append(_abschliessen(erg, alpha_max, alpha_plausibel))
+    return resultate

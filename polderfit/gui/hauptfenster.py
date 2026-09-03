@@ -1209,7 +1209,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Korridor, zu dem ``mode`` gehoert (Hauptdip oder weiterer Dip)."""
         return next((k for k in self._korridore if k.enthaelt_mode(int(mode))), None)
 
-    def _dips_geaendert(self, mode: int, n: int):
+    def _dips_geaendert(self, mode: int, n: int, methode: str = "trennung"):
         """Vorgabe "n Resonanzen im Korridor": weitere Dips bekommen eigene, freie
         Mode-Nummern; beim Verringern werden deren Ergebnisse verworfen."""
         korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
@@ -1217,6 +1217,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         n = max(1, int(n))
         if n == korridor.n_dips and len(korridor.moden) == n:
+            if methode != korridor.methode:
+                korridor.methode = methode
+                self._zeige_korridore()
+                self._log(f"Korridor M{mode}: Verfahren „{methode}“ – gilt ab dem nächsten "
+                          "Korridor-Fit.", "info")
             return
         vorher = self._korridor_schatten
         fits_vorher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
@@ -1227,6 +1232,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             korridor.moden.append(self.zonenpanel.mode_neu())
             self.zonenpanel.setze_korridore(self._korridore)   # mode_neu sieht die neue Nummer
         korridor.n_dips = n
+        korridor.methode = methode
         if self.stapel is not None:
             for m in entfernt:
                 self.stapel.mode_entfernen(m)
