@@ -53,6 +53,7 @@ STANDARD_ANZEIGE = {
     "vollbereich": False,
     "ausreisser_anzeigen": False,
     "nebenmoden_anzeigen": True,
+    "ungefittete_ueberspringen": True,
 }
 
 STANDARD_EXPORT = {

@@ -32,6 +32,10 @@ class AuswahlDialog(QtWidgets.QDialog):
         self.setModal(True)
         self._datensatz = datensatz
         vorgabe = letzte if letzte is not None else Auswertungsauswahl()
+        # Bereich startet IMMER ohne Begrenzung (ganzer Datensatz); von der letzten
+        # Auswahl bleiben nur Jumper und Frequenz-Ausschluesse.
+        vorgabe = Auswertungsauswahl(n_frequenz=vorgabe.n_frequenz, n_feld=vorgabe.n_feld,
+                                     frequenz_ausschluss=list(vorgabe.frequenz_ausschluss))
 
         frequenzen = datensatz.frequenzen
         b_min, b_max = datensatz.feld_bereich()
@@ -116,9 +120,6 @@ class AuswahlDialog(QtWidgets.QDialog):
         self.bereich_hinweis = QtWidgets.QLabel("")
         self.bereich_hinweis.setWordWrap(True)
         form_b.addRow("", self.bereich_hinweis)
-        if zoom_bereich is not None:
-            self.setze_bereich(*zoom_bereich)
-            self.bereich_hinweis.setText("Bereich = sichtbarer Farbplot-Ausschnitt (Zoom).")
 
         self.ausschluss = QtWidgets.QLineEdit(
             "; ".join(f"{lo/1e9:g}-{hi/1e9:g}" for lo, hi in vorgabe.frequenz_ausschluss))
@@ -170,20 +171,21 @@ class AuswahlDialog(QtWidgets.QDialog):
         f_min_ghz = float(frequenzen.min()) / 1e9 if frequenzen.size else 0.0
         f_max_ghz = float(frequenzen.max()) / 1e9 if frequenzen.size else 1.0
 
-        def _oder_none(wert, standard):
+        def _oder_none(wert, standard, toleranz):
             # Volle Spanne bedeutet "keine Einschraenkung" -> None (robust
-            # gegen erneutes Laden mit anderem Datensatzbereich).
-            return None if abs(wert - standard) < 1e-12 else wert
+            # gegen erneutes Laden mit anderem Datensatzbereich); Toleranz =
+            # halbe Anzeigeaufloesung der Eingabefelder (gerundete Werte).
+            return None if abs(wert - standard) <= toleranz else wert
 
         return Auswertungsauswahl(
             n_frequenz=int(self.n_frequenz.value()),
             n_feld=int(self.n_feld.value()),
             frequenz_min_hz=(lambda v: None if v is None else v * 1e9)(
-                _oder_none(self.f_min.value(), f_min_ghz)),
+                _oder_none(self.f_min.value(), f_min_ghz, 5e-4)),
             frequenz_max_hz=(lambda v: None if v is None else v * 1e9)(
-                _oder_none(self.f_max.value(), f_max_ghz)),
-            feld_min_t=_oder_none(self.b_min.value(), b_min),
-            feld_max_t=_oder_none(self.b_max.value(), b_max),
+                _oder_none(self.f_max.value(), f_max_ghz, 5e-4)),
+            feld_min_t=_oder_none(self.b_min.value(), b_min, 5e-5),
+            feld_max_t=_oder_none(self.b_max.value(), b_max, 5e-5),
             frequenz_ausschluss=parse_bereiche(self.ausschluss.text(), einheit=1e9),
         )
 

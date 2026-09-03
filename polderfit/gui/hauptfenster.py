@@ -569,6 +569,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_nebenmoden.setCheckable(True)
         self.akt_nebenmoden.setChecked(True)
         self.akt_nebenmoden.toggled.connect(self.matrix.setze_nebenmoden_anzeigen)
+        self.akt_ungefittete = A("Ungefittete Frequenzen überspringen", self)
+        self.akt_ungefittete.setCheckable(True)
+        self.akt_ungefittete.setChecked(True)
+        self.akt_ungefittete.setToolTip(
+            "Beim Blättern (Pfeiltasten, Zurück/Weiter) nur gefittete Frequenzen der\n"
+            "angezeigten Mode anspringen – z. B. nach einem Auto-Fit mit Jumper.")
 
         # Farbskala als Auswahlgruppe.
         self.farbskala_gruppe = QtGui.QActionGroup(self)
@@ -693,6 +699,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_ansicht.addAction(self.akt_problemfits)
         m_ansicht.addAction(self.akt_ausreisser_anzeigen)
         m_ansicht.addAction(self.akt_nebenmoden)
+        m_ansicht.addAction(self.akt_ungefittete)
         self.menue_farbskala = m_ansicht.addMenu("Farbskala des Farbplots")
         for akt in self.akt_farbskalen.values():
             self.menue_farbskala.addAction(akt)
@@ -1833,6 +1840,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.navigator_dock.setVisible(False)  # erst beim Zoomen einblenden
         self.datensatz_voll = datensatz
         self.stapel = self._leerer_stapel(datensatz)
+        self._letzte_auswahl = None   # Bereich/Jumper gehoeren zum alten Datensatz
         self.aktueller_index = 0
         self.zonenpanel.setze_zonen([])
         self._korridore = []
@@ -1948,9 +1956,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         physik = self._physik
         korridor_m1 = self._korridor_fuer(1)
+        weitere = [k for k in self._korridore if int(k.mode) >= 2]
         if korridor_m1 is not None:
             self._log("Auto-Fit: Mode 1 hat einen Korridor – gefittet wird nur darin "
                       "(keine Fenstersuche).", "info")
+        if weitere:
+            self._log("Auto-Fit: anschließend werden die Korridore "
+                      + ", ".join(f"M{k.mode}" for k in weitere)
+                      + " gefittet (je Mode nur im Korridor).", "info")
 
         def aufgabe(melde):
             n = len(datensatz.linescans)
@@ -1964,27 +1977,46 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 melde(i + 1, total, self._fortschritt_text(i + 1, total, erg) if zeige else "",
                       daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
 
-            return fitte_alle(datensatz, gamma=physik.gamma,
-                              breite_faktor=physik.breite_faktor,
-                              r2_schwelle=physik.r2_schwelle,
-                              fortschritt=fortschritt, auswahl=auswahl,
-                              alpha_erwartet=physik.alpha_erwartet,
-                              alpha_max=physik.alpha_max,
-                              nachfenster_faktor=physik.nachfenster_faktor,
-                              alpha_plausibel=physik.alpha_plausibel_wirksam,
-                              nachfit_bestaetigen=physik.nachfit_bestaetigen,
-                              fortschritt_fenster=fortschritt_fenster,
-                              abbruch=melde.abgebrochen,
-                              korridor=korridor_m1)
+            stapel = fitte_alle(datensatz, gamma=physik.gamma,
+                                breite_faktor=physik.breite_faktor,
+                                r2_schwelle=physik.r2_schwelle,
+                                fortschritt=fortschritt, auswahl=auswahl,
+                                alpha_erwartet=physik.alpha_erwartet,
+                                alpha_max=physik.alpha_max,
+                                nachfenster_faktor=physik.nachfenster_faktor,
+                                alpha_plausibel=physik.alpha_plausibel_wirksam,
+                                nachfit_bestaetigen=physik.nachfit_bestaetigen,
+                                fortschritt_fenster=fortschritt_fenster,
+                                abbruch=melde.abgebrochen,
+                                korridor=korridor_m1)
+            for korridor in weitere:
+                if melde.abgebrochen():
+                    break
+
+                def fortschritt_k(k, n, erg, _m=korridor.mode):
+                    melde(k, n, self._fortschritt_text(k, n, erg) if erg.problematisch else "",
+                          daten=(erg.frequenz, erg.B_res, F.status_von(erg)),
+                          phase=f"Korridor M{_m}")
+                fitte_korridor(stapel, korridor, fortschritt=fortschritt_k,
+                               abbruch=melde.abgebrochen)   # Stapel ist bereits (Jumper-)reduziert
+            return stapel
 
         def bei_fertig(stapel):
             self._nach_autofit(stapel)
             n_fit = len(stapel.index_gefittet())
             n_prob = len(stapel.index_problematisch())
             art = "ok" if n_prob == 0 else "warn"
-            if len(self._korridore) > 1:
-                self._log("Weitere Moden: Korridore sind erhalten, ihre Fits bitte über "
-                          "„Korridor fitten …“ neu rechnen.", "info")
+            for k in sorted(stapel.nebenmoden):
+                liste = stapel.nebenmoden[k]
+                n_k = sum(1 for e in liste if e.gefittet)
+                p_k = sum(1 for e in liste if e.gefittet and e.problematisch)
+                self._log(f"Korridor M{k}: {n_k} Fits, {p_k} problematisch.",
+                          "warn" if p_k else "ok")
+            if not self._korridore and n_fit and n_prob > 0.2 * n_fit:
+                self._log("Hinweis: viele Problemfits – bei mehreren Moden (z. B. vermiedene "
+                          "Kreuzung) je Mode einen Korridor anlegen und „Korridor fitten …“ "
+                          "verwenden; die Fenstersuche kann dort zwischen den Ästen springen.",
+                          "info")
             if n_fit < len(stapel.ergebnisse):
                 self._log(f"Auto-Fit abgebrochen: {n_fit} von {len(stapel.ergebnisse)} "
                           f"Frequenzen gefittet, {n_prob} problematisch – der Rest bleibt "
@@ -2153,9 +2185,31 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _navigiere(self, schritt: int):
         if not self.stapel or not self.stapel.ergebnisse:
             return
-        self.aktueller_index = int(np.clip(self.aktueller_index + schritt, 0,
-                                           len(self.stapel.ergebnisse) - 1))
+        ziel = int(np.clip(self.aktueller_index + schritt, 0, len(self.stapel.ergebnisse) - 1))
+        self.aktueller_index = self._ziel_mit_sprung(ziel, schritt)
         self._zeige_aktuellen()
+
+    def _ziel_mit_sprung(self, ziel: int, richtung: int) -> int:
+        """Option "Ungefittete überspringen": naechster gefitteter Index der
+        angezeigten Mode in Laufrichtung (sonst der naechstgelegene, sonst ``ziel``)."""
+        st = self.stapel
+        if st is None or not self.akt_ungefittete.isChecked():
+            return ziel
+        liste = st.ergebnisse_mode(self._mode_aktiv)
+        if 0 <= ziel < len(liste) and liste[ziel].gefittet:
+            return ziel
+        gefittet = [i for i, e in enumerate(liste) if e.gefittet]
+        if not gefittet:
+            return ziel
+        if richtung > 0:
+            weiter = [i for i in gefittet if i > ziel]
+            if weiter:
+                return weiter[0]
+        elif richtung < 0:
+            zurueck = [i for i in gefittet if i < ziel]
+            if zurueck:
+                return zurueck[-1]
+        return min(gefittet, key=lambda i: abs(i - ziel))
 
     def _naechster_problemfit(self):
         if not self.stapel or not self.stapel.ergebnisse:
@@ -2961,6 +3015,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             "vollbereich": self.akt_vollbereich.isChecked(),
             "ausreisser_anzeigen": self.akt_ausreisser_anzeigen.isChecked(),
             "nebenmoden_anzeigen": self.akt_nebenmoden.isChecked(),
+            "ungefittete_ueberspringen": self.akt_ungefittete.isChecked(),
         }
         e.bereichsfit = {"modus": self._bereich_modus, "breite_punkte": self._bereich_breite}
         return e
@@ -2976,6 +3031,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_vollbereich.setChecked(bool(anzeige.get("vollbereich", False)))
         self.akt_ausreisser_anzeigen.setChecked(bool(anzeige.get("ausreisser_anzeigen", False)))
         self.akt_nebenmoden.setChecked(bool(anzeige.get("nebenmoden_anzeigen", True)))
+        self.akt_ungefittete.setChecked(bool(anzeige.get("ungefittete_ueberspringen", True)))
         self._farbskala_setzen(anzeige.get("farbskala", "viridis"))
         self._bereich_modus = einst.bereichsfit.get("modus", "ueberschreiben")
         self._bereich_breite = einst.bereichsfit.get("breite_punkte")
@@ -3084,7 +3140,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if freq_achse is None or index >= len(freq_achse):
             return
         f = float(freq_achse[index])
-        self.aktueller_index = int(np.argmin(np.abs(self.stapel.datensatz.frequenzen - f)))
+        ziel = int(np.argmin(np.abs(self.stapel.datensatz.frequenzen - f)))
+        self.aktueller_index = self._ziel_mit_sprung(ziel, int(np.sign(ziel - self.aktueller_index)))
         if self.linescan_dock.isHidden():
             self._dock_schmal_halten(self.linescan_dock, breite=500)
         self._zeige_aktuellen()
