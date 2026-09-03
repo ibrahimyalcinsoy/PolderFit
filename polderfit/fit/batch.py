@@ -584,7 +584,8 @@ def fitte_mode(
     for j, mode in enumerate(korridor.moden):
         if j < len(segmente):
             ergebnisse[mode] = _fitte_mode_im_fenster(stapel, index, mode, segmente[j],
-                                                      bestaetigen)
+                                                      bestaetigen,
+                                                      nachfenster_pass=len(segmente) == 1)
         else:
             erg = FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=mode)
             erg.meldung = "Dip im Korridor nicht gefunden"
@@ -621,7 +622,8 @@ def fitte_mode(
     # profitiert erst vom guten Nachbarn und verbessert diesen in Runde 2.
     if len(segmente) > 1:
         omega = 2.0 * np.pi * ls.frequenz
-        for _runde in range(2):
+        for runde in range(2):
+            geaendert = False
             for j, mode in enumerate(korridor.moden[:len(segmente)]):
                 rest = np.asarray(ls.s21, dtype=complex).copy()
                 abgezogen = 0
@@ -648,18 +650,23 @@ def fitte_mode(
                     neu_gut == alt_gut and np.isfinite(neu.rmse_norm)
                     and (not np.isfinite(alt.rmse_norm) or neu.rmse_norm <= alt.rmse_norm))
                 if besser:
+                    geaendert = geaendert or (abs(neu.B_res - alt.B_res) > 1e-6
+                                              or abs(neu.dH - alt.dH) > 1e-6)
                     ergebnisse[mode] = neu
                 else:
                     stapel.ergebnisse_mode(mode)[index] = alt
+            if not geaendert:
+                break   # zweite Runde nur, wenn die erste etwas veraendert hat
     return ergebnisse.get(korridor.moden[0])
 
 
 def _fitte_mode_im_fenster(stapel: StapelErgebnis, index: int, mode: int,
                            grenzen: tuple[float, float],
-                           bestaetigen: bool | None, linescan: Linescan | None = None) -> FitErgebnis:
+                           bestaetigen: bool | None, linescan: Linescan | None = None,
+                           nachfenster_pass: bool = True) -> FitErgebnis:
     """Einzelfit einer Mode im harten Fenster ``grenzen`` mit Nachbar-Rueckfall
-    und Nachfenster-Durchgang (siehe :func:`fitte_mode`). ``linescan``: ersetzt
-    die Messdaten (Nachbar-Dips abgezogen)."""
+    und (``nachfenster_pass``) Nachfenster-Durchgang (siehe :func:`fitte_mode`).
+    ``linescan``: ersetzt die Messdaten (Nachbar-Dips abgezogen)."""
     ls = linescan if linescan is not None else stapel.datensatz.linescans[index]
     liste = stapel.ergebnisse_mode(mode)
     vorgabe = _nachbar_b_res(liste, index, grenzen)
@@ -680,7 +687,7 @@ def _fitte_mode_im_fenster(stapel: StapelErgebnis, index: int, mode: int,
             ergebnis = fitte_neu(stapel, index, feld_unten=grenzen[0], feld_oben=grenzen[1],
                                  bestaetigen=bestaetigen, mode=mode, linescan=linescan)
     # 2. Durchgang: Nachfenster innerhalb des Fensters.
-    eng = nachfenster(ls, ergebnis, grenzen, stapel.nachfenster_faktor)
+    eng = nachfenster(ls, ergebnis, grenzen, stapel.nachfenster_faktor) if nachfenster_pass else None
     if eng is not None:
         b_start = float(ergebnis.B_res)
         zweites = fitte_neu(stapel, index, feld_unten=eng[0], feld_oben=eng[1],

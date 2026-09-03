@@ -1456,6 +1456,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     f"{len(neu)} gefittet, {probleme} problematisch, "
                     f"{len(set(uebersprungen))} übersprungen.")
             self._log(text, "warn" if probleme else "ok")
+            am_rand = 0
+            for korridor in korridore:
+                for m in korridor.moden:
+                    liste = stapel.ergebnisse_mode(m)
+                    am_rand += sum(1 for i in set(neu) if liste[i].gefittet
+                                   and "B_res am Fensterrand" in liste[i].problem_gruende)
+            if neu and am_rand > 0.3 * len(neu):
+                self._log(f"Hinweis: {am_rand} Fits mit „B_res am Fensterrand“ – der Korridor "
+                          "ist zu eng oder liegt neben der Resonanz (bei mehreren Dips müssen "
+                          "ALLE Dips im Korridor liegen): Breite „± mT“ erhöhen oder Anker "
+                          "nachsetzen und erneut fitten.", "warn")
             self.statusBar().showMessage(text)
             self._zeige_korridore()
 
