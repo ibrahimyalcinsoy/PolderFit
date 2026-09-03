@@ -1142,7 +1142,22 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if st is None or korridor is None:
             return
         i = self.aktueller_index
-        f = st.datensatz.linescans[i].frequenz
+        ls = st.datensatz.linescans[i]
+        f = ls.frequenz
+        # Pruefung: jedes Segment braucht genug Messpunkte, sonst Klick verwerfen.
+        g = korridor.grenzen_im_bereich(f, float(ls.feld.min()), float(ls.feld.max()))
+        if g is not None:
+            from ..fit.korridor import segmente_aus_trennern
+            from ..fit.kriterien import MIN_PUNKTE_FIT
+            zu_klein = [seg for seg in segmente_aus_trennern(g[0], g[1], positionen)
+                        if np.count_nonzero((ls.feld >= seg[0]) & (ls.feld <= seg[1])) < MIN_PUNKTE_FIT]
+            if zu_klein or len(segmente_aus_trennern(g[0], g[1], positionen)) < len(positionen) + 1:
+                text = (f"Trennlinie nicht übernommen: ein Segment hätte weniger als "
+                        f"{MIN_PUNKTE_FIT} Messpunkte – zwischen die Dips klicken.")
+                self._log(text, "warn")
+                self.statusBar().showMessage(text, 8000)
+                self._zeige_aktuellen()
+                return
         vorher = self._korridor_schatten
         fits_vorher = self._fit_zustand([i])
         korridor.trenner_setzen(f, positionen, toleranz_hz=self._frequenz_toleranz())
@@ -2279,12 +2294,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Fenster der angezeigten Mode: Mode 1 = Stapelfenster; sonst das Fenster
         des Ergebnisses, davor der Korridor bei dieser Frequenz, sonst Stapelfenster."""
         st = self.stapel
+        korridor = self._korridor_fuer(mode)
+        ls = st.datensatz.linescans[i]
+        if korridor is not None and korridor.n_dips > 1 and ls.feld.size:
+            # Mehr-Dip-Korridor: immer den ganzen Korridor zeigen (Segmente
+            # entstehen aus den Trennlinien), nicht nur das Segment der Mode.
+            g = korridor.grenzen_im_bereich(ls.frequenz, float(ls.feld.min()), float(ls.feld.max()))
+            if g is not None:
+                return g
         if mode == 1:
             return st.fenster[i]
         if e.gefittet and np.isfinite(e.B_fenster_min) and np.isfinite(e.B_fenster_max):
             return float(e.B_fenster_min), float(e.B_fenster_max)
-        korridor = self._korridor_fuer(mode)
-        ls = st.datensatz.linescans[i]
         if korridor is not None and ls.feld.size:
             g = korridor.grenzen_im_bereich(ls.frequenz, float(ls.feld.min()), float(ls.feld.max()))
             if g is not None:

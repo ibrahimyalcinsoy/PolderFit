@@ -326,9 +326,17 @@ class FitAnsicht(FigureCanvasQTAgg):
     def _on_press(self, event):
         if event.inaxes not in (self.ax_re, self.ax_im) or event.xdata is None:
             return
-        self._gezogen = self._naechste_grenze(event.xdata)
-        if self._gezogen is None and self._trenner_modus:
-            self._trenner_setzen(event.xdata)
+        naechste = self._naechste_grenze(event.xdata)
+        if self._trenner_modus:
+            # Im Trennlinien-Modus greift der Klick keine gruene Fenstergrenze:
+            # vorhandene Trennlinie ziehen, sonst neue setzen.
+            if naechste is not None and str(naechste).startswith("trenner:"):
+                self._gezogen = naechste
+            else:
+                self._gezogen = None
+                self._trenner_setzen(event.xdata)
+            return
+        self._gezogen = naechste
 
     def _on_move(self, event):
         # Ziehen hat Vorrang.
