@@ -23,7 +23,8 @@ class AuswahlDialog(QtWidgets.QDialog):
 
     def __init__(self, datensatz: Messdatensatz,
                  letzte: Auswertungsauswahl | None = None, parent=None,
-                 zoom_bereich: tuple[float, float, float, float] | None = None):
+                 zoom_bereich: tuple[float, float, float, float] | None = None,
+                 dips_auto_vorgabe: bool | None = None):
         """``zoom_bereich``: ``(feld_min, feld_max, f_min_ghz, f_max_ghz)`` -
         sichtbarer Farbplot-Ausschnitt; belegt den Bereich vor (Zoom vor
         letzter Auswahl)."""
@@ -129,6 +130,17 @@ class AuswahlDialog(QtWidgets.QDialog):
         form_b.addRow("Frequenz-Ausschluesse (GHz):", self.ausschluss)
         lay.addWidget(grp_b)
 
+        # Nur sichtbar, wenn ein Korridor mit mehreren Resonanzen existiert.
+        self.chk_dips_auto = QtWidgets.QCheckBox(
+            "Korridore mit mehreren Resonanzen: Anzahl der Dips je Frequenz automatisch (BIC)")
+        self.chk_dips_auto.setToolTip(
+            "Je Frequenz werden 1 … n Linien gefittet und das sparsamste Modell gewählt,\n"
+            "das die Daten erklärt. Wo weniger Dips sind, entfällt die überzählige Linie.\n"
+            "Nur Summenfit; manuelle Trennlinien haben Vorrang. Rechenzeit etwa 2–3-fach.")
+        self.chk_dips_auto.setChecked(bool(dips_auto_vorgabe))
+        self.chk_dips_auto.setVisible(dips_auto_vorgabe is not None)
+        lay.addWidget(self.chk_dips_auto)
+
         self.zusammenfassung = QtWidgets.QLabel("")
         self.zusammenfassung.setWordWrap(True)
         lay.addWidget(self.zusammenfassung)
@@ -146,6 +158,10 @@ class AuswahlDialog(QtWidgets.QDialog):
             box.valueChanged.connect(self._aktualisiere_zusammenfassung)
         self.ausschluss.textChanged.connect(self._aktualisiere_zusammenfassung)
         self._aktualisiere_zusammenfassung()
+
+    def dips_auto(self) -> bool:
+        """Haekchen "Anzahl der Dips automatisch (BIC)" (nur bei Mehr-Dip-Korridoren)."""
+        return bool(self.chk_dips_auto.isVisible() and self.chk_dips_auto.isChecked())
 
     def setze_bereich(self, feld_min: float, feld_max: float,
                       f_min_ghz: float, f_max_ghz: float) -> None:

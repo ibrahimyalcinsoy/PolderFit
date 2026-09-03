@@ -2033,12 +2033,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         Liefert die :class:`Auswertungsauswahl` oder ``None`` (abgebrochen).
         """
+        mehr_dips = [k for k in self._korridore if k.n_dips > 1]
         dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self,
-                               zoom_bereich=self.matrix.sichtbarer_bereich())
+                               zoom_bereich=self.matrix.sichtbarer_bereich(),
+                               dips_auto_vorgabe=(any(k.dips_auto for k in mehr_dips)
+                                                  if mehr_dips else None))
         if not dialog.exec():
             return None
         auswahl = dialog.auswahl()
         self._letzte_auswahl = auswahl
+        for k in mehr_dips:
+            k.dips_auto = dialog.dips_auto()
         if not auswahl.ist_neutral:
             self._log("Auswertungsauswahl: "
                       + auswahl.beschreibung(self.datensatz_voll), "info")
