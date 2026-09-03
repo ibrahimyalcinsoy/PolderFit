@@ -33,6 +33,7 @@ class BereichsFitDialog(QtWidgets.QDialog):
                  daten_bereich: tuple[float, float, float, float] | None = None,
                  mit_feld: bool = True, mit_breite: bool = True,
                  schritt_vorgabe: int | None = None,
+                 dips_auto_vorgabe: bool | None = None,
                  parent=None):
         """``daten_bereich`` = (feld_min, feld_max, f_min_ghz, f_max_ghz) der
         ganzen Messung (Grenzen der Eingabefelder); fehlt es, gilt das Rechteck.
@@ -101,6 +102,15 @@ class BereichsFitDialog(QtWidgets.QDialog):
             "1 = alle Frequenzen).")
         if schritt_vorgabe is not None:
             form.addRow("Jumper:", self.schritt_spin)
+        self.chk_dips_auto = QtWidgets.QCheckBox("Anzahl der Dips je Frequenz automatisch (BIC)")
+        self.chk_dips_auto.setToolTip(
+            "Zusatzoption: je Frequenz werden 1 … n Linien gefittet und das sparsamste\n"
+            "Modell gewählt, das die Daten erklärt (BIC). Wo weniger Dips sind, entfällt\n"
+            "die überzählige Linie. Nur Summenfit; manuelle Trennlinien haben Vorrang.\n"
+            "Rechenzeit etwa 2–3-fach. Aus = Verhalten wie bisher.")
+        self.chk_dips_auto.setChecked(bool(dips_auto_vorgabe))
+        if dips_auto_vorgabe is not None:
+            form.addRow("", self.chk_dips_auto)
         lay.addLayout(form)
 
         breite_zeile = QtWidgets.QHBoxLayout()
@@ -150,6 +160,9 @@ class BereichsFitDialog(QtWidgets.QDialog):
         """(feld_min, feld_max) in Tesla (sortiert)."""
         a, b = float(self.b_von.value()), float(self.b_bis.value())
         return (min(a, b), max(a, b))
+
+    def dips_auto(self) -> bool:
+        return bool(self.chk_dips_auto.isChecked())
 
     def schritt(self) -> int:
         """Jumper: jede n-te Frequenz (1 = alle)."""

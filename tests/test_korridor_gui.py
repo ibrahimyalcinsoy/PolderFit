@@ -96,7 +96,7 @@ def test_zonen_panel_korridorliste(app):
     assert "1 ⚠" in p.korridor_liste.item(0).text()
     p.korridor_liste.setCurrentRow(1)
     assert gewaehlt == [2] and p.mode_aktiv() == 2 and p.korridor_aktiv() is k2
-    assert p.btn_fit.isEnabled() and p.anker_liste.count() == 2
+    assert p.btn_fit.isEnabled()
 
 
 def test_hauptfenster_korridor_anlegen_anker_und_undo(app):

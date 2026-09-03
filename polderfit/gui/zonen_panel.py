@@ -33,8 +33,8 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``korridor_entfernen(mode)``
     * ``anker_entfernen(mode, index)``
     * ``korridor_fit(mode | None)`` – Korridor fitten (``None`` = alle)
-    * ``dips_geaendert(mode, n, methode, auto)`` – Zahl der Resonanzen (Dips) im
-      Korridor, Verfahren (``"summe"``/``"trennung"``), Anzahl automatisch (BIC)
+    * ``dips_geaendert(mode, n, methode)`` – Zahl der Resonanzen (Dips) im
+      Korridor und Verfahren (``"summe"``/``"trennung"``)
     * ``trenner_umschalten(an)`` – Trennlinie im Linescan-Panel setzen (Klick)
     * ``trenner_loeschen()`` – Trennlinien an der angezeigten Frequenz loeschen
     * ``breite_geaendert(mode, halbbreite_T)`` – Breite des gewaehlten Korridors
@@ -127,15 +127,6 @@ class ZonenPanel(QtWidgets.QWidget):
         self.methode_combo.currentIndexChanged.connect(self._dips_gewaehlt)
         self.methode_combo.setVisible(False)
         k_lay.addWidget(self.methode_combo)
-        self.chk_dips_auto = QtWidgets.QCheckBox("Anzahl automatisch (BIC, max. n)")
-        self.chk_dips_auto.setToolTip(
-            "Zusatz zum Auto-/Korridor-Fit: je Frequenz werden 1 … n Linien gefittet und\n"
-            "das sparsamste Modell gewählt, das die Daten erklärt (BIC). Wo weniger Dips\n"
-            "sind, entfällt die überzählige Linie. Nur Summenfit; manuelle Trennlinien\n"
-            "haben Vorrang. Rechenzeit etwa 2–3-fach.")
-        self.chk_dips_auto.toggled.connect(self._dips_gewaehlt)
-        self.chk_dips_auto.setVisible(False)
-        k_lay.addWidget(self.chk_dips_auto)
         zeile_t = QtWidgets.QHBoxLayout()
         self.btn_trenner = QtWidgets.QPushButton("Trennlinie setzen")
         self.btn_trenner.setCheckable(True)
@@ -186,27 +177,6 @@ class ZonenPanel(QtWidgets.QWidget):
         zeile3.addWidget(self.btn_fit_alle)
         k_lay.addLayout(zeile3)
 
-        # Details (Anker des gewaehlten Korridors) - erst bei Bedarf sichtbar.
-        self.btn_details = QtWidgets.QToolButton()
-        self.btn_details.setText("Anker")
-        self.btn_details.setCheckable(True)
-        self.btn_details.setArrowType(QtCore.Qt.RightArrow)
-        self.btn_details.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        self.btn_details.setAutoRaise(True)
-        self.btn_details.toggled.connect(self._details_umschalten)
-        k_lay.addWidget(self.btn_details)
-        self.details_box = QtWidgets.QWidget()
-        d_lay = QtWidgets.QVBoxLayout(self.details_box)
-        d_lay.setContentsMargins(0, 0, 0, 0)
-        self.anker_liste = QtWidgets.QListWidget()
-        self.anker_liste.setMaximumHeight(90)
-        self.anker_liste.setToolTip("Anker des gewählten Korridors: Frequenz, linke/rechte Grenze.")
-        d_lay.addWidget(self.anker_liste)
-        self.btn_anker_entfernen = QtWidgets.QPushButton("Anker entfernen")
-        self.btn_anker_entfernen.clicked.connect(self._anker_entfernen_geklickt)
-        d_lay.addWidget(self.btn_anker_entfernen)
-        self.details_box.setVisible(False)
-        k_lay.addWidget(self.details_box)
         lay.addWidget(grp_k)
 
         # --- Ausschlusszonen --------------------------------------------------
@@ -312,8 +282,6 @@ class ZonenPanel(QtWidgets.QWidget):
         """Halbe Korridorbreite beim Anlegen in Tesla."""
         return float(self.breite_spin.value()) / 1e3
 
-    def gewaehlter_anker(self) -> int:
-        return int(self.anker_liste.currentRow())
 
     # --- Modus-Synchronisation (ohne Rueckruf) ---------------------------------
     def setze_modus_aktiv(self, an: bool) -> None:
@@ -353,10 +321,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self.methode_combo.blockSignals(False)
         mehrere = k is not None and k.n_dips > 1
         self.methode_combo.setVisible(mehrere)
-        self.chk_dips_auto.blockSignals(True)
-        self.chk_dips_auto.setChecked(bool(k.dips_auto) if k is not None else False)
-        self.chk_dips_auto.blockSignals(False)
-        self.chk_dips_auto.setVisible(mehrere)
+
         self.trenner_box.setEnabled(mehrere)
         self.btn_trenner.setToolTip(self._trenner_tip if mehrere else
                                     "Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen.")
@@ -364,21 +329,10 @@ class ZonenPanel(QtWidgets.QWidget):
         self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
         self.btn_fit_alle.setEnabled(bool(self._korridore))
-        self.btn_anker_entfernen.setEnabled(hat and self.anker_liste.count() > 0)
+
 
     def _anker_liste_fuellen(self) -> None:
-        self.anker_liste.clear()
-        k = self.korridor_aktiv()
-        if k is not None:
-            for a in k.anker:
-                self.anker_liste.addItem(
-                    f"{a.f/1e9:.3f} GHz: {a.b_links:.4f} – {a.b_rechts:.4f} T")
-            if k.anker:
-                self.anker_liste.setCurrentRow(len(k.anker) - 1)
-
-    def _details_umschalten(self, an: bool) -> None:
-        self.btn_details.setArrowType(QtCore.Qt.DownArrow if an else QtCore.Qt.RightArrow)
-        self.details_box.setVisible(bool(an))
+        return   # kein Anker-Detailbereich mehr (Anker werden im Farbplot gezogen)
 
     def _zeile_gewaehlt(self, zeile: int) -> None:
         if self._blockiert or zeile < 0:
@@ -410,10 +364,8 @@ class ZonenPanel(QtWidgets.QWidget):
         k = self.korridor_aktiv()
         if k is not None and self._cb_dips_geaendert is not None:
             self._cb_dips_geaendert(int(k.mode), int(self.dips_spin.value()),
-                                    str(self.methode_combo.currentData() or "summe"),
-                                    bool(self.chk_dips_auto.isChecked()))
+                                    str(self.methode_combo.currentData() or "summe"))
         self.methode_combo.setVisible(k is not None and int(self.dips_spin.value()) > 1)
-        self.chk_dips_auto.setVisible(k is not None and int(self.dips_spin.value()) > 1)
         self.trenner_box.setEnabled(k is not None and int(self.dips_spin.value()) > 1)
 
     def _entfernen_geklickt(self) -> None:
@@ -421,11 +373,6 @@ class ZonenPanel(QtWidgets.QWidget):
         if k is not None and self._cb_korridor_entfernen is not None:
             self._cb_korridor_entfernen(int(k.mode))
 
-    def _anker_entfernen_geklickt(self) -> None:
-        zeile = self.anker_liste.currentRow()
-        k = self.korridor_aktiv()
-        if zeile >= 0 and k is not None and self._cb_anker_entfernen is not None:
-            self._cb_anker_entfernen(int(k.mode), zeile)
 
     def _zone_umgeschaltet(self, an: bool) -> None:
         if self._cb_zone_umschalten is not None:

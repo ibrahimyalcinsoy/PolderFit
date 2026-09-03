@@ -1316,7 +1316,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._merke_korridor_aenderung(f"Korridor M{mode}: ±{halbbreite*1e3:.0f} mT", vorher)
         self._zeige_aktuellen()
 
-    def _dips_geaendert(self, mode: int, n: int, methode: str = "summe", auto: bool = False):
+    def _dips_geaendert(self, mode: int, n: int, methode: str = "summe", auto: bool | None = None):
         """Vorgabe "n Resonanzen im Korridor": weitere Dips bekommen eigene, freie
         Mode-Nummern; beim Verringern werden deren Ergebnisse verworfen."""
         korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)
@@ -1324,9 +1324,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         n = max(1, int(n))
         if n == korridor.n_dips and len(korridor.moden) == n:
-            if methode != korridor.methode or bool(auto) != bool(korridor.dips_auto):
+            if methode != korridor.methode or (auto is not None and bool(auto) != bool(korridor.dips_auto)):
                 korridor.methode = methode
-                korridor.dips_auto = bool(auto)
+                if auto is not None:
+                    korridor.dips_auto = bool(auto)
                 self._zeige_korridore()
                 self._log(f"Korridor M{mode}: Verfahren „{methode}“"
                           + (", Anzahl automatisch (BIC)" if auto else "")
@@ -1342,7 +1343,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.zonenpanel.setze_korridore(self._korridore)   # mode_neu sieht die neue Nummer
         korridor.n_dips = n
         korridor.methode = methode
-        korridor.dips_auto = bool(auto)
+        if auto is not None:
+            korridor.dips_auto = bool(auto)
         if self.stapel is not None:
             for m in entfernt:
                 self.stapel.mode_entfernen(m)
@@ -1424,13 +1426,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
             info_text=(f"Korridor {namen}: je Frequenz ein Einzelfit nur auf den Messpunkten "
                        f"im Korridor ({', '.join(f'M{m}: {n} Frequenzen' for m, n in abgedeckt.items())})."),
             daten_bereich=self._daten_bereich(), mit_feld=False, mit_breite=False,
-            schritt_vorgabe=self._bereich_schritt, parent=self)
+            schritt_vorgabe=self._bereich_schritt,
+            dips_auto_vorgabe=(any(k.dips_auto for k in korridore)
+                               if any(k.n_dips > 1 for k in korridore) else None),
+            parent=self)
         if not dialog.exec():
             self._log("Korridor-Fit abgebrochen.", "info")
             return
         modus = dialog.modus()
         f_von, f_bis = dialog.frequenz_bereich()
         schritt = dialog.schritt()
+        for korridor in korridore:
+            if korridor.n_dips > 1:
+                korridor.dips_auto = dialog.dips_auto()
         self._bereich_modus = modus
         self._bereich_frequenz = (f_von, f_bis)
         self._bereich_schritt = schritt

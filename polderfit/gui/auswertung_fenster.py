@@ -500,11 +500,14 @@ class AuswertungsFenster(QtWidgets.QDialog):
             reihe = self._reihen.get(mode) or _leere_reihe(mode)
             tab_param = self._parameter_tabelle(stapel, reihe, mehrere)
             tab_punkte = self._punkte_tabelle(stapel, reihe, mehrere)
-        blaetter = [("Parameter", tab_param), ("Punkte", tab_punkte)]
         if mehrere:
+            # Je Mode ein Blatt - keine doppelten Blaetter fuer die aktuelle Ansicht.
+            blaetter = []
             for k, r in self._reihen_alle_moden(stapel).items():
                 blaetter.append((f"Parameter_M{k}", self._parameter_tabelle(stapel, r, True)))
                 blaetter.append((f"Punkte_M{k}", self._punkte_tabelle(stapel, r, True)))
+        else:
+            blaetter = [("Parameter", tab_param), ("Punkte", tab_punkte)]
         with pd.ExcelWriter(basis + ".xlsx", engine="openpyxl") as writer:
             for name, tab in blaetter:
                 tab.to_excel(writer, sheet_name=name, index=False)
