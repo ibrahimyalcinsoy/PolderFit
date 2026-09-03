@@ -174,7 +174,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.matrix = MatrixAnsicht(frequenz_gewaehlt=self._frequenz_gewaehlt,
                                     zoom_geaendert=self._auf_zoom,
                                     modus_geaendert=self._auf_modus_geaendert)
-        self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert)
+        self.fitansicht = FitAnsicht(grenzen_geaendert=self._grenzen_geaendert,
+                                     trenner_geaendert=self._trenner_geaendert)
         self.navigator = NavigatorAnsicht(bereich_gewaehlt=self._navigator_bereich)
         self.verarbeitung = VerarbeitungPanel(geaendert=self._verarbeitung_geaendert,
                                               farbskala_geaendert=self._farbskala_geaendert)
@@ -188,6 +189,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             anker_entfernen=self._anker_entfernen,
             korridor_fit=self._korridor_fit,
             dips_geaendert=self._dips_geaendert,
+            trenner_umschalten=self._trenner_modus,
+            trenner_loeschen=self._trenner_loeschen,
         )
         #: Korridore je Mode - die EINZIGE Quelle des Moden-Zustands (Zahl der
         #: Moden = Zahl der Korridore); bleiben ueber Auto-Fits erhalten, werden
@@ -1114,6 +1117,67 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._zeige_korridore()
         self._merke_korridor_aenderung(f"Anker M{korridor.mode} gesetzt", vorher)
         self._log(f"Anker M{korridor.mode} bei {f_ghz:.3f} GHz: {lo:.4f} – {hi:.4f} T.", "ok")
+        self._zeige_aktuellen()
+
+    # --- Trennlinien (manuelle Dip-Grenzen im Korridor) ----------------------------
+    def _trenner_modus(self, an: bool):
+        """Knopf "Trennlinie setzen": Klick im Linescan-Panel setzt eine gelbe
+        Trennlinie; gilt entlang der Mode (Interpolation ueber die Frequenz)."""
+        korridor = self._korridor_fuer(self._mode_aktiv)
+        if an and (korridor is None or korridor.n_dips < 2):
+            self.zonenpanel.setze_trenner_modus_aktiv(False)
+            self._log("Trennlinie: zuerst im Korridor mehr als eine Resonanz vorgeben.", "warn")
+            return
+        self.fitansicht.setze_trenner_modus(bool(an))
+        self._zeige_aktuellen()
+        if an:
+            self._dock_schmal_halten(self.linescan_dock, breite=500)
+
+    def _trenner_geaendert(self, positionen: list):
+        """Trennlinien an der angezeigten Frequenz gesetzt/gezogen: in den Korridor
+        uebernehmen (wandert per Interpolation mit der Mode) und Frequenz neu fitten."""
+        st = self.stapel
+        korridor = self._korridor_fuer(self._mode_aktiv)
+        if st is None or korridor is None:
+            return
+        i = self.aktueller_index
+        f = st.datensatz.linescans[i].frequenz
+        vorher = self._korridor_schatten
+        fits_vorher = self._fit_zustand([i])
+        korridor.trenner_setzen(f, positionen, toleranz_hz=self._frequenz_toleranz())
+        self._zeige_korridore()
+        erg = fitte_mode(st, i, korridor, bestaetigen=None)
+        nachher = self._korridor_schatten
+        fits_nachher = self._fit_zustand([i])
+        self._merke_aenderung(
+            f"Trennlinie M{korridor.mode} bei {f/1e9:.2f} GHz",
+            lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
+            lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
+        self._aktualisiere_overlay()
+        self._zeige_aktuellen()
+        self._auswertung_nachziehen()
+        self._log(f"Trennlinie(n) M{korridor.mode} bei {f/1e9:.2f} GHz: "
+                  + ", ".join(f"{t:.4f} T" for t in positionen)
+                  + f" – gilt entlang der Mode ({len(korridor.trenner)} Stützstelle(n))"
+                  + (f"; Fit: {erg.problem_text}" if erg is not None else ""), "ok")
+
+    def _trenner_loeschen(self):
+        st = self.stapel
+        korridor = self._korridor_fuer(self._mode_aktiv)
+        if st is None or korridor is None:
+            return
+        f = st.datensatz.linescans[self.aktueller_index].frequenz
+        vorher = self._korridor_schatten
+        if not korridor.trenner_entfernen(f, toleranz_hz=self._frequenz_toleranz()):
+            if korridor.trenner:
+                korridor.trenner = []
+                self._log(f"Alle Trennlinien von M{korridor.mode} gelöscht.", "info")
+            else:
+                return
+        else:
+            self._log(f"Trennlinie M{korridor.mode} bei {f/1e9:.2f} GHz gelöscht.", "info")
+        self._zeige_korridore()
+        self._merke_korridor_aenderung(f"Trennlinie M{korridor.mode} gelöscht", vorher)
         self._zeige_aktuellen()
 
     def _frequenz_toleranz(self) -> float:
@@ -2160,7 +2224,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.mode_label.setText(f"M{mode}")
         status = F.status_von(e, ignoriert=self.stapel.ist_ausreisser(i)
                               or self.stapel.ist_ausreisser_mode(i, mode))
-        self.fitansicht.zeige(voll, unten, oben, e, status=status)
+        korridor = self._korridor_fuer(mode)
+        trenner = korridor.trennstellen(voll.frequenz) if korridor is not None else None
+        self.fitansicht.zeige(voll, unten, oben, e, status=status, trenner=trenner,
+                              trenner_max=(korridor.n_dips - 1) if korridor is not None else 0)
         # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
         # enthalten als die angezeigte Matrix.
         self.matrix.markiere_frequenz_wert(e.frequenz)

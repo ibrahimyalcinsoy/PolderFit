@@ -18,7 +18,7 @@ from ..physik.konstanten import GAMMA_STANDARD
 from ..physik.fitmodell import Startwerte, s21_modell
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
-from .korridor import Korridor, dip_segmente
+from .korridor import Korridor, dip_segmente, segmente_aus_trennern
 from .kriterien import ALPHA_MAX
 from .linescan_fit import FitErgebnis, fitte_linescan, fitte_linescan_summe, setze_bewertung
 
@@ -573,7 +573,12 @@ def fitte_mode(
     ausschnitt = schneide_band(ls, grenzen[0], grenzen[1])
     if stapel.ausschlusszonen:
         ausschnitt = ohne_ausschlusszonen(ausschnitt, stapel.ausschlusszonen)
-    segmente = dip_segmente(ausschnitt.feld, ausschnitt.s21, len(korridor.moden))
+    manuell = korridor.trennstellen(ls.frequenz)
+    if manuell is not None:
+        segmente = segmente_aus_trennern(float(ausschnitt.feld.min()),
+                                         float(ausschnitt.feld.max()), manuell)
+    else:
+        segmente = dip_segmente(ausschnitt.feld, ausschnitt.s21, len(korridor.moden))
     ergebnisse: dict[int, FitErgebnis] = {}
     # Durchgang 1: jeder Dip in seinem Segment (harte Trennung).
     for j, mode in enumerate(korridor.moden):

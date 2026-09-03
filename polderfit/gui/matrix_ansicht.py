@@ -859,6 +859,17 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 text.set_path_effects(
                     [pe.Stroke(linewidth=2.5, foreground="#FFFFFFCC"), pe.Normal()])
                 self._korridor_artists.append(text)
+            if getattr(korridor, "n_dips", 1) > 1 and len(punkte) >= 2:
+                stuetz = [p[0] for p in punkte]
+                trenn = [korridor.trennstellen(f_ghz * 1e9) for f_ghz in stuetz]
+                if all(t is not None for t in trenn):
+                    for j in range(len(trenn[0])):
+                        linie = self.ax.plot([t[j] for t in trenn], stuetz, "--",
+                                             color="#D4A500", lw=1.4 if aktiv else 1.0,
+                                             zorder=6, label="_korridor_trenner")[0]
+                        linie.set_path_effects(
+                            [pe.Stroke(linewidth=2.6, foreground="#FFFFFFAA"), pe.Normal()])
+                        self._korridor_artists.append(linie)
             if korridor.anker:
                 xs = [a.b_links for a in korridor.anker] + [a.b_rechts for a in korridor.anker]
                 ys = [a.f / 1e9 for a in korridor.anker] * 2

@@ -198,3 +198,16 @@ Offen:
   gelöscht werden.
 * `physik/fitmodell.py`: Summenmodell (`s21_modell_multi` u. a.) bleibt ungenutzt im Code
   (keine Änderung an physik/ ohne Rückfrage).
+
+## 8. Mehrere Dips in einem Korridor (2026-09-03, nach Nutzer-Zeichnung und V1.66-Bildern)
+
+* „Resonanzen im Korridor“ (1–4) im Panel; jeder Dip = eigene Mode (Untermoden-Zeilen ↳).
+* Verfahren je Korridor: **harte Trennung** (Segmente, Einzelfit je Dip, Nachbar-Dip abgezogen,
+  zwei Runden) oder **Summenfit** (alle Dips gemeinsam auf den Korridorpunkten, B_res je Dip
+  hart auf sein Segment beschränkt, Einzelbeiträge gestrichelt im Linescan-Panel).
+* Segmente automatisch aus den n prominentesten Dips (Untergrundgerade aus den Korridor-
+  Rändern) oder **manuell**: „Trennlinie setzen“ → Klick im Linescan-Panel, gelb gestrichelt,
+  ziehbar; wandert linear über der Frequenz mit der Mode (Stützstellen), im Farbplot als gelbe
+  Linie, gilt für Auto-Fit, Korridor-Fit und Nachfits; Undo, Projekt v4.
+* Realdaten 19,5–22,5 GHz (2 Dips): Trennung M1 3,0737 T/19,7 mT, M2 3,0949 T/4,7 mT, keine
+  Problemfits.

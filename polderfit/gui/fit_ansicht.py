@@ -39,17 +39,25 @@ _HALO = [pe.Stroke(linewidth=GRENZ_LW + 2.0, foreground="white"), pe.Normal()]
 _FARBE_RE = F.TEXT_BLAU
 _FARBE_IM = "#B35C00"
 _FARBE_FIT = F.TEXT
+#: Manuelle Trennlinien zwischen Dips (gelb gestrichelt, ziehbar).
+TRENN_FARBE = "#D4A500"
 
 
 class FitAnsicht(FigureCanvasQTAgg):
     """Matplotlib-Canvas mit zwei Achsen (Re/Im) und verschiebbaren Grenzlinien."""
 
-    def __init__(self, grenzen_geaendert=None):
+    def __init__(self, grenzen_geaendert=None, trenner_geaendert=None):
         self.figur = Figure(figsize=(6, 5))
         super().__init__(self.figur)
         self.ax_re = self.figur.add_subplot(211)
         self.ax_im = self.figur.add_subplot(212, sharex=self.ax_re)
         self.grenzen_geaendert = grenzen_geaendert
+        #: ``trenner_geaendert(positionen)`` nach Setzen/Ziehen einer Trennlinie.
+        self.trenner_geaendert = trenner_geaendert
+        self._trenner: list[float] = []
+        self._trenner_linien: list = []
+        self._trenner_max = 0            # erlaubte Zahl (n_dips - 1); 0 = keine
+        self._trenner_modus = False      # Klick setzt eine Trennlinie
 
         self._linescan: Linescan | None = None
         self._grenze_unten: float | None = None
@@ -77,18 +85,24 @@ class FitAnsicht(FigureCanvasQTAgg):
         grenze_oben: float,
         ergebnis: FitErgebnis | None = None,
         status: str | None = None,
+        trenner: list | None = None,
+        trenner_max: int = 0,
     ) -> None:
         """Stellt einen Linescan samt Bandgrenzen und (optional) Fitkurve dar.
 
         ``status``: Statusklasse des Fits (:mod:`polderfit.gui.farben`) fuer
         die Farbe der Resonanzlinie; fehlt sie, wird sie aus dem Ergebnis
-        abgeleitet.
+        abgeleitet. ``trenner``: manuelle Trennlinien (T) zwischen Dips,
+        ``trenner_max`` = erlaubte Zahl (``n_dips - 1``).
         """
         self._linescan = linescan
         self._grenze_unten = float(grenze_unten)
         self._grenze_oben = float(grenze_oben)
         self._gezogen = None
         self._hover = None
+        self._trenner = sorted(float(t) for t in (trenner or []))
+        self._trenner_max = max(0, int(trenner_max))
+        self._trenner_linien = []
 
         self.ax_re.clear()
         self.ax_im.clear()
@@ -147,6 +161,10 @@ class FitAnsicht(FigureCanvasQTAgg):
                          transform=trans, clip_on=False, zorder=6)[0]
             self._griffe_unten.append(gu)
             self._griffe_oben.append(go)
+            for t in self._trenner:
+                lt = ax.axvline(t, color=TRENN_FARBE, lw=1.8, ls="--", zorder=5)
+                lt.set_path_effects(_HALO)
+                self._trenner_linien.append((ax, lt))
 
         # Zwei explizite Zeilen: tight_layout misst mehrzeilige Titel korrekt,
         # ein automatischer Umbruch (wrap) wuerde in die Achse hineinragen.
@@ -169,9 +187,12 @@ class FitAnsicht(FigureCanvasQTAgg):
         self.ax_re.set_xlim(*self._berechne_xlim(b))
         self._tight_layout_sicher()
         # Dezenter Bedienhinweis (nach tight_layout, damit er nicht verschoben wird).
+        hinweis = ("Klick = Trennlinie setzen · gelbe Linien ziehen" if self._trenner_modus
+                   else "grüne Linien ziehen = Fenster ändern"
+                   + (" · gelb = Trennlinie" if self._trenner else ""))
         self._hinweis = self.figur.text(
-            0.995, 0.004, "grüne Linien ziehen = Fenster ändern",
-            ha="right", va="bottom", fontsize=7.5, color=GRENZ_FARBE, alpha=0.85)
+            0.995, 0.004, hinweis, ha="right", va="bottom", fontsize=7.5,
+            color=TRENN_FARBE if self._trenner_modus else GRENZ_FARBE, alpha=0.9)
         self._hinweis.set_in_layout(False)
         self.draw_idle()
 
@@ -212,6 +233,35 @@ class FitAnsicht(FigureCanvasQTAgg):
             return bmin, bmax
         return links, rechts
 
+    def setze_trenner_modus(self, an: bool) -> None:
+        """Klick im Plot setzt eine Trennlinie (bis ``trenner_max``; danach wird die
+        naechste ersetzt). Neuanzeige durch den Aufrufer."""
+        self._trenner_modus = bool(an)
+        self.setCursor(QtCore.Qt.CrossCursor if an else QtCore.Qt.ArrowCursor)
+
+    def trenner_modus(self) -> bool:
+        return self._trenner_modus
+
+    def _trenner_setzen(self, x: float) -> None:
+        if self._trenner_max <= 0:
+            return
+        x = float(x)
+        if len(self._trenner) < self._trenner_max:
+            self._trenner.append(x)
+        else:
+            k = int(np.argmin([abs(t - x) for t in self._trenner]))
+            self._trenner[k] = x
+        self._trenner.sort()
+        if self.trenner_geaendert is not None:
+            self.trenner_geaendert(list(self._trenner))
+
+    def _aktualisiere_trenner_grafik(self) -> None:
+        for k, (ax, lt) in enumerate(self._trenner_linien):
+            t = self._trenner[k // 2] if k // 2 < len(self._trenner) else None
+            if t is not None:
+                lt.set_xdata([t, t])
+        self.draw_idle()
+
     def setze_vollbereich(self, an: bool) -> None:
         """Schaltet zwischen Zoom aufs Band und ganzem Feldsweep um (Neuanzeige durch Aufrufer)."""
         self._vollbereich = bool(an)
@@ -245,6 +295,11 @@ class FitAnsicht(FigureCanvasQTAgg):
         d_unten = abs(x - self._grenze_unten)
         d_oben = abs(x - self._grenze_oben)
         toleranz = GREIF_TOLERANZ_REL * (np.ptp(self._linescan.feld) or 1.0)
+        # Trennlinien haben Vorrang (liegen innerhalb des Fensters).
+        if self._trenner:
+            k = int(np.argmin([abs(t - x) for t in self._trenner]))
+            if abs(self._trenner[k] - x) <= 0.5 * toleranz:
+                return f"trenner:{k}"
         if min(d_unten, d_oben) > toleranz:
             return None
         return "unten" if d_unten <= d_oben else "oben"
@@ -262,7 +317,7 @@ class FitAnsicht(FigureCanvasQTAgg):
         for go in self._griffe_oben:
             go.set_markersize(GRIFF_MS_HOVER if welche == "oben" else GRIFF_MS)
         if welche is None:
-            self.unsetCursor()
+            self.setCursor(QtCore.Qt.CrossCursor) if self._trenner_modus else self.unsetCursor()
         else:
             self.setCursor(QtCore.Qt.SizeHorCursor)
         self.draw_idle()
@@ -272,10 +327,18 @@ class FitAnsicht(FigureCanvasQTAgg):
         if event.inaxes not in (self.ax_re, self.ax_im) or event.xdata is None:
             return
         self._gezogen = self._naechste_grenze(event.xdata)
+        if self._gezogen is None and self._trenner_modus:
+            self._trenner_setzen(event.xdata)
 
     def _on_move(self, event):
         # Ziehen hat Vorrang.
         if self._gezogen is not None and event.xdata is not None:
+            if str(self._gezogen).startswith("trenner:"):
+                k = int(str(self._gezogen).split(":")[1])
+                if k < len(self._trenner):
+                    self._trenner[k] = float(event.xdata)
+                    self._aktualisiere_trenner_grafik()
+                return
             if self._gezogen == "unten":
                 self._grenze_unten = float(event.xdata)
             else:
@@ -290,6 +353,13 @@ class FitAnsicht(FigureCanvasQTAgg):
 
     def _on_release(self, event):
         if self._gezogen is None:
+            return
+        if str(self._gezogen).startswith("trenner:"):
+            self._gezogen = None
+            self._trenner.sort()
+            self._aktualisiere_trenner_grafik()
+            if self.trenner_geaendert is not None:
+                self.trenner_geaendert(list(self._trenner))
             return
         self._gezogen = None
         unten = min(self._grenze_unten, self._grenze_oben)

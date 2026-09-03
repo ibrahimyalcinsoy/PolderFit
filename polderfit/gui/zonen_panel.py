@@ -35,13 +35,15 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``korridor_fit(mode | None)`` – Korridor fitten (``None`` = alle)
     * ``dips_geaendert(mode, n, methode)`` – Zahl der Resonanzen (Dips) im
       Korridor und Verfahren (``"trennung"``/``"summe"``)
+    * ``trenner_umschalten(an)`` – Trennlinie im Linescan-Panel setzen (Klick)
+    * ``trenner_loeschen()`` – Trennlinien an der angezeigten Frequenz loeschen
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
                  korridor_umschalten=None, anker_umschalten=None,
                  korridor_gewaehlt=None, korridor_entfernen=None,
                  anker_entfernen=None, korridor_fit=None, dips_geaendert=None,
-                 parent=None):
+                 trenner_umschalten=None, trenner_loeschen=None, parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
@@ -52,6 +54,8 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_anker_entfernen = anker_entfernen
         self._cb_korridor_fit = korridor_fit
         self._cb_dips_geaendert = dips_geaendert
+        self._cb_trenner_umschalten = trenner_umschalten
+        self._cb_trenner_loeschen = trenner_loeschen
         self._korridore: list = []
         self._mode_aktiv: int = 1
         self._blockiert = False
@@ -117,6 +121,26 @@ class ZonenPanel(QtWidgets.QWidget):
         self.methode_combo.currentIndexChanged.connect(self._dips_gewaehlt)
         self.methode_combo.setVisible(False)
         k_lay.addWidget(self.methode_combo)
+        zeile_t = QtWidgets.QHBoxLayout()
+        self.btn_trenner = QtWidgets.QPushButton("Trennlinie setzen")
+        self.btn_trenner.setCheckable(True)
+        self.btn_trenner.setToolTip(
+            "Im Linescan-Panel zwischen zwei Dips klicken → gelbe Trennlinie (harte\n"
+            "Grenze). Sie wandert entlang der Mode mit (linear über der Frequenz) und\n"
+            "gilt für alle Fits dieses Korridors; an anderen Frequenzen nachsetzen oder\n"
+            "ziehen, wenn sie abweicht. Erneuter Klick auf den Knopf beendet.")
+        self.btn_trenner.toggled.connect(
+            lambda an: self._cb_trenner_umschalten and self._cb_trenner_umschalten(bool(an)))
+        zeile_t.addWidget(self.btn_trenner, 1)
+        self.btn_trenner_loeschen = QtWidgets.QPushButton("löschen")
+        self.btn_trenner_loeschen.setToolTip("Trennlinien an der angezeigten Frequenz löschen.")
+        self.btn_trenner_loeschen.clicked.connect(
+            lambda: self._cb_trenner_loeschen and self._cb_trenner_loeschen())
+        zeile_t.addWidget(self.btn_trenner_loeschen)
+        self.trenner_box = QtWidgets.QWidget()
+        self.trenner_box.setLayout(zeile_t)
+        self.trenner_box.setVisible(False)
+        k_lay.addWidget(self.trenner_box)
 
         zeile2 = QtWidgets.QHBoxLayout()
         self.btn_anker = QtWidgets.QPushButton("Anker setzen")
@@ -285,6 +309,9 @@ class ZonenPanel(QtWidgets.QWidget):
     def setze_anker_modus_aktiv(self, an: bool) -> None:
         self._knopf_syncen(self.btn_anker, an)
 
+    def setze_trenner_modus_aktiv(self, an: bool) -> None:
+        self._knopf_syncen(self.btn_trenner, an)
+
     @staticmethod
     def _knopf_syncen(knopf: QtWidgets.QPushButton, an: bool) -> None:
         if knopf.isChecked() != bool(an):
@@ -305,6 +332,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self.methode_combo.setCurrentIndex(max(0, idx))
         self.methode_combo.blockSignals(False)
         self.methode_combo.setVisible(k is not None and k.n_dips > 1)
+        self.trenner_box.setVisible(k is not None and k.n_dips > 1)
         self.btn_anker.setEnabled(hat)
         self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
@@ -352,6 +380,7 @@ class ZonenPanel(QtWidgets.QWidget):
             self._cb_dips_geaendert(int(k.mode), int(self.dips_spin.value()),
                                     str(self.methode_combo.currentData() or "trennung"))
         self.methode_combo.setVisible(k is not None and int(self.dips_spin.value()) > 1)
+        self.trenner_box.setVisible(k is not None and int(self.dips_spin.value()) > 1)
 
     def _entfernen_geklickt(self) -> None:
         k = self.korridor_aktiv()

@@ -60,6 +60,11 @@ class Korridor:
     #: einzeln (Nachbar-Dip abgezogen); ``"summe"`` = Summenfit aller Dips auf
     #: den Korridorpunkten, jedes ``B_res_k`` hart auf sein Segment beschraenkt.
     methode: str = "trennung"
+    #: Manuelle Trennlinien zwischen den Dips: ``[{"f": Hz, "b": [T, …]}]`` -
+    #: je Stuetzfrequenz ``n_dips - 1`` Feldwerte, dazwischen linear ueber der
+    #: Frequenz interpoliert (harte Segmentgrenzen fuer alle Fits). Fehlen sie,
+    #: werden die Segmente automatisch aus den Dips bestimmt.
+    trenner: list = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.mode = max(1, int(self.mode))
@@ -71,6 +76,46 @@ class Korridor:
         if not self.moden or self.moden[0] != self.mode:
             self.moden = [self.mode] + [m for m in self.moden if m != self.mode]
         self._sortieren()
+
+    # --- Trennlinien -----------------------------------------------------------
+    def trenner_setzen(self, f: float, b: list, toleranz_hz: float = 0.0) -> None:
+        """Trennlinien (Feldwerte, aufsteigend) bei Frequenz ``f`` setzen/ersetzen."""
+        werte = sorted(float(x) for x in b)
+        eintrag = {"f": float(f), "b": werte}
+        for k, t in enumerate(self.trenner):
+            if abs(float(t["f"]) - float(f)) <= toleranz_hz:
+                self.trenner[k] = eintrag
+                break
+        else:
+            self.trenner.append(eintrag)
+        self.trenner.sort(key=lambda t: t["f"])
+
+    def trenner_entfernen(self, f: float, toleranz_hz: float = 0.0) -> bool:
+        vorher = len(self.trenner)
+        self.trenner = [t for t in self.trenner if abs(float(t["f"]) - float(f)) > toleranz_hz]
+        return len(self.trenner) < vorher
+
+    def trennstellen(self, f: float) -> list | None:
+        """Interpolierte Trennlinien bei ``f`` (aufsteigend) oder ``None``; nur
+        Stuetzstellen mit ``n_dips - 1`` Werten zaehlen."""
+        n_t = self.n_dips - 1
+        st = [t for t in self.trenner if len(t["b"]) == n_t]
+        if n_t <= 0 or not st:
+            return None
+        if len(st) == 1:
+            return list(st[0]["b"])
+        fs = np.array([t["f"] for t in st], dtype=float)
+        f = float(f)
+        if f <= fs[0]:
+            i0, i1 = 0, 1
+        elif f >= fs[-1]:
+            i0, i1 = len(st) - 2, len(st) - 1
+        else:
+            i1 = int(np.searchsorted(fs, f))
+            i0 = i1 - 1
+        df = fs[i1] - fs[i0]
+        w = (f - fs[i0]) / df if df else 0.0
+        return sorted(float(a + w * (b - a)) for a, b in zip(st[i0]["b"], st[i1]["b"]))
 
     def mode_von_dip(self, j: int) -> int | None:
         """Mode-Nummer des ``j``-ten Dips (0-basiert) oder ``None``."""
@@ -185,7 +230,9 @@ class Korridor:
     def als_dict(self) -> dict:
         return {"mode": int(self.mode), "anker": [a.als_dict() for a in self.anker],
                 "n_dips": int(self.n_dips), "moden": [int(m) for m in self.moden],
-                "methode": self.methode}
+                "methode": self.methode,
+                "trenner": [{"f": float(t["f"]), "b": [float(x) for x in t["b"]]}
+                            for t in self.trenner]}
 
     @classmethod
     def aus_dict(cls, daten: dict) -> "Korridor":
@@ -194,12 +241,15 @@ class Korridor:
                           for a in daten.get("anker", [])],
                    n_dips=int(daten.get("n_dips", 1)),
                    moden=[int(m) for m in daten.get("moden", [])],
-                   methode=str(daten.get("methode", "trennung")))
+                   methode=str(daten.get("methode", "trennung")),
+                   trenner=[{"f": float(t["f"]), "b": [float(x) for x in t.get("b", [])]}
+                            for t in daten.get("trenner", [])])
 
     def kopie(self) -> "Korridor":
         return Korridor(mode=self.mode,
                         anker=[Anker(a.f, a.b_links, a.b_rechts) for a in self.anker],
-                        n_dips=self.n_dips, moden=list(self.moden), methode=self.methode)
+                        n_dips=self.n_dips, moden=list(self.moden), methode=self.methode,
+                        trenner=[{"f": t["f"], "b": list(t["b"])} for t in self.trenner])
 
 
 def korridor_aus_linie(mode: int, b1: float, f1: float, b2: float, f2: float,
@@ -310,3 +360,10 @@ def dip_segmente(feld: np.ndarray, s21: np.ndarray, n: int,
             segmente.append((float(Bs[start]), float(Bs[ende])))
         start = ende
     return segmente if segmente else [(lo, hi)]
+
+
+def segmente_aus_trennern(lo: float, hi: float, trennstellen: list) -> list[tuple[float, float]]:
+    """Segmente ``[(lo, t1), (t1, t2), …, (tn, hi)]`` aus manuellen Trennlinien
+    (auf ``[lo, hi]`` geklemmt; leere Segmente entfallen)."""
+    grenzen = [float(lo)] + [min(max(float(t), lo), hi) for t in sorted(trennstellen)] + [float(hi)]
+    return [(a, b) for a, b in zip(grenzen[:-1], grenzen[1:]) if b > a]
