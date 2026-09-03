@@ -167,3 +167,17 @@ Branch `fix/rueckbau-7c893e8`, nicht auf main gemergt.
 7. Korridor-GUI am Bildschirm prüfen (Drag-Handhabung, Farben, Dock-Breite), neue GUI-Tests für Korridor-Werkzeuge (Ersatz für `tests/veraltet/`).
 8. Handbuch/Doku (docs/, handbuch/) auf Korridor-Konzept aktualisieren.
 9. Phase 4: `benchmark_ftf/REGRESSION_<datum>.md`, Kurzbericht, Freigabe vor Merge.
+
+## 6. Nutzer-Feedback nach Test von V0.1.68 (2026-09-03, Datensätze testdata-n-lorentz 19.5–22.5 GHz und 28.5–31.5 GHz)
+
+Positiv: Korridor-Fit ist schnell und nahezu eindeutig, auch bei schwierigen Daten (vermiedene Kreuzung zweier Moden); Panel ist übersichtlich. Abzuarbeiten nach dem Token-Reset, vor den P2-Punkten aus §5:
+
+| Nr | Befund | Soll |
+|---|---|---|
+| F-1 | „Korridor fitten …“ für M2: scheinbar passiert nichts; erst nach erneutem Auswählen der Zeile erscheinen die Punkte – und dann **grau und eckig** (Raute wie „ignoriert“) | Nach dem Korridor-Fit sofort Overlay/Liste/Linescan aktualisieren und M2 auswählen; Nebenmoden-Punkte rund in der Mode-Farbe (M2 violett …), Status-Farben wie bei M1; „ignoriert“ bleibt grau |
+| F-2 | Auto-Fit-Dialog vorbelegt mit falschem Frequenzbereich (25,5–25,5 GHz → 0 Linescans; stammt aus vorherigem Datensatz/Zoom) | Standard = ganzer Bereich, keine Begrenzung; letzte Auswahl nur übernehmen, wenn sie im Datenbereich liegt (P2-3 mit einschließen) |
+| F-3 | Spinbox „± 10 mT“ (Korridorbreite): Klick auf Pfeile hoch/runter wirkt nicht zuverlässig | Muss funktionieren (RuhigeSpinBox-Pfeile prüfen; ggf. auch andere Spinboxen) |
+| F-4 | Nahe Dips (Zeichnung): **Hard Crop** durch den Nutzer – eine Lorentz links, eine rechts der Grenze, jede über alle Punkte ihrer Seite gefittet, Grenze strikt. V1.66 konnte das im Fit, aber die Grenzgeraden-Grenzen wurden im Linescan-Fenster ignoriert | Korridorgrenzen = harte Grenzen in jedem Fit (Auto-Fit, Korridor-Fit, Nachfit) und im Linescan-Fenster sichtbar/ziehbar; Grenze im Linescan-Fenster ziehen → Anker → schräge Korridorgrenze im Farbplot (bereits so gebaut, am Bildschirm verifizieren) |
+| F-5 | Vorgabe an den Auto-Fit: „hier sind zwei (drei) Resonanzen“ als harte Randbedingung; nur danach suchen; dritte weiter entfernt ebenfalls per Hard Crop | Auto-Fit bei vorhandenen Korridoren: alle Korridore nacheinander fitten (M1..Mn), keine freie Suche außerhalb; Korridor-Anlage einfach halten (Tutor: eine globale Grenze je Mode, innerhalb jede gewünschte Mode fitten) |
+| F-6 | Jumper aktiv: Pfeiltasten im Farbplot springen auch auf nicht gefittete Frequenzen (Linescan-Panel zeigt ungefittete Punkte) | Option „ungefittete überspringen“ (Standard an, wenn Jumper > 1) |
+| F-7 (Beobachtung) | Auto-Fit ohne Korridor an der vermiedenen Kreuzung (28,5–31,5 GHz): AutoWindow springt zwischen den Ästen, Fenster 247 Punkte, viele Problemfits | Hinweis/Empfehlung im Protokoll: bei mehreren Moden Korridore anlegen; Fensterbreite gegenüber Sweep deckeln |
