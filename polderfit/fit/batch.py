@@ -601,6 +601,23 @@ def fitte_mode(
         except Exception:
             summe = None
         if summe is not None:
+            # Entartung: Beitraege, die sich gegenseitig ausloeschen (jede Linie viel
+            # groesser als der Signalhub) -> Summenfit verwerfen, Einzelfits behalten.
+            e0 = summe[0]
+            B = np.asarray(e0.feld, dtype=float)
+            untergrund = ((e0.off_re + 1j * e0.off_im)
+                          + (e0.slope_re + 1j * e0.slope_im) * (B - float(np.mean(B))))
+            hub = float(e0.signalhub) if np.isfinite(e0.signalhub) else 0.0
+            entartet = hub > 0 and any(
+                float(np.max(np.abs(kurve_k - untergrund))) > 3.0 * hub
+                for _m, kurve_k in (e0.beitraege or []))
+            if entartet:
+                for mode in moden:
+                    e = ergebnisse.get(mode)
+                    if e is not None:
+                        e.meldung = "Summenfit entartet (Beiträge heben sich auf) – Einzelfits verwendet"
+                summe = None
+        if summe is not None:
             for mode, erg in zip(moden, summe):
                 erg.nachbearbeitet = True
                 if bestaetigen is None:
