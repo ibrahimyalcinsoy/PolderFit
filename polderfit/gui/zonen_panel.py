@@ -38,8 +38,6 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``trenner_umschalten(an)`` – Trennlinie im Linescan-Panel setzen (Klick)
     * ``trenner_loeschen()`` – Trennlinien an der angezeigten Frequenz loeschen
     * ``breite_geaendert(mode, halbbreite_T)`` – Breite des gewaehlten Korridors
-    * ``sichtbar_geaendert(mode, an)`` – Haekchen in der Liste: Mode im Farbplot zeigen
-    * ``fits_loeschen(mode)`` – Kontextmenue: Fit-Ergebnisse dieser Mode verwerfen
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
@@ -47,7 +45,7 @@ class ZonenPanel(QtWidgets.QWidget):
                  korridor_gewaehlt=None, korridor_entfernen=None,
                  anker_entfernen=None, korridor_fit=None, dips_geaendert=None,
                  trenner_umschalten=None, trenner_loeschen=None, breite_geaendert=None,
-                 sichtbar_geaendert=None, fits_loeschen=None, parent=None):
+                 parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
@@ -61,9 +59,6 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_trenner_umschalten = trenner_umschalten
         self._cb_trenner_loeschen = trenner_loeschen
         self._cb_breite_geaendert = breite_geaendert
-        self._cb_sichtbar_geaendert = sichtbar_geaendert
-        self._cb_fits_loeschen = fits_loeschen
-        self._versteckt: set = set()
         self._korridore: list = []
         self._mode_aktiv: int = 1
         self._statistik: dict = {}
@@ -85,13 +80,8 @@ class ZonenPanel(QtWidgets.QWidget):
 
         self.korridor_liste = QtWidgets.QListWidget()
         self.korridor_liste.setMaximumHeight(96)
-        self.korridor_liste.setToolTip(
-            "Gewählte Zeile = Mode im Linescan-Panel. Häkchen = Punkte im Farbplot zeigen.\n"
-            "Rechtsklick: Fit-Ergebnisse dieser Mode löschen.")
+        self.korridor_liste.setToolTip("Gewählte Zeile = Mode im Linescan-Panel.")
         self.korridor_liste.currentRowChanged.connect(self._zeile_gewaehlt)
-        self.korridor_liste.itemChanged.connect(self._zeile_geaendert)
-        self.korridor_liste.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.korridor_liste.customContextMenuRequested.connect(self._kontextmenue)
         k_lay.addWidget(self.korridor_liste)
 
         zeile1 = QtWidgets.QHBoxLayout()
@@ -268,12 +258,9 @@ class ZonenPanel(QtWidgets.QWidget):
         if self._mode_aktiv not in moden and self._mode_aktiv != 1:
             self._mode_aktiv = 1
         for r in range(self.korridor_liste.count()):
-            item = self.korridor_liste.item(r)
-            m = int(item.data(QtCore.Qt.UserRole) or 1)
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Unchecked if m in self._versteckt else QtCore.Qt.Checked)
-            if m == self._mode_aktiv:
+            if self.korridor_liste.item(r).data(QtCore.Qt.UserRole) == self._mode_aktiv:
                 self.korridor_liste.setCurrentRow(r)
+                break
         self._blockiert = False
         self._anker_liste_fuellen()
         self._aktualisiere_knoepfe()
@@ -367,33 +354,6 @@ class ZonenPanel(QtWidgets.QWidget):
 
     def _anker_liste_fuellen(self) -> None:
         return   # kein Anker-Detailbereich mehr (Anker werden im Farbplot gezogen)
-
-    def versteckte_moden(self) -> set:
-        """Moden, deren Punkte im Farbplot ausgeblendet sind (Haekchen aus)."""
-        return set(self._versteckt)
-
-    def _zeile_geaendert(self, item) -> None:
-        if self._blockiert:
-            return
-        m = int(item.data(QtCore.Qt.UserRole) or 1)
-        an = item.checkState() == QtCore.Qt.Checked
-        if an:
-            self._versteckt.discard(m)
-        else:
-            self._versteckt.add(m)
-        if self._cb_sichtbar_geaendert is not None:
-            self._cb_sichtbar_geaendert(m, an)
-
-    def _kontextmenue(self, pos) -> None:
-        item = self.korridor_liste.itemAt(pos)
-        if item is None:
-            return
-        m = int(item.data(QtCore.Qt.UserRole) or 1)
-        menue = QtWidgets.QMenu(self)
-        akt = menue.addAction(f"Fit-Ergebnisse von M{m} löschen")
-        akt.setToolTip("Nur die Fits dieser Mode verwerfen (Korridor bleibt; Strg+Z macht es rückgängig).")
-        if menue.exec(self.korridor_liste.mapToGlobal(pos)) is akt and self._cb_fits_loeschen is not None:
-            self._cb_fits_loeschen(m)
 
     def _zeile_gewaehlt(self, zeile: int) -> None:
         if self._blockiert or zeile < 0:

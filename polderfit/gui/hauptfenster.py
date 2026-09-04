@@ -195,8 +195,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
             trenner_umschalten=self._trenner_modus,
             trenner_loeschen=self._trenner_loeschen,
             breite_geaendert=self._korridor_breite_geaendert,
-            sichtbar_geaendert=lambda _m, _an: self._aktualisiere_overlay(),
-            fits_loeschen=self._fits_loeschen,
         )
         #: Korridore je Mode - die EINZIGE Quelle des Moden-Zustands (Zahl der
         #: Moden = Zahl der Korridore); bleiben ueber Auto-Fits erhalten, werden
@@ -2321,8 +2319,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 nebenmoden.append((k, b_k, st_k))
         self.matrix.aktualisiere_resonanz(st.datensatz.frequenzen, bres, problem,
                                           ausgeschlossen, status=status, info=info,
-                                          nebenmoden=nebenmoden, aktiv_mode=self._mode_aktiv,
-                                          versteckt=self.zonenpanel.versteckte_moden())
+                                          nebenmoden=nebenmoden, aktiv_mode=self._mode_aktiv)
         self.ausreisserpanel.zeige_ausreisser(st)
 
     def _zeige_aktuellen(self):
