@@ -24,7 +24,7 @@ Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`
 | 2 AutoWindow (Fenster je Frequenz) | `fit/autowindows.py` |
 | 3 Beschnitt | `fit/autowindows.py: schneide_band` |
 | 4 Einzelfit (LM) + Nachfenster `B_res ± 2,5·ΔH`; mehrere Dips je Fenster/Korridor: Abschälen → Summenfit mit Segment-Schranken (optional BIC) | `fit/linescan_fit.py`, `fit/batch.py`, `fit/korridor.py` |
-| 5 Bewertung (a)–(f) + Nutzer-Bewertung | `fit/kriterien.py`, `fit/linescan_fit.py` |
+| 5 Bewertung (a)–(h) + Nutzer-Bewertung | `fit/kriterien.py`, `fit/linescan_fit.py` |
 | 6 Kittel/LLG | `physik/kittel_llg.py`, `auswertung/uebersicht.py` |
 | Export, Projekt, Einstellungen, Auto-Sicherung | `persistenz/` |
 | Farben nach DIN EN 60073 | `gui/farben.py` |

@@ -163,6 +163,7 @@ class FitErgebnis:
             "frequenz_GHz": self.frequenz / 1e9,
             "B_res_T": self.B_res,
             "B_res_err_T": self.B_res_err,
+            "B_res_err_mT": float(self.B_res_err * 1e3) if np.isfinite(self.B_res_err) else np.nan,
             "B_res_mT": self.B_res_mT,
             "alpha": self.alpha,
             "alpha_err": self.alpha_err,

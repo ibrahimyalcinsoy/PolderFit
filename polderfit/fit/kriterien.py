@@ -197,6 +197,7 @@ KRITERIEN_GRUPPEN: dict[str, tuple[str, str]] = {
     "keine Unsicherheiten": ("U", "Unsicherheit: keine Kovarianz bestimmbar"),
     "B_res-Unsicherheit zu gross": ("U", "Unsicherheit: u(B_res)/B_res > %.0f %%"
                                     % (100 * B_RES_REL_UNSICHERHEIT_MAX)),
+    GRUND_NICHT_GEFITTET: ("–", "noch nicht gefittet"),
 }
 
 

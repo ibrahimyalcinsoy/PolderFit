@@ -132,7 +132,7 @@ def test_projekt_roundtrip_mit_ausreissern_und_zonen(tmp_path):
 
     # Wiederherstellen: TDMS ueber die gespeicherte Zuordnung neu laden.
     daten = lade_sitzung(str(projekt_pfad))
-    assert daten["polderfit_projekt_version"] == 4
+    assert daten["polderfit_projekt_version"] == 5
     zuordnung = {rolle: tuple(paar) for rolle, paar in daten["zuordnung"].items()}
     ds2 = lade_tdms(daten["quelle"], zuordnung=zuordnung, layout=daten["format_typ"])
     stapel2 = stelle_stapel_wieder_her(daten, ds2)

@@ -27,12 +27,12 @@ from pathlib import Path
 import numpy as np
 
 from ..fit.batch import NACHFENSTER_FAKTOR_STANDARD, Ausschlusszone, StapelErgebnis
-from ..fit.korridor import Korridor, korridore_aus_grenzgeraden
+from ..fit.korridor import Anker, Korridor, korridore_aus_grenzgeraden
 from ..fit.kriterien import ALPHA_MAX
 from ..fit.linescan_fit import BEWERTUNGEN, FitErgebnis
 from ..physik.konstanten import GAMMA_STANDARD
 
-PROJEKT_VERSION = 4
+PROJEKT_VERSION = 5
 
 
 def _zahl(x):
@@ -69,6 +69,8 @@ def sitzung_als_dict(stapel: StapelErgebnis, physik: dict | None = None,
         "alpha_plausibel": stapel.alpha_plausibel,
         "nachfenster_faktor": stapel.nachfenster_faktor,
         "nachfit_bestaetigen": bool(stapel.nachfit_bestaetigen),
+        "auto_n_dips": int(getattr(stapel, "auto_n_dips", 1)),
+        "auto_dips_auto": bool(getattr(stapel, "auto_dips_auto", False)),
         "physik": dict(physik) if physik else None,
         "verarbeitung": dict(verarbeitung) if verarbeitung else None,
         "korridore": [k.als_dict() for k in (korridore or [])],
@@ -124,7 +126,7 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
     from ..fit.batch import fitte_mode, fitte_neu  # spaeter Import vermeidet Zyklen
 
     fenster = [tuple(f) for f in daten.get("fenster", [])]
-    if len(fenster) != len(datensatz.linescans):
+    if len(fenster) != len(datensatz.linescans) and int(daten.get("polderfit_projekt_version", 0)) < 5:
         daten = _auf_volles_gitter(daten, datensatz)
         fenster = [tuple(f) for f in daten.get("fenster", [])]
     if len(fenster) != len(datensatz.linescans):
@@ -143,6 +145,8 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
         nachfenster_faktor=float(daten.get("nachfenster_faktor",
                                            NACHFENSTER_FAKTOR_STANDARD)),
         nachfit_bestaetigen=bool(daten.get("nachfit_bestaetigen", True)),
+        auto_n_dips=max(1, int(daten.get("auto_n_dips", 1))),
+        auto_dips_auto=bool(daten.get("auto_dips_auto", False)),
         fenster=fenster,
         ausschlusszonen=[Ausschlusszone.aus_dict(z)
                          for z in daten.get("ausschlusszonen", [])],
@@ -170,9 +174,29 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
         if fortschritt is not None:
             fortschritt(i + 1, len(fenster), ergebnis)
 
-    # Weitere Moden: je Frequenz im Korridor der Mode (sonst gespeichertes Fenster).
-    korridor_je_mode = {int(m): k for k in (korridore or []) for m in k.moden}
+    # Auto-Fit mit mehreren Dips je Fenster (ohne Korridor fuer Mode 1): dieselbe
+    # Kette wie beim Auto-Fit nachbauen (Temp-Korridor = gespeichertes Fenster).
     bereits = set()
+    korridor_je_mode = {int(m): k for k in (korridore or []) for m in k.moden}
+    if stapel.auto_n_dips > 1 and 1 not in korridor_je_mode:
+        n_d = int(stapel.auto_n_dips)
+        for i, ls in enumerate(datensatz.linescans):
+            e = stapel.ergebnisse[i]
+            if not (e is not None and e.gefittet) or not ls.feld.size:
+                continue
+            tmp = Korridor(mode=1, n_dips=n_d, moden=list(range(1, n_d + 1)), methode="summe",
+                           dips_auto=bool(stapel.auto_dips_auto),
+                           anker=[Anker(ls.frequenz, float(fenster[i][0]), float(fenster[i][1]))])
+            fitte_mode(stapel, i, tmp, bestaetigen=False)
+            for m in range(1, n_d + 1):
+                bereits.add((m, i))
+        # Bewertungen der Mode 1 erneut anwenden (fitte_mode hat neu gefittet).
+        for i in range(len(fenster)):
+            zeile = gespeicherte[i] if i < len(gespeicherte) else {}
+            bewertung = zeile.get("bewertung", "auto") if zeile else "auto"
+            if zeile and zeile.get("gefittet", True) and bewertung in BEWERTUNGEN and bewertung != "auto":
+                stapel.bewerte(i, bewertung)
+    # Weitere Moden: je Frequenz im Korridor der Mode (sonst gespeichertes Fenster).
     for mode_text, zeilen in (daten.get("nebenmoden") or {}).items():
         try:
             mode = int(mode_text)
@@ -184,6 +208,13 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
         korridor = korridor_je_mode.get(mode)
         for i, zeile in enumerate(zeilen):
             if not zeile or not zeile.get("gefittet", True):
+                continue
+            if (mode, i) in bereits:
+                ergebnis = liste[i]
+                if ergebnis.gefittet:
+                    bewertung = zeile.get("bewertung", "auto")
+                    if bewertung in BEWERTUNGEN and bewertung != "auto":
+                        liste[i] = stapel.bewerte(i, bewertung, mode=mode)
                 continue
             ergebnis = None
             if korridor is not None and (id(korridor), i) not in bereits:

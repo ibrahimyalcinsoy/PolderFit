@@ -10,10 +10,10 @@
 
 **Einstellungen** (`Datei → Einstellungen`): physikalische Parameter, Verarbeitungskette, Anzeige (Farbskala, Zoom, Problemfits, …), Export-Spalten, Bereichsfit-Optionen → `*.polderfit-einstellungen.json`; *Als Standard speichern* legt sie im Konfigurationsverzeichnis ab (Windows `%APPDATA%\PolderFit`, Linux `~/.config/polderfit`, macOS `~/Library/Application Support/PolderFit`; Umgebungsvariable `POLDERFIT_KONFIG`) und lädt sie beim Start.
 
-**Speichern / Export** (`Datei → Speichern / Export`): *Alles speichern* (`Strg+Umschalt+S`) schreibt gewählte Bestandteile mit gemeinsamem Basisnamen in einen Ordner – Projekt, Excel, CSV, Kittel/LLG (Excel + CSV + PNG/PDF), Farbplot-Bild, Farbplot-Matrix, TDMS, Einstellungen. Excel/CSV der Einzelfits enthalten alle Parameter in Spaltengruppen (*Export-Spalten*, als Voreinstellung speicherbar): Resonanzfeld und Linienbreite in **T und mT**, α, Amplitude/Phase/komplexe Amplitude, Untergrund, Gütemaße, Fenster, Status/Bewertung, weitere Moden, Temperatur; Blatt *Global* mit Kittel/LLG (T und mT) und Einstellungen; Zusatzblätter *Einstellungen*, *Zonen_Geraden*, *Ausreisser*. CSV wahlweise deutsch (`;`, Dezimalkomma).
+**Speichern / Export** (`Datei → Speichern / Export`): *Alles speichern* (`Strg+Umschalt+S`) schreibt gewählte Bestandteile mit gemeinsamem Basisnamen in einen Ordner – Projekt, Excel, CSV, Kittel/LLG (Excel + CSV + PNG/PDF), Farbplot-Bild, Farbplot-Matrix, TDMS, Einstellungen. Excel/CSV der Einzelfits enthalten alle Parameter in Spaltengruppen (*Export-Spalten*, als Voreinstellung speicherbar): Resonanzfeld und Linienbreite in **T und mT**, α, Amplitude/Phase/komplexe Amplitude, Untergrund, Gütemaße, Fenster, Status/Bewertung, Temperatur; je weiterer Mode ein Blatt *Einzelfits_M<k>*; Blatt *Global* mit Kittel/LLG (T und mT) und Einstellungen; Zusatzblätter *Einstellungen*, *Zonen_Korridore*, *Ausreisser*. CSV wahlweise deutsch (`;`, Dezimalkomma).
 
 ```python
-speichere_sitzung(stapel, "sitzung.json", physik=p.als_dict(), verarbeitung=kette.als_dict(), grenzgeraden=geraden)
+speichere_sitzung(stapel, "sitzung.json", physik=p.als_dict(), verarbeitung=kette.als_dict(), korridore=korridore)
 daten = lade_sitzung("sitzung.json")
 ds = lade_tdms(daten["quelle"], zuordnung={r: tuple(p) for r, p in daten["zuordnung"].items()}, layout=daten["format_typ"])
 stapel = stelle_stapel_wieder_her(daten, ds)

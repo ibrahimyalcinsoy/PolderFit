@@ -121,6 +121,10 @@ class StapelErgebnis:
     #: der validierten Basis); Korridor-/Bereichs-Fits ueber viele Frequenzen
     #: bewerten die Kriterien. Abschaltbar in den Parametern (Strg+P).
     nachfit_bestaetigen: bool = True
+    #: Auto-Fit ohne Korridor: erwartete Dips je Fenster und BIC-Option (fuer
+    #: reproduzierbares Wiederherstellen aus der Projektdatei).
+    auto_n_dips: int = 1
+    auto_dips_auto: bool = False
     #: Fitfenster je Frequenz (Mode 1; das "gruene Fenster").
     fenster: list[tuple[float, float]] = field(default_factory=list)
     #: Ergebnisse der Mode 1 je Frequenz (Hauptmode: Overlay, Problemliste, Export).
@@ -385,12 +389,16 @@ def fitte_alle(
         alpha_max=alpha_max, nachfenster_faktor=nachfenster_faktor,
         alpha_plausibel=alpha_plausibel,
         nachfit_bestaetigen=nachfit_bestaetigen,
+        auto_n_dips=max(1, int(n_dips)), auto_dips_auto=bool(dips_auto),
     )
     n = len(datensatz.linescans)
     for i, ls in enumerate(datensatz.linescans):
         if abbruch is not None and abbruch():
             # Rest als Platzhalter: der Stapel bleibt konsistent und nutzbar.
-            for rest in datensatz.linescans[i:]:
+            for j, rest in enumerate(datensatz.linescans[i:], start=i):
+                if not np.all(np.isfinite(fenster[j])):
+                    stapel.fenster[j] = ((float(rest.feld.min()), float(rest.feld.max()))
+                                         if rest.feld.size else (0.0, 0.0))
                 stapel.zugeschnitten.append(rest)
                 stapel.ergebnisse.append(FitErgebnis.platzhalter(rest.frequenz, rest.feld))
             break
@@ -630,12 +638,16 @@ def fitte_mode(
         # Durchgang 2 (Summenfit): alle Dips gemeinsam auf den Korridorpunkten,
         # B_res_k hart auf sein Segment beschraenkt, gemeinsamer Untergrund.
         moden = list(korridor.moden[:len(segmente)])
+        segmente = segmente[:len(moden)]
         try:
             summe = fitte_linescan_summe(
                 ausschnitt, stapel.gamma, segmente, [ergebnisse.get(m) for m in moden], moden,
                 alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel)
-        except Exception:
+        except (ValueError, TypeError, np.linalg.LinAlgError, RuntimeError) as exc:
             summe = None
+            for m in moden:
+                if m in ergebnisse:
+                    ergebnisse[m].meldung = f"Summenfit fehlgeschlagen ({exc.__class__.__name__}) – Einzelfits"
         if summe is not None:
             # Entartung: Beitraege, die sich gegenseitig ausloeschen (jede Linie viel
             # groesser als der Signalhub) -> Summenfit verwerfen, Einzelfits behalten.
@@ -811,7 +823,9 @@ def _fitte_mode_bic(stapel: StapelErgebnis, index: int, korridor: Korridor,
             e.meldung = (e.meldung + f" · BIC: {k_best} von {korridor.n_dips} Dips").strip(" ·")
             liste[index] = e
             if mode == 1:
-                stapel.fenster[index] = (float(e.B_fenster_min), float(e.B_fenster_max))
+                # Fenster der Mode 1 = ganzer Korridor (nicht das Segment), damit
+                # Projekt-Wiederherstellung und Anzeige dieselbe Kette nachbauen.
+                stapel.fenster[index] = (float(grenzen[0]), float(grenzen[1]))
                 stapel.zugeschnitten[index] = ausschnitt
         else:
             ph = FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=mode)

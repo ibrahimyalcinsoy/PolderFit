@@ -115,7 +115,7 @@ Python-Umgebung.
    pip install -e ".[gui]"
    ```
 
-   Wenn am Ende eine Zeile wie `Successfully installed polderfit-0.1.0 ...` erscheint,
+   Wenn am Ende eine Zeile wie `Successfully installed polderfit-2.0.0 ...` erscheint,
    ist die Installation fertig.
 
 ---

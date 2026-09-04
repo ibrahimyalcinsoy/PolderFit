@@ -8,7 +8,7 @@ Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, `
 | Korridore | `Strg+L` oder Panel *Korridore*, 2 Klicks entlang der Resonanz | Korridor ± Breite (Spinbox wirkt auf den gewählten Korridor); Anker durch Ziehen der grünen Grenzen im Linescan-Panel oder der Griffe im Farbplot; „Resonanzen im Korridor“ = n Dips (Summenfit, B_res je Dip im Segment; alternativ harte Trennung); „Trennlinie setzen“ = gelbe Linie im Linescan-Panel, wandert relativ zur Korridormitte mit; „Korridor fitten …“ (Frequenzbereich, Modus, Jumper, BIC) |
 | Bereich neu fitten (Rechteck) | `Strg+B` | derselbe Dialog (Bereich editierbar); `B_res` bleibt im Bereich |
 | Grenzen im Linescan ziehen | Fit-Panel (erscheint mit erstem Fit oder Klick in die Karte) | Einzelfrequenz, Fit sofort; Zahl der Resonanzen wählbar |
-| Ausschlusszone | Panel, Rechteck | Punkte aus allen (Nach-)Fits; schraffiert; einzeln entfernbar |
+| Ausschlusszone | Menü Funktionen → „Ausschlusszone einzeichnen“, Rechteck | Punkte aus allen (Nach-)Fits; schraffiert; Rückgängig mit Strg+Z |
 | Bewertung | `Strg+1/2/3`, `Strg+I`, Panel-Knöpfe | gut bestätigen / problematisch / automatisch / ignorieren ([Bewertung](bewertung.md)) |
 
 Ein gezielter Nachfit an **einer** Frequenz (Grenzen ziehen, „Neu fitten“, Trennlinie) gilt als **vom Nutzer bestätigt** (grün mit blauem Rand; abschaltbar mit Strg+P); Korridor- und Bereichs-Fits über viele Frequenzen bewerten die Kriterien. Im Linescan-Panel zeigt „M1/M2 …“ die gewählte Mode; Grenzen ziehen setzt bei dieser Frequenz einen Anker des Korridors.

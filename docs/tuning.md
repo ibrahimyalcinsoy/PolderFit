@@ -25,4 +25,4 @@ Bewertungsschwellen: `RMSE_NORM_SCHWELLE` 0.35, `ALPHA_PLAUSIBEL_MAX` 0.05, `B_R
 | schwach/verrauscht (nahe ip) | `_PROMINENZ_MIN` ↑ oder Korridor um die Mode |
 | Gitter/periodischer Untergrund | Stationärabzug greift (unsortiert); sonst Korridor/Bereich |
 | sehr breit (FeCr₂S₄, α ≈ 0,2–0,8) | `alpha_max` ↑, `alpha_plausibel` ↑ + manuelle Fenster (Automatik nicht ausgelegt) |
-| nahe Moden (Doppel-Dip, vermiedene Kreuzung) | je Mode ein enger Korridor (harte Grenze), „Korridor fitten …“; kein Summenfit |
+| nahe Moden (Doppel-Dip, vermiedene Kreuzung) | ein Korridor mit „Resonanzen im Korridor“ = n: Summenfit mit B_res je Dip im Segment (Standard), harte Trennung als Alternative, Trennlinien im Linescan-Panel, Anzahl optional per BIC; getrennte Moden: je Mode ein Korridor |

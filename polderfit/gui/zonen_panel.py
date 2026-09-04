@@ -61,6 +61,8 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_breite_geaendert = breite_geaendert
         self._korridore: list = []
         self._mode_aktiv: int = 1
+        self._statistik: dict = {}
+        self._extra_moden: list = []
         self._blockiert = False
 
         lay = QtWidgets.QVBoxLayout(self)
@@ -209,20 +211,38 @@ class ZonenPanel(QtWidgets.QWidget):
                 f"{zone.feld_min:.3f}–{zone.feld_max:.3f} T, "
                 f"{zone.frequenz_min/1e9:.2f}–{zone.frequenz_max/1e9:.2f} GHz")
 
-    def setze_korridore(self, korridore, statistik: dict | None = None) -> None:
+    def setze_korridore(self, korridore, statistik: dict | None = None,
+                        extra_moden=None) -> None:
         """Fuellt die Korridorliste (``statistik[mode] = (n_gefittet, n_problematisch)``).
 
-        Ohne Korridore steht eine Zeile "M1 – AutoWindow" (Mode 1 ohne Korridor).
-        Die aktive Mode bleibt, wenn sie noch existiert; sonst Mode 1.
+        Ohne Korridore steht eine Zeile "M1 – AutoWindow" (Mode 1 ohne Korridor);
+        ``extra_moden``: weitere Moden aus dem Auto-Fit (Resonanzen je Fenster)
+        ohne eigenen Korridor - als Zeilen waehlbar. Die aktive Mode bleibt,
+        wenn sie noch existiert; sonst Mode 1.
         """
         self._korridore = list(korridore)
-        statistik = statistik or {}
+        if statistik is not None:
+            self._statistik = dict(statistik)
+        statistik = self._statistik
+        if extra_moden is not None:
+            self._extra_moden = [int(m) for m in extra_moden]
         self._blockiert = True
         self.korridor_liste.clear()
         moden = [int(m) for k in self._korridore for m in k.moden]
         if 1 not in moden:
             self.korridor_liste.addItem(self._zeile_text(1, None, statistik.get(1)))
             self.korridor_liste.item(0).setData(QtCore.Qt.UserRole, 1)
+        for m in self._extra_moden:
+            if m in moden or m == 1:
+                continue
+            stat = statistik.get(m)
+            text = f"M{m} · Auto-Fit (Resonanz {m} je Fenster)"
+            if stat:
+                text += f" · {stat[0]} Fits" + (f" ({stat[1]} ⚠)" if stat[1] else "")
+            item = QtWidgets.QListWidgetItem(text)
+            item.setData(QtCore.Qt.UserRole, int(m))
+            self.korridor_liste.addItem(item)
+            moden.append(m)
         for k in self._korridore:
             item = QtWidgets.QListWidgetItem(self._zeile_text(k.mode, k, statistik.get(k.mode)))
             item.setData(QtCore.Qt.UserRole, int(k.mode))
@@ -274,8 +294,9 @@ class ZonenPanel(QtWidgets.QWidget):
         return None
 
     def mode_neu(self) -> int:
-        """Naechste freie Mode-Nummer (ueber alle Korridore und Dips)."""
-        return max((int(m) for k in self._korridore for m in k.moden), default=0) + 1
+        """Naechste freie Mode-Nummer (ueber alle Korridore, Dips und Auto-Fit-Moden)."""
+        belegt = [int(m) for k in self._korridore for m in k.moden] + list(self._extra_moden)
+        return max(belegt, default=0) + 1
 
     def bandbreite_T(self) -> float:
         """Halbe Korridorbreite beim Anlegen in Tesla."""

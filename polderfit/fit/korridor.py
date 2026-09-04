@@ -76,9 +76,18 @@ class Korridor:
         self.n_dips = max(1, int(self.n_dips))
         if self.methode not in METHODEN:
             self.methode = "summe"
-        self.moden = [int(m) for m in self.moden]
+        moden, gesehen = [], set()
+        for m in [int(m) for m in self.moden]:
+            if m not in gesehen:
+                moden.append(m)
+                gesehen.add(m)
+        self.moden = moden
         if not self.moden or self.moden[0] != self.mode:
             self.moden = [self.mode] + [m for m in self.moden if m != self.mode]
+        self.moden = self.moden[:self.n_dips]      # nie mehr Moden als Dips
+        self.trenner = [{"f": float(t["f"]), "b": sorted(float(x) for x in t["b"])}
+                        for t in self.trenner]
+        self.trenner.sort(key=lambda t: t["f"])
         self._sortieren()
 
     # --- Trennlinien -----------------------------------------------------------

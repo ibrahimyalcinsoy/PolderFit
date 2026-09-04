@@ -500,7 +500,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_korridor.setCheckable(True)
         self.akt_korridor.setToolTip(
             "Modus: zwei Punkte entlang der Resonanz im Farbplot klicken → Korridor "
-            "± Breite für die nächste Mode; danach im Panel „Korridore & Zonen“ "
+            "± Breite für die nächste Mode; danach im Panel „Korridore“ "
             "den Korridor fitten. Funktioniert direkt nach dem Laden.")
         self.akt_korridor.toggled.connect(self._korridor_modus)
         self.akt_zone = A("Ausschlusszone einzeichnen", self)
@@ -861,7 +861,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_zonen_dock(self):
         """Fit-Werkzeuge (links): Korridore (Moden) und Ausschlusszonen."""
-        dock = QtWidgets.QDockWidget("Korridore & Zonen", self)
+        dock = QtWidgets.QDockWidget("Korridore", self)
         dock.setObjectName("zonen_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
@@ -1003,6 +1003,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.zonenpanel.setze_modus_aktiv(modus == "zone")
         self.zonenpanel.setze_korridor_modus_aktiv(modus == "korridor")
         self.zonenpanel.setze_anker_modus_aktiv(modus == "anker")
+        if modus is not None and self.fitansicht.trenner_modus():
+            self.fitansicht.setze_trenner_modus(False)      # exklusiv: nur ein Modus
+            self.zonenpanel.setze_trenner_modus_aktiv(False)
         if modus is None:
             self.modus_label.setVisible(False)
             self.statusBar().showMessage("Modus beendet.", 4000)
@@ -1242,6 +1245,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _korridor_gewaehlt(self, mode: int):
         """Zeile der Korridorliste gewaehlt: Linescan-Panel und Farbplot heben diese Mode hervor."""
         self._mode_aktiv = max(1, int(mode))
+        if self.zonenpanel.mode_aktiv() != self._mode_aktiv:
+            self.zonenpanel.setze_mode_aktiv(self._mode_aktiv)
+        korridor = self._korridor_fuer(self._mode_aktiv)
+        if self.fitansicht.trenner_modus() and (korridor is None or korridor.n_dips < 2):
+            self._trenner_modus(False)   # Trennlinien nur bei Mehr-Dip-Korridor
         self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv)
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
@@ -1289,7 +1297,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if st is None:
             return {}
         stat = {}
-        for mode in [1] + [int(m) for k in self._korridore for m in k.moden]:
+        for mode in sorted({1} | {int(m) for k in self._korridore for m in k.moden}
+                           | set(st.moden_vorhanden())):
             liste = st.ergebnisse_mode(mode)
             n_fit = sum(1 for e in liste if e.gefittet)
             n_prob = sum(1 for e in liste if e.gefittet and e.problematisch)
@@ -1298,7 +1307,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _zeige_korridore(self):
         """Synchronisiert Korridor-Overlay (Farbplot), Panel-Liste und Schatten."""
-        self.zonenpanel.setze_korridore(self._korridore, self._korridor_statistik())
+        extra = [m for m in (self.stapel.moden_vorhanden() if self.stapel is not None else [])
+                 if m != 1]
+        self.zonenpanel.setze_korridore(self._korridore, self._korridor_statistik(),
+                                        extra_moden=extra)
         self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv,
                                     anker_geaendert=self._anker_gezogen)
         self._korridor_schatten = self._korridore_kopie()
@@ -1355,7 +1367,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             korridor.moden.append(self.zonenpanel.mode_neu())
             self.zonenpanel.setze_korridore(self._korridore)   # mode_neu sieht die neue Nummer
         korridor.n_dips = n
-        korridor.methode = methode
+        korridor.methode = "summe" if auto else methode   # BIC nur mit Summenfit
         if auto is not None:
             korridor.dips_auto = bool(auto)
         if self.stapel is not None:
@@ -1373,6 +1385,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
             lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
         self._aktualisiere_overlay()
+        self._zeige_aktuellen()
         self._auswertung_nachziehen()
         self._log(f"Korridor M{mode}: {n} Resonanz(en) vorgegeben"
                   + (f" – Moden {', '.join(f'M{m}' for m in korridor.moden)}; je Frequenz wird "
@@ -1452,6 +1465,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         for korridor in korridore:
             if korridor.n_dips > 1:
                 korridor.dips_auto = dialog.dips_auto()
+                if korridor.dips_auto:
+                    korridor.methode = "summe"   # BIC bewertet Summenfit-Kandidaten
         self._bereich_modus = modus
         self._bereich_frequenz = (f_von, f_bis)
         self._bereich_schritt = schritt
@@ -2012,6 +2027,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._korridore = []
         self._korridor_schatten = []
         self._mode_aktiv = 1
+        if self.fitansicht.trenner_modus():
+            self._trenner_modus(False)
         self.zonenpanel.setze_mode_aktiv(1)
         self._zeige_korridore()
         self._bereich_frequenz = self._bereich_feld = None  # datensatzbezogen
@@ -2176,7 +2193,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
                           phase=f"Korridor M{_m}")
                 fitte_korridor(stapel, korridor, fortschritt=fortschritt_k,
                                abbruch=melde.abgebrochen,
-                               schritt=max(1, int(auswahl.n_frequenz)))   # Jumper absolut
+                               schritt=max(1, int(auswahl.n_frequenz)),   # Jumper absolut
+                               frequenz_min=auswahl.frequenz_min_hz,
+                               frequenz_max=auswahl.frequenz_max_hz,
+                               ausschluss=list(auswahl.frequenz_ausschluss))
             return stapel
 
         def bei_fertig(stapel):
@@ -2417,8 +2437,6 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _mode_combo_gewaehlt(self, index: int) -> None:
         mode = int(self.mode_combo.itemData(index) or 1)
         if mode != self._mode_aktiv:
-            if any(k.enthaelt_mode(mode) for k in self._korridore) or mode == 1:
-                self.zonenpanel.setze_mode_aktiv(mode)
             self._korridor_gewaehlt(mode)
 
     def _fenster_der_mode(self, i: int, mode: int, e) -> tuple[float, float]:
@@ -2756,6 +2774,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         werte["verarbeitung"] = self.verarbeitung.kette().beschreibung()
         return werte
 
+    def _kittel_indizes_moden(self) -> dict:
+        """Je Mode >= 2 die im Kittel/LLG-Fit dieser Mode verwendeten Stapel-Indizes."""
+        st = self.stapel
+        if st is None or not st.nebenmoden:
+            return {}
+        p = self._physik
+        try:
+            reihen = auswertung_je_mode(
+                st, [k for k in st.moden_vorhanden() if k >= 2], geometrie=p.geometrie,
+                gamma_fest=p.gamma_fest, gamma_start=p.gamma, r2_min=p.r2_min,
+                gewichtet=p.gewichtet)
+        except Exception:
+            return {}
+        return {int(k): [int(i) for i in r.indizes] for k, r in reihen.items()}
+
     def _global_parameter_moden(self) -> dict:
         """Kittel/LLG je Mode (nur bei mehreren Moden) fuer das Blatt 'Global':
         ``mode<k>_kittel_*``, ``mode<k>_llg_*``, ``mode<k>_n_punkte``."""
@@ -2827,7 +2860,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                              verwendet=self._kittel_indizes(),
                              zusatzblaetter=self._zusatzblaetter() if opt.get("zusatzblaetter", True) else None,
                              zugeschnitten=self.stapel.zugeschnitten,
-                             nebenmoden=self.stapel.nebenmoden)
+                             nebenmoden=self.stapel.nebenmoden,
+                             verwendet_moden=self._kittel_indizes_moden(),
+                             ausreisser_moden=self.stapel.ausreisser_moden)
         self.statusBar().showMessage(f"Excel gespeichert: {pfad}")
         self._log(f"Excel gespeichert: {os.path.basename(pfad)}", "ok")
         return pfad
@@ -3268,6 +3303,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.navigator_dock.setVisible(False)
             self._korridore = korridore
             self._mode_aktiv = 1
+            if self.fitansicht.trenner_modus():
+                self._trenner_modus(False)
             self.zonenpanel.setze_mode_aktiv(1)
             self._zeige_korridore()
             self._aktualisiere_overlay()
@@ -3487,15 +3524,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
               α-Plausibilitätsgrenze.</li>
           <li><b>Fitten – drei Wege, alle direkt nach dem Laden möglich:</b>
               <ul>
-              <li><b>Auto-Fit (alle)</b> (F5): Dialog mit Frequenz/Feld von … bis … und Jumper,
-                  danach Fenstersuche und Fit je Frequenz im Hintergrund.</li>
-              <li><b>Korridore je Mode</b> (Strg+L oder Panel „Korridore &amp; Zonen“): zwei
-                  Klicks entlang der Resonanz → Korridor ± Breite für die nächste Mode
-                  (M1, M2 …). Anker setzen (Klick) oder ziehen führt den Korridor nach;
-                  zwischen den Ankern wird linear interpoliert. „Korridor fitten …“ fittet
-                  die Mode je Frequenz NUR auf den Punkten im Korridor (Einzelfit, kein
-                  Summenfit) – der Korridor ist die harte Grenze. Bei nahen Moden Korridore
-                  eng setzen; das Programm trennt sie nicht selbst.</li>
+              <li><b>Auto-Fit (alle)</b> (F5): Dialog mit Jumper (absolut auf dem Frequenzgitter),
+                  Bereich (Standard: alles, „Zoom-Ausschnitt übernehmen“), erwarteten
+                  Resonanzen je Fenster und optional „Anzahl automatisch (BIC)“; danach
+                  Fenstersuche und Fit je Frequenz, anschließend alle Korridore.</li>
+              <li><b>Korridore je Mode</b> (Strg+L oder Panel „Korridore“): zwei Klicks
+                  entlang der Resonanz → Korridor ± Breite (M1, M2 …). Anker entstehen durch
+                  Ziehen der grünen Grenzen im Linescan-Panel oder der Griffe im Farbplot;
+                  dazwischen wird linear interpoliert. „Resonanzen im Korridor“ = n Dips:
+                  Summenfit mit B_res je Dip in seinem Segment (Alternative: harte Trennung),
+                  Trennlinien (gelb) im Linescan-Panel setzen, optional Anzahl per BIC.
+                  „Korridor fitten …“ rechnet nur auf den Punkten im Korridor.</li>
               <li><b>Bereich neu fitten</b> (Strg+B): Rechteck im Farbplot (Mode 1).</li>
               </ul>
               Im <b>Linescan-Panel</b> (erscheint mit dem ersten Fit oder Klick in die Karte)

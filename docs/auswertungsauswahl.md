@@ -1,6 +1,6 @@
 # Auswertungsauswahl (Bereiche, Jumper)
 
-Vor jedem Auto-Fit: Dialog „Auswertungsbereich & Jumper“ (`fit/auswahl.py`).
+Vor jedem Auto-Fit: Dialog „Auto-Fit: Bereich & Jumper“ (`fit/auswahl.py`).
 
 | Einstellung | Wirkung |
 |---|---|

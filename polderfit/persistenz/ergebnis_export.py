@@ -24,7 +24,7 @@ from ..fit.linescan_fit import FitErgebnis
 #: Spaltengruppen des Einzelfit-Exports: Schluessel -> (Titel, Spalten).
 SPALTEN_GRUPPEN: dict[str, tuple[str, list[str]]] = {
     "kern": ("Resonanzfeld & Linienbreite (T und mT), α", [
-        "frequenz_Hz", "frequenz_GHz", "B_res_T", "B_res_mT", "B_res_err_T",
+        "frequenz_Hz", "frequenz_GHz", "B_res_T", "B_res_mT", "B_res_err_T", "B_res_err_mT",
         "mu0_dH_T", "mu0_dH_mT", "mu0_dH_err_T", "mu0_dH_err_mT", "alpha", "alpha_err"]),
     "amplitude": ("Amplitude, Phase, komplexe Amplitude", [
         "A", "A_err", "phi_rad", "phi_err_rad", "phi_deg", "A_komplex_re", "A_komplex_im"]),
@@ -134,6 +134,8 @@ def exportiere_excel(
     zusatzblaetter: dict[str, pd.DataFrame] | None = None,
     zugeschnitten=None,
     nebenmoden: dict | None = None,
+    verwendet_moden: dict | None = None,
+    ausreisser_moden=None,
 ) -> None:
     """Schreibt Parameter (Blatt 'Einzelfits'), je weiterer Mode ein Blatt
     'Einzelfits_M<k>' (``nebenmoden``: ``{mode: [FitErgebnis]}``), Kittel/LLG
@@ -147,8 +149,11 @@ def exportiere_excel(
         for mode, liste in sorted((nebenmoden or {}).items()):
             if not any(e.gefittet for e in liste):
                 continue
-            tab_m = parameter_tabelle(liste, ausreisser, spalten=spalten,
-                                      nur_gefittete=nur_gefittete)
+            gesperrt_m = sorted(set(ausreisser or []) | {
+                int(i) for i, k in (ausreisser_moden or []) if int(k) == int(mode)})
+            tab_m = parameter_tabelle(liste, gesperrt_m, spalten=spalten,
+                                      nur_gefittete=nur_gefittete,
+                                      verwendet=(verwendet_moden or {}).get(int(mode)))
             tab_m.to_excel(writer, sheet_name=f"Einzelfits_M{int(mode)}", index=False)
         _global_tabelle(global_param).to_excel(writer, sheet_name="Global", index=False)
         for name, blatt in (zusatzblaetter or {}).items():
@@ -183,7 +188,9 @@ def kittel_llg_tabelle(info: dict | None, gewichtet: bool = False,
     Mode (Korridor-Nummer als erste Zeile)."""
     zeilen = []
     if mode is not None:
-        zeilen.append(("Mode", int(mode), mode_text, ""))
+        zeilen.append(("Mode", int(mode), "", ""))
+        if mode_text:
+            zeilen.append(("Mode_Beschreibung", mode_text, "", ""))
     if info is not None:
         kit, llg = info["kittel"], info["llg"]
         g_err = kit.get("g_faktor_err", np.nan)

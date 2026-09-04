@@ -24,7 +24,7 @@ from ..persistenz.ergebnis_export import SPALTEN_GRUPPEN
 #: Schluessel -> (Text, Tooltip, braucht_fits)
 EXPORT_TEILE = {
     "projekt": ("Projektdatei (JSON) – Sitzung fortsetzen",
-                "Quelle, Kanal-Zuordnung, Fenster, Zonen, Grenzgeraden, Ausreißer,\n"
+                "Quelle, Kanal-Zuordnung, Fenster, Zonen, Korridore, Ausreißer,\n"
                 "Bewertungen, physikalische Parameter und Verarbeitungskette.", True),
     "excel": ("Einzelfits als Excel (.xlsx) – alle Parameter, Kittel/LLG, Einstellungen",
               "Blatt 'Einzelfits' (Spalten nach Export-Spalten-Einstellung),\n"

@@ -159,7 +159,7 @@ class ParameterDialog(QtWidgets.QDialog):
             "Manuelle Nachfits automatisch als „gut – bestätigt“ bewerten")
         self.chk_bestaetigen.setChecked(parameter.nachfit_bestaetigen)
         self.chk_bestaetigen.setToolTip(
-            "An (Standard): Grenzen ziehen, Bereichs-/Grenzgeraden-Fit und\n"
+            "An (Standard): Grenzen ziehen, Bereichs-/Korridor-Fit und\n"
             "'Nochmal fitten' gelten als vom Nutzer geprüft → grüner Punkt mit\n"
             "blauem Rand, gehen in Kittel/LLG ein. Das Kriterienergebnis bleibt\n"
             "einsehbar (Export: problematisch_auto). Aus: Kriterien entscheiden\n"

@@ -350,6 +350,7 @@ def fitte_korridor(
     frequenz_min: float | None = None,
     frequenz_max: float | None = None,
     schritt: int = 1,
+    ausschluss=None,
 ) -> tuple[list[int], list[int]]:
     """Fittet die Mode des Korridors an allen Frequenzen, an denen der Korridor
     nicht leer ist - je Frequenz ein Einzelfit NUR auf den Punkten im Korridor
@@ -374,6 +375,9 @@ def fitte_korridor(
         if frequenz_max is not None and ls.frequenz > frequenz_max:
             uebersprungen.append(i)
             continue
+        if any(lo <= ls.frequenz <= hi for lo, hi in (ausschluss or [])):
+            uebersprungen.append(i)
+            continue
         if not ls.feld.size or not korridor.gilt(ls.frequenz, float(ls.feld.min()),
                                                  float(ls.feld.max())):
             uebersprungen.append(i)
@@ -382,7 +386,8 @@ def fitte_korridor(
     # Jumper absolut auf dem Frequenzgitter (Index i mit i % schritt == 0) -
     # kongruent zum Auto-Fit-Jumper, unabhaengig vom Korridoranfang.
     reihenfolge = [i for i in kandidaten if i % schritt == 0]
-    uebersprungen.extend(i for i in kandidaten if i not in set(reihenfolge))
+    gewaehlt = set(reihenfolge)
+    uebersprungen.extend(i for i in kandidaten if i not in gewaehlt)
     neu: list[int] = []
     for k, i in enumerate(reihenfolge):
         if abbruch is not None and abbruch():

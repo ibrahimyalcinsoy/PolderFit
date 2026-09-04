@@ -10,6 +10,8 @@
 | d | unphysikalisch | `alpha > alpha_plausibel` (Standard `alpha_max/2` = 0.05; einstellbar `Strg+P`) | `ALPHA_PLAUSIBEL_MAX` |
 | e | Konvergenz/Kovarianz | kein Erfolg; keine Unsicherheiten **und** `rmse_norm > 0.10` | `RMSE_NORM_EXZELLENT` |
 | f | Unsicherheit | `B_res_err/|B_res| > 2 %` | `B_RES_REL_UNSICHERHEIT_MAX` |
+| g | zu wenige Punkte | weniger als 12 Messpunkte im Fenster/Korridor | `MIN_PUNKTE_FIT` |
+| h | Linie nicht aufgelöst | `µ0ΔH < 1,5` Feldschritte | `DH_MIN_FELDSCHRITTE` |
 
 R² ist **kein** Gütemaß (Untergrund dominiert die Varianz → R² ≈ 1 auch ohne Resonanz). `chi2_red` (Rauschen aus zweiten Differenzen, MAD/√6) wird exportiert, nicht zur Einstufung genutzt.
 

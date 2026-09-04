@@ -460,7 +460,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         n_aus = len(stapel.ausreisser) + len(paare)
         return kittel_llg_tabelle(reihe.info, gewichtet=self._gewichtet, n_punkte=reihe.n,
                                   n_ausreisser=n_aus, mode=mode if kennzeichnen else None,
-                                  mode_text=f"Korridor M{mode}" if kennzeichnen else "")
+                                  mode_text=f"Mode M{mode}" if kennzeichnen else "")
 
     def _punkte_tabelle(self, stapel, reihe: ModenReihe, kennzeichnen: bool) -> pd.DataFrame:
         mode = reihe.mode
@@ -513,6 +513,10 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 tab.to_excel(writer, sheet_name=name, index=False)
         geschrieben.append(basis + ".xlsx")
         csv_pfad = basis + "_punkte.csv"
+        if mehrere:
+            # CSV mit den Punkten ALLER Moden (Spalte mode), nicht nur der Ansicht.
+            tab_punkte = _zusammen([self._punkte_tabelle(stapel, r, True)
+                                    for r in self._reihen_alle_moden(stapel).values()])
         if csv_deutsch:
             tab_punkte.to_csv(csv_pfad, index=False, sep=";", decimal=",", encoding="utf-8-sig")
         else:
