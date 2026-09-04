@@ -14,10 +14,9 @@ Nur starten: `.venv\Scripts\activate && polderfit`
 
 ## Erstinstallation (Windows)
 
-Voraussetzungen: [Python ≥ 3.11](https://www.python.org/downloads/windows/) („Add python.exe to PATH“ anhaken) und [Git](https://git-scm.com/download/win). Befehle in der Eingabeaufforderung (`cmd`):
+Voraussetzungen: [Python ≥ 3.11](https://www.python.org/downloads/windows/) („Add python.exe to PATH“ anhaken) und [Git](https://git-scm.com/download/win). In der Eingabeaufforderung (`cmd`) in den gewünschten Zielordner wechseln, dann:
 
 ```bat
-cd %USERPROFILE%
 git clone https://github.com/ibrahimyalcinsoy/PolderFit.git
 cd PolderFit
 python -m venv .venv

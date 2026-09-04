@@ -104,7 +104,8 @@ def test_zwei_dips_im_korridor_hard_crop(methode):
         if methode == "trennung":
             assert e1.feld.max() <= e2.feld.min() + 1e-9  # harte Trennung, keine Ueberlappung
         else:
-            assert e1.B_fenster_max <= e2.B_fenster_min + 1e-9  # B_res-Schranken je Segment
+            assert e1.B_res < e2.B_res                        # Reihenfolge der Segmente
+            assert e1.B_fenster_min == e2.B_fenster_min       # Kriterienfenster = ganzer Korridor
     assert st.moden_vorhanden() == [1, 2]
 
 

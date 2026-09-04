@@ -439,6 +439,7 @@ def fitte_linescan_summe(
     moden: list,
     alpha_max: float = ALPHA_MAX,
     alpha_plausibel: float | None = None,
+    fenster_gesamt: tuple | None = None,
 ) -> list:
     """Summenfit von ``n = len(segmente)`` Polder-Linien auf dem (bereits auf den
     Korridor beschnittenen) Linescan mit HARTEN Schranken: ``B_res_k`` darf nur
@@ -449,7 +450,8 @@ def fitte_linescan_summe(
 
     Liefert je Mode ein :class:`FitErgebnis` (``mode = moden[k]``) mit den
     Parametern dieser Linie, der Summenkurve als ``fitkurve`` und den Guetemassen
-    des Gesamtfits; ``B_fenster_min/max`` = Segmentgrenzen. Im Gegensatz zum
+    des Gesamtfits; ``B_fenster_min/max`` = ``fenster_gesamt`` (ganzer Korridor;
+    innere Segmentgrenzen zaehlen nicht als "Fensterrand"), sonst Segment. Im Gegensatz zum
     freien Summenfit ueber den ganzen Sweep ist das Problem durch Korridor und
     Segment-Schranken gut konditioniert.
     """
@@ -519,7 +521,9 @@ def fitte_linescan_summe(
             phi=float(p[f"phi_{k}"].value), phi_err=_err(f"phi_{k}"),
             off_re=float(p["off_re"].value), off_im=float(p["off_im"].value),
             slope_re=float(p["slope_re"].value), slope_im=float(p["slope_im"].value),
-            B_fenster_min=float(lo), B_fenster_max=float(hi), kovarianz_ok=kovarianz_ok,
+            B_fenster_min=float(fenster_gesamt[0] if fenster_gesamt else lo),
+            B_fenster_max=float(fenster_gesamt[1] if fenster_gesamt else hi),
+            kovarianz_ok=kovarianz_ok,
             meldung=getattr(ergebnis, "message", ""), feld=B, fitkurve=kurve,
             temperatur=temperatur, mode=int(moden[k - 1]), beitraege=beitraege, **masse,
         )

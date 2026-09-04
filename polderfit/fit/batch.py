@@ -611,13 +611,19 @@ def fitte_mode(
         ausschnitt = ohne_ausschlusszonen(ausschnitt, stapel.ausschlusszonen)
     manuell = korridor.trennstellen(ls.frequenz)
     lo_k, hi_k = float(ausschnitt.feld.min()), float(ausschnitt.feld.max())
+    abgeschaelt: list = []
     if manuell is not None:
         segmente = segmente_aus_trennern(lo_k, hi_k, manuell)
     else:
         # Dips iterativ "abschaelen": staerkste Linie fitten, abziehen, naechste
         # suchen - robuster als Maxima im Signalbetrag (Rauschen, Ueberlappung).
-        positionen = dip_positionen_iterativ(ausschnitt, len(korridor.moden), stapel.gamma,
-                                             stapel.alpha_max)
+        positionen, abgeschaelt = dip_positionen_iterativ(
+            ausschnitt, len(korridor.moden), stapel.gamma, stapel.alpha_max, mit_ergebnissen=True)
+        if len(positionen) < len(korridor.moden):
+            # Fehlende Dips aus den Nachbarfrequenzen uebernehmen (Konzept: Startwert
+            # aus dem Nachbarn), relativ zur Korridormitte verschoben.
+            positionen = _positionen_aus_nachbarn(stapel, index, korridor, positionen,
+                                                  lo_k, hi_k)
         if len(positionen) >= 2:
             trenn = [0.5 * (a + b) for a, b in zip(positionen[:-1], positionen[1:])]
             segmente = segmente_aus_trennern(lo_k, hi_k, trenn)
@@ -642,7 +648,21 @@ def fitte_mode(
         try:
             summe = fitte_linescan_summe(
                 ausschnitt, stapel.gamma, segmente, [ergebnisse.get(m) for m in moden], moden,
-                alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel)
+                alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
+                fenster_gesamt=(lo_k, hi_k))
+            # Schwache Linie verloren (problematisch)? Zweiter Versuch mit den
+            # Startwerten aus dem Abschaelen, das bessere Ergebnis behalten.
+            if summe is not None and any(e.problematisch for e in summe) and len(abgeschaelt) >= len(segmente):
+                starts2 = list(abgeschaelt[:len(segmente)])
+                zweite = fitte_linescan_summe(
+                    ausschnitt, stapel.gamma, segmente, starts2, moden,
+                    alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
+                    fenster_gesamt=(lo_k, hi_k))
+                n_alt = sum(1 for e in summe if e.problematisch)
+                n_neu = sum(1 for e in zweite if e.problematisch)
+                if n_neu < n_alt or (n_neu == n_alt and np.isfinite(zweite[0].rmse_norm)
+                                     and zweite[0].rmse_norm < summe[0].rmse_norm):
+                    summe = zweite
         except (ValueError, TypeError, np.linalg.LinAlgError, RuntimeError) as exc:
             summe = None
             for m in moden:
@@ -659,6 +679,8 @@ def fitte_mode(
             entartet = hub > 0 and any(
                 float(np.max(np.abs(kurve_k - untergrund))) > 3.0 * hub
                 for _m, kurve_k in (e0.beitraege or []))
+            entartet = entartet or any(np.isfinite(e.dH) and e.dH > 0.5 * (hi_k - lo_k)
+                                       for e in summe)
             if entartet:
                 for mode in moden:
                     e = ergebnisse.get(mode)
@@ -722,11 +744,19 @@ def fitte_mode(
                     stapel.ergebnisse_mode(mode)[index] = alt
             if not geaendert:
                 break   # zweite Runde nur, wenn die erste etwas veraendert hat
+        # Beschnitt der Mode 1 = ORIGINAL-Messpunkte ihres Segments (kein nachbar-
+        # bereinigter Datensatz in Export/TDMS/Undo); Fenster = ganzer Korridor.
+        seg0 = schneide_band(ls, segmente[0][0], segmente[0][1])
+        if stapel.ausschlusszonen:
+            seg0 = ohne_ausschlusszonen(seg0, stapel.ausschlusszonen)
+        stapel.zugeschnitten[index] = seg0
+        stapel.fenster[index] = grenzen
     return ergebnisse.get(korridor.moden[0])
 
 
 def dip_positionen_iterativ(linescan: Linescan, n: int, gamma: float,
-                            alpha_max: float = ALPHA_MAX, sortiert: bool = True) -> list[float]:
+                            alpha_max: float = ALPHA_MAX, sortiert: bool = True,
+                            mit_ergebnissen: bool = False):
     """Resonanzfelder von bis zu ``n`` Dips im (bereits beschnittenen) Linescan
     durch sequentielles Abschaelen: Einzelfit einer Polder-Linie auf den
     aktuellen Daten, Resonanzanteil abziehen, naechsten Fit auf dem Rest.
@@ -734,11 +764,14 @@ def dip_positionen_iterativ(linescan: Linescan, n: int, gamma: float,
     verworfen); leer, wenn schon der erste Fit scheitert."""
     B = np.asarray(linescan.feld, dtype=float)
     if B.size < 4:
-        return []
+        return ([], []) if mit_ergebnissen else []
     schritt = float(np.ptp(B)) / max(B.size - 1, 1)
+    breite = float(np.ptp(B))
+    lo, hi = float(B.min()), float(B.max())
     omega = 2.0 * np.pi * linescan.frequenz
     rest = np.asarray(linescan.s21, dtype=complex).copy()
     gefunden: list[float] = []
+    ergebnisse: list = []
     for _ in range(max(1, int(n))):
         ls_rest = Linescan(frequenz=linescan.frequenz, feld=B, re=rest.real, im=rest.imag)
         try:
@@ -747,12 +780,56 @@ def dip_positionen_iterativ(linescan: Linescan, n: int, gamma: float,
             break
         if not (e.erfolg and np.isfinite(e.B_res) and np.isfinite(e.A)):
             break
+        # Nur plausible Linien abschaelen: keine Breitlinie (Untergrund-Ersatz),
+        # nicht am Korridorrand, kein Duplikat.
+        if not np.isfinite(e.dH) or e.dH > breite / 3.0:
+            break
+        if e.B_res < lo + 2.0 * schritt or e.B_res > hi - 2.0 * schritt:
+            break
         if any(abs(e.B_res - b) < 2.0 * schritt for b in gefunden):
             break
         gefunden.append(float(e.B_res))
+        ergebnisse.append(e)
         rest -= s21_modell(B, e.B_res, e.alpha, e.A, e.phi, 0.0, 0.0, 0.0, 0.0,
                            omega, gamma, float(np.mean(B)))
+    if mit_ergebnissen:
+        reihenfolge = np.argsort(gefunden) if sortiert else np.arange(len(gefunden))
+        return [gefunden[i] for i in reihenfolge], [ergebnisse[i] for i in reihenfolge]
     return sorted(gefunden) if sortiert else gefunden
+
+
+def _positionen_aus_nachbarn(stapel: StapelErgebnis, index: int, korridor: Korridor,
+                             positionen: list, lo: float, hi: float, reichweite: int = 25) -> list:
+    """Ergaenzt fehlende Dip-Positionen aus gut gefitteten Nachbarfrequenzen
+    derselben Moden (naechster Nachbar innerhalb ``reichweite`` Indizes), um die
+    Verschiebung der Korridormitte korrigiert; Duplikate/Randlagen ausgeschlossen."""
+    ls = stapel.datensatz.linescans[index]
+    schritt = float(np.ptp(ls.feld)) / max(ls.feld.size - 1, 1) if ls.feld.size > 1 else 0.0
+    mitte_hier = korridor.mitte(ls.frequenz)
+    ergebnis = sorted(float(p) for p in positionen)
+    n = len(stapel.datensatz.linescans)
+    for mode in korridor.moden:
+        if len(ergebnis) >= len(korridor.moden):
+            break
+        liste = stapel.ergebnisse_mode(mode)
+        kandidat = None
+        for d in range(1, reichweite + 1):
+            for j in (index - d, index + d):
+                if 0 <= j < n and liste[j].gefittet and liste[j].erfolg and not liste[j].problematisch:
+                    kandidat = liste[j]
+                    break
+            if kandidat is not None:
+                break
+        if kandidat is None:
+            continue
+        m_dort = korridor.mitte(kandidat.frequenz)
+        b = float(kandidat.B_res) + ((mitte_hier - m_dort) if (mitte_hier is not None and m_dort is not None) else 0.0)
+        if not (lo + 2 * schritt < b < hi - 2 * schritt):
+            continue
+        if any(abs(b - q) < 2 * schritt for q in ergebnis):
+            continue
+        ergebnis.append(b)
+    return sorted(ergebnis)
 
 
 def _modell_im_korridor(ergebnisse: list, B: np.ndarray, omega: float, gamma: float) -> np.ndarray:
@@ -789,6 +866,7 @@ def _fitte_mode_bic(stapel: StapelErgebnis, index: int, korridor: Korridor,
     positionen = dip_positionen_iterativ(ausschnitt, len(korridor.moden), stapel.gamma,
                                          stapel.alpha_max, sortiert=False)
     K = max(1, min(len(korridor.moden), len(positionen)))
+    bestaetigen_wirksam = bool(stapel.nachfit_bestaetigen) if bestaetigen is None else bool(bestaetigen)
     N = 2 * B.size
     kandidaten = []
     for k in range(1, K + 1):
@@ -798,15 +876,28 @@ def _fitte_mode_bic(stapel: StapelErgebnis, index: int, korridor: Korridor,
         tmp.n_dips = k
         tmp.moden = list(korridor.moden[:k])
         tmp.trenner = []
-        if k >= 2:
+        if k == 1:
+            # Eine Linie + Untergrund auf ALLEN Korridorpunkten (vergleichbar mit k >= 2,
+            # kein Nachfenster - sonst wuerde k = 1 systematisch verlieren).
+            try:
+                einzel = fitte_linescan_summe(
+                    ausschnitt, stapel.gamma, [grenzen], [None], [tmp.moden[0]],
+                    alpha_max=stapel.alpha_max, alpha_plausibel=stapel.alpha_plausibel,
+                    fenster_gesamt=grenzen)
+            except (ValueError, TypeError, np.linalg.LinAlgError, RuntimeError):
+                continue
+            ergebnisse = list(einzel)
+        else:
             lagen = sorted(positionen[:k])
             tmp.trenner_setzen(ls.frequenz, [0.5 * (a + b) for a, b in zip(lagen[:-1], lagen[1:])])
-        erg = fitte_mode(stapel, index, tmp, bestaetigen=bestaetigen)
-        if erg is None:
-            continue
-        ergebnisse = [stapel.ergebnisse_mode(m)[index] for m in tmp.moden]
+            erg = fitte_mode(stapel, index, tmp, bestaetigen=bestaetigen)
+            if erg is None:
+                continue
+            ergebnisse = [stapel.ergebnisse_mode(m)[index] for m in tmp.moden]
         if not all(e.gefittet and e.erfolg and np.isfinite(e.B_res) for e in ergebnisse):
             continue
+        if any(e.problematisch for e in ergebnisse) and k > 1:
+            continue   # Kandidat mit problematischer Linie (Phantom) verwerfen
         modell = _modell_im_korridor(ergebnisse, B, omega, stapel.gamma)
         chi2 = float(np.sum(np.abs(modell - s21) ** 2))
         p_par = 4 * k + 4
@@ -821,6 +912,9 @@ def _fitte_mode_bic(stapel: StapelErgebnis, index: int, korridor: Korridor,
         if j < k_best:
             e = ergebnisse[j]
             e.meldung = (e.meldung + f" · BIC: {k_best} von {korridor.n_dips} Dips").strip(" ·")
+            e.nachbearbeitet = True
+            if bestaetigen_wirksam:
+                e = setze_bewertung(e, "bestaetigt")
             liste[index] = e
             if mode == 1:
                 # Fenster der Mode 1 = ganzer Korridor (nicht das Segment), damit
