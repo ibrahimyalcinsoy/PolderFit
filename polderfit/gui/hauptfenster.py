@@ -195,6 +195,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             trenner_umschalten=self._trenner_modus,
             trenner_loeschen=self._trenner_loeschen,
             breite_geaendert=self._korridor_breite_geaendert,
+            mode_entfernen=self._mode_ohne_korridor_entfernen,
         )
         #: Korridore je Mode - die EINZIGE Quelle des Moden-Zustands (Zahl der
         #: Moden = Zahl der Korridore); bleiben ueber Auto-Fits erhalten, werden
@@ -1280,6 +1281,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._zeige_aktuellen()
         self._auswertung_nachziehen()
         self._log(f"Korridor M{mode} entfernt (samt Fits dieser Mode).", "info")
+
+    def _mode_ohne_korridor_entfernen(self, mode: int):
+        """Zeile einer Mode ohne Korridor (AutoWindow M1, Auto-Fit-Moden) entfernen:
+        Fits dieser Mode verwerfen; Moden >= 2 verschwinden damit aus der Liste."""
+        if self.stapel is None:
+            return
+        self._fits_loeschen(int(mode))
+        if int(mode) >= 2:
+            self.stapel.mode_entfernen(int(mode))
+            if self._mode_aktiv == int(mode):
+                self._mode_aktiv = 1
+                self.zonenpanel.setze_mode_aktiv(1)
+            self._zeige_korridore()
+            self._aktualisiere_overlay()
+            self._zeige_aktuellen()
 
     def _anker_entfernen(self, mode: int, index: int):
         korridor = next((k for k in self._korridore if int(k.mode) == int(mode)), None)

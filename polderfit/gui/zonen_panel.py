@@ -38,6 +38,7 @@ class ZonenPanel(QtWidgets.QWidget):
     * ``trenner_umschalten(an)`` – Trennlinie im Linescan-Panel setzen (Klick)
     * ``trenner_loeschen()`` – Trennlinien an der angezeigten Frequenz loeschen
     * ``breite_geaendert(mode, halbbreite_T)`` – Breite des gewaehlten Korridors
+    * ``mode_entfernen(mode)`` – Fits einer Mode ohne Korridor (Auto-Fit, AutoWindow) loeschen
     """
 
     def __init__(self, zone_umschalten=None, zone_entfernen=None,
@@ -45,7 +46,7 @@ class ZonenPanel(QtWidgets.QWidget):
                  korridor_gewaehlt=None, korridor_entfernen=None,
                  anker_entfernen=None, korridor_fit=None, dips_geaendert=None,
                  trenner_umschalten=None, trenner_loeschen=None, breite_geaendert=None,
-                 parent=None):
+                 mode_entfernen=None, parent=None):
         super().__init__(parent)
         self._cb_zone_umschalten = zone_umschalten
         self._cb_zone_entfernen = zone_entfernen
@@ -59,6 +60,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self._cb_trenner_umschalten = trenner_umschalten
         self._cb_trenner_loeschen = trenner_loeschen
         self._cb_breite_geaendert = breite_geaendert
+        self._cb_mode_entfernen = mode_entfernen
         self._korridore: list = []
         self._mode_aktiv: int = 1
         self._statistik: dict = {}
@@ -158,8 +160,10 @@ class ZonenPanel(QtWidgets.QWidget):
         self.btn_anker.setCheckable(True)
         self.btn_anker.toggled.connect(self._anker_umgeschaltet)
         self.btn_anker.setVisible(False)
-        self.btn_entfernen = QtWidgets.QPushButton("Korridor entfernen")
-        self.btn_entfernen.setToolTip("Gewählten Korridor samt Fits dieser Mode entfernen.")
+        self.btn_entfernen = QtWidgets.QPushButton("Entfernen")
+        self.btn_entfernen.setToolTip(
+            "Gewählte Zeile entfernen: Korridor samt Fits seiner Moden, bei Auto-Fit-Moden\n"
+            "(ohne Korridor) nur die Fits dieser Mode. Rückgängig mit Strg+Z.")
         self.btn_entfernen.clicked.connect(self._entfernen_geklickt)
         zeile2.addWidget(self.btn_entfernen, 1)
         k_lay.addLayout(zeile2)
@@ -327,6 +331,7 @@ class ZonenPanel(QtWidgets.QWidget):
     def _aktualisiere_knoepfe(self) -> None:
         hat = self.korridor_aktiv() is not None
         k = self.korridor_aktiv()
+        self.btn_entfernen.setEnabled(True)   # jede Zeile entfernbar (Korridor oder Fits)
         self.dips_spin.blockSignals(True)
         self.dips_spin.setValue(int(k.n_dips) if k is not None else 1)
         self.dips_spin.blockSignals(False)
@@ -347,7 +352,6 @@ class ZonenPanel(QtWidgets.QWidget):
                                     "Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen.")
         self.btn_anker.setEnabled(hat)
         self.btn_trenner.setEnabled(hat and self.korridor_aktiv().n_dips > 1)
-        self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
         self.btn_fit_alle.setEnabled(bool(self._korridore))
 
@@ -391,8 +395,11 @@ class ZonenPanel(QtWidgets.QWidget):
 
     def _entfernen_geklickt(self) -> None:
         k = self.korridor_aktiv()
-        if k is not None and self._cb_korridor_entfernen is not None:
-            self._cb_korridor_entfernen(int(k.mode))
+        if k is not None:
+            if self._cb_korridor_entfernen is not None:
+                self._cb_korridor_entfernen(int(k.mode))
+        elif self._cb_mode_entfernen is not None:
+            self._cb_mode_entfernen(int(self._mode_aktiv))
 
 
     def _zone_umgeschaltet(self, an: bool) -> None:

@@ -1,6 +1,6 @@
 # PolderFit – Breitband-FMR-Auswertung
 
-**Version 2.0 · Stand 2026-09-04**
+**Version 2.1 · Stand 2026-09-04**
 
 Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) → Anzeige `PolderFit V<Version>` (`polderfit.PROGRAMMNAME`).
 

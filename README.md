@@ -1,6 +1,6 @@
 # PolderFit
 
-**Version 2.0 · Stand 2026-09-04** · Breitband-FMR: TDMS → `B_res`, `µ0ΔH` je Frequenz → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
+**Version 2.1 · Stand 2026-09-04** · Breitband-FMR: TDMS → `B_res`, `µ0ΔH` je Frequenz → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
 [Dokumentation](https://ibrahimyalcinsoy.github.io/PolderFit/) · [Windows-Anleitung](INSTALLATION_WINDOWS.md)
 
 > [!CAUTION]

@@ -815,7 +815,8 @@ def _positionen_aus_nachbarn(stapel: StapelErgebnis, index: int, korridor: Korri
         kandidat = None
         for d in range(1, reichweite + 1):
             for j in (index - d, index + d):
-                if 0 <= j < n and liste[j].gefittet and liste[j].erfolg and not liste[j].problematisch:
+                if (0 <= j < min(n, len(liste)) and liste[j] is not None and liste[j].gefittet
+                        and liste[j].erfolg and not liste[j].problematisch):
                     kandidat = liste[j]
                     break
             if kandidat is not None:
