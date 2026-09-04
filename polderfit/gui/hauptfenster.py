@@ -69,7 +69,7 @@ from ..fit.fenster_steuerung import (
     _fitte_neu_mit_nachfenster,
 )
 from ..fit.korridor import Korridor, korridor_aus_linie
-from ..fit.linescan_fit import BEWERTUNG_TEXTE
+from ..fit.linescan_fit import BEWERTUNG_TEXTE, FitErgebnis
 from ..fit.kriterien import kriterien_kurz, kriterien_text
 from ..fit.parameter import PhysikParameter
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv, kittel_llg_flach
@@ -156,6 +156,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._bereich_frequenz: tuple[float, float] | None = None
         self._bereich_feld: tuple[float, float] | None = None
         self._bereich_schritt: int = 1
+        #: Auto-Fit: erwartete Resonanzen je AutoWindow-Fenster und BIC-Option.
+        self._auto_n_dips: int = 1
+        self._auto_dips_auto: bool = False
         #: Einstellbare physikalische Parameter (g-Faktor/gamma, Geometrie,
         #: Fensterfaktor, Schwellen, alpha-Grenzen, Moden) - Dialog: Strg+P.
         self._physik = self._einstellungen.physik_parameter()
@@ -291,9 +294,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_neu.setToolTip(
             "Diese Frequenz (gewählte Mode) mit dem aktuellen Fenster bzw. Korridor\n"
             "neu fitten.")
-        self.mode_label = QtWidgets.QLabel("M1")
-        self.mode_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.mode_label.setToolTip("Angezeigte Mode (Korridorliste im Panel „Korridore & Zonen“).")
+        self.mode_combo = QtWidgets.QComboBox()
+        self.mode_combo.addItem("M1", 1)
+        self.mode_combo.setToolTip("Angezeigte Mode – wie die Auswahl in der Korridorliste.")
+        self.mode_combo.activated.connect(self._mode_combo_gewaehlt)
         # Vollbereich-Umschalter direkt am Linescan-Panel (gespiegelt mit der
         # Menue-Aktion akt_vollbereich; Verbindung in _baue_aktionen).
         self.chk_vollbereich = QtWidgets.QCheckBox("ganzer Feldsweep")
@@ -313,7 +317,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         steuer.addWidget(self.btn_naechstes_problem, 0, 2)
         steuer.addWidget(self.btn_voriges_problem, 1, 0)
         steuer.addWidget(self.btn_neu, 1, 1)
-        steuer.addWidget(self.mode_label, 1, 2)
+        steuer.addWidget(self.mode_combo, 1, 2)
         # Bewertungszeile: Status-Chip (Farbe wie im Farbplot) + Auswahlliste
         # (Strg+1/2/3, Strg+I).
         self.status_label = QtWidgets.QLabel("–")
@@ -541,6 +545,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_bew_ignorieren.triggered.connect(lambda: self._bewerte_aktuellen("ignorieren"))
         self.akt_bew_alle_auto = A("Alle Bewertungen auf automatisch zurücksetzen", self)
         self.akt_bew_alle_auto.triggered.connect(self._alle_bewertungen_auto)
+        self.akt_fits_loeschen = A("Fit-Ergebnisse löschen …", self)
+        self.akt_fits_loeschen.setToolTip(
+            "Ergebnisse verwerfen (rückgängig mit Strg+Z): alle Fits oder nur die der "
+            "angezeigten Mode. Korridore, Zonen und Einstellungen bleiben.")
+        self.akt_fits_loeschen.triggered.connect(self._fits_loeschen_dialog)
 
         # --- Ansicht --------------------------------------------------------
         self.akt_vollbild = A("Vollbild", self)
@@ -684,6 +693,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_bearbeiten = mb.addMenu("&Bearbeiten")
         m_bearbeiten.addAction(self.akt_rueckgaengig)
         m_bearbeiten.addAction(self.akt_wiederholen)
+        m_bearbeiten.addSeparator()
+        m_bearbeiten.addAction(self.akt_fits_loeschen)
 
         self.funktionen_menue = mb.addMenu("Fun&ktionen")
         self.funktionen_menue.addAction(self.akt_fit)
@@ -823,7 +834,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.navigator_dock = dock
 
     def _baue_verarbeitung_dock(self):
-        """Verarbeitung (links): divide-slice, derivative-divide, relation-amplitude."""
+        """Verarbeitung (links): divide-slice, derivative-divide (kompakt)."""
         dock = QtWidgets.QDockWidget("Verarbeitung (Farbplot)", self)
         dock.setObjectName("verarbeitung_dock")
         dock.setAllowedAreas(
@@ -837,6 +848,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         rollbereich = QtWidgets.QScrollArea()
         rollbereich.setWidgetResizable(True)
         rollbereich.setWidget(self.verarbeitung)
+        rollbereich.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         dock.setWidget(rollbereich)
         dock.setMinimumWidth(280)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
@@ -1228,9 +1240,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._zeige_aktuellen()
 
     def _korridor_gewaehlt(self, mode: int):
-        """Zeile der Korridorliste gewaehlt: Linescan-Panel zeigt diese Mode."""
+        """Zeile der Korridorliste gewaehlt: Linescan-Panel und Farbplot heben diese Mode hervor."""
         self._mode_aktiv = max(1, int(mode))
         self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv)
+        self._aktualisiere_overlay()
         self._zeige_aktuellen()
 
     def _korridor_entfernen(self, mode: int):
@@ -2037,11 +2050,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dialog = AuswahlDialog(self.datensatz_voll, self._letzte_auswahl, parent=self,
                                zoom_bereich=self.matrix.sichtbarer_bereich(),
                                dips_auto_vorgabe=(any(k.dips_auto for k in mehr_dips)
-                                                  if mehr_dips else None))
+                                                  if mehr_dips else self._auto_dips_auto),
+                               n_dips_vorgabe=(None if self._korridore else self._auto_n_dips))
         if not dialog.exec():
             return None
         auswahl = dialog.auswahl()
         self._letzte_auswahl = auswahl
+        self._bereich_schritt = max(1, int(auswahl.n_frequenz))   # Korridor-Fit kongruent
+        self._auto_n_dips = int(dialog.n_dips())
+        self._auto_dips_auto = bool(dialog.dips_auto())
         for k in mehr_dips:
             k.dips_auto = dialog.dips_auto()
         if not auswahl.ist_neutral:
@@ -2146,7 +2163,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                 nachfit_bestaetigen=physik.nachfit_bestaetigen,
                                 fortschritt_fenster=fortschritt_fenster,
                                 abbruch=melde.abgebrochen,
-                                korridor=korridor_m1)
+                                korridor=korridor_m1,
+                                n_dips=(1 if self._korridore else self._auto_n_dips),
+                                dips_auto=self._auto_dips_auto)
             for korridor in weitere:
                 if melde.abgebrochen():
                     break
@@ -2156,7 +2175,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                           daten=(erg.frequenz, erg.B_res, F.status_von(erg)),
                           phase=f"Korridor M{_m}")
                 fitte_korridor(stapel, korridor, fortschritt=fortschritt_k,
-                               abbruch=melde.abgebrochen)   # Stapel ist bereits (Jumper-)reduziert
+                               abbruch=melde.abgebrochen,
+                               schritt=max(1, int(auswahl.n_frequenz)))   # Jumper absolut
             return stapel
 
         def bei_fertig(stapel):
@@ -2279,7 +2299,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 nebenmoden.append((k, b_k, st_k))
         self.matrix.aktualisiere_resonanz(st.datensatz.frequenzen, bres, problem,
                                           ausgeschlossen, status=status, info=info,
-                                          nebenmoden=nebenmoden)
+                                          nebenmoden=nebenmoden, aktiv_mode=self._mode_aktiv)
         self.ausreisserpanel.zeige_ausreisser(st)
 
     def _zeige_aktuellen(self):
@@ -2291,7 +2311,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         mode = self._mode_aktiv
         e = self.stapel.ergebnisse_mode(mode)[i]
         unten, oben = self._fenster_der_mode(i, mode, e)
-        self.mode_label.setText(f"M{mode}")
+        self._mode_combo_syncen(mode)
         status = F.status_von(e, ignoriert=self.stapel.ist_ausreisser(i)
                               or self.stapel.ist_ausreisser_mode(i, mode))
         korridor = self._korridor_fuer(mode)
@@ -2329,6 +2349,77 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.label_info.setText(text)
         self.label_info.setToolTip(kriterien_text(e) if e.gefittet else "")
         self.statusBar().showMessage(text)
+
+    def _fits_loeschen_dialog(self) -> None:
+        """Bearbeiten -> Fit-Ergebnisse loeschen: alle Fits oder nur die angezeigte Mode."""
+        st = self.stapel
+        if st is None or self._job_laeuft:
+            return
+        box = QtWidgets.QMessageBox(self)
+        box.setWindowTitle("Fit-Ergebnisse löschen")
+        box.setText("Welche Ergebnisse verwerfen? (Rückgängig: Strg+Z)")
+        alle = box.addButton("Alle Fits", QtWidgets.QMessageBox.AcceptRole)
+        mode = box.addButton(f"Nur Mode M{self._mode_aktiv}", QtWidgets.QMessageBox.AcceptRole)
+        box.addButton(QtWidgets.QMessageBox.Cancel)
+        box.exec()
+        if box.clickedButton() is alle:
+            self._fits_loeschen(None)
+        elif box.clickedButton() is mode:
+            self._fits_loeschen(self._mode_aktiv)
+
+    def _fits_loeschen(self, mode: int | None) -> None:
+        """Ergebnisse loeschen (``None`` = alle Moden), Fenster bleiben; Undo-faehig."""
+        st = self.stapel
+        if st is None:
+            return
+        indizes = range(len(st.ergebnisse))
+        vorher = self._fit_zustand(indizes)
+        ausreisser_vorher = list(st.ausreisser)
+        moden = ([1] + sorted(st.nebenmoden)) if mode is None else [int(mode)]
+        for m in moden:
+            liste = st.ergebnisse_mode(m)
+            for i, ls in enumerate(st.datensatz.linescans):
+                liste[i] = FitErgebnis.platzhalter(ls.frequenz, ls.feld, mode=m)
+                if m == 1:
+                    st.zugeschnitten[i] = ls
+        if mode is None:
+            st.ausreisser = []
+            st.ausreisser_moden = []
+        else:
+            st.ausreisser_moden = [(i, k) for i, k in st.ausreisser_moden if int(k) != int(mode)]
+        nachher = self._fit_zustand(indizes)
+        ausreisser_nachher = list(st.ausreisser)
+        self._merke_aenderung(
+            "Fit-Ergebnisse gelöscht" + ("" if mode is None else f" (M{mode})"),
+            lambda: (self._fit_zustand_setzen(vorher), self._ausreisser_setzen(ausreisser_vorher)),
+            lambda: (self._fit_zustand_setzen(nachher), self._ausreisser_setzen(ausreisser_nachher)))
+        self._aktualisiere_overlay()
+        self._zeige_korridore()
+        self._zeige_aktuellen()
+        self._auswertung_nachziehen()
+        self._log("Fit-Ergebnisse gelöscht" + ("" if mode is None else f" (Mode M{mode})")
+                  + " – Korridore und Einstellungen bleiben erhalten.", "info")
+
+    def _mode_combo_syncen(self, mode: int) -> None:
+        """Moden-Auswahl im Linescan-Panel mit Korridoren/aktiver Mode abgleichen."""
+        moden = sorted({1} | {int(m) for k in self._korridore for m in k.moden}
+                       | set(self.stapel.moden_vorhanden() if self.stapel is not None else []))
+        combo = self.mode_combo
+        combo.blockSignals(True)
+        if [combo.itemData(i) for i in range(combo.count())] != moden:
+            combo.clear()
+            for m in moden:
+                combo.addItem(f"M{m}", m)
+        idx = combo.findData(int(mode))
+        combo.setCurrentIndex(idx if idx >= 0 else 0)
+        combo.blockSignals(False)
+
+    def _mode_combo_gewaehlt(self, index: int) -> None:
+        mode = int(self.mode_combo.itemData(index) or 1)
+        if mode != self._mode_aktiv:
+            if any(k.enthaelt_mode(mode) for k in self._korridore) or mode == 1:
+                self.zonenpanel.setze_mode_aktiv(mode)
+            self._korridor_gewaehlt(mode)
 
     def _fenster_der_mode(self, i: int, mode: int, e) -> tuple[float, float]:
         """Fenster der angezeigten Mode: Mode 1 = Stapelfenster; sonst das Fenster
@@ -3142,7 +3233,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             reduziert = voll
             if auswahl_dict:
                 auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
-                reduziert, _indizes = auswahl.reduziere(voll)
+                reduziert = auswahl.reduziere_felder(voll)   # volles Frequenzgitter
             melde(0, 0, "Stelle Fits mit gespeicherten Fenstern wieder her …", phase="Fits")
             b_min, b_max = reduziert.feld_bereich()
             korridore = korridore_aus_sitzung(daten, b_min, b_max)

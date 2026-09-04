@@ -150,18 +150,16 @@ class ZonenPanel(QtWidgets.QWidget):
         k_lay.addWidget(self.trenner_box)
 
         zeile2 = QtWidgets.QHBoxLayout()
+        # "Anker setzen" ist kein Knopf mehr: Anker entstehen durch Ziehen der
+        # gruenen Grenzen im Linescan-Panel oder der Griffe im Farbplot.
         self.btn_anker = QtWidgets.QPushButton("Anker setzen")
         self.btn_anker.setCheckable(True)
-        self.btn_anker.setToolTip(
-            "Klick im Farbplot setzt am gewählten Korridor bei dieser Frequenz die\n"
-            "nähere Grenze auf das geklickte Feld (Anker). Anker im Farbplot ziehbar.\n"
-            "Mehrere Klicks möglich; Esc beendet.")
         self.btn_anker.toggled.connect(self._anker_umgeschaltet)
-        zeile2.addWidget(self.btn_anker, 1)
-        self.btn_entfernen = QtWidgets.QPushButton("Entfernen")
+        self.btn_anker.setVisible(False)
+        self.btn_entfernen = QtWidgets.QPushButton("Korridor entfernen")
         self.btn_entfernen.setToolTip("Gewählten Korridor samt Fits dieser Mode entfernen.")
         self.btn_entfernen.clicked.connect(self._entfernen_geklickt)
-        zeile2.addWidget(self.btn_entfernen)
+        zeile2.addWidget(self.btn_entfernen, 1)
         k_lay.addLayout(zeile2)
 
         zeile3 = QtWidgets.QHBoxLayout()
@@ -197,6 +195,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self.btn_zone_entfernen.setToolTip("Gewählte (sonst zuletzt gezeichnete) Zone entfernen.")
         self.btn_zone_entfernen.clicked.connect(self._zone_entfernen_geklickt)
         zonen_lay.addWidget(self.btn_zone_entfernen)
+        grp_zonen.setVisible(False)   # Zonen nur noch ueber Menue Funktionen (Strg+Z = rueckgaengig)
         lay.addWidget(grp_zonen)
         lay.addStretch(1)
         self._aktualisiere_knoepfe()
@@ -326,6 +325,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self.btn_trenner.setToolTip(self._trenner_tip if mehrere else
                                     "Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen.")
         self.btn_anker.setEnabled(hat)
+        self.btn_trenner.setEnabled(hat and self.korridor_aktiv().n_dips > 1)
         self.btn_entfernen.setEnabled(hat)
         self.btn_fit.setEnabled(hat)
         self.btn_fit_alle.setEnabled(bool(self._korridore))

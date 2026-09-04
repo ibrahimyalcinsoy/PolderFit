@@ -356,7 +356,8 @@ def fitte_korridor(
     (:func:`polderfit.fit.batch.fitte_mode`). Kein Summenfit, keine
     Fenstersuche: der Korridor IST das Fenster.
 
-    ``schritt`` (Jumper): nur jede ``schritt``-te Frequenz des Bereichs fitten.
+    ``schritt`` (Jumper): nur Frequenzen mit Index ``i % schritt == 0`` des
+    VOLLEN Gitters fitten (absolut, wie der Auto-Fit-Jumper).
     ``modus='ergaenzen'``: nur Frequenzen, die fuer diese Mode noch nicht gut
     gefittet sind. ``abbruch()`` wird nach jedem Fit abgefragt. Liefert
     ``(neu_gefittet, uebersprungen)``.
@@ -378,7 +379,9 @@ def fitte_korridor(
             uebersprungen.append(i)
             continue
         kandidaten.append(i)
-    reihenfolge = kandidaten[::schritt]
+    # Jumper absolut auf dem Frequenzgitter (Index i mit i % schritt == 0) -
+    # kongruent zum Auto-Fit-Jumper, unabhaengig vom Korridoranfang.
+    reihenfolge = [i for i in kandidaten if i % schritt == 0]
     uebersprungen.extend(i for i in kandidaten if i not in set(reihenfolge))
     neu: list[int] = []
     for k, i in enumerate(reihenfolge):

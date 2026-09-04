@@ -133,7 +133,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_problem = None
         self._res_status = None        # Statusklasse je Punkt (farben.STATUS_*)
         self._res_info = None          # Tooltip-Text je Punkt
-        self._res_nebenmoden = None    # Liste von (B_res-Array) je weiterer Mode
+        self._res_nebenmoden = None    # Liste (mode, B_res-Array, Status) je weiterer Mode
+        self._res_aktiv_mode = 1       # hervorgehobene Mode (Korridorliste)
         self._problemfits_ausblenden = False
         self._ausreisser_anzeigen = False
         self._nebenmoden_anzeigen = True
@@ -500,7 +501,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
     # --- Resonanz-Overlay --------------------------------------------------
     def aktualisiere_resonanz(self, frequenzen, B_res, problematisch=None,
                               ausgeschlossen=None, status=None, info=None,
-                              nebenmoden=None) -> None:
+                              nebenmoden=None, aktiv_mode: int = 1) -> None:
         """Speichert und zeichnet die Resonanzpunkte nach Statusklasse.
 
         ``status`` (optional): Klasse je Punkt (``gut``/``bestaetigt``/
@@ -526,6 +527,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_info = list(info) if info is not None else None
         self._res_nebenmoden = ([(int(m), np.asarray(b, dtype=float), np.asarray(st, dtype=object))
                                  for m, b, st in nebenmoden] if nebenmoden else None)
+        self._res_aktiv_mode = int(aktiv_mode)
         self._hover_index = None
         self._zeichne_resonanz()
 
@@ -557,6 +559,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                 ln.remove()
         f_ghz = self._res_freq / 1e9
         status = self._status_array()
+        # Nicht hervorgehobene Moden blass zeichnen (Auswahl in der Korridorliste).
+        alpha_m1 = 1.0 if self._res_aktiv_mode == 1 or not self._res_nebenmoden else 0.35
         for klasse in ("ignoriert", "fehler", "problem", "gut", "bestaetigt"):
             maske = (status == klasse) & np.isfinite(self._res_bres)
             if not maske.any() or not self._status_sichtbar(klasse):
@@ -566,22 +570,24 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             if klasse == "ignoriert":
                 # Grau gefuellt mit dunklem Rand: auf jedem Untergrund erkennbar.
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
-                             mec=rand, ms=6, mew=0.9, ls="", label=_STATUS_LABEL[klasse])
+                             mec=rand, ms=6, mew=0.9, ls="", label=_STATUS_LABEL[klasse], alpha=alpha_m1)
             elif klasse == "bestaetigt":
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
-                             mec=rand, ms=6.5, mew=1.6, ls="", label=_STATUS_LABEL[klasse])
+                             mec=rand, ms=6.5, mew=1.6, ls="", label=_STATUS_LABEL[klasse], alpha=alpha_m1)
             elif klasse == "fehler":
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
-                             mec=rand, ms=7, mew=0.8, ls="", label=_STATUS_LABEL[klasse])
+                             mec=rand, ms=7, mew=0.8, ls="", label=_STATUS_LABEL[klasse], alpha=alpha_m1)
             else:
                 self.ax.plot(self._res_bres[maske], f_ghz[maske], marker, color=fuell,
                              mec=rand, ms=6 if klasse == "gut" else 7, mew=0.9, ls="",
-                             label=_STATUS_LABEL[klasse])
+                             label=_STATUS_LABEL[klasse], alpha=alpha_m1)
         if self._nebenmoden_anzeigen and self._res_nebenmoden:
             # Weitere Moden: runde Punkte in der Mode-Farbe; Problemfits als
             # Dreieck (wie Mode 1), ignorierte grau - dieselbe Sichtbarkeitslogik.
             for mode, moden_b, moden_status in self._res_nebenmoden:
                 farbe = F.mode_farbe(mode)
+                aktiv = int(mode) == self._res_aktiv_mode
+                alpha_k = 1.0 if aktiv else 0.35
                 for klasse in ("ignoriert", "fehler", "problem", "gut", "bestaetigt"):
                     maske = (moden_status == klasse) & np.isfinite(moden_b)
                     if not maske.any() or not self._status_sichtbar(klasse):
@@ -589,16 +595,18 @@ class MatrixAnsicht(FigureCanvasQTAgg):
                     if klasse == "ignoriert":
                         fuell, rand = F.STATUS_FARBEN["ignoriert"]
                         self.ax.plot(moden_b[maske], f_ghz[maske], "o", color=fuell, mec=rand,
-                                     ms=5.5, mew=0.9, ls="", label="_resonanz_nebenmode")
+                                     ms=5.5, mew=0.9, ls="", label="_resonanz_nebenmode",
+                                     alpha=alpha_k)
                     elif klasse in ("problem", "fehler"):
                         self.ax.plot(moden_b[maske], f_ghz[maske], F.STATUS_MARKER[klasse],
                                      color=F.STATUS_FARBEN[klasse][0], mec=farbe, ms=7, mew=1.2,
-                                     ls="", label="_resonanz_nebenmode")
+                                     ls="", label="_resonanz_nebenmode", alpha=alpha_k)
                     else:
-                        self.ax.plot(moden_b[maske], f_ghz[maske], "o", color=farbe,
-                                     mec="white" if klasse == "gut" else farbe,
-                                     ms=6, mew=0.9 if klasse == "gut" else 1.6, ls="",
-                                     label="_resonanz_nebenmode")
+                        # Keine weissen Raender: bei dichten Punkten wuerden sie das
+                        # Overlay als weisses Band ueberdecken.
+                        self.ax.plot(moden_b[maske], f_ghz[maske], "o", color=farbe, mec=farbe,
+                                     ms=6 if aktiv else 5, mew=0.6 if klasse == "gut" else 1.4,
+                                     ls="", label="_resonanz_nebenmode", alpha=alpha_k)
         self.draw_idle()
 
     def _status_array(self) -> np.ndarray:

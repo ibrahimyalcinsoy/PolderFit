@@ -1,5 +1,7 @@
 # PolderFit – Breitband-FMR-Auswertung
 
+**Version 2.0 · Stand 2026-09-04**
+
 Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) → Anzeige `PolderFit V<Version>` (`polderfit.PROGRAMMNAME`).
 
 **Zweck:** TDMS-Messdaten (bbFMR) → je Frequenz Resonanzfeld `B_res` und Linienbreite `µ0ΔH` (mit 1σ) → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
@@ -21,7 +23,7 @@ Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`
 | 1 Laden + Kanal-Mapping | `io/tdms_laden.py`, `io/kanal_mapping.py` |
 | 2 AutoWindow (Fenster je Frequenz) | `fit/autowindows.py` |
 | 3 Beschnitt | `fit/autowindows.py: schneide_band` |
-| 4 Einzelfit (LM) + Nachfenster `B_res ± 2,5·ΔH` | `fit/linescan_fit.py`, `fit/batch.py` |
+| 4 Einzelfit (LM) + Nachfenster `B_res ± 2,5·ΔH`; mehrere Dips je Fenster/Korridor: Abschälen → Summenfit mit Segment-Schranken (optional BIC) | `fit/linescan_fit.py`, `fit/batch.py`, `fit/korridor.py` |
 | 5 Bewertung (a)–(f) + Nutzer-Bewertung | `fit/kriterien.py`, `fit/linescan_fit.py` |
 | 6 Kittel/LLG | `physik/kittel_llg.py`, `auswertung/uebersicht.py` |
 | Export, Projekt, Einstellungen, Auto-Sicherung | `persistenz/` |

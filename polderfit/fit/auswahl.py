@@ -99,7 +99,9 @@ class Auswertungsauswahl:
         for lo, hi in self.frequenz_ausschluss:
             maske &= ~((frequenzen >= lo) & (frequenzen <= hi))
         indizes = np.flatnonzero(maske)
-        return indizes[:: self.n_frequenz]
+        # Jumper ABSOLUT auf dem vollen Frequenzgitter (Index i mit i % n == 0):
+        # damit treffen Auto-Fit und spaetere Korridor-Fits dieselben Frequenzen.
+        return indizes[indizes % self.n_frequenz == 0]
 
     def reduziere_linescan(self, ls: Linescan) -> Linescan:
         """Feldbereich einschraenken und jeden ``n_feld``-ten Punkt behalten."""
@@ -122,6 +124,20 @@ class Auswertungsauswahl:
             feld_after=_teil(ls.feld_after),
             temperatur=_teil(ls.temperatur),
         )
+
+    def reduziere_felder(self, datensatz: Messdatensatz) -> Messdatensatz:
+        """Datensatz mit ALLEN Frequenzen, aber je Linescan auf Feldbereich und
+        jeden ``n_feld``-ten Punkt reduziert. Der Stapel behaelt so das volle
+        Frequenzgitter; welche Frequenzen gefittet werden, entscheidet
+        :meth:`waehle_indizes` (Jumper absolut)."""
+        if self.n_feld == 1 and self.feld_min_t is None and self.feld_max_t is None:
+            linescans = list(datensatz.linescans)
+        else:
+            linescans = [self.reduziere_linescan(ls) for ls in datensatz.linescans]
+        meta = dict(datensatz.meta)
+        meta["auswertungsauswahl"] = self.als_dict()
+        return Messdatensatz(quelle=datensatz.quelle, format_typ=datensatz.format_typ,
+                             linescans=linescans, meta=meta)
 
     def reduziere(self, datensatz: Messdatensatz) -> tuple[Messdatensatz, np.ndarray]:
         """Reduzierten Datensatz + gewaehlte Original-Indizes liefern.

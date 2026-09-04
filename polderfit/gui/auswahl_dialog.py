@@ -15,7 +15,7 @@ from PySide6 import QtWidgets
 
 from ..fit.auswahl import Auswertungsauswahl, parse_bereiche
 from ..io.datensatz import Messdatensatz
-from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox
+from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox, RuhigeSpinBox as RuhigeSpinBoxWrapper
 
 
 class AuswahlDialog(QtWidgets.QDialog):
@@ -24,7 +24,8 @@ class AuswahlDialog(QtWidgets.QDialog):
     def __init__(self, datensatz: Messdatensatz,
                  letzte: Auswertungsauswahl | None = None, parent=None,
                  zoom_bereich: tuple[float, float, float, float] | None = None,
-                 dips_auto_vorgabe: bool | None = None):
+                 dips_auto_vorgabe: bool | None = None,
+                 n_dips_vorgabe: int | None = None):
         """``zoom_bereich``: ``(feld_min, feld_max, f_min_ghz, f_max_ghz)`` -
         sichtbarer Farbplot-Ausschnitt; belegt den Bereich vor (Zoom vor
         letzter Auswahl)."""
@@ -130,16 +131,33 @@ class AuswahlDialog(QtWidgets.QDialog):
         form_b.addRow("Frequenz-Ausschluesse (GHz):", self.ausschluss)
         lay.addWidget(grp_b)
 
-        # Nur sichtbar, wenn ein Korridor mit mehreren Resonanzen existiert.
-        self.chk_dips_auto = QtWidgets.QCheckBox(
-            "Korridore mit mehreren Resonanzen: Anzahl der Dips je Frequenz automatisch (BIC)")
+        # Resonanzen je Fenster (ohne Korridore) und BIC-Option.
+        grp_r = QtWidgets.QGroupBox("Resonanzen")
+        form_r = QtWidgets.QFormLayout(grp_r)
+        self.dips_spin = RuhigeSpinBoxWrapper()
+        self.dips_spin.setRange(1, 4)
+        self.dips_spin.setValue(max(1, int(n_dips_vorgabe or 1)))
+        self.dips_spin.setToolTip(
+            "Erwartete Zahl nahe beieinander liegender Resonanzen (Dips) im gefundenen\n"
+            "Fenster jeder Frequenz. 1 = klassisch. Bei > 1 werden alle Dips wie im\n"
+            "Korridor per Summenfit mit Segment-Schranken gefittet (Mode 1 = erster Dip).\n"
+            "Mit vorhandenen Korridoren bestimmen die Korridore die Moden.")
+        if n_dips_vorgabe is not None:
+            form_r.addRow("je Fenster erwartet:", self.dips_spin)
+        else:
+            hinweis_r = QtWidgets.QLabel("Moden = vorhandene Korridore (werden mitgefittet).")
+            form_r.addRow(hinweis_r)
+        self.chk_dips_auto = QtWidgets.QCheckBox("Anzahl je Frequenz automatisch (BIC)")
         self.chk_dips_auto.setToolTip(
             "Je Frequenz werden 1 … n Linien gefittet und das sparsamste Modell gewählt,\n"
             "das die Daten erklärt. Wo weniger Dips sind, entfällt die überzählige Linie.\n"
             "Nur Summenfit; manuelle Trennlinien haben Vorrang. Rechenzeit etwa 2–3-fach.")
         self.chk_dips_auto.setChecked(bool(dips_auto_vorgabe))
-        self.chk_dips_auto.setVisible(dips_auto_vorgabe is not None)
-        lay.addWidget(self.chk_dips_auto)
+        form_r.addRow("", self.chk_dips_auto)
+        self.dips_spin.valueChanged.connect(self._dips_geaendert)
+        self._dips_auto_erlaubt = dips_auto_vorgabe is not None
+        self._dips_geaendert()
+        lay.addWidget(grp_r)
 
         self.zusammenfassung = QtWidgets.QLabel("")
         self.zusammenfassung.setWordWrap(True)
@@ -160,8 +178,15 @@ class AuswahlDialog(QtWidgets.QDialog):
         self._aktualisiere_zusammenfassung()
 
     def dips_auto(self) -> bool:
-        """Haekchen "Anzahl der Dips automatisch (BIC)" (nur bei Mehr-Dip-Korridoren)."""
-        return bool(self.chk_dips_auto.isVisible() and self.chk_dips_auto.isChecked())
+        """Haekchen "Anzahl je Frequenz automatisch (BIC)"."""
+        return bool(self.chk_dips_auto.isEnabled() and self.chk_dips_auto.isChecked())
+
+    def n_dips(self) -> int:
+        """Erwartete Resonanzen je AutoWindow-Fenster (1 = klassisch)."""
+        return max(1, int(self.dips_spin.value()))
+
+    def _dips_geaendert(self, *_args) -> None:
+        self.chk_dips_auto.setEnabled(self._dips_auto_erlaubt or self.n_dips() > 1)
 
     def setze_bereich(self, feld_min: float, feld_max: float,
                       f_min_ghz: float, f_max_ghz: float) -> None:

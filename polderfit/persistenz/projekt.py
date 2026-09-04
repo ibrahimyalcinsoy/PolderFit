@@ -125,6 +125,9 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
 
     fenster = [tuple(f) for f in daten.get("fenster", [])]
     if len(fenster) != len(datensatz.linescans):
+        daten = _auf_volles_gitter(daten, datensatz)
+        fenster = [tuple(f) for f in daten.get("fenster", [])]
+    if len(fenster) != len(datensatz.linescans):
         raise ValueError(
             f"Sitzung passt nicht zum Datensatz: {len(fenster)} Fenster fuer "
             f"{len(datensatz.linescans)} Linescans. Wurde die Datei mit einer "
@@ -207,6 +210,58 @@ def stelle_stapel_wieder_her(daten: dict, datensatz, fortschritt=None,
         (int(i), int(k)) for i, k in daten.get("ausreisser_moden", [])
         if 0 <= int(i) < n and int(k) >= 1)
     return stapel
+
+
+def _auf_volles_gitter(daten: dict, datensatz) -> dict:
+    """Projekte aus Staenden mit REDUZIERTEM Stapel (Jumper: nur jede n-te
+    Frequenz im Stapel) auf das volle Frequenzgitter heben: gespeicherte
+    Eintraege wandern an ihre Original-Indizes, der Rest wird Platzhalter."""
+    from ..fit.auswahl import Auswertungsauswahl
+    auswahl_dict = daten.get("auswertungsauswahl")
+    if not auswahl_dict:
+        return daten
+    try:
+        auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
+    except Exception:
+        return daten
+    n = len(datensatz.linescans)
+    alt = [tuple(f) for f in daten.get("fenster", [])]
+    # Frueheres (relatives) Jumper-Schema: Bereich, dann jeder n-te Eintrag.
+    frequenzen = datensatz.frequenzen
+    maske = np.ones(frequenzen.size, dtype=bool)
+    if auswahl.frequenz_min_hz is not None:
+        maske &= frequenzen >= auswahl.frequenz_min_hz
+    if auswahl.frequenz_max_hz is not None:
+        maske &= frequenzen <= auswahl.frequenz_max_hz
+    for lo, hi in auswahl.frequenz_ausschluss:
+        maske &= ~((frequenzen >= lo) & (frequenzen <= hi))
+    quell = np.flatnonzero(maske)[:: auswahl.n_frequenz]
+    if len(quell) != len(alt):
+        return daten
+    neu = dict(daten)
+    voll_f = [[float(ls.feld.min()), float(ls.feld.max())] if ls.feld.size else [0.0, 0.0]
+              for ls in datensatz.linescans]
+    voll_e = [{"gefittet": False} for _ in range(n)]
+    for k, i in enumerate(quell):
+        voll_f[int(i)] = list(alt[k])
+        zeilen = daten.get("ergebnisse", [])
+        if k < len(zeilen):
+            voll_e[int(i)] = zeilen[k]
+    neu["fenster"] = voll_f
+    neu["ergebnisse"] = voll_e
+    abbildung = {k: int(i) for k, i in enumerate(quell)}
+    neu["ausreisser"] = [abbildung[int(i)] for i in daten.get("ausreisser", []) if int(i) in abbildung]
+    neu["ausreisser_moden"] = [[abbildung[int(i)], int(m)] for i, m in daten.get("ausreisser_moden", [])
+                               if int(i) in abbildung]
+    nebenmoden = {}
+    for mode, zeilen in (daten.get("nebenmoden") or {}).items():
+        voll = [{"gefittet": False} for _ in range(n)]
+        for k, i in enumerate(quell):
+            if k < len(zeilen):
+                voll[int(i)] = zeilen[k]
+        nebenmoden[mode] = voll
+    neu["nebenmoden"] = nebenmoden
+    return neu
 
 
 def korridore_aus_sitzung(daten: dict, feld_min: float = -1e6,

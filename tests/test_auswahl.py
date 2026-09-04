@@ -127,25 +127,26 @@ def _fmr_datensatz(n_freq=8, n_feld=120):
 
 
 def test_fitte_alle_mit_auswahl_reduziert():
+    """Jumper absolut: der Stapel behaelt das volle Frequenzgitter, gefittet
+    werden nur die Indizes i mit i % n == 0; Feld-Jumper halbiert die Punkte."""
     ds, _ = _fmr_datensatz(n_freq=8, n_feld=120)
     auswahl = Auswertungsauswahl(n_frequenz=2, n_feld=2)
     stapel = fitte_alle(ds, auswahl=auswahl)
-    assert len(stapel.ergebnisse) == 4
-    assert len(stapel.datensatz) == 4
-    assert stapel.datensatz.meta["quell_indizes"] == [0, 2, 4, 6]
-    # Feld-Jumper: die gefitteten Linescans haben das halbierte Gitter.
+    assert len(stapel.ergebnisse) == 8 and len(stapel.datensatz) == 8
+    assert stapel.index_gefittet() == [0, 2, 4, 6]
+    assert stapel.datensatz.meta["auswertungsauswahl"]["n_frequenz"] == 2
+    # Feld-Jumper: alle Linescans haben das halbierte Gitter.
     assert stapel.datensatz.linescans[0].feld.size == 60
-    # Frequenzen entsprechen exakt den gewaehlten Original-Linescans.
-    np.testing.assert_allclose(stapel.datensatz.frequenzen, ds.frequenzen[[0, 2, 4, 6]])
+    np.testing.assert_allclose(stapel.datensatz.frequenzen, ds.frequenzen)
 
 
 def test_fitte_alle_zentren_werden_mitreduziert():
     ds, b_res = _fmr_datensatz(n_freq=8, n_feld=120)
     auswahl = Auswertungsauswahl(n_frequenz=2)
     stapel = fitte_alle(ds, zentren=b_res, auswahl=auswahl)
-    assert len(stapel.fenster) == 4
-    # Fenster liegen um die (reduzierten) vorgegebenen Zentren.
-    for (unten, oben), br in zip(stapel.fenster, b_res[[0, 2, 4, 6]]):
+    assert len(stapel.fenster) == 8 and stapel.index_gefittet() == [0, 2, 4, 6]
+    # Fenster liegen um die vorgegebenen Zentren.
+    for (unten, oben), br in zip(stapel.fenster, b_res):
         assert unten < br < oben
 
 

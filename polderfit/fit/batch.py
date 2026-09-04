@@ -18,7 +18,7 @@ from ..physik.konstanten import GAMMA_STANDARD
 from ..physik.fitmodell import Startwerte, s21_modell
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
-from .korridor import Korridor, dip_segmente, segmente_aus_trennern
+from .korridor import Anker, Korridor, dip_segmente, segmente_aus_trennern
 from .kriterien import ALPHA_MAX
 from .linescan_fit import FitErgebnis, fitte_linescan, fitte_linescan_summe, setze_bewertung
 
@@ -329,6 +329,8 @@ def fitte_alle(
     fortschritt_fenster=None,
     abbruch=None,
     korridor: Korridor | None = None,
+    n_dips: int = 1,
+    dips_auto: bool = False,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -351,11 +353,19 @@ def fitte_alle(
     ``korridor`` (optional): Korridor der Mode 1 - dann wird je Frequenz NUR
     im Korridor gefittet (Fenster = Korridor, keine Fenstersuche); Frequenzen
     ohne Korridor bleiben Platzhalter. Weitere Moden: :func:`fitte_mode`.
+
+    ``auswahl``: der Stapel behaelt IMMER das volle Frequenzgitter (Jumper und
+    Bereich wirken absolut: nur die gewaehlten Indizes werden gefittet, der
+    Rest bleibt "nicht gefittet"); Feld-Jumper/-Bereich reduzieren die Punkte
+    je Linescan. ``n_dips > 1``: im gefundenen Fenster werden ``n_dips``
+    Resonanzen gefittet (Summenfit mit Segment-Schranken wie im Korridor,
+    optional ``dips_auto`` = Anzahl per BIC); Mode 1 = erster Dip, weitere in
+    ``nebenmoden``.
     """
+    fit_indizes = None
     if auswahl is not None and not auswahl.ist_neutral:
-        datensatz, indizes = auswahl.reduziere(datensatz)
-        if zentren is not None:
-            zentren = np.asarray(zentren)[indizes]
+        fit_indizes = set(int(i) for i in auswahl.waehle_indizes(datensatz))
+        datensatz = auswahl.reduziere_felder(datensatz)
 
     if korridor is not None and korridor.definiert:
         fenster = []
@@ -384,10 +394,13 @@ def fitte_alle(
                 stapel.zugeschnitten.append(rest)
                 stapel.ergebnisse.append(FitErgebnis.platzhalter(rest.frequenz, rest.feld))
             break
-        if not np.all(np.isfinite(fenster[i])):
-            # Ausserhalb des Korridors: nicht gefittet.
-            stapel.fenster[i] = ((float(ls.feld.min()), float(ls.feld.max()))
-                                 if ls.feld.size else (0.0, 0.0))
+        if not np.all(np.isfinite(fenster[i])) or (fit_indizes is not None and i not in fit_indizes):
+            # Ausserhalb des Korridors bzw. vom Jumper/Bereich nicht gewaehlt: nicht gefittet.
+            if np.all(np.isfinite(fenster[i])):
+                stapel.fenster[i] = (float(fenster[i][0]), float(fenster[i][1]))
+            else:
+                stapel.fenster[i] = ((float(ls.feld.min()), float(ls.feld.max()))
+                                     if ls.feld.size else (0.0, 0.0))
             stapel.zugeschnitten.append(ls)
             stapel.ergebnisse.append(FitErgebnis.platzhalter(ls.frequenz, ls.feld))
             continue
@@ -397,6 +410,15 @@ def fitte_alle(
         stapel.fenster[i] = verwendet
         stapel.zugeschnitten.append(beschnitten)
         stapel.ergebnisse.append(ergebnis)
+        if int(n_dips) > 1:
+            # Mehrere Resonanzen im AutoWindow-Fenster: dieselbe Kette wie im
+            # Korridor (Abschaelen, Summenfit mit Segment-Schranken, optional BIC).
+            tmp = Korridor(mode=1, n_dips=int(n_dips), moden=list(range(1, int(n_dips) + 1)),
+                           methode="summe", dips_auto=bool(dips_auto),
+                           anker=[Anker(ls.frequenz, float(fenster[i][0]), float(fenster[i][1]))])
+            neu = fitte_mode(stapel, i, tmp, bestaetigen=False)
+            if neu is not None:
+                ergebnis = neu
         if fortschritt is not None:
             fortschritt(i, n, ergebnis)
     return stapel

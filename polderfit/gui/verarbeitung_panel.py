@@ -87,8 +87,8 @@ class VerarbeitungPanel(QtWidgets.QWidget):
         self._timer.timeout.connect(self._melde_jetzt)
 
         lay = QtWidgets.QVBoxLayout(self)
-        lay.setContentsMargins(10, 8, 10, 10)
-        lay.setSpacing(8)
+        lay.setContentsMargins(6, 4, 6, 4)
+        lay.setSpacing(3)
 
         self.setToolTip("Genau eine Verarbeitung ist aktiv; Erklärung je Option per Tooltip.")
 
@@ -155,6 +155,10 @@ class VerarbeitungPanel(QtWidgets.QWidget):
         self.rel_achse.setToolTip(_TIP_ACHSE)
         g3.addRow("Achse:", self.rel_achse)
         lay.addWidget(self.grp_rel)
+        # relation-amplitude bleibt als Verarbeitung erhalten (Projekte, Skripte),
+        # ist in der Oberflaeche aber ausgeblendet (selten gebraucht, Platz).
+        self.grp_rel.setChecked(False)
+        self.grp_rel.setVisible(False)
 
         # --- Anzeige ----------------------------------------------------------
         grp_anzeige = QtWidgets.QGroupBox("Darstellung")
@@ -175,7 +179,8 @@ class VerarbeitungPanel(QtWidgets.QWidget):
         self.btn_roh.setToolTip(_TIP_ROH)
         self.btn_roh.clicked.connect(self._alles_aus)
         lay.addWidget(self.btn_roh)
-        lay.addStretch(1)
+        # Kein Stretch: das Panel beansprucht nur so viel Hoehe wie noetig.
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
         # Genau eine Operation aktiv: Einschalten schaltet die anderen ab.
         self._gruppen = (self.grp_divide, self.grp_dd, self.grp_rel)
