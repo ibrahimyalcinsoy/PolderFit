@@ -135,6 +135,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_info = None          # Tooltip-Text je Punkt
         self._res_nebenmoden = None    # Liste (mode, B_res-Array, Status) je weiterer Mode
         self._res_aktiv_mode = 1       # hervorgehobene Mode (Korridorliste)
+        self._res_versteckt = set()    # Moden ohne Punkte im Overlay (Haekchen aus)
         self._problemfits_ausblenden = False
         self._ausreisser_anzeigen = False
         self._nebenmoden_anzeigen = True
@@ -501,7 +502,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
     # --- Resonanz-Overlay --------------------------------------------------
     def aktualisiere_resonanz(self, frequenzen, B_res, problematisch=None,
                               ausgeschlossen=None, status=None, info=None,
-                              nebenmoden=None, aktiv_mode: int = 1) -> None:
+                              nebenmoden=None, aktiv_mode: int = 1, versteckt=None) -> None:
         """Speichert und zeichnet die Resonanzpunkte nach Statusklasse.
 
         ``status`` (optional): Klasse je Punkt (``gut``/``bestaetigt``/
@@ -528,6 +529,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._res_nebenmoden = ([(int(m), np.asarray(b, dtype=float), np.asarray(st, dtype=object))
                                  for m, b, st in nebenmoden] if nebenmoden else None)
         self._res_aktiv_mode = int(aktiv_mode)
+        self._res_versteckt = set(int(m) for m in (versteckt or ()))
         self._hover_index = None
         self._zeichne_resonanz()
 
@@ -562,6 +564,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         # Nicht hervorgehobene Moden blass zeichnen (Auswahl in der Korridorliste).
         alpha_m1 = 1.0 if self._res_aktiv_mode == 1 or not self._res_nebenmoden else 0.35
         for klasse in ("ignoriert", "fehler", "problem", "gut", "bestaetigt"):
+            if 1 in self._res_versteckt:
+                break
             maske = (status == klasse) & np.isfinite(self._res_bres)
             if not maske.any() or not self._status_sichtbar(klasse):
                 continue
@@ -585,6 +589,8 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             # Weitere Moden: runde Punkte in der Mode-Farbe; Problemfits als
             # Dreieck (wie Mode 1), ignorierte grau - dieselbe Sichtbarkeitslogik.
             for mode, moden_b, moden_status in self._res_nebenmoden:
+                if int(mode) in self._res_versteckt:
+                    continue
                 farbe = F.mode_farbe(mode)
                 aktiv = int(mode) == self._res_aktiv_mode
                 alpha_k = 1.0 if aktiv else 0.35
