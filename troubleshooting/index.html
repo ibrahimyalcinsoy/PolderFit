@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Fehlerdiagnose - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Fehlerdiagnose";
+        var mkdocs_page_input_path = "troubleshooting.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../referenz/">Schnellreferenz: Größen · Formeln · Quellen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Fehlerdiagnose</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Fehlerdiagnose</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="fehlerdiagnose">Fehlerdiagnose<a class="headerlink" href="#fehlerdiagnose" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Ursache</th>
+<th>Vorgehen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>„Punktzahl … nicht durch Feldanzahl teilbar“</td>
+<td><code>_flush</code>-Datei, letzter Sweep unvollständig</td>
+<td>wird automatisch gekürzt; sonst Datei defekt</td>
+</tr>
+<tr>
+<td>„Kein Mapping-Profil passt“</td>
+<td>fremdes Layout oder Nicht-FMR (<code>Read.ZNA</code>, Winkel-Sweep)</td>
+<td>Zuordnungsdialog; Winkel-Sweeps nicht auswertbar</td>
+</tr>
+<tr>
+<td>sehr lange Laufzeit</td>
+<td>tausende Feldpunkte je Linescan</td>
+<td>Jumper (Auswertungsauswahl), Bereich einschränken</td>
+</tr>
+<tr>
+<td>Fit gut, Fenster sichtbar falsch</td>
+<td>Störfeature/Rauschen</td>
+<td>Korridor (<code>Strg+L</code>), Rechteck-Nachfit, <code>_PROMINENZ_MIN</code> ↑</td>
+</tr>
+<tr>
+<td>Farbplot wird immer schmaler</td>
+<td>(behoben) wiederholtes <code>tight_layout</code></td>
+<td><em>Ansicht → Fensterlayout zurücksetzen</em>; Layout wird jetzt vor jedem Zeichnen zurückgesetzt</td>
+</tr>
+<tr>
+<td>„alpha unphysikalisch“ bei sichtbar guten, breiten Linien</td>
+<td>Plausibilitätsgrenze α_max/2</td>
+<td><code>Strg+P</code> α-Plausibilitätsgrenze anheben oder Fit mit <code>Strg+1</code> bestätigen</td>
+</tr>
+<tr>
+<td>Arbeitsstand verloren (Absturz)</td>
+<td>–</td>
+<td><code>Datei → Auto-Sicherung wiederherstellen</code></td>
+</tr>
+<tr>
+<td>Programm wirkt eingefroren</td>
+<td>langer Auto-Fit/Ladevorgang</td>
+<td>Statusleiste zeigt Spinner, Phase, Stand, Restzeit; gefittete Punkte erscheinen live im Farbplot; <strong>Abbrechen</strong> (Statusleiste/Aktivitäts-Panel) beendet geordnet, bisherige Fits bleiben</td>
+</tr>
+<tr>
+<td>sehr viele problematische Fits</td>
+<td>keine Resonanz im Feldbereich (tiefe f); ip mit oop-Modell an Schranke</td>
+<td><code>problem_statistik()</code> prüfen – meist sachgerecht</td>
+</tr>
+<tr>
+<td>Fit sieht gut aus, „keine Unsicherheiten“</td>
+<td>φ-Nebenminimum, singuläre Jacobi</td>
+<td>automatisch: φ-Neustart, Ausnahme bei <code>rmse_norm ≤ 0.10</code>; sonst Fenster/Startwerte prüfen</td>
+</tr>
+<tr>
+<td>Fenster sucht zu tief</td>
+<td>stationäre Artefakte am Feldrand</td>
+<td>Stationärabzug/Trasse; sonst Korridor</td>
+</tr>
+<tr>
+<td><code>.tdms_index</code> passt nicht</td>
+<td>Datei kopiert/umbenannt</td>
+<td>automatisch ohne Index gelesen; Index löschen</td>
+</tr>
+</tbody>
+</table>
+<p>Systematisch über viele Dateien: <a href="../test-harness/">Robustheits-Harness</a> (<code>diag/</code>-Plots).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../tuning/" class="btn btn-neutral float-left" title="Parameter und Feineinstellung"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../test-harness/" class="btn btn-neutral float-right" title="Robustheitsprüfung über reale Messdaten">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../tuning/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../test-harness/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

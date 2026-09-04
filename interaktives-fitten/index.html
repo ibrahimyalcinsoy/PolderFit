@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Interaktives Fitten - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Interaktives Fitten";
+        var mkdocs_page_input_path = "interaktives-fitten.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../referenz/">Schnellreferenz: Größen · Formeln · Quellen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Interaktives Fitten</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Interaktives Fitten</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="interaktives-fitten">Interaktives Fitten<a class="headerlink" href="#interaktives-fitten" title="Permanent link">&para;</a></h1>
+<p>Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, <code>Esc</code> bricht ab. Zoom (Mausrad/Kästchen) ist standardmäßig <strong>aus</strong>: <em>Ansicht → Zoom</em>; Doppelklick setzt zurück, Tasten <code>+</code>/<code>-</code>/<code>0</code> wirken immer. Alles rückgängig: <code>Strg+Z</code> / <code>Strg+Umschalt+Z</code> (50 Schritte). <strong>Alle Werkzeuge funktionieren direkt nach dem Laden – ein Auto-Fit ist keine Voraussetzung</strong> (<code>leerer_stapel</code>: nicht gefittete Frequenzen bleiben unsichtbar und außerhalb aller Auswertungen).</p>
+<table>
+<thead>
+<tr>
+<th>Werkzeug</th>
+<th>Aufruf</th>
+<th>Wirkung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Auto-Fit (alle)</td>
+<td><code>F5</code></td>
+<td>Dialog: Jumper (absolut), Bereich, <strong>Resonanzen je Fenster</strong> (1–4; &gt; 1 = Summenfit der Dips im AutoWindow-Fenster) und <strong>Anzahl automatisch (BIC)</strong>; Fit je Frequenz für Mode 1, danach alle Korridore</td>
+</tr>
+<tr>
+<td>Korridore</td>
+<td><code>Strg+L</code> oder Panel <em>Korridore</em>, 2 Klicks entlang der Resonanz</td>
+<td>Korridor ± Breite (Spinbox wirkt auf den gewählten Korridor); Anker durch Ziehen der grünen Grenzen im Linescan-Panel oder der Griffe im Farbplot; „Resonanzen im Korridor“ = n Dips (Summenfit, B_res je Dip im Segment; alternativ harte Trennung); „Trennlinie setzen“ = gelbe Linie im Linescan-Panel, wandert relativ zur Korridormitte mit; „Korridor fitten …“ (Frequenzbereich, Modus, Jumper, BIC)</td>
+</tr>
+<tr>
+<td>Bereich neu fitten (Rechteck)</td>
+<td><code>Strg+B</code></td>
+<td>derselbe Dialog (Bereich editierbar); <code>B_res</code> bleibt im Bereich</td>
+</tr>
+<tr>
+<td>Grenzen im Linescan ziehen</td>
+<td>Fit-Panel (erscheint mit erstem Fit oder Klick in die Karte)</td>
+<td>Einzelfrequenz, Fit sofort; Zahl der Resonanzen wählbar</td>
+</tr>
+<tr>
+<td>Ausschlusszone</td>
+<td>Menü Funktionen → „Ausschlusszone einzeichnen“, Rechteck</td>
+<td>Punkte aus allen (Nach-)Fits; schraffiert; Rückgängig mit Strg+Z</td>
+</tr>
+<tr>
+<td>Bewertung</td>
+<td><code>Strg+1/2/3</code>, <code>Strg+I</code>, Panel-Knöpfe</td>
+<td>gut bestätigen / problematisch / automatisch / ignorieren (<a href="../bewertung/">Bewertung</a>)</td>
+</tr>
+</tbody>
+</table>
+<p>Ein gezielter Nachfit an <strong>einer</strong> Frequenz (Grenzen ziehen, „Neu fitten“, Trennlinie) gilt als <strong>vom Nutzer bestätigt</strong> (grün mit blauem Rand; abschaltbar mit Strg+P); Korridor- und Bereichs-Fits über viele Frequenzen bewerten die Kriterien. Im Linescan-Panel zeigt „M1/M2 …“ die gewählte Mode; Grenzen ziehen setzt bei dieser Frequenz einen Anker des Korridors.</p>
+<p>Während eines Fits: Wartecursor, Statusleiste mit Phase (Fenstersuche → Einzelfits), Stand, verstrichener und geschätzter Restzeit, Banner im Farbplot, Live-Einzeichnen der fertigen Punkte; <code>Abbrechen</code> beendet nach dem laufenden Fit, der Rest bleibt „nicht gefittet“ (<code>fitte_alle(abbruch=…)</code>).</p>
+<p>Fenstersuche des Bereichs-Fits = wie Auto-Fit (Residuen auf vollen Linescans, Stationärabzug, lokale Trasse), auf das Feldintervall beschränkt. Korridor-Fits suchen kein Fenster: der Korridor ist das Fenster; Startwert aus dem lokalen Dip, sonst vom Nachbarn.</p>
+<table>
+<thead>
+<tr>
+<th>Fehlerbild</th>
+<th>Werkzeug</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grenzen zu eng</td>
+<td>Rechteck + „Fensterbreite fest“</td>
+</tr>
+<tr>
+<td>mehrere Moden (z. B. nanostrukturiertes CoFe, 2–3 Zweige)</td>
+<td>Resonanzen = 2/3 (Panel, Strg+P oder Auto-Fit-Dialog); Bänder nacheinander je Mode → fitten; Kittel/LLG je Mode (<code>Strg+K</code> → Resonanz); alle Moden im Export</td>
+</tr>
+<tr>
+<td>falsches Signal neben der Mode</td>
+<td>Rechteck eng um die Mode oder Korridor</td>
+</tr>
+<tr>
+<td>Fit ok gemeldet, physikalisch falsch</td>
+<td><code>Strg+2</code> (problematisch) oder Rechteck <em>überschreiben</em> + Ausschlusszone</td>
+</tr>
+<tr>
+<td>Fit gelb, aber sichtbar richtig („alpha unphysikalisch“ bei breiten Linien)</td>
+<td><code>Strg+1</code> (gut bestätigen) oder α-Plausibilitätsgrenze anheben (<code>Strg+P</code>)</td>
+</tr>
+<tr>
+<td>Einzelner Fit daneben</td>
+<td>Grenzen im Linescan-Panel ziehen</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python">st = leerer_stapel(ds)                                   # ohne Auto-Fit
+k = Korridor(mode=2, anker=[Anker(40.5e9, 2.70, 2.80), Anker(43.8e9, 2.80, 2.90)])
+neu, uebersprungen = fitte_korridor(st, k, schritt=1)
+neu, uebersprungen = fitte_bereich(stapel, feld_min=0.55, feld_max=1.30, frequenz_min=8e9, frequenz_max=18e9, modus=&quot;ueberschreiben&quot;, breite_punkte=25)
+stapel.bewerte(i, &quot;bestaetigt&quot;)                          # &quot;auto&quot; | &quot;bestaetigt&quot; | &quot;verworfen&quot;
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../auswertungsauswahl/" class="btn btn-neutral float-left" title="Auswertungsauswahl (Bereiche und Frequenzauswahl)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ausreisser/" class="btn btn-neutral float-right" title="Ausreißer und Projektdateien">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../auswertungsauswahl/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ausreisser/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

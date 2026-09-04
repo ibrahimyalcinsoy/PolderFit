@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Physikalische Gegenprüfung PolderFit gegen Müller (Diss. 2023, WMI) und Müller et al., J. Appl. Phys. 132, 233905 (2022) - PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Physikalische Gegenpr\u00fcfung PolderFit gegen M\u00fcller (Diss. 2023, WMI) und M\u00fcller et al., J. Appl. Phys. 132, 233905 (2022)";
+        var mkdocs_page_input_path = "physik-bewertung-2026-09-03.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../referenz/">Schnellreferenz: Größen · Formeln · Quellen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Physikalische Gegenprüfung PolderFit gegen Müller (Diss. 2023, WMI) und Müller et al., J. Appl. Phys. 132, 233905 (2022)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="physikalische-gegenprufung-polderfit-gegen-muller-diss-2023-wmi-und-muller-et-al-j-appl-phys-132-233905-2022">Physikalische Gegenprüfung PolderFit gegen Müller (Diss. 2023, WMI) und Müller et al., J. Appl. Phys. 132, 233905 (2022)<a class="headerlink" href="#physikalische-gegenprufung-polderfit-gegen-muller-diss-2023-wmi-und-muller-et-al-j-appl-phys-132-233905-2022" title="Permanent link">&para;</a></h1>
+<p>Stand: 2026-09-03. Read-only-Prüfung, keine Codeänderung.
+Quellenangaben: <code>Diss. S. xx</code> = Seitenzahl aus der Kopf-/Fußzeile des Textextrakts, <code>Z. n</code> = Zeilennummer in
+<code>scratchpad/physik/mueller.txt</code>; <code>Paper</code> = <code>scratchpad/physik/paper_233905.txt</code>.
+Codeangaben: Pfad relativ zu <code>/home/ibrahim/Dokumente/Ananas</code>.</p>
+<h2 id="0-konventionsabgleich-basis-fur-alles-weitere">0. Konventionsabgleich (Basis für alles Weitere)<a class="headerlink" href="#0-konventionsabgleich-basis-fur-alles-weitere" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Größe</th>
+<th>Diss.</th>
+<th>PolderFit</th>
+<th>Urteil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kittel oop</td>
+<td><code>H_res − M_eff = 2πf/(γµ0)</code> — Gl. (2.24), Diss. S. 15, Z. 1064</td>
+<td><code>B_res = µ0M_eff + 2πf/γ</code>, <code>physik/kittel_llg.py:17-20</code></td>
+<td>identisch</td>
+</tr>
+<tr>
+<td>Kittel ip</td>
+<td><code>H_res = −H_u^oop − M_eff/2 + √[(2πf/γµ0)² + (M_eff/2)²]</code> — Gl. (2.26), S. 16, Z. 1082</td>
+<td><code>√(w²+(M_eff/2)²) − M_eff/2 − µ0H_u</code>, <code>kittel_llg.py:23-30</code></td>
+<td>identisch</td>
+</tr>
+<tr>
+<td>Linienbreite</td>
+<td><code>ΔH = 2·2πf·α/(γµ0)</code>, <strong>ausdrücklich FWHM</strong> — Gl. (2.27), S. 16, Z. 1099 („given as the full-width at half-maximum")</td>
+<td><code>µ0ΔH = 2·ω·α/γ</code>, <code>fit/linescan_fit.py:418</code>; Modell <code>kittel_llg.py:33-39</code></td>
+<td>identisch, FWHM</td>
+</tr>
+<tr>
+<td>Inhomogenität</td>
+<td><code>ΔH = H_inh + 2·2πfα/(µ0γ)</code> — Gl. (2.28), S. 17, Z. 1115</td>
+<td><code>linienbreite()</code>, <code>kittel_llg.py:33-39</code></td>
+<td>identisch</td>
+</tr>
+<tr>
+<td>γ</td>
+<td><code>γ = gµ_B/ħ</code>, Felder als µ0H in T</td>
+<td><code>konstanten.py:31-37</code>, <code>GAMMA_STANDARD</code> für g=2</td>
+<td>identisch</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Numerische Verifikation</strong> (eigener Lauf gegen <code>physik/suszeptibilitaet.py</code>): Die FWHM von <code>−Im χ_oop</code>
+über dem Feld beträgt bei f = 15 GHz, α = 3·10⁻³ genau <code>2ωα/γ</code> (Verhältnis 0.99995) — die im Code
+verwendete Umrechnung α → µ0ΔH ist also exakt Gl. (2.27) und ist <strong>FWHM, nicht HWHM</strong>. Dasselbe gilt
+für <code>chi_ip_komponenten</code> (Verhältnis 0.99964), und die dortige Resonanz liegt exakt auf <code>kittel_ip</code>.
+Damit ist Müllers Aussage „Eq. (2.27) holds irrespective of sample shape and anisotropy as well as
+measurement geometry" (S. 16, Z. 1102) im Code konsistent umgesetzt.</p>
+<p><strong>Randbemerkung (kein Fehler, nur Startwert):</strong> Der √3-Faktor in <code>fitmodell.py:194-200</code>
+(Magnituden-FWHM → Absorptions-FWHM) gilt für eine reine Lorentz-Absorption. Für die tatsächlich
+gefittete komplexe Größe <code>|A·χ_oop|</code> beträgt das Verhältnis numerisch 1.56 statt 1.73, weil χ′ mit
+in den Betrag eingeht. Konsequenz: der α-<strong>Startwert</strong> liegt ca. 10 % zu tief. Für einen
+Levenberg-Marquardt-Startwert irrelevant, aber der Kommentar im Code ist insofern ungenau.</p>
+<hr />
+<h2 id="1-maghemit-fe2o3-welche-modelle-nutzt-muller-und-reicht-polderfits-lineare-llg-gerade">1. Maghemit γ-Fe₂O₃: Welche Modelle nutzt Müller — und reicht PolderFits lineare LLG-Gerade?<a class="headerlink" href="#1-maghemit-fe2o3-welche-modelle-nutzt-muller-und-reicht-polderfits-lineare-llg-gerade" title="Permanent link">&para;</a></h2>
+<h3 id="11-befund-aus-disspaper">1.1 Befund aus Diss./Paper<a class="headerlink" href="#11-befund-aus-disspaper" title="Permanent link">&para;</a></h3>
+<p><strong>Geometrie und B_res(f).</strong> Müller misst γ-Fe₂O₃ ausschließlich <strong>oop</strong>, und zwar gezielt:
+„The external static magnetic field is applied along the oop direction <strong>to suppress two-magnon
+scattering</strong>" (Paper S. 233905-4; Diss. Z. 3059-3061, S. 54). Die Dispersion ist <strong>nicht</strong> die reine
+Kittel-Gerade, sondern (Diss. Gl. (2.37), S. 23, Z. 1429; Paper Gl. (1)):</p>
+<pre><code>µ0 H_res = µ0 M_eff + (hf/gµ_B)·[1 + Im(α_slow(f))]
+</code></pre>
+<p>mit <code>M_eff = M_s − H_k</code> (Paper, unter Gl. (2)). Es gibt <strong>keinen</strong> zusätzlichen kubischen oder
+in-plane-Anisotropieterm im Fit: die Anisotropie steckt vollständig in <code>M_eff</code>, unter der
+ausdrücklichen Annahme „a uniform uniaxial out-of-plane anisotropy field H_u parallel to the applied
+static magnetic field" (Diss. Z. 1425-1427). <code>H_eff = H_ext + H_d + H_u</code> ist Gl. (2.11) (Z. 800), also
+genau das, was in oop-Geometrie zu <code>M_eff = M_s − H_u</code> kollabiert.</p>
+<p><strong>ΔH(f).</strong> Gl. (2.38) (Diss. S. 23, Z. 1432; Paper Gl. (2)):</p>
+<pre><code>µ0 ΔH = µ0 H_inh + 2·(hf/gµ_B)·[α + Re(α_slow(f))]
+</code></pre>
+<p>mit dem Slow-Relaxor-Term (Gl. (2.39), Z. 1440; Paper Gl. (3)), <code>C</code> nach Gl. (2.40)/(4) und
+<code>F(T) = sech²(E_slow/k_BT)</code> nach Gl. (2.41)/(5). Die Auswertung ist ein <strong>globaler, simultaner Fit von
+H_res(f) und ΔH(f) mit gemeinsamen Parametern</strong> und festgehaltenem g = 2.022 (Diss. Z. 3204-3212,
+S. 56; Paper S. 233905-5). Ergebnis bei RT: µ0M_eff = (−12.4 ± 2.1) mT, α = (2.2 ± 1.5)·10⁻³,
+CF(T) = (2.9 ± 0.6) GHz, τ = (6.3 ± 2.5) ps.</p>
+<p>Die nichtlineare ΔH(f)-Kurve zeigt eine ausgeprägte <strong>Cusp-Struktur bei 10–20 GHz</strong> (Diss. Z. 3070-3072;
+Paper S. 233905-4). Weitere Beiträge werden diskutiert und <em>ausgeschlossen</em>: Zwei-Magnonen-Streuung
+(„not a strong temperature dependence … expected to be suppressed in oop-geometry", Paper S. 233905-6),
+Anisotropie-Dispersion nach Krysztofik (falsche Krümmung), Kasuya-LeCraw/KLC (≈ linear in f).
+Als <em>zusätzlicher</em> Kanal oberhalb 150 K wird der Valenzaustausch-/Charge-Transfer-Mechanismus
+angeführt (Diss. Z. 1477-1494, S. 23), der dieselbe Peakform <code>ΔH_ct ∝ ωτ_ct/[1+(ωτ_ct)²]</code> mit
+anderer Zeitkonstante erzeugt.</p>
+<h3 id="12-abgleich-mit-dem-code">1.2 Abgleich mit dem Code<a class="headerlink" href="#12-abgleich-mit-dem-code" title="Permanent link">&para;</a></h3>
+<p>PolderFit besitzt für die ΔH(f)-Auswertung <strong>nur</strong> die Gerade nach Gl. (2.28)
+(<code>kittel_llg.py:33-39</code>, <code>fit_linienbreite</code> :156-190) und für die Dispersion nur die Kittel-Gerade.
+Eine Repo-weite Suche findet <strong>keinen</strong> Slow-Relaxor-, Valenzaustausch- oder
+Zwei-Magnonen-Term und keinen globalen H_res/ΔH-Kopplungsfit. Temperatur wird zwar je Linescan
+geladen (<code>io/tdms_laden.py:256</code>, <code>io/datensatz.py:41</code>) und als Plot „Resonanz vs. Temperatur"
+angeboten (<code>auswertung/uebersicht.py:186-201</code>), aber <strong>nie gefittet</strong>.</p>
+<h3 id="13-quantitative-konsequenz-eigene-rechnung-mit-mullers-eigenen-rt-parametern">1.3 Quantitative Konsequenz (eigene Rechnung mit Müllers eigenen RT-Parametern)<a class="headerlink" href="#13-quantitative-konsequenz-eigene-rechnung-mit-mullers-eigenen-rt-parametern" title="Permanent link">&para;</a></h3>
+<p>Ich habe µ0ΔH(f) nach Gl. (2.38) mit g = 2.022, α = 2.2·10⁻³, CF = 2.9 GHz, τ = 6.3 ps über
+5–43.5 GHz (Müllers Messbereich) erzeugt und darauf PolderFits Geradenmodell (Gl. 2.28) angepasst:</p>
+<table>
+<thead>
+<tr>
+<th>Größe</th>
+<th>wahr (Müller)</th>
+<th>aus PolderFits Geradenfit</th>
+<th>Fehler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>α</td>
+<td>2.2·10⁻³</td>
+<td><strong>4.25·10⁻³</strong></td>
+<td>Faktor 1.93 zu groß</td>
+</tr>
+<tr>
+<td>µ0H_inh</td>
+<td>(beliebig)</td>
+<td>wahrer Wert <strong>+ 10.7 mT</strong></td>
+<td>massiv überhöht</td>
+</tr>
+<tr>
+<td>R² der Geraden</td>
+<td>–</td>
+<td>0.75</td>
+<td>fällt auf</td>
+</tr>
+</tbody>
+</table>
+<p>Analog für die Dispersion (Gl. 2.37, Debye-Form, s. u.): g = 2.022 → scheinbar <strong>2.040</strong> (+0.9 %),
+µ0M_eff −12.4 mT → −11.9 mT, R² = 0.99999.</p>
+<p><strong>Das ist der Kern der Antwort:</strong> Die Kittel-Auswertung bleibt für solche Proben praktisch
+brauchbar (Müller selbst: „could be (mis-)interpreted in terms of a modified g-factor", Paper
+S. 233905-5) — die <strong>LLG-Gerade dagegen liefert für γ-Fe₂O₃ ein grob falsches α (hier Faktor ≈ 2)
+und ein sinnloses H_inh.</strong> Genau die Sorge des Nutzers aus <code>Dokumente/Prompts.txt</code> („sodass eben kein
+Müll für alpha Gilbert-Dämpfung aus der Kittel Auswertung rauskommt") ist für diese Probenklasse
+berechtigt und quantifizierbar.</p>
+<p><strong>Bewertung: nicht gedeckt</strong> (für γ-Fe₂O₃ und allgemein für Proben mit nichtlinearem ΔH(f));
+gedeckt nur für Proben mit rein Gilbert-artiger Dämpfung (CoFe, YIG — siehe Abschnitt 6).</p>
+<h3 id="14-was-liee-sich-aus-polderfits-vorhandener-ausgabe-zusatzlich-gewinnen">1.4 Was ließe sich aus PolderFits vorhandener Ausgabe zusätzlich gewinnen?<a class="headerlink" href="#14-was-liee-sich-aus-polderfits-vorhandener-ausgabe-zusatzlich-gewinnen" title="Permanent link">&para;</a></h3>
+<p>PolderFit liefert je Linescan bereits genau die Eingangsdaten, die Müller braucht: <code>f</code>, <code>B_res</code>,
+<code>µ0ΔH</code> mit 1σ-Unsicherheiten (<code>fit/linescan_fit.py:416-421</code>) plus mittlere Temperatur.
+Fehlend ist ausschließlich die <strong>zweite Fitstufe</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Zielgröße</th>
+<th>benötigte Gleichung</th>
+<th>Datenbasis in PolderFit</th>
+<th>fehlt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>α (echt, entkoppelt), H_inh, CF(T), τ</td>
+<td>Gl. (2.37)+(2.38)+(2.39) global</td>
+<td>vorhanden (f, B_res, ΔH je f)</td>
+<td>globaler 2-Kurven-Fit</td>
+</tr>
+<tr>
+<td>ΔH_max und f_max des Cusps</td>
+<td>Maximum von Re(α_slow) bei 2πfτ = 1</td>
+<td>vorhanden</td>
+<td>–</td>
+</tr>
+<tr>
+<td>M_eff(T), g(T), α(T), H_inh(T)</td>
+<td>Kittel/LLG je Temperaturgruppe</td>
+<td>Temperatur je Linescan vorhanden</td>
+<td>Gruppierung nach T + Serienplot</td>
+</tr>
+<tr>
+<td>E_slow, C·T</td>
+<td>Gl. (2.40)·(2.41), Fit an CF(T)</td>
+<td>erst nach CF(T)</td>
+<td>3. Stufe</td>
+</tr>
+<tr>
+<td>E_A, τ₀</td>
+<td><code>τ = τ₀·tanh(E_A/2k_BT)</code> (Paper Gl. (6))</td>
+<td>erst nach τ(T)</td>
+<td>3. Stufe</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Achtung, Fallstrick bei einer späteren Implementierung:</strong> Gl. (2.39) / Paper Gl. (3) ist in <em>beiden</em>
+Quellen im Imaginärteil dimensional inkonsistent gesetzt — der Realteil <code>CF·τ/(1+(2πfτ)²)</code> ist
+dimensionslos (GHz·ps ✓), der Imaginärteil <code>CF·(2πfτ)²/(1+(2πfτ)²)</code> hätte die Einheit GHz. Die
+physikalisch konsistente Debye-Form ist <code>α_slow = CFτ·[1 − i·2πfτ]/(1+(2πfτ)²)</code>. Vor einer
+Implementierung ist das mit dem Betreuer zu klären; blindes Abtippen der gedruckten Formel wäre falsch.</p>
+<h3 id="15-praktischer-nutzen-fur-den-nutzer">1.5 Praktischer Nutzen für den Nutzer<a class="headerlink" href="#15-praktischer-nutzen-fur-den-nutzer" title="Permanent link">&para;</a></h3>
+<p>Für die Fe₂O₃-Linescans am WMI: Solange nur die Gerade angeboten wird, sollte PolderFit den
+Nutzer <strong>warnen</strong>, statt ein falsches α zu exportieren. Konkrete, aufwandsarme Empfehlungen:</p>
+<ol>
+<li><strong>Krümmungswarnung im LLG-Fenster.</strong> <code>fit_linienbreite</code> liefert bereits R² (<code>kittel_llg.py:189</code>).
+   Ein Hinweis „ΔH(f) nichtlinear (R² &lt; ~0.95 bzw. systematisches Vorzeichenmuster der Residuen) —
+   α ist eine obere Schranke, kein Gilbert-α" hätte im obigen Testfall (R² = 0.75) sofort gegriffen.
+   Aufwand: klein.</li>
+<li><strong>Residuenplot ΔH − Gerade über f</strong> anzeigen. Das ist exakt Müllers Fig. 4.5(f) und macht den
+   Cusp ohne jedes neue Modell sichtbar. Aufwand: klein.</li>
+<li>Slow-Relaxor-Fit als <strong>optionales</strong> zweites ΔH(f)-Modell (Abschnitt 6).</li>
+</ol>
+<hr />
+<h2 id="2-einzelfit-modell-deckt-s21_modell-die-auswertung-nach-kap-331-ab">2. Einzelfit-Modell: Deckt <code>s21_modell</code> die Auswertung nach Kap. 3.3.1 ab?<a class="headerlink" href="#2-einzelfit-modell-deckt-s21_modell-die-auswertung-nach-kap-331-ab" title="Permanent link">&para;</a></h2>
+<h3 id="21-befund">2.1 Befund<a class="headerlink" href="#21-befund" title="Permanent link">&para;</a></h3>
+<p>Diss. Gl. (3.9), S. 41 (Z. 2417 ff.):</p>
+<pre><code>S21(f,H_ext) = S21⁰(f) − i·A·e^{iφ}·[χ_bb(1−δ_bH) + χ_cc(1−δ_cH)]
+</code></pre>
+<p>mit dem Untergrund <code>S21⁰ = A + B·H_ext</code>, ausdrücklich „modeled as a <strong>complex linear function</strong> of the
+form S21⁰ = A + B·H_ext, where A and B are complex constants, to account for the magnetic-field
+dependence of these losses" (Diss. S. 40, Z. 2352-2356). Für oop reduziert sich das auf Gl. (3.12):
+<code>S21 = S21⁰ − i·A·e^{iφ}·χ_xx = S21⁰ + A·e^{iφ}·χ_yx·e</code> (S. 42, Z. 2453 ff.).</p>
+<p>PolderFit (<code>physik/fitmodell.py:2-19, 59-79</code>):</p>
+<pre><code>S21(B) = A·e^{iφ}·χ_oop(B; B_res, α, ω, γ) + (off_re + i·off_im) + (slope_re + i·slope_im)·(B − B_ref)
+</code></pre>
+<p>Das ist <strong>strukturidentisch</strong> mit Gl. (3.9)/(3.12): der Faktor <code>−i</code> und alle Setup-Vorfaktoren werden
+von der freien Phase φ bzw. der freien Amplitude A aufgenommen; der komplexe lineare Untergrund
+entspricht <code>A + B·H_ext</code> eins zu eins (die Umparametrisierung auf die Bandmitte <code>B_ref</code>
+entkoppelt nur Offset und Steigung numerisch). Re und Im werden simultan gefittet
+(<code>fitmodell.py:109-110</code>), 8 freie Parameter, Levenberg-Marquardt (<code>fit/linescan_fit.py:353-364</code>).</p>
+<p><strong>Bewertung: gedeckt.</strong></p>
+<h3 id="22-derivative-divide-wichtige-klarstellung">2.2 „derivative divide" — wichtige Klarstellung<a class="headerlink" href="#22-derivative-divide-wichtige-klarstellung" title="Permanent link">&para;</a></h3>
+<p>Weder Diss. noch Paper werten diese Daten mit <em>derivative divide</em> aus. Der Begriff kommt im
+Diss.-Text nicht vor (nur Maier-Flaig als Zitat [140],[150],[203], Z. 10244/10282/10502).
+Verwendet wird stattdessen die <strong>feldgesweepte Messung bei fester Frequenz</strong> mit
+<code>ΔS21 = (S21 − S21⁰)/S21</code> (Gl. (3.7), S. 40, Z. 2362) und anschließendem Polder-Fit
+(Diss. Z. 3063-3068: „The complex ΔS21 data is fitted to the Polder susceptibility χ̂p via
+Eq. (2.30) to extract the resonance field H_ext and the linewidth ΔH as a function of f").
+Derivative divide (Maier-Flaig 2018) ist demgegenüber die <strong>frequenzgesweepte</strong>
+Ableitungsmethode. PolderFits Linescan-Ansatz ist also genau Müllers Verfahren — und deckt
+sich mit der Betreuervorgabe „gefittet werden sollen vorrangig Linescan-Messungen
+(Feldsweep bei fester Frequenz)" (<code>benchmark_ftf/BERICHT.md</code>, Hinweis vom 2026-08-17).</p>
+<p>Ein Unterschied bleibt: Müller normiert <strong>multiplikativ</strong> (<code>/S21</code>), PolderFit modelliert den
+Untergrund <strong>additiv</strong> im rohen S21. Das ist bei kleinem ΔS21 (hier ≲ 0.2, vgl. Diss. Fig. 4.5)
+in erster Ordnung äquivalent und wird ohnehin von A, φ, off, slope absorbiert. Kein Handlungsbedarf.
+<strong>Bewertung: gedeckt.</strong></p>
+<h3 id="23-_oop-fur-ip-messungen">2.3 χ_oop für ip-Messungen<a class="headerlink" href="#23-_oop-fur-ip-messungen" title="Permanent link">&para;</a></h3>
+<p>Diss. Gl. (2.31), S. 17 (Z. 1143): die Elliptizität <code>e = M_rf,x/M_rf,y</code>; für oop im Dünnfilmlimes ist
+<code>e ≈ 1</code> (<strong>zirkulare</strong> Präzession, Z. 2456-2459), für ip ist <code>e ≠ 1</code> und in der Konfiguration
+<code>H_ext ∥ b</code> sogar <code>e ≫ 1</code> mit stark reduziertem Signal (Z. 2440-2454). In ip-Geometrie <code>H_ext ∥ a</code>
+tragen <strong>beide</strong> Treibfeldkomponenten bei: <code>S21 = S21⁰ + A·e^{iφ}·χ_yx·(e + 1/e)</code> (Gl. (3.10), S. 41).</p>
+<p>Der Code weiß das und dokumentiert es explizit: <code>physik/suszeptibilitaet.py:102-110</code> — <code>chi_ip_*</code>
+existiert, ist aber <strong>nicht</strong> im Linescan-Fit verdrahtet; <code>s21_modell</code> benutzt ausschließlich
+<code>chi_oop</code> (<code>fitmodell.py:40, 74</code>). Das oop/ip-Umschalten greift erst in der übergreifenden
+Kittel/LLG-Auswertung auf bereits extrahierte B_res (<code>auswertung/uebersicht.py:90-98</code>).</p>
+<p>Was das praktisch bedeutet, habe ich numerisch geprüft: Die Feld-FWHM von <code>−Im χ_ip</code> ist ebenfalls
+exakt <code>2ωα/γ</code>. Die α↔ΔH-Umrechnung ist also auch für ip korrekt (Gl. (2.27) ist
+geometrieunabhängig, Diss. Z. 1102). Der Unterschied liegt allein in der <strong>Linienform</strong>: der
+<code>e+1/e</code>- bzw. <code>1/e</code>-Vorfaktor mischt χ′ und χ″ anders. Da φ frei ist, wird eine <em>konstante</em>
+Re/Im-Mischung vollständig absorbiert; unmodelliert bleibt nur die schwache <strong>Feldabhängigkeit von
+e(H_ext)</strong> über die Linie hinweg (Gl. (2.31)), die eine leichte Linienasymmetrie erzeugt.</p>
+<p><strong>Bewertung: teilweise gedeckt.</strong> χ_oop ist für ip eine sehr gute Linienform-Näherung, keine exakte
+Beschreibung. Der empirische Beleg, dass die Näherung trägt, liegt vor: der gesamte
+FTF-Benchmark CoFe 290 K/5 K ist <strong>ip</strong>-Geometrie, und alle Kittel/LLG-Größen stimmen mit
+|z| ≤ 0.5σ mit dem LabVIEW-FTF überein (<code>benchmark_ftf/FTF_AUTOFIT_2026-09-03.md</code>).</p>
+<p><strong>Konsequenz für die Auswertung:</strong> Für die Fe₂O₃-Linescans ist der Punkt ohnehin gegenstandslos —
+Müller misst diese Probe oop, und zwar aus physikalischem Grund (Zwei-Magnonen-Unterdrückung).
+Empfehlung: bei ip-Datensätzen im Bericht vermerken, dass die Linienform genähert ist; wer es exakt
+will, braucht den in <code>suszeptibilitaet.py:102-110</code> bereits beschriebenen <code>B_res</code>-parametrisierten
+ip-Wrapper plus Geometrie-Parameter durch Startwertschätzung/Modell/Fit. Aufwand: mittel.</p>
+<h3 id="24-vorzeichen-und-einheiten">2.4 Vorzeichen und Einheiten<a class="headerlink" href="#24-vorzeichen-und-einheiten" title="Permanent link">&para;</a></h3>
+<p>Alle geprüften Punkte stimmen: γ in rad·s⁻¹·T⁻¹ (<code>konstanten.py:31-37</code>), Felder durchgehend µ0H in
+Tesla (<code>konstanten.py:4-11</code>, TDMS liefert bereits Tesla), ω = 2πf (<code>linescan_fit.py:332</code>),
+ΔH als <strong>FWHM</strong> entsprechend Gl. (2.27) (numerisch verifiziert, Abschnitt 0). Das im
+<code>konstanten.py</code>-Docstring als „wahrscheinlichste Fehlerquelle" markierte Mischen von H (A/m) und
+µ0H (T) tritt nirgends auf. <code>chi_oop</code> setzt intern <code>µ0M_eff = B_res − ω/γ</code> (<code>suszeptibilitaet.py:84</code>),
+d. h. die Resonanz liegt per Konstruktion bei <code>B_res</code> — das ist Gl. (2.24) nach M_eff aufgelöst und
+sauber. <strong>Bewertung: gedeckt.</strong></p>
+<hr />
+<h2 id="3-kittel-auswertung">3. Kittel-Auswertung<a class="headerlink" href="#3-kittel-auswertung" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Fall</th>
+<th>Müller</th>
+<th>PolderFit</th>
+<th>Urteil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>allgemein</td>
+<td>Gl. (2.22), S. 15 (Z. 1028): volle Formel mit N_xx,N_yy,N_zz, H_u und Richtung <strong>u</strong></td>
+<td>nicht implementiert</td>
+<td>nicht gedeckt (aber s. u.)</td>
+</tr>
+<tr>
+<td>Kugel</td>
+<td>Gl. (2.23), Z. 1049</td>
+<td>nicht implementiert</td>
+<td>irrelevant (Dünnfilme)</td>
+</tr>
+<tr>
+<td>Dünnfilm oop</td>
+<td>Gl. (2.24), Z. 1064</td>
+<td><code>kittel_oop</code>, <code>kittel_llg.py:17-20</code></td>
+<td><strong>identisch</strong></td>
+</tr>
+<tr>
+<td>Dünnfilm ip</td>
+<td>Gl. (2.25)/(2.26), Z. 1075/1082</td>
+<td><code>kittel_ip</code>, <code>kittel_llg.py:23-30</code></td>
+<td><strong>identisch zu (2.26)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Müller selbst benutzt in der ganzen Arbeit ausschließlich die Spezialfälle (2.24) und (2.26) —
+(2.26) explizit „we use a modified version of Eq. (2.25) in Ch. 5" (Z. 1079-1082); für γ-Fe₂O₃
+(Kap. 4) und CoFe/Al₂O₃ (Appendix G1, Z. 9307-9309) wird (2.24) gefittet. Die in
+<code>Dokumente/Prompts.txt</code> offene Frage, ob <code>H_eff = H_ext + H_d + H_u + h_rf</code> in voller
+mathematischer Modellierung nötig ist, lässt sich damit beantworten: <strong>Nein, nicht für Dünnfilme in
+den beiden Standardgeometrien</strong> — Gl. (2.11) (Z. 800) ist genau das, was zu (2.24)/(2.26)
+zusammenfällt; die bereitgestellten Fitfunktionen decken es ab. Das gilt, solange die uniaxiale
+Anisotropie <strong>parallel zum Feld</strong> liegt (Müllers ausdrückliche Annahme, Z. 1425-1427) und die
+Demagnetisierungsfaktoren die Dünnfilmwerte annehmen.</p>
+<p><strong>Zusätzlicher Befund (Codequalität):</strong> Die in <code>kittel_llg.py:120-125</code> beschriebene exakte
+Entartung von Gl. (2.26) unter <code>(M_eff, H_u) → (−M_eff, H_u + M_eff)</code> habe ich algebraisch
+nachgerechnet — sie besteht tatsächlich, und die Schranke <code>µ0M_eff ≥ 0</code> (<code>kittel_llg.py:139</code>) ist
+die richtige Auflösung. Diese Falle steht so nicht in der Diss.; der Fix ist eine echte
+Verbesserung gegenüber einer naiven Umsetzung von (2.26).</p>
+<p><strong>Wo es für welche Probe relevant wird:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Probe</th>
+<th>Situation</th>
+<th>Urteil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>γ-Fe₂O₃ / MgO (Dehnung, PMA)</td>
+<td>oop gemessen, Anisotropie steckt vollständig in M_eff; kubische Spinellanisotropie spielt in oop keine Rolle</td>
+<td><strong>gedeckt</strong> — nur <code>kittel_oop</code> nötig; M_eff wird klein und <strong>negativ</strong> (−12 mT bei RT, Vorzeichenwechsel bei T_cross ≈ 200 K, Diss. Z. 3230-3236). Wichtig: PolderFits <code>fit_kittel_oop</code> hat <strong>keine</strong> Vorzeichenschranke (<code>kittel_llg.py:87, 98</code>) — negatives M_eff kommt korrekt heraus. Bei <code>fit_kittel_ip</code> dagegen erzwingt die Schranke M_eff ≥ 0: <strong>auf eine ip-gemessene Fe₂O₃-Probe mit PMA dürfte man <code>fit_kittel_ip</code> nicht anwenden</strong> ohne diese Schranke zu prüfen.</td>
+</tr>
+<tr>
+<td>CoFe (auch nanostrukturiert)</td>
+<td>große M_eff ≈ 2.3 T, Standardfall</td>
+<td>gedeckt</td>
+</tr>
+<tr>
+<td>YIG</td>
+<td>kleine M_eff, kubische Anisotropie in ip-Geometrie winkelabhängig</td>
+<td>teilweise — Winkelabhängigkeit (kubisch) ist in (2.22) nur über N und uniaxiales H_u parametrisierbar; Müller macht dazu keine Aussage. Kein Handlungsbedarf ohne Winkelserien.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Empfehlung:</strong> Warnhinweis in der GUI, wenn im ip-Fit <code>µ0M_eff</code> an der unteren Schranke 0 landet —
+das ist das Signal für „Probe hat PMA / falsche Geometrie gewählt". Aufwand: klein.</p>
+<hr />
+<h2 id="4-mehr-moden-auswertung">4. Mehr-Moden-Auswertung<a class="headerlink" href="#4-mehr-moden-auswertung" title="Permanent link">&para;</a></h2>
+<p><strong>Vorbemerkung:</strong> In der Dissertation gibt es dazu <strong>nichts</strong> — Müller wertet durchweg die
+uniforme Kittel-Mode einer homogenen Schicht aus. Die einzige Situation mit mehreren
+Resonanzen ist die Magnon-Phonon-Hybridisierung in Kap. 7, und die wird gerade <em>nicht</em>
+Mode-für-Mode mit unabhängigen Lorentzlinien behandelt, sondern über ein Modell <strong>gekoppelter
+harmonischer Oszillatoren</strong> (Gl. (2.51)-(2.56), S. 27-28). Der Vergleich ist also
+notwendigerweise indirekt.</p>
+<p><strong>Was PolderFit tut:</strong> je Mode ein eigener Korridor (<code>fit/korridor.py:2-13</code>), pro Linescan ein
+Summenmodell aus n Polder-Linien mit je eigenem <code>B_res_k, α_k, A_k, φ_k</code> über <strong>gemeinsamem</strong>
+Untergrund (<code>fitmodell.py:26-46</code>, <code>residuum_multi</code> :58-75), danach Kittel/LLG je Mode
+(<code>auswertung/moden.py:60-100</code>).</p>
+<p><strong>Bewertung: gedeckt für phänomenologisch entkoppelte Moden, nicht gedeckt für gekoppelte.</strong>
+Ein Summenmodell aus unabhängigen Polder-Linien ist die korrekte Beschreibung, solange die Moden
+nur <em>räumlich</em> verschieden sind (z. B. PSSW- oder Randmoden eines perforierten Films) und
+<strong>nicht miteinander wechselwirken</strong>. Das entspricht der Vorgabe „phänomenologisch, aber in der
+Datenauswertung exakt" (<code>Dokumente/Prompts.txt</code>).</p>
+<p><strong>Physikalische Fallen, die so nicht erfasst sind:</strong></p>
+<ol>
+<li><strong>Modenkopplung / vermiedene Kreuzung.</strong> Bei endlicher Kopplung g_eff sind die beiden
+   Resonanzen keine Summe zweier Lorentzlinien mehr; Gl. (2.53) (Diss. S. 27, Z. 1697) zeigt einen
+   <strong>gemeinsamen Nenner</strong> mit einem <code>−g_eff²/(…)</code>-Term. Ein Summenfit erzeugt dort systematisch
+   falsche B_res (die Aufspaltung wird als zwei unabhängige Kittel-Zweige interpretiert) und
+   falsche α. <strong>Diagnose-Signatur: die Kittel-Fits zweier Moden ergeben kreuzende Geraden, die sich
+   in den Daten aber nicht kreuzen.</strong> PolderFit erkennt das nicht.</li>
+<li><strong>Gemeinsame Linienbreiten / Linienbreiten-Transfer.</strong> In Resonanz wird die magnetische
+   Relaxationsrate <em>erhöht</em>: <code>κ̃_s = κ_s + g_eff²/(4η_a)</code> (Gl. (2.55), Z. 1721). Wer daraus per
+   LLG-Gerade ein „α" der Mode zieht, mischt intrinsische Dämpfung und Kopplung. Der Code hat
+   je Mode ein völlig freies α (<code>fitmodell.py:52-55</code>), also keine Kopplung der Linienbreiten.</li>
+<li><strong>Amplituden-/Phasenentartung.</strong> Bei Modenabstand ≲ ΔH ist das Summenmodell numerisch
+   schlecht konditioniert (zwei Linien können A/φ tauschen). Der Code mildert das über die
+   nutzergesetzten Korridore und die φ±π-Neustartlogik (<code>linescan_fit.py:385-395</code>), löst es aber
+   nicht prinzipiell.</li>
+<li><strong>Zuordnung über Linescans hinweg.</strong> Die Modenzuordnung erfolgt über die Korridore, also über
+   menschliche Vorgabe — physikalisch das Richtige, aber bei Modenkreuzung (Punkt 1) führt genau
+   diese Zuordnung in die Irre.</li>
+</ol>
+<p><strong>Empfehlungen (keine Codeänderung, nur Nutzung):</strong>
+- Nach einem Mehr-Moden-Lauf prüfen, ob die α_k benachbarter Moden dort lokal <em>anschwellen</em>, wo die
+  Moden sich nähern. Das ist die Signatur von Punkt 2 und bedeutet: Summenmodell ungeeignet.
+- Modenabstand ≥ 2–3 ΔH als Faustregel; darunter das Ergebnis nicht als „zwei unabhängige Moden"
+  berichten.
+- Ein echter Kopplungsfit nach Gl. (2.53) wäre Aufwand groß und ist ohne konkreten Anwendungsfall
+  nicht zu empfehlen (siehe Abschnitt 6).</p>
+<hr />
+<h2 id="5-kap-712-72-und-appendix-g">5. Kap. 7.1.2, 7.2 und Appendix G<a class="headerlink" href="#5-kap-712-72-und-appendix-g" title="Permanent link">&para;</a></h2>
+<h3 id="51-auswertestandard-bei-muller">5.1 Auswertestandard bei Müller<a class="headerlink" href="#51-auswertestandard-bei-muller" title="Permanent link">&para;</a></h3>
+<p><strong>Datendarstellung (Fig. 7.2, Diss. S. 134):</strong> <code>|S21|</code> als <strong>Colorplot über (µ0H_ext, f − f₀)</strong> —
+Feld auf x, Frequenz auf y, in einem Fenster von ±20 mT × ±10 MHz um <code>µ0H_res(f₀) ≈ 3.005 T</code> bei
+f₀ = 18 GHz, T = 5 K. Dazu: (b) <strong>vertikaler Schnitt</strong> <code>|S21(f)|</code> bei einem <em>verstimmten</em> Feld
+(3.011 T) → zwei Lorentzlinien → elastische Zerfallsraten <code>η_a1,2/(2π) = (0.23 ± 0.02)</code> und
+<code>(0.16 ± 0.01)</code> MHz; (c) <strong>horizontale Schnitte</strong> <code>|S21(H_ext)|</code> = normale Linescans, resonant und
+verstimmt → <code>κ_s/(2π) = (69.0 ± 0.1)</code> MHz aus der <strong>HWHM</strong>; (d) <code>ΔH(f)</code> mit den MEC-Peaks
+<code>ΔH_MEC1,2</code> über der Geraden <code>ΔH₀</code> (Z. 7269-7302).</p>
+<p><strong>Extrahierte Größen:</strong> freier Spektralbereich <code>f_FSR ≈ 6.04 MHz</code> (Gl. (2.50)), Kopplungsrate über
+<strong>Gl. (2.56)</strong> (S. 28, Z. 1725-1728):</p>
+<pre><code>g_eff = 2·√[η_a·(κ̃_s(f=f_n) − κ_s)] = √{2·η_a·γ·[µ0(ΔH(f=f_n) − ΔH₀)]}
+</code></pre>
+<p>→ <code>g_eff1,2/(2π) = (4.02 ± 0.62)</code> und <code>(4.55 ± 0.47)</code> MHz, Kooperativitäten
+<code>C = g_eff²/(2κ_s η_a) = 0.63 ± 0.09</code> und <code>0.76 ± 0.10</code>.</p>
+<p><strong>Kap. 7.2 (Temperaturabhängigkeit):</strong> <code>κ_s(f)</code> linear gefittet als <code>κ_s/(2π) = κ_s0/(2π) + 2αf</code>
+→ <code>κ_s0/(2π) = (48.0 ± 2.4)</code> MHz, <code>α = (2.9 ± 0.1)·10⁻³</code> (Z. 7815-7820) — das ist <strong>exakt Gl. (2.28)
+in Frequenzeinheiten</strong>. <code>η_a(f) = η_a0 + 4π²ξf²</code> (Gl. (7.2)) und <code>η_a(T) = η_a0 + β_a T⁴</code>
+(Landau-Rumer, Gl. (7.3), Z. 7935-7940). Temperaturserien von g, M_eff, α, H_inh in Fig. G2
+(Z. 9325-9335).</p>
+<p><strong>Appendix G1 (S. 181-182, Z. 9278-9324):</strong> Für CoFe/Al₂O₃ bei T = 5 K, oop, wird ganz konventionell
+<code>H_res(f)</code> mit <strong>Gl. (2.24)</strong> und <code>ΔH(f)</code> mit <strong>Gl. (2.28)</strong> gefittet:</p>
+<table>
+<thead>
+<tr>
+<th>Größe</th>
+<th>Müller, Appendix G1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>g</td>
+<td>2.079 ± 0.001</td>
+</tr>
+<tr>
+<td>µ0M_eff</td>
+<td>(2.381 ± 0.004) T</td>
+</tr>
+<tr>
+<td>µ0H_inh</td>
+<td>(1.6 ± 0.2) mT</td>
+</tr>
+<tr>
+<td>α</td>
+<td>(2.8 ± 0.1)·10⁻³</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-was-polderfit-heute-kann-und-was-nicht">5.2 Was PolderFit heute kann — und was nicht<a class="headerlink" href="#52-was-polderfit-heute-kann-und-was-nicht" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Auswerteschritt</th>
+<th>PolderFit</th>
+<th>Bewertung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Colorplot Feld x / Frequenz y</td>
+<td>ja (Standarddarstellung, laut Memo „Plots stets x=Feld/y=Frequenz")</td>
+<td><strong>gedeckt</strong></td>
+</tr>
+<tr>
+<td>Horizontale Schnitte <code>|S21(H)|</code>, Polder-Fit → B_res, ΔH</td>
+<td>ja, Kernfunktion (<code>fit/linescan_fit.py</code>)</td>
+<td><strong>gedeckt</strong></td>
+</tr>
+<tr>
+<td>Kittel oop (2.24) → g, M_eff</td>
+<td>ja (<code>kittel_llg.py:64-110</code>)</td>
+<td><strong>gedeckt</strong></td>
+</tr>
+<tr>
+<td>LLG (2.28) → α, H_inh</td>
+<td>ja (<code>kittel_llg.py:156-190</code>)</td>
+<td><strong>gedeckt</strong></td>
+</tr>
+<tr>
+<td>Gütekriterien / Ausreißer</td>
+<td>ja (<code>fit/kriterien.py</code>, Nachfenster 2.5·ΔH <code>fit/batch.py:37</code>)</td>
+<td>über Müllers Standard hinaus</td>
+</tr>
+<tr>
+<td><strong>Vertikaler Schnitt <code>|S21(f)|</code> bei festem Feld + Lorentzfit → η_a</strong></td>
+<td><strong>nein</strong> — es gibt keinen Frequenzschnitt-Fit</td>
+<td><strong>nicht gedeckt</strong></td>
+</tr>
+<tr>
+<td><strong>f_FSR / Periodizität der Phononenmoden</strong></td>
+<td>nein</td>
+<td>nicht gedeckt</td>
+</tr>
+<tr>
+<td><strong>ΔH-Peaks bei Phononenresonanz auswerten (ΔH_MEC)</strong></td>
+<td>indirekt: ΔH(f) wird berechnet, aber nur gegen die Gerade gefittet; Peaks gelten als Ausreißer</td>
+<td><strong>teilweise</strong></td>
+</tr>
+<tr>
+<td><strong>g_eff, C nach Gl. (2.56)</strong></td>
+<td>nein</td>
+<td>nicht gedeckt</td>
+</tr>
+<tr>
+<td><strong>Fit der vermiedenen Kreuzung (Gl. 2.52/2.53)</strong></td>
+<td>nein</td>
+<td>nicht gedeckt</td>
+</tr>
+<tr>
+<td><strong>Temperaturserien (M_eff(T), α(T), η_a(T), Gl. (7.3))</strong></td>
+<td>nein — T wird geladen und geplottet, nie gefittet</td>
+<td>nicht gedeckt</td>
+</tr>
+<tr>
+<td>Frequenzauflösung im MHz-Bereich um f₀</td>
+<td>prinzipiell ja, wenn die TDMS so aufgenommen sind</td>
+<td>offen (datenabhängig)</td>
+</tr>
+</tbody>
+</table>
+<p>Wichtig für die Erwartungshaltung: Kap. 7 braucht eine <strong>Frequenzauflösung im MHz-Bereich bei
+festem Feld</strong> (±10 MHz um 18 GHz, Fig. 7.2). PolderFits Linescan-Paradigma (Feldsweep bei fester
+Frequenz) liefert die horizontalen Schnitte — die Colorplot-Achse <code>f</code> mit MHz-Schrittweite kommt
+aus vielen dicht benachbarten Linescans. Das ist möglich, aber ein anderes Messregime als die
+Fe₂O₃-Serien.</p>
+<h3 id="53-lasst-sich-appendix-g-mit-polderfit-kreuzprufen">5.3 Lässt sich Appendix G mit PolderFit kreuzprüfen?<a class="headerlink" href="#53-lasst-sich-appendix-g-mit-polderfit-kreuzprufen" title="Permanent link">&para;</a></h3>
+<p><strong>Ja, und zwar direkt und ohne jede Erweiterung</strong> — Appendix G1 ist der ideale Kreuzprüfungsfall,
+weil dort genau PolderFits vier Ausgabegrößen stehen. Vergleichbar wären:</p>
+<table>
+<thead>
+<tr>
+<th>Größe</th>
+<th>Müller CoFe/Al₂O₃, 5 K, oop (App. G1)</th>
+<th>PolderFit liefert</th>
+<th>Anmerkung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>g</td>
+<td>2.079 ± 0.001</td>
+<td><code>kittel["g_faktor"]</code></td>
+<td>direkt vergleichbar</td>
+</tr>
+<tr>
+<td>µ0M_eff</td>
+<td>(2.381 ± 0.004) T</td>
+<td><code>kittel["mu0Meff"]</code></td>
+<td>direkt vergleichbar</td>
+</tr>
+<tr>
+<td>α</td>
+<td>(2.8 ± 0.1)·10⁻³</td>
+<td><code>llg["alpha"]</code></td>
+<td>direkt vergleichbar</td>
+</tr>
+<tr>
+<td>µ0H_inh</td>
+<td>(1.6 ± 0.2) mT</td>
+<td><code>llg["mu0Hinh"]</code></td>
+<td>direkt vergleichbar</td>
+</tr>
+<tr>
+<td>κ_s/(2π)</td>
+<td>69.0 MHz (HWHM in f)</td>
+<td>aus <code>µ0ΔH</code>: κ_s/(2π) = γ·µ0ΔH/(4π)</td>
+<td>Umrechnung nötig, kein neuer Fit</td>
+</tr>
+<tr>
+<td>g_eff, C, η_a, f_FSR</td>
+<td>Gl. (2.56), (2.50)</td>
+<td><strong>nicht</strong> ableitbar</td>
+<td>η_a fehlt (Frequenzschnitt)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bemerkenswerte Konsistenz:</strong> Der bereits vorhandene FTF-Benchmark (<code>benchmark_ftf/BERICHT.md</code>)
+prüft CoFe bei 290 K und 5 K und liefert α = 7.34·10⁻³ (290 K) bzw. 7.82·10⁻³ (5 K) — deutlich
+größer als Müllers 2.8·10⁻³. Das ist <strong>kein Widerspruch</strong>, sondern eine andere Probe/Geometrie
+(ip, andere Schichtfolge, ohne Müllers Pt/Cu-Seedlayer, der laut Z. 7185-7187 „required to generate
+optimal magnetization damping properties of CoFe" ist). Ein sauberer Kreuztest gegen Appendix G1
+bräuchte einen <strong>oop</strong>-Datensatz der CoFe/Al₂O₃-Probe. Falls ein solcher TDMS auf dem Share liegt,
+wäre er die wertvollste noch offene Validierung — vier unabhängige Literaturwerte mit
+Fehlerbalken, direkt gegen PolderFits Standardausgabe.</p>
+<p><strong>Konkrete Empfehlung:</strong> Die MEC-Peaks in <code>ΔH(f)</code> nicht als Ausreißer wegwerfen. Ein
+Zusatzausgabefeld „µ0(ΔH − ΔH_Gerade) je f" (das ist bereits berechenbar, <code>kittel_llg.py:189</code> hat
+alle Zutaten) macht Fig. 7.2(d) reproduzierbar; mit einem extern bestimmten η_a folgt g_eff
+direkt aus Gl. (2.56) per Taschenrechner. Aufwand: klein.</p>
+<hr />
+<h2 id="6-gesamturteil-und-priorisierte-erweiterungen">6. Gesamturteil und priorisierte Erweiterungen<a class="headerlink" href="#6-gesamturteil-und-priorisierte-erweiterungen" title="Permanent link">&para;</a></h2>
+<h3 id="61-numerische-genauigkeit">6.1 Numerische Genauigkeit<a class="headerlink" href="#61-numerische-genauigkeit" title="Permanent link">&para;</a></h3>
+<p>Sehr gut belegt. Gegen das LabVIEW-FTF (<code>benchmark_ftf/BERICHT.md</code>, <code>FTF_AUTOFIT_2026-09-03.md</code>):</p>
+<ul>
+<li>CoFe 290 K (ip): g 2.1054 vs. 2.1053; µ0M_eff 2.2496 vs. 2.2492 T; α 7.338 vs. 7.378·10⁻³;
+  µ0H_u 3.05 vs. 3.14 mT; µ0ΔH₀ −0.92 vs. −1.01 mT. <strong>Alle |z| ≤ 0.15σ.</strong></li>
+<li>CoFe 5 K (ip): g 2.1065 vs. 2.1048; µ0M_eff 2.3049 vs. 2.3104 T; α 7.818 vs. 7.857·10⁻³.
+  <strong>Alle |z| ≤ 0.46σ.</strong></li>
+<li>Einzelfit-Ebene: Median-Abweichung in ΔH zwischen −0.70 % und +0.08 %, 95–100 % der Punkte
+  innerhalb 2σ, 0 problematische Fits.</li>
+<li>Auf identischem Fenster sind die Modelle äquivalent: B_res auf 10⁻⁵ T, ΔH auf 0.1 %.</li>
+</ul>
+<p>Der Nachfenster-Faktor 2.5·ΔH (<code>fit/batch.py:37</code>) ist empirisch aus einer k-Studie begründet
+(k = 2/2.5/3/4 → Median-Abweichung −0.1/+0.1/−0.1/−2.0 %) und behebt eine reale systematische
+ΔH-Unterschätzung. <strong>Urteil: numerisch einwandfrei, in ΔH sogar besser kontrolliert als das FTF.</strong></p>
+<p>Einziger offener numerischer Punkt: YIG 50 K, α 1.784 vs. 1.584·10⁻³ (≈ 4σ Differenz). Angesichts
+der ansonsten perfekten Übereinstimmung wäre hier zu prüfen, welcher der beiden Werte richtig ist —
+bei YIG mit kleinem α ist die Linienbreite nahe an <code>DH_MIN_FELDSCHRITTE = 1.5</code> (<code>kriterien.py:65</code>),
+also am Auflösungslimit. Aufwand: klein (Diagnose, keine Implementierung).</p>
+<h3 id="62-physikalische-sinnhaftigkeit">6.2 Physikalische Sinnhaftigkeit<a class="headerlink" href="#62-physikalische-sinnhaftigkeit" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Bereich</th>
+<th>Urteil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Einheiten/Vorzeichen/FWHM-Konvention</td>
+<td><strong>gedeckt</strong>, numerisch verifiziert</td>
+</tr>
+<tr>
+<td>S21-Modell (Gl. 3.9/3.12)</td>
+<td><strong>gedeckt</strong></td>
+</tr>
+<tr>
+<td>Kittel oop (2.24) und ip (2.26)</td>
+<td><strong>gedeckt</strong>, inkl. korrekter Auflösung der (2.26)-Entartung</td>
+</tr>
+<tr>
+<td>LLG-Gerade (2.28) für Gilbert-dominierte Proben (CoFe, YIG)</td>
+<td><strong>gedeckt</strong></td>
+</tr>
+<tr>
+<td>χ_oop als Linienform für ip-Daten</td>
+<td><strong>teilweise</strong> (Elliptizität e(H) unmodelliert; empirisch unkritisch)</td>
+</tr>
+<tr>
+<td>ΔH(f) für γ-Fe₂O₃ und andere Proben mit nichtlinearem ΔH(f)</td>
+<td><strong>nicht gedeckt</strong> — α systematisch ≈ Faktor 2 zu groß</td>
+</tr>
+<tr>
+<td>Temperaturabhängige Relaxationsprozesse (Sec. 2.3.3)</td>
+<td><strong>nicht gedeckt</strong></td>
+</tr>
+<tr>
+<td>Magnon-Phonon-Kopplung (Kap. 7)</td>
+<td><strong>nicht gedeckt</strong></td>
+</tr>
+<tr>
+<td>Mehr-Moden mit Kopplung</td>
+<td><strong>nicht gedeckt</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Zusammenfassend: <strong>PolderFit ist eine korrekte und präzise Umsetzung von Müllers Standardauswertung
+(Kap. 2/3, Appendix G1) — sie deckt genau den linearen, Gilbert-dominierten Fall ab.</strong> Die
+Kapitel 4 und 7 der Dissertation gehen darüber hinaus, und für die Fe₂O₃-Probe des Nutzers ist
+dieser Überhang nicht kosmetisch, sondern entscheidet über die Richtigkeit von α.</p>
+<h3 id="63-priorisierte-erweiterungen">6.3 Priorisierte Erweiterungen<a class="headerlink" href="#63-priorisierte-erweiterungen" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Erweiterung</th>
+<th>Gleichung</th>
+<th>Aufwand</th>
+<th>Nutzen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Nichtlinearitäts-Warnung + Residuenplot ΔH(f) − Gerade</strong></td>
+<td>Vergleich gegen Gl. (2.28)</td>
+<td><strong>klein</strong></td>
+<td>verhindert stillschweigend falsches α — direkt die Sorge aus <code>Prompts.txt</code>. Höchste Priorität.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Warnung, wenn ip-Fit an der Schranke µ0M_eff = 0 landet</strong></td>
+<td>Gl. (2.26)</td>
+<td><strong>klein</strong></td>
+<td>erkennt PMA-Proben in falscher Geometrie (Fe₂O₃!)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Export „µ0(ΔH − ΔH_Gerade)(f)"</strong> (MEC-/Cusp-Residuum)</td>
+<td>Gl. (2.38) bzw. (2.56)</td>
+<td><strong>klein</strong></td>
+<td>reproduziert Fig. 4.5(f) und Fig. 7.2(d) ohne neues Modell</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Temperaturserien-Auswertung</strong>: Linescans nach T gruppieren, Kittel/LLG je T, Plots M_eff(T), g(T), α(T), H_inh(T)</td>
+<td>(2.24)+(2.28) je T</td>
+<td><strong>mittel</strong></td>
+<td>genau Diss. Fig. 4.6 und Fig. G2; T ist bereits geladen</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Slow-Relaxor-ΔH(f)-Modell</strong> als optionale Alternative zur Geraden</td>
+<td><strong>Gl. (2.38)</strong> mit <strong>Gl. (2.39)</strong> (Debye-Form, s. 1.4)</td>
+<td><strong>mittel</strong></td>
+<td>liefert echtes α, H_inh, CF(T), τ für Fe₂O₃</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Globaler Fit H_res(f) + ΔH(f) mit gemeinsamen Parametern</strong>, g optional fest</td>
+<td><strong>Gl. (2.37) + (2.38)</strong> simultan</td>
+<td><strong>mittel</strong></td>
+<td>Müllers eigenes Verfahren; entkoppelt g von Im(α_slow)</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>CF(T)- und τ(T)-Fit</strong> (3. Stufe)</td>
+<td><strong>Gl. (2.40)·(2.41)</strong> und <code>τ = τ₀ tanh(E_A/2k_BT)</code> (Paper Gl. 6)</td>
+<td><strong>mittel</strong></td>
+<td>E_slow, C·T, E_A, τ₀ — Diss. Fig. 4.6(c),(d)</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Echter ip-Linienform-Fit</strong> (χ_ip mit B_res-Parametrisierung + Geometrieparameter)</td>
+<td>Gl. (2.30)+(3.10)/(3.11)</td>
+<td><strong>mittel</strong></td>
+<td>beseitigt die letzte Näherung bei ip-Daten; Bauplan steht bereits in <code>suszeptibilitaet.py:102-110</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Frequenzschnitt-Fit <code>|S21(f)|</code> bei festem Feld → η_a, f_FSR</strong></td>
+<td>Lorentz + Gl. (2.50)</td>
+<td><strong>groß</strong></td>
+<td>Voraussetzung für alles aus Kap. 7</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>g_eff / Kooperativität aus ΔH-Peaks</strong></td>
+<td><strong>Gl. (2.56)</strong>, <code>C = g_eff²/(2κ_s η_a)</code></td>
+<td><strong>groß</strong> (braucht #9)</td>
+<td>Kap. 7.1.2 vollständig</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>Fit der vermiedenen Kreuzung / gekoppelte Oszillatoren</strong></td>
+<td><strong>Gl. (2.52)/(2.53)</strong></td>
+<td><strong>groß</strong></td>
+<td>nur bei konkretem MEC-Projekt sinnvoll</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Empfehlung an den Nutzer:</strong> #1–#3 sofort (kleiner Aufwand, verhindern falsche Ergebnisse); #4–#7
+als Paket, sobald die Fe₂O₃-Temperaturserien ausgewertet werden sollen — das ist der eigentliche
+physikalische Mehrwert gegenüber dem LabVIEW-FTF, das diese Modelle ebenfalls nicht hat.</p>
+<h1 id="911-nur-bei-einem-konkreten-magnon-phonon-projekt">9–#11 nur bei einem konkreten Magnon-Phonon-Projekt.<a class="headerlink" href="#911-nur-bei-einem-konkreten-magnon-phonon-projekt" title="Permanent link">&para;</a></h1>
+<hr />
+<h2 id="anhang-fundstellenverzeichnis">Anhang: Fundstellenverzeichnis<a class="headerlink" href="#anhang-fundstellenverzeichnis" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gleichung / Aussage</th>
+<th>Diss. Seite</th>
+<th>Zeile im Extrakt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H_eff = H_ext + H_d + H_u, Gl. (2.11)</td>
+<td>S. 12</td>
+<td>800</td>
+</tr>
+<tr>
+<td>Polder-Suszeptibilität χ̂_P, Gl. (2.20)/(2.21)</td>
+<td>S. 13</td>
+<td>958 / 968</td>
+</tr>
+<tr>
+<td>Kittel allgemein, Gl. (2.22)</td>
+<td>S. 15</td>
+<td>1028</td>
+</tr>
+<tr>
+<td>Kittel oop, Gl. (2.24)</td>
+<td>S. 15</td>
+<td>1064</td>
+</tr>
+<tr>
+<td>Kittel ip mit H_u, Gl. (2.26)</td>
+<td>S. 16</td>
+<td>1082</td>
+</tr>
+<tr>
+<td>ΔH = 2·2πfα/(γµ0), FWHM, Gl. (2.27)</td>
+<td>S. 16</td>
+<td>1099-1102</td>
+</tr>
+<tr>
+<td>ΔH = H_inh + …, Gl. (2.28)</td>
+<td>S. 17</td>
+<td>1115</td>
+</tr>
+<tr>
+<td>Elliptizität e, Gl. (2.31)</td>
+<td>S. 17</td>
+<td>1143</td>
+</tr>
+<tr>
+<td>Slow-Relaxor: Gl. (2.37)-(2.41)</td>
+<td>S. 23</td>
+<td>1429-1470</td>
+</tr>
+<tr>
+<td>Valenzaustausch-Mechanismus</td>
+<td>S. 23-24</td>
+<td>1477-1494</td>
+</tr>
+<tr>
+<td>g_eff aus ΔH-Peak, Gl. (2.56)</td>
+<td>S. 28</td>
+<td>1725-1728</td>
+</tr>
+<tr>
+<td>ΔS21 = (S21−S21⁰)/S21, Gl. (3.7); Untergrund A+B·H</td>
+<td>S. 40</td>
+<td>2352-2362</td>
+</tr>
+<tr>
+<td>S21-Gesamtmodell, Gl. (3.9)</td>
+<td>S. 41</td>
+<td>2417 ff.</td>
+</tr>
+<tr>
+<td>oop: S21 = S21⁰ − iAe^{iφ}χ_xx, e ≈ 1, Gl. (3.12)</td>
+<td>S. 42</td>
+<td>2453-2459</td>
+</tr>
+<tr>
+<td>γ-Fe₂O₃ oop-Messung zur 2-Magnonen-Unterdrückung</td>
+<td>S. 54</td>
+<td>3059-3061</td>
+</tr>
+<tr>
+<td>Cusp in ΔH(f), 10-20 GHz</td>
+<td>S. 54</td>
+<td>3070-3072</td>
+</tr>
+<tr>
+<td>globaler Fit, g = 2.022 fest, RT-Parameter</td>
+<td>S. 56</td>
+<td>3204-3218</td>
+</tr>
+<tr>
+<td>M_eff(T)-Vorzeichenwechsel bei T_cross ≈ 200 K</td>
+<td>S. 57</td>
+<td>3230-3236</td>
+</tr>
+<tr>
+<td>Fig. 7.2, η_a, κ_s, ΔH_MEC, g_eff, C</td>
+<td>S. 133-135</td>
+<td>7269-7310</td>
+</tr>
+<tr>
+<td>κ_s(f) = κ_s0 + 2αf, α = 2.9·10⁻³</td>
+<td>S. 145</td>
+<td>7815-7820</td>
+</tr>
+<tr>
+<td>η_a(f) = η_a0 + 4π²ξf², Gl. (7.2)</td>
+<td>S. 146</td>
+<td>7925</td>
+</tr>
+<tr>
+<td>η_a(T) = η_a0 + β_a T⁴, Gl. (7.3)</td>
+<td>S. 146</td>
+<td>7935-7940</td>
+</tr>
+<tr>
+<td>Appendix G1: g, M_eff, H_inh, α für CoFe/Al₂O₃ 5 K</td>
+<td>S. 181-182</td>
+<td>9307-9324</td>
+</tr>
+<tr>
+<td>Appendix G1.1: g(T), M_eff(T), α(T), H_inh(T)</td>
+<td>S. 182</td>
+<td>9325-9335</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Paper-Fundstelle</th>
+<th>Seite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>oop-Geometrie zur 2-Magnonen-Unterdrückung; Gl. (1)-(4)</td>
+<td>233905-4</td>
+</tr>
+<tr>
+<td>F(T) = sech², globaler Fit, g = 2.022, RT-Parameter; Gl. (5), (6)</td>
+<td>233905-5</td>
+</tr>
+<tr>
+<td>Ausschluss Zwei-Magnonen / Anisotropiedispersion / KLC; Valenzaustausch</td>
+<td>233905-6</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

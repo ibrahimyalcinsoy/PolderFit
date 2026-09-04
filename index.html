@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="Wie der PolderFit-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>PolderFit – Breitband-FMR-Auswertung</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Start";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> PolderFit – Breitband-FMR-Auswertung
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Start</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="referenz/">Schnellreferenz: Größen · Formeln · Quellen</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="installation/">Installation und Start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="datenformate/">Die Messdaten (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="kanal-mapping/">Kanal-Mapping und Profile</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="verarbeitung/">Verarbeitung des Farbplots</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="auswertungsauswahl/">Auswertungsauswahl (Bereiche und Frequenzauswahl)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="interaktives-fitten/">Interaktives Fitten</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="ausreisser/">Ausreißer und Projektdateien</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="pipeline/">Ablauf der Auswertung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="autowindow/">AutoWindow im Detail</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="physik-und-fit/">Physikalisches Modell und Fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="bewertung/">Bewertung der Fits</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="tuning/">Parameter und Feineinstellung</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="troubleshooting/">Fehlerdiagnose</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="test-harness/">Robustheitsprüfung über reale Messdaten</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">PolderFit – Breitband-FMR-Auswertung</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Start</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="polderfit-breitband-fmr-auswertung">PolderFit – Breitband-FMR-Auswertung<a class="headerlink" href="#polderfit-breitband-fmr-auswertung" title="Permanent link">&para;</a></h1>
+<p><strong>Version 2.1 · Stand 2026-09-04</strong></p>
+<p>Name und Version: <code>pyproject.toml</code> (<code>[tool.polderfit] name</code>, <code>[project] version</code>) → Anzeige <code>PolderFit V&lt;Version&gt;</code> (<code>polderfit.PROGRAMMNAME</code>).</p>
+<p><strong>Zweck:</strong> TDMS-Messdaten (bbFMR) → je Frequenz Resonanzfeld <code>B_res</code> und Linienbreite <code>µ0ΔH</code> (mit 1σ) → Kittel/LLG → <code>g</code>, <code>µ0M_eff</code>, <code>µ0H_u</code>, <code>α</code>, <code>µ0ΔH_0</code>.</p>
+<p><strong>Konventionen</strong></p>
+<table>
+<thead>
+<tr>
+<th>Größe</th>
+<th>Einheit / Regel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Felder</td>
+<td>immer <code>µ0H</code> in <strong>T</strong></td>
+</tr>
+<tr>
+<td>γ</td>
+<td><code>g·µ_B/ħ</code> in rad s⁻¹ T⁻¹ (g = 2 → 1,7588·10¹¹)</td>
+</tr>
+<tr>
+<td><code>µ0ΔH</code></td>
+<td>FWHM der Absorption χ″ (nicht von |χ|: Faktor √3)</td>
+</tr>
+<tr>
+<td>Plots</td>
+<td><strong>x = Feld, y = Frequenz</strong></td>
+</tr>
+<tr>
+<td><code>*_err</code></td>
+<td>1σ aus der Fit-Kovarianz</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Auswertekette</strong></p>
+<table>
+<thead>
+<tr>
+<th>Schritt</th>
+<th>Modul</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 Laden + Kanal-Mapping</td>
+<td><code>io/tdms_laden.py</code>, <code>io/kanal_mapping.py</code></td>
+</tr>
+<tr>
+<td>2 AutoWindow (Fenster je Frequenz)</td>
+<td><code>fit/autowindows.py</code></td>
+</tr>
+<tr>
+<td>3 Beschnitt</td>
+<td><code>fit/autowindows.py: schneide_band</code></td>
+</tr>
+<tr>
+<td>4 Einzelfit (LM) + Nachfenster <code>B_res ± 2,5·ΔH</code>; mehrere Dips je Fenster/Korridor: Abschälen → Summenfit mit Segment-Schranken (optional BIC)</td>
+<td><code>fit/linescan_fit.py</code>, <code>fit/batch.py</code>, <code>fit/korridor.py</code></td>
+</tr>
+<tr>
+<td>5 Bewertung (a)–(h) + Nutzer-Bewertung</td>
+<td><code>fit/kriterien.py</code>, <code>fit/linescan_fit.py</code></td>
+</tr>
+<tr>
+<td>6 Kittel/LLG</td>
+<td><code>physik/kittel_llg.py</code>, <code>auswertung/uebersicht.py</code></td>
+</tr>
+<tr>
+<td>Export, Projekt, Einstellungen, Auto-Sicherung</td>
+<td><code>persistenz/</code></td>
+</tr>
+<tr>
+<td>Farben nach DIN EN 60073</td>
+<td><code>gui/farben.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Kittel/LLG" src="abb/abb_kittel_llg.png" /></p>
+<p>Nachschlagen: <a href="referenz/">Schnellreferenz</a>. Vergleich mit dem LabVIEW-FTF: <code>benchmark_ftf/einfacher_vergleich_2026-08-25/VERGLEICH_EINFACH.md</code> (einfach: PolderFit minus FTF je Frequenz, eigener Ordner) und <code>benchmark_ftf/BERICHT.md</code> (ausführlich).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="referenz/" class="btn btn-neutral float-right" title="Schnellreferenz: Größen · Formeln · Quellen">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="referenz/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2026-09-04 10:34:43.181191+00:00
+-->
