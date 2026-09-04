@@ -14,11 +14,11 @@ Nur starten: `.venv\Scripts\activate && polderfit`
 
 ## Erstinstallation
 
-Python ≥ 3.11 („Add python.exe to PATH“) und Git installiert; im Zielordner:
+Python ≥ 3.11 („Add python.exe to PATH“) und Git installiert; Ordner `PolderFit` anlegen, dann:
 
 ```bat
-git clone https://github.com/ibrahimyalcinsoy/PolderFit.git
 cd PolderFit
+git clone https://github.com/ibrahimyalcinsoy/PolderFit.git .
 python -m venv .venv
 .venv\Scripts\activate
 pip install -e ".[gui]"
