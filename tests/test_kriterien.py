@@ -81,6 +81,31 @@ def test_B_res_innerhalb_fenster_erzwungen():
     assert erg.problematisch
 
 
+def test_alpha_untergrenze_skaliert_nur_bei_kleiner_obergrenze():
+    from polderfit.fit.kriterien import alpha_min_zu
+    assert alpha_min_zu(ALPHA_MAX) == ALPHA_MIN      # Standard bitgleich
+    assert alpha_min_zu(1e-3) == ALPHA_MIN
+    assert np.isclose(alpha_min_zu(1e-4), 1e-6)
+    assert np.isclose(alpha_min_zu(1e-5), 1e-7)
+
+
+def test_sehr_kleine_alpha_obergrenze_fittet():
+    # Schwach gedaempfte Linie (alpha = 5e-5): Obergrenze 1e-4 wird nicht mehr
+    # stillschweigend auf 0.1 zurueckgesetzt; Plausibilitaet einstellbar.
+    frequenz, alpha = 10e9, 5e-5
+    breite = 2 * 2 * np.pi * frequenz * alpha / GAMMA_STANDARD
+    omega = 2 * np.pi * frequenz
+    B = np.linspace(0.5 - 60 * breite, 0.5 + 60 * breite, 400)
+    s = s21_modell(B, 0.5, alpha, 0.01, 0.6, 0.02, -0.01, 0.05, 0.03, omega,
+                   GAMMA_STANDARD, float(B.mean()))
+    ls = Linescan(frequenz=frequenz, feld=B, re=s.real, im=s.imag)
+    erg = fitte_linescan(ls, alpha_max=1e-4, alpha_plausibel=8e-5)
+    assert erg.erfolg and not erg.problematisch, erg.problem_gruende
+    assert abs(erg.alpha - alpha) / alpha < 1e-3
+    erg_auto = fitte_linescan(ls, alpha_max=1e-4)   # auto: Grenze 5e-5 -> Warnung moeglich
+    assert erg_auto.alpha <= 1e-4
+
+
 def test_problemgruende_im_klartext():
     # Kuenstliches Ergebnis mit alpha an der Grenze.
     class Dummy:

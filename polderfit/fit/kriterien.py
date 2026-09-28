@@ -21,6 +21,8 @@ import numpy as np
 #: den Optimierer; bewusst weiter gefasst als die Plausibilitaetsgrenze unten).
 ALPHA_MIN: float = 1e-5
 ALPHA_MAX: float = 0.1
+#: Kleinste einstellbare harte alpha-Obergrenze (sehr schwach gedaempfte Proben).
+ALPHA_MAX_UNTERGRENZE: float = 1e-5
 #: alpha-Werte oberhalb dieses Wertes gelten als unphysikalisch (Kriterium d).
 #: Liegt UNTER ALPHA_MAX: Werte in (0.05, 0.1) sind als Fitwert erlaubt, werden
 #: aber als problematisch markiert (statt hart an die Schranke geklemmt zu werden).
@@ -73,6 +75,18 @@ def an_grenze(wert: float, unten: float, oben: float, rel: float = GRENZ_NAEHE_R
     if spanne <= 0:
         return False
     return (wert <= unten + rel * spanne) or (wert >= oben - rel * spanne)
+
+
+def alpha_min_zu(alpha_max: float) -> float:
+    """Untere harte alpha-Schranke zur oberen ``alpha_max``.
+
+    ``ALPHA_MIN`` fuer alle Obergrenzen ab ``100 * ALPHA_MIN`` (Standard 0.1:
+    unveraendert); darunter zwei Dekaden unter ``alpha_max``, damit auch
+    Obergrenzen bis :data:`ALPHA_MAX_UNTERGRENZE` ein gueltiges Intervall haben.
+    """
+    if not np.isfinite(alpha_max) or alpha_max <= 0:
+        return ALPHA_MIN
+    return min(ALPHA_MIN, float(alpha_max) / 100.0)
 
 
 def alpha_plausibel_max(alpha_max: float = ALPHA_MAX) -> float:
@@ -137,7 +151,7 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
 
     alpha, phi, b_res = erg.alpha, erg.phi, erg.B_res
     # (b) Parameter an Schranke
-    if an_grenze(alpha, ALPHA_MIN, alpha_max):
+    if an_grenze(alpha, alpha_min_zu(alpha_max), alpha_max):
         gruende.append("alpha an Grenze")
     if an_grenze(phi, PHI_MIN, PHI_MAX):
         gruende.append("phi an Grenze")

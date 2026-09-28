@@ -8,6 +8,7 @@
 | Fit gut, Fenster sichtbar falsch | Störfeature/Rauschen | Korridor (`Strg+L`), Rechteck-Nachfit, `_PROMINENZ_MIN` ↑ |
 | Farbplot wird immer schmaler | (behoben) wiederholtes `tight_layout` | *Ansicht → Fensterlayout zurücksetzen*; Layout wird jetzt vor jedem Zeichnen zurückgesetzt |
 | „alpha unphysikalisch“ bei sichtbar guten, breiten Linien | Plausibilitätsgrenze α_max/2 | `Strg+P` α-Plausibilitätsgrenze anheben oder Fit mit `Strg+1` bestätigen |
+| „alpha an Grenze“ bei schmalen Linien (α ≲ α_max/100, z. B. 7·10⁻⁴ bei α_max 0,1) | „an Grenze“ = innerhalb 1 % der Spanne [α_min, α_max] | `Strg+P` α-Obergrenze absenken (bis 0,00001), ggf. Plausibilitätsgrenze mit |
 | Arbeitsstand verloren (Absturz) | – | `Datei → Auto-Sicherung wiederherstellen` |
 | Programm wirkt eingefroren | langer Auto-Fit/Ladevorgang | Statusleiste zeigt Spinner, Phase, Stand, Restzeit; gefittete Punkte erscheinen live im Farbplot; **Abbrechen** (Statusleiste/Aktivitäts-Panel) beendet geordnet, bisherige Fits bleiben |
 | sehr viele problematische Fits | keine Resonanz im Feldbereich (tiefe f); ip mit oop-Modell an Schranke | `problem_statistik()` prüfen – meist sachgerecht |

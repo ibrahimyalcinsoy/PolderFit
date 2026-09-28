@@ -42,6 +42,6 @@ Standard **ungewichtet** (wie FTF); Option `w = 1/u²`. `absolute_sigma=False`: 
 
 ![ip-Entartung](abb/abb_ip_entartung.png)
 
-**Einstellbar (Strg+P):** g (Start), γ festhalten, Geometrie oop/ip, Fensterfaktor 8, R²-Schwellen 0,9, Gewichtung aus, α-Obergrenze 0,1, α-Plausibilitätsgrenze (0 = α_max/2), Nachfenster 2,5, Resonanzen je Linescan 1, Nachfits bestätigen an. Speicher-/ladbar als Voreinstellung (Datei → Einstellungen).
+**Einstellbar (Strg+P):** g (Start), γ festhalten, Geometrie oop/ip, Fensterfaktor 8, R²-Schwellen 0,9, Gewichtung aus, α-Obergrenze 0,1 (bis 0,00001 absenkbar; untere Fit-Schranke dann α_max/100), α-Plausibilitätsgrenze (0 = α_max/2, bis 0,00001), Nachfenster 2,5, Resonanzen je Linescan 1, Nachfits bestätigen an. Speicher-/ladbar als Voreinstellung (Datei → Einstellungen).
 
 Quellen: Müller 2023 Kap. 2; Notebook `Chi_Fit_Functions_and_Inductances_2020-04-06.nb`; Maier-Flaig 2018; Protokoll 2026-05-08; ABW/GUM.

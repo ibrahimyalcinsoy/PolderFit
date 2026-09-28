@@ -55,6 +55,21 @@ def test_dialog_roundtrip_und_standardwerte(app):
     assert dlg.parameter() == PhysikParameter()
 
 
+def test_alpha_grenzen_bis_1e5_einstellbar(app):
+    from polderfit.gui.parameter_dialog import ParameterDialog, PhysikParameter
+    dlg = ParameterDialog(PhysikParameter(alpha_max=2e-5, alpha_plausibel=1e-5))
+    p = dlg.parameter()
+    assert abs(p.alpha_max - 2e-5) < 1e-12
+    assert abs(p.alpha_plausibel - 1e-5) < 1e-12
+    dlg.alpha_max_spin.setValue(0.0)                 # Untergrenze greift
+    assert abs(dlg.alpha_max_spin.value() - 1e-5) < 1e-12
+    # Standardwert unveraendert, Pfeilschritt dekadisch-adaptiv.
+    dlg._standardwerte()
+    assert dlg.parameter() == PhysikParameter()
+    dlg.alpha_max_spin.stepBy(-1)
+    assert abs(dlg.alpha_max_spin.value() - 0.099) < 1e-9
+
+
 def test_hauptfenster_uebernimmt_parameter(app):
     from polderfit.gui.hauptfenster import Hauptfenster
     from polderfit.gui.parameter_dialog import PhysikParameter

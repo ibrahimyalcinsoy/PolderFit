@@ -30,10 +30,10 @@ from ..physik.fitmodell import (Startwerte, moden_aus_params, residuum, residuum
                                 s21_modell, s21_modell_multi, schaetze_startwerte)
 from .kriterien import (
     ALPHA_MAX,
-    ALPHA_MIN,
     GRUND_NICHT_GEFITTET,
     PHI_MAX,
     PHI_MIN,
+    alpha_min_zu,
     bewerte_fit,
 )
 
@@ -327,8 +327,9 @@ def fitte_linescan(
     ersetzt die Plausibilitaetsgrenze ``alpha_max/2`` des Kriteriums
     "alpha unphysikalisch". ``mode``: Mode-Nummer, die das Ergebnis traegt.
     """
-    if not np.isfinite(alpha_max) or alpha_max <= ALPHA_MIN:
+    if not np.isfinite(alpha_max) or alpha_max <= 0:
         alpha_max = ALPHA_MAX
+    alpha_min = alpha_min_zu(alpha_max)
     mode = max(1, int(mode))
     omega = 2.0 * np.pi * linescan.frequenz
     B = linescan.feld
@@ -345,14 +346,14 @@ def fitte_linescan(
 
     # Startwerte in die Schranken zwingen (kein Start exakt auf einer Grenze).
     b_res_start = float(np.clip(sw.B_res, B_min, B_max))
-    alpha_start = float(np.clip(sw.alpha, ALPHA_MIN * 1.1, alpha_max * 0.9))
+    alpha_start = float(np.clip(sw.alpha, alpha_min * 1.1, alpha_max * 0.9))
     phi_start = float(np.clip(sw.phi, PHI_MIN + 1e-6, PHI_MAX - 1e-6))
 
     def _minimiere(phi_wert: float):
         params = Parameters()
         # B_res MUSS im Feldfenster liegen (Defekt 1).
         params.add("B_res", value=b_res_start, min=B_min, max=B_max)
-        params.add("alpha", value=alpha_start, min=ALPHA_MIN, max=alpha_max)
+        params.add("alpha", value=alpha_start, min=alpha_min, max=alpha_max)
         params.add("A", value=sw.A)
         params.add("phi", value=phi_wert, min=PHI_MIN, max=PHI_MAX)
         params.add("off_re", value=sw.off_re)
@@ -445,7 +446,7 @@ def fitte_linescan_summe(
     Korridor beschnittenen) Linescan mit HARTEN Schranken: ``B_res_k`` darf nur
     innerhalb seines Segments ``segmente[k]`` liegen (Hard Crop aus
     :func:`polderfit.fit.korridor.dip_segmente`), ``alpha_k`` in
-    ``[ALPHA_MIN, alpha_max]``; gemeinsamer linearer Untergrund. Startwerte
+    ``[alpha_min_zu(alpha_max), alpha_max]``; gemeinsamer linearer Untergrund. Startwerte
     ``starts[k]`` = :class:`FitErgebnis` der Einzelfits je Segment (oder None).
 
     Liefert je Mode ein :class:`FitErgebnis` (``mode = moden[k]``) mit den
@@ -455,8 +456,9 @@ def fitte_linescan_summe(
     freien Summenfit ueber den ganzen Sweep ist das Problem durch Korridor und
     Segment-Schranken gut konditioniert.
     """
-    if not np.isfinite(alpha_max) or alpha_max <= ALPHA_MIN:
+    if not np.isfinite(alpha_max) or alpha_max <= 0:
         alpha_max = ALPHA_MAX
+    alpha_min = alpha_min_zu(alpha_max)
     n = len(segmente)
     omega = 2.0 * np.pi * linescan.frequenz
     B = np.asarray(linescan.feld, dtype=float)
@@ -477,8 +479,8 @@ def fitte_linescan_summe(
                                      omega, gamma, None, alpha_max=alpha_max)
             b0, a0, A0, phi0 = sw.B_res, sw.alpha, sw.A, sw.phi
         params.add(f"B_res_{k}", value=float(np.clip(b0, lo, hi)), min=lo, max=hi)
-        params.add(f"alpha_{k}", value=float(np.clip(a0, ALPHA_MIN * 1.1, alpha_max * 0.9)),
-                   min=ALPHA_MIN, max=alpha_max)
+        params.add(f"alpha_{k}", value=float(np.clip(a0, alpha_min * 1.1, alpha_max * 0.9)),
+                   min=alpha_min, max=alpha_max)
         params.add(f"A_{k}", value=float(A0))
         params.add(f"phi_{k}", value=float(np.clip(phi0, PHI_MIN + 1e-6, PHI_MAX - 1e-6)),
                    min=PHI_MIN, max=PHI_MAX)

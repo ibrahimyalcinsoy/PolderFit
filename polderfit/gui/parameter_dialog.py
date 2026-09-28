@@ -14,6 +14,7 @@ from dataclasses import replace
 
 from PySide6 import QtWidgets
 
+from ..fit.kriterien import ALPHA_MAX_UNTERGRENZE
 from ..fit.parameter import GEOMETRIEN, PhysikParameter
 from ..physik.konstanten import gamma_aus_g
 from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox, RuhigeSpinBox
@@ -103,28 +104,31 @@ class ParameterDialog(QtWidgets.QDialog):
         form.addRow("R²-Minimum (Kittel/LLG):", self.r2min_spin)
 
         self.alpha_max_spin = RuhigeDoubleSpinBox()
-        self.alpha_max_spin.setRange(0.001, 2.0)
-        self.alpha_max_spin.setDecimals(3)
-        self.alpha_max_spin.setSingleStep(0.05)
+        self.alpha_max_spin.setRange(ALPHA_MAX_UNTERGRENZE, 2.0)
+        self.alpha_max_spin.setDecimals(5)
+        self.alpha_max_spin.setStepType(QtWidgets.QAbstractSpinBox.AdaptiveDecimalStepType)
         self.alpha_max_spin.setValue(parameter.alpha_max)
         self.alpha_max_spin.setToolTip(
             "Harte obere Schranke der Gilbert-Dämpfung α im Einzelfit.\n"
             "Standard 0.1 (Metalle/Granate). Für sehr breite Resonanzen\n"
             "(z. B. FeCr2S4 mit α ≈ 0.2–0.5) anheben – sonst klemmt der Fit\n"
-            "an der Schranke ('alpha an Grenze').")
+            "an der Schranke ('alpha an Grenze'). Für sehr schwach gedämpfte\n"
+            "Proben bis 0.00001 absenkbar (Pfeile/Mausrad: dekadische Schritte).")
         form.addRow("α-Obergrenze (Einzelfit):", self.alpha_max_spin)
 
         self.alpha_plausibel_spin = RuhigeDoubleSpinBox()
         self.alpha_plausibel_spin.setRange(0.0, 2.0)
-        self.alpha_plausibel_spin.setDecimals(3)
-        self.alpha_plausibel_spin.setSingleStep(0.01)
+        self.alpha_plausibel_spin.setDecimals(5)
+        self.alpha_plausibel_spin.setStepType(
+            QtWidgets.QAbstractSpinBox.AdaptiveDecimalStepType)
         self.alpha_plausibel_spin.setSpecialValueText("automatisch (α max / 2)")
         self.alpha_plausibel_spin.setValue(parameter.alpha_plausibel)
         self.alpha_plausibel_spin.setToolTip(
             "Grenze des Kriteriums 'alpha unphysikalisch' (gelbe Warnung).\n"
             "0 = automatisch (halbe α-Obergrenze). Bei Proben mit real breiten\n"
             "Linien (nanostrukturiertes CoFe, FeCr2S4) anheben, damit gute Fits\n"
-            "nicht dauernd als problematisch gelten.")
+            "nicht dauernd als problematisch gelten; bei schwach gedämpften\n"
+            "Proben bis 0.00001 absenkbar.")
         form.addRow("α-Plausibilitätsgrenze:", self.alpha_plausibel_spin)
 
         self.nachfenster_spin = RuhigeDoubleSpinBox()

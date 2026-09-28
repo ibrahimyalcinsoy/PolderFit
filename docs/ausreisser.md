@@ -1,6 +1,8 @@
 # Ausreißer, Projektdateien, Einstellungen, Speichern
 
-**Ausreißer / ignorieren** (`Strg+M` im Farbplot, `Strg+I` für den aktuellen Fit oder Klick im Kittel-Fenster `Strg+K`): Punkt aus Kittel/LLG, Plots und Globalparametern entfernt (grau, Status `ignoriert`); Einzelfit bleibt; Spalte `ausreisser` im Export; Panel *Wieder aufnehmen*; rückgängig per `Strg+Z`.
+**Ausreißer / ignorieren** (`Strg+M` im Farbplot, `Strg+I` für den aktuellen Fit oder im Kittel-Fenster `Strg+K`): Punkt aus Kittel/LLG, Plots und Globalparametern entfernt (grau, Status `ignoriert`); Einzelfit bleibt; Spalte `ausreisser` im Export; Panel *Wieder aufnehmen*; rückgängig per `Strg+Z`.
+
+**Kittel-Fenster:** Werkzeugleiste *Auswählen* (Klick schaltet einen Punkt an/aus, Kasten fügt hinzu), Gesamtansicht, Verschieben, Zoom. *Auswahl ausblenden* (`Entf`) übernimmt die Punkte ins Hauptfenster/den Farbplot (grau; bei mehreren Moden nur für die jeweilige Mode). *ausgeblendete Punkte zeigen* + *Auswahl einblenden* nimmt sie wieder auf; `Esc` hebt die Auswahl auf.
 
 ![Auswahl](abb/abb_kittel_unsort.png)
 

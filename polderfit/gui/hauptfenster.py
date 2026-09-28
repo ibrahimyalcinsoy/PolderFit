@@ -2294,7 +2294,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
     # --- Overlay / Anzeige ---------------------------------------------------
     def _status_liste(self) -> list[str]:
         st = self.stapel
-        return [F.status_von(e, ignoriert=st.ist_ausreisser(i))
+        mode1_aus = {int(i) for i, k in st.ausreisser_moden if int(k) == 1}
+        return [F.status_von(e, ignoriert=st.ist_ausreisser(i) or i in mode1_aus)
                 for i, e in enumerate(st.ergebnisse)]
 
     def _tooltip_text(self, i: int, status: str) -> str:
@@ -2707,6 +2708,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 hole_parameter=lambda: self._physik,
                 geometrie_geaendert=self._geometrie_aus_auswertung,
                 ausreisser_mode_markieren=self._ausreisser_mode_gewaehlt,
+                ausreisser_wieder_aufnehmen=self._ausreisser_wieder_aufnehmen,
+                ausreisser_mode_wieder_aufnehmen=self._ausreisser_mode_wieder_aufnehmen,
                 parent=self)
             self._auswertungsfenster.finished.connect(self._auswertungsfenster_zu)
         else:
@@ -3149,7 +3152,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self.stapel is None:
             return
         self.stapel.ausreisser_moden = sorted((int(i), int(k)) for i, k in liste)
-        self.ausreisserpanel.zeige_ausreisser(self.stapel)
+        self._aktualisiere_overlay()
         self._auswertung_nachziehen()
 
     def _merke_ausreisser_moden_aenderung(self, beschreibung: str, vorher: list) -> None:
@@ -3173,7 +3176,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.stapel.ausreisser_mode_umschalten(i, k)
         self._merke_ausreisser_moden_aenderung(
             f"Punkt(e) je Mode ausgeschlossen ({len(neu)})", vorher)
-        self.ausreisserpanel.zeige_ausreisser(self.stapel)
+        self._aktualisiere_overlay()
         self._auswertung_nachziehen()
         beschreibung = ", ".join(f"{self.stapel.ergebnisse[i].frequenz/1e9:.2f} GHz/M{k}"
                                  for i, k in neu[:6])
@@ -3190,7 +3193,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 self.stapel.ausreisser_mode_umschalten(i, k)
         self._merke_ausreisser_moden_aenderung(
             f"Punkt(e) je Mode wieder aufgenommen ({len(paare)})", vorher)
-        self.ausreisserpanel.zeige_ausreisser(self.stapel)
+        self._aktualisiere_overlay()
         self._auswertung_nachziehen()
         self._log(f"{len(paare)} Punkt(e) je Mode wieder aufgenommen – verbleibend "
                   f"{len(self.stapel.ausreisser_moden)}.", "ok")
@@ -3571,8 +3574,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
               ignorieren; reversibel (Liste + Rückgängig). Ignorierte Punkte fehlen in ALLEN
               Auswertungen und sind im Export gekennzeichnet.</li>
           <li><b>Kittel/LLG-Auswertung</b> (Strg+K) – eigenes Fenster mit Feld auf der x-Achse:
-              Punkte direkt im Plot entfernen, Fit rechnet sofort neu; Ergebnisse in T und mT;
-              Export Excel + CSV + Plot.</li>
+              Werkzeugleiste mit Auswählen (Klick/Kasten), Zoom, Verschieben; „Auswahl
+              ausblenden“ (Entf) nimmt Punkte aus der Auswertung – auch im Farbplot (grau);
+              Fit rechnet sofort neu; Ergebnisse in T und mT; Export Excel + CSV + Plot.</li>
           <li><b>Speichern</b> (Datei → Speichern / Export): <b>Alles speichern</b>
               (Strg+Umschalt+S) schreibt Projekt, Excel/CSV, Kittel/LLG, Farbplot-Bild und
               -Matrix, TDMS und Einstellungen in einen Ordner. Excel/CSV enthalten alle
