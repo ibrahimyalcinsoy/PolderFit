@@ -22,46 +22,47 @@ from PySide6 import QtCore, QtWidgets
 from ..persistenz.einstellungen import FARBSKALEN
 from ..verarbeitung import ANZEIGE_MODI, KettenSchritt, Verarbeitungskette
 from .widgets import RuhigeComboBox, RuhigeSpinBox
+from ..sprache import N_, tr
 
 #: Auswahltexte fuer den ``achse``-Parameter.
-_ACHSEN_TEXTE = {"feld": "Feldachse", "frequenz": "Frequenzachse"}
+_ACHSEN_TEXTE = {"feld": N_("Feldachse"), "frequenz": N_("Frequenzachse")}
 
 _TIP_DIVIDE = (
-    "divide-slice: Die ganze Matrix wird durch das Spektrum bei EINEM festen\n"
+    N_("divide-slice: Die ganze Matrix wird durch das Spektrum bei EINEM festen\n"
     "Feldwert (Referenz-Slice) geteilt. Entfernt den frequenzabhängigen\n"
     "Untergrund (Maier-Flaig 2018, Gl. 3). Der Referenzwert sollte möglichst\n"
-    "resonanzfrei sein (z. B. Rand des Feldsweeps).")
+    "resonanzfrei sein (z. B. Rand des Feldsweeps)."))
 _TIP_DD = (
-    "derivative-divide: Zentraler Differenzenquotient entlang des Feldes,\n"
+    N_("derivative-divide: Zentraler Differenzenquotient entlang des Feldes,\n"
     "geteilt durch den Wert in der Mitte (Maier-Flaig 2018, Gl. 4).\n"
     "Beseitigt Untergrund und Phase ohne Kalibrierung; das Ergebnis ist\n"
-    "proportional zu dχ/dω. Standardansicht für die Resonanzsuche.")
+    "proportional zu dχ/dω. Standardansicht für die Resonanzsuche."))
 _TIP_REL = (
-    "relation-amplitude: Jeder Slice wird durch den Nachbar-Slice im Abstand Δn\n"
+    N_("relation-amplitude: Jeder Slice wird durch den Nachbar-Slice im Abstand Δn\n"
     "geteilt (divisive Untergrund-Referenz, pybbfmr 'referenced fmr').\n"
-    "Betont schmale Strukturen, die sich von Slice zu Slice ändern.")
+    "Betont schmale Strukturen, die sich von Slice zu Slice ändern."))
 _TIP_DELTA = (
-    "Punktabstand Δn der Differenz-/Referenzbildung (Modulationsamplitude in\n"
+    N_("Punktabstand Δn der Differenz-/Referenzbildung (Modulationsamplitude in\n"
     "Gitterpunkten). Größer = glatter und rauschärmer, aber breitere Linien;\n"
     "kleiner = schärfer, aber verrauschter. Typisch 2–8.\n"
-    "Tipp: Mausrad wirkt nur, wenn das Feld den Fokus hat.")
+    "Tipp: Mausrad wirkt nur, wenn das Feld den Fokus hat."))
 _TIP_MITTELN = (
-    "Statt der Zwei-Punkt-Differenz die Mittelwerte der Fenster [i−Δn, i) und\n"
-    "[i, i+Δn] vergleichen – zusätzliche Glättung (pybbfmr-Standard).")
+    N_("Statt der Zwei-Punkt-Differenz die Mittelwerte der Fenster [i−Δn, i) und\n"
+    "[i, i+Δn] vergleichen – zusätzliche Glättung (pybbfmr-Standard)."))
 _TIP_ACHSE = (
-    "Entlang welcher Achse gerechnet wird: Feldachse (Standard, wie im Paper)\n"
-    "oder Frequenzachse.")
+    N_("Entlang welcher Achse gerechnet wird: Feldachse (Standard, wie im Paper)\n"
+    "oder Frequenzachse."))
 _TIP_INDEX = (
-    "Achsenindex des Referenz-Slices (0 = erster, −1 = letzter Punkt).\n"
-    "Der zugehörige Feld-/Frequenzwert steht darunter.")
+    N_("Achsenindex des Referenz-Slices (0 = erster, −1 = letzter Punkt).\n"
+    "Der zugehörige Feld-/Frequenzwert steht darunter."))
 _TIP_ANZEIGE = (
-    "Welche reelle Größe des (komplexen) Ergebnisses gezeichnet wird:\n"
-    "Betrag, Betrag in dB, Real-/Imaginärteil oder Phase.")
+    N_("Welche reelle Größe des (komplexen) Ergebnisses gezeichnet wird:\n"
+    "Betrag, Betrag in dB, Real-/Imaginärteil oder Phase."))
 _TIP_FARBSKALA = (
-    "Farbskala des Falschfarbenbilds. 'Grau' hält den Hintergrund neutral,\n"
+    N_("Farbskala des Falschfarbenbilds. 'Grau' hält den Hintergrund neutral,\n"
     "damit die Signalfarben der Fit-Punkte (grün/gelb/rot/blau) hervorstechen;\n"
-    "Viridis/Cividis sind wahrnehmungsgleich (auch für Farbfehlsichtige).")
-_TIP_ROH = "Alle Verarbeitungen abschalten und die Rohdaten |S21| zeigen."
+    "Viridis/Cividis sind wahrnehmungsgleich (auch für Farbfehlsichtige)."))
+_TIP_ROH = N_("Alle Verarbeitungen abschalten und die Rohdaten |S21| zeigen.")
 
 
 class VerarbeitungPanel(QtWidgets.QWidget):
@@ -90,70 +91,70 @@ class VerarbeitungPanel(QtWidgets.QWidget):
         lay.setContentsMargins(6, 4, 6, 4)
         lay.setSpacing(3)
 
-        self.setToolTip("Genau eine Verarbeitung ist aktiv; Erklärung je Option per Tooltip.")
+        self.setToolTip(tr("Genau eine Verarbeitung ist aktiv; Erklärung je Option per Tooltip."))
 
         vorgabe = Verarbeitungskette.standard()
         js = {s.operation: s for s in vorgabe.schritte}
 
         # --- 1. divide-slice -------------------------------------------------
-        self.grp_divide = QtWidgets.QGroupBox("divide-slice (Referenz-Slice)")
+        self.grp_divide = QtWidgets.QGroupBox(tr("divide-slice (Referenz-Slice)"))
         self.grp_divide.setCheckable(True)
         self.grp_divide.setChecked(js["divide_slice"].aktiv)
-        self.grp_divide.setToolTip(_TIP_DIVIDE)
+        self.grp_divide.setToolTip(tr(_TIP_DIVIDE))
         g1 = QtWidgets.QFormLayout(self.grp_divide)
         self.divide_achse = RuhigeComboBox()
         for schluessel, text in _ACHSEN_TEXTE.items():
-            self.divide_achse.addItem(f"Referenz-Slice auf {text}", schluessel)
-        self.divide_achse.setToolTip(_TIP_ACHSE)
-        g1.addRow("Achse:", self.divide_achse)
+            self.divide_achse.addItem(tr("Referenz-Slice auf {0}", tr(text)), schluessel)
+        self.divide_achse.setToolTip(tr(_TIP_ACHSE))
+        g1.addRow(tr("Achse:"), self.divide_achse)
         self.divide_index = RuhigeSpinBox()
         self.divide_index.setRange(-1, 0)  # echte Grenzen kommen mit setze_achsen()
         self.divide_index.setValue(int(js["divide_slice"].parameter.get("index", 0)))
-        self.divide_index.setToolTip(_TIP_INDEX)
-        g1.addRow("Index:", self.divide_index)
+        self.divide_index.setToolTip(tr(_TIP_INDEX))
+        g1.addRow(tr("Index:"), self.divide_index)
         self.divide_wert_label = QtWidgets.QLabel("–")
-        self.divide_wert_label.setToolTip("Feld- bzw. Frequenzwert des gewählten Referenz-Index.")
-        g1.addRow("entspricht:", self.divide_wert_label)
+        self.divide_wert_label.setToolTip(tr("Feld- bzw. Frequenzwert des gewählten Referenz-Index."))
+        g1.addRow(tr("entspricht:"), self.divide_wert_label)
         lay.addWidget(self.grp_divide)
 
         # --- 2. derivative-divide -------------------------------------------
-        self.grp_dd = QtWidgets.QGroupBox("derivative-divide")
+        self.grp_dd = QtWidgets.QGroupBox(tr("derivative-divide"))
         self.grp_dd.setCheckable(True)
         self.grp_dd.setChecked(js["derivative_divide"].aktiv)
-        self.grp_dd.setToolTip(_TIP_DD)
+        self.grp_dd.setToolTip(tr(_TIP_DD))
         g2 = QtWidgets.QFormLayout(self.grp_dd)
         self.dd_delta = RuhigeSpinBox()
         self.dd_delta.setRange(1, 200)
         self.dd_delta.setValue(int(js["derivative_divide"].parameter.get("delta_n", 4)))
-        self.dd_delta.setToolTip(_TIP_DELTA)
-        g2.addRow("Δn (Punkte):", self.dd_delta)
-        self.dd_mitteln = QtWidgets.QCheckBox("Fenster mitteln (zusätzliche Glättung)")
+        self.dd_delta.setToolTip(tr(_TIP_DELTA))
+        g2.addRow(tr("Δn (Punkte):"), self.dd_delta)
+        self.dd_mitteln = QtWidgets.QCheckBox(tr("Fenster mitteln (zusätzliche Glättung)"))
         self.dd_mitteln.setChecked(bool(js["derivative_divide"].parameter.get("mitteln", True)))
-        self.dd_mitteln.setToolTip(_TIP_MITTELN)
+        self.dd_mitteln.setToolTip(tr(_TIP_MITTELN))
         g2.addRow(self.dd_mitteln)
         self.dd_achse = RuhigeComboBox()
         for schluessel, text in _ACHSEN_TEXTE.items():
-            self.dd_achse.addItem(f"Ableitung entlang {text}", schluessel)
-        self.dd_achse.setToolTip(_TIP_ACHSE)
-        g2.addRow("Achse:", self.dd_achse)
+            self.dd_achse.addItem(tr("Ableitung entlang {0}", tr(text)), schluessel)
+        self.dd_achse.setToolTip(tr(_TIP_ACHSE))
+        g2.addRow(tr("Achse:"), self.dd_achse)
         lay.addWidget(self.grp_dd)
 
         # --- 3. relation-amplitude -------------------------------------------
-        self.grp_rel = QtWidgets.QGroupBox("relation-amplitude")
+        self.grp_rel = QtWidgets.QGroupBox(tr("relation-amplitude"))
         self.grp_rel.setCheckable(True)
         self.grp_rel.setChecked(js["relation_amplitude"].aktiv)
-        self.grp_rel.setToolTip(_TIP_REL)
+        self.grp_rel.setToolTip(tr(_TIP_REL))
         g3 = QtWidgets.QFormLayout(self.grp_rel)
         self.rel_delta = RuhigeSpinBox()
         self.rel_delta.setRange(1, 200)
         self.rel_delta.setValue(int(js["relation_amplitude"].parameter.get("delta_n", 1)))
-        self.rel_delta.setToolTip(_TIP_DELTA)
-        g3.addRow("Δn (Punkte):", self.rel_delta)
+        self.rel_delta.setToolTip(tr(_TIP_DELTA))
+        g3.addRow(tr("Δn (Punkte):"), self.rel_delta)
         self.rel_achse = RuhigeComboBox()
         for schluessel, text in _ACHSEN_TEXTE.items():
-            self.rel_achse.addItem(f"Referenz entlang {text}", schluessel)
-        self.rel_achse.setToolTip(_TIP_ACHSE)
-        g3.addRow("Achse:", self.rel_achse)
+            self.rel_achse.addItem(tr("Referenz entlang {0}", tr(text)), schluessel)
+        self.rel_achse.setToolTip(tr(_TIP_ACHSE))
+        g3.addRow(tr("Achse:"), self.rel_achse)
         lay.addWidget(self.grp_rel)
         # relation-amplitude bleibt als Verarbeitung erhalten (Projekte, Skripte),
         # ist in der Oberflaeche aber ausgeblendet (selten gebraucht, Platz).
@@ -161,22 +162,22 @@ class VerarbeitungPanel(QtWidgets.QWidget):
         self.grp_rel.setVisible(False)
 
         # --- Anzeige ----------------------------------------------------------
-        grp_anzeige = QtWidgets.QGroupBox("Darstellung")
+        grp_anzeige = QtWidgets.QGroupBox(tr("Darstellung"))
         anzeige_reihe = QtWidgets.QFormLayout(grp_anzeige)
         self.anzeige_combo = RuhigeComboBox()
         for schluessel, text in ANZEIGE_MODI.items():
-            self.anzeige_combo.addItem(text, schluessel)
-        self.anzeige_combo.setToolTip(_TIP_ANZEIGE)
-        anzeige_reihe.addRow("Größe:", self.anzeige_combo)
+            self.anzeige_combo.addItem(tr(text), schluessel)
+        self.anzeige_combo.setToolTip(tr(_TIP_ANZEIGE))
+        anzeige_reihe.addRow(tr("Größe:"), self.anzeige_combo)
         self.farbskala_combo = RuhigeComboBox()
         for name, text in FARBSKALEN.items():
-            self.farbskala_combo.addItem(text, name)
-        self.farbskala_combo.setToolTip(_TIP_FARBSKALA)
-        anzeige_reihe.addRow("Farbskala:", self.farbskala_combo)
+            self.farbskala_combo.addItem(tr(text), name)
+        self.farbskala_combo.setToolTip(tr(_TIP_FARBSKALA))
+        anzeige_reihe.addRow(tr("Farbskala:"), self.farbskala_combo)
         lay.addWidget(grp_anzeige)
 
-        self.btn_roh = QtWidgets.QPushButton("Alles aus (Rohdaten |S21|)")
-        self.btn_roh.setToolTip(_TIP_ROH)
+        self.btn_roh = QtWidgets.QPushButton(tr("Alles aus (Rohdaten |S21|)"))
+        self.btn_roh.setToolTip(tr(_TIP_ROH))
         self.btn_roh.clicked.connect(self._alles_aus)
         lay.addWidget(self.btn_roh)
         # Kein Stretch: das Panel beansprucht nur so viel Hoehe wie noetig.
@@ -290,11 +291,11 @@ class VerarbeitungPanel(QtWidgets.QWidget):
             return
         index = int(self.divide_index.value())
         if not (-werte.size <= index < werte.size):
-            self.divide_wert_label.setText("Index außerhalb der Achse")
+            self.divide_wert_label.setText(tr("Index außerhalb der Achse"))
             return
         wert = float(werte[index])
         self.divide_wert_label.setText(
-            f"{wert:.4f} T" if achse == "feld" else f"{wert / 1e9:.3f} GHz")
+            tr("{0:.4f} T", wert) if achse == "feld" else tr("{0:.3f} GHz", wert / 1e9))
 
     def _exklusiv(self, gruppe: QtWidgets.QGroupBox, an: bool) -> None:
         """Genau eine Operation aktiv: die anderen Gruppen abschalten."""

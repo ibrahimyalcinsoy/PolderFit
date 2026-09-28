@@ -5,6 +5,11 @@ import os
 
 import pytest
 
+from polderfit.sprache import setze_sprache
+
+# Die Tests pruefen die deutschen Quelltexte; Englisch testet test_sprache.py gezielt.
+setze_sprache("de")
+
 WURZEL = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TDMS_DIR = os.path.join(WURZEL, "TDMS files")
 

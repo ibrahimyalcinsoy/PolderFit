@@ -21,6 +21,7 @@ from dataclasses import asdict, dataclass, fields
 from .batch import NACHFENSTER_FAKTOR_STANDARD
 from .kriterien import ALPHA_MAX
 from ..physik.konstanten import G_FAKTOR_STANDARD, gamma_aus_g
+from ..sprache import tr
 
 #: Waehlbare Kittel-Geometrien.
 GEOMETRIEN = ("oop", "ip")
@@ -74,16 +75,17 @@ class PhysikParameter:
         return float(self.alpha_plausibel) if self.alpha_plausibel > 0 else None
 
     def beschreibung(self) -> str:
-        fest = ", γ fest" if self.gamma_fest else ""
+        fest = tr(", γ fest") if self.gamma_fest else ""
         plausibel = (f"{self.alpha_plausibel:g}" if self.alpha_plausibel > 0
                      else f"auto ({self.alpha_max / 2:g})")
-        return (f"g={self.g_faktor:.4f} (γ={self.gamma:.4e} rad/(s·T)){fest}, "
-                f"Geometrie {self.geometrie}, Fensterfaktor {self.breite_faktor:g}, "
-                f"R²-Schwelle {self.r2_schwelle:g}, R²-Min (Kittel) {self.r2_min:g}, "
-                f"α max {self.alpha_max:g}, α plausibel {plausibel}, "
-                f"Nachfenster ±{self.nachfenster_faktor:g}·ΔH, "
-                f"Kittel/LLG {'gewichtet' if self.gewichtet else 'ungewichtet'}, "
-                f"Nachfits {'bestätigen' if self.nachfit_bestaetigen else 'automatisch bewerten'}")
+        return tr("g={0:.4f} (γ={1:.4e} rad/(s·T)){2}, Geometrie {3}, Fensterfaktor {4:g}, "
+                  "R²-Schwelle {5:g}, R²-Min (Kittel) {6:g}, α max {7:g}, α plausibel {8}, "
+                  "Nachfenster ±{9:g}·ΔH, Kittel/LLG {10}, Nachfits {11}",
+                  self.g_faktor, self.gamma, fest, self.geometrie, self.breite_faktor,
+                  self.r2_schwelle, self.r2_min, self.alpha_max, plausibel,
+                  self.nachfenster_faktor,
+                  tr("gewichtet") if self.gewichtet else tr("ungewichtet"),
+                  tr("bestätigen") if self.nachfit_bestaetigen else tr("automatisch bewerten"))
 
     # --- Serialisierung -------------------------------------------------------
     def als_dict(self) -> dict:

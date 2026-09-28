@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ..io.datensatz import Linescan, Messdatensatz
+from ..sprache import tr
 
 
 def parse_bereiche(text: str, einheit: float = 1.0) -> list[tuple[float, float]]:
@@ -161,22 +162,22 @@ class Auswertungsauswahl:
         """Kurztext fuer Protokoll/Dialog, z. B. ``jede 10. Frequenz, Feld 2.5-4 T``."""
         teile: list[str] = []
         if self.n_frequenz > 1:
-            teile.append(f"jede {self.n_frequenz}. Frequenz")
+            teile.append(tr("jede {0}. Frequenz", self.n_frequenz))
         if self.n_feld > 1:
-            teile.append(f"jeder {self.n_feld}. Feldpunkt")
+            teile.append(tr("jeder {0}. Feldpunkt", self.n_feld))
         if self.frequenz_min_hz is not None or self.frequenz_max_hz is not None:
             lo = "…" if self.frequenz_min_hz is None else f"{self.frequenz_min_hz/1e9:g}"
             hi = "…" if self.frequenz_max_hz is None else f"{self.frequenz_max_hz/1e9:g}"
-            teile.append(f"Frequenz {lo}-{hi} GHz")
+            teile.append(tr("Frequenz {0}-{1} GHz", lo, hi))
         for lo, hi in self.frequenz_ausschluss:
-            teile.append(f"ohne {lo/1e9:g}-{hi/1e9:g} GHz")
+            teile.append(tr("ohne {0:g}-{1:g} GHz", lo / 1e9, hi / 1e9))
         if self.feld_min_t is not None or self.feld_max_t is not None:
             lo = "…" if self.feld_min_t is None else f"{self.feld_min_t:g}"
             hi = "…" if self.feld_max_t is None else f"{self.feld_max_t:g}"
-            teile.append(f"Feld {lo}-{hi} T")
-        text = ", ".join(teile) if teile else "alles auswerten"
+            teile.append(tr("Feld {0}-{1} T", lo, hi))
+        text = ", ".join(teile) if teile else tr("alles auswerten")
         if datensatz is not None:
-            text += f" -> {self.waehle_indizes(datensatz).size} von {len(datensatz)} Linescans"
+            text += tr(" -> {0} von {1} Linescans", self.waehle_indizes(datensatz).size, len(datensatz))
         return text
 
     # --- Serialisierung (JSON-faehig, fuer Projektsitzungen) -------------------

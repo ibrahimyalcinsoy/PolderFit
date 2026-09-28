@@ -24,6 +24,7 @@ from PySide6 import QtCore
 from ..fit.linescan_fit import FitErgebnis
 from ..io.datensatz import Linescan
 from . import farben as F
+from ..sprache import tr
 
 # --- Darstellung der verschiebbaren Bandgrenzen ---------------------------
 GRENZ_FARBE = F.SIGNAL_GRUEN
@@ -117,8 +118,8 @@ class FitAnsicht(FigureCanvasQTAgg):
             self._hinweis = None
 
         b = linescan.feld
-        self.ax_re.plot(b, linescan.re, ".", ms=3, color=_FARBE_RE, label="Re S21 (Messung)")
-        self.ax_im.plot(b, linescan.im, ".", ms=3, color=_FARBE_IM, label="Im S21 (Messung)")
+        self.ax_re.plot(b, linescan.re, ".", ms=3, color=_FARBE_RE, label=tr("Re S21 (Messung)"))
+        self.ax_im.plot(b, linescan.im, ".", ms=3, color=_FARBE_IM, label=tr("Im S21 (Messung)"))
 
         gefittet = (ergebnis is not None and ergebnis.fitkurve is not None
                     and ergebnis.feld is not None)
@@ -132,12 +133,12 @@ class FitAnsicht(FigureCanvasQTAgg):
             for mode_k, kurve_k in (getattr(ergebnis, "beitraege", None) or []):
                 farbe_k = F.mode_farbe(int(mode_k)) if int(mode_k) > 1 else "#6B6F76"
                 self.ax_re.plot(ergebnis.feld, kurve_k.real, "--", color=farbe_k, lw=0.9,
-                                label=f"M{int(mode_k)}")
+                                label=tr("M{0}", int(mode_k)))
                 self.ax_im.plot(ergebnis.feld, kurve_k.imag, "--", color=farbe_k, lw=0.9)
             self.ax_re.plot(ergebnis.feld, ergebnis.fitkurve.real, "-", color=_FARBE_FIT,
-                            lw=1.4, label="Fit Re")
+                            lw=1.4, label=tr("Fit Re"))
             self.ax_im.plot(ergebnis.feld, ergebnis.fitkurve.imag, "-", color=_FARBE_FIT,
-                            lw=1.4, label="Fit Im")
+                            lw=1.4, label=tr("Fit Im"))
             for ax in (self.ax_re, self.ax_im):
                 ax.axvline(ergebnis.B_res, color=farbe_res, ls="--", lw=1.2, zorder=2)
 
@@ -175,11 +176,11 @@ class FitAnsicht(FigureCanvasQTAgg):
             titel += (f" · B_res {ergebnis.B_res:.4f} T ({ergebnis.B_res_mT:.1f} mT)\n"
                       f"µ₀ΔH {ergebnis.dH_mT:.2f} mT · α {ergebnis.alpha:.2e} · R² {ergebnis.R2:.4f}")
         elif ergebnis is not None:
-            titel += "\nnoch nicht gefittet – Grenzen ziehen fittet diese Frequenz"
+            titel += tr("\nnoch nicht gefittet – Grenzen ziehen fittet diese Frequenz")
         self.ax_re.set_title(titel, fontsize=9)
-        self.ax_re.set_ylabel("Re S21")
-        self.ax_im.set_ylabel("Im S21")
-        self.ax_im.set_xlabel(r"Feld $\mu_0 H$ (T)")
+        self.ax_re.set_ylabel(tr("Re S21"))
+        self.ax_im.set_ylabel(tr("Im S21"))
+        self.ax_im.set_xlabel(tr(r"Feld $\mu_0 H$ (T)"))
         self.ax_re.legend(fontsize=8, loc="best")
         self.ax_im.legend(fontsize=8, loc="best")
         # Standardmaessig auf das Resonanzband zoomen, damit die beiden Grenzlinien
@@ -187,9 +188,9 @@ class FitAnsicht(FigureCanvasQTAgg):
         self.ax_re.set_xlim(*self._berechne_xlim(b))
         self._tight_layout_sicher()
         # Dezenter Bedienhinweis (nach tight_layout, damit er nicht verschoben wird).
-        hinweis = ("Klick = Trennlinie setzen · gelbe Linien ziehen" if self._trenner_modus
-                   else "grüne Linien ziehen = Fenster ändern"
-                   + (" · gelb = Trennlinie" if self._trenner else ""))
+        hinweis = (tr("Klick = Trennlinie setzen · gelbe Linien ziehen") if self._trenner_modus
+                   else tr("grüne Linien ziehen = Fenster ändern")
+                   + (tr(" · gelb = Trennlinie") if self._trenner else ""))
         self._hinweis = self.figur.text(
             0.995, 0.004, hinweis, ha="right", va="bottom", fontsize=7.5,
             color=TRENN_FARBE if self._trenner_modus else GRENZ_FARBE, alpha=0.9)

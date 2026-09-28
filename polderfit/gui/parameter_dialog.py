@@ -18,6 +18,7 @@ from ..fit.kriterien import ALPHA_MAX_UNTERGRENZE
 from ..fit.parameter import GEOMETRIEN, PhysikParameter
 from ..physik.konstanten import gamma_aus_g
 from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox, RuhigeSpinBox
+from ..sprache import tr
 
 __all__ = ["GEOMETRIEN", "ParameterDialog", "PhysikParameter"]
 
@@ -27,15 +28,15 @@ class ParameterDialog(QtWidgets.QDialog):
 
     def __init__(self, parameter: PhysikParameter, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Physikalische Parameter")
+        self.setWindowTitle(tr("Physikalische Parameter"))
         self._vorgabe = parameter
         lay = QtWidgets.QVBoxLayout(self)
 
         hinweis = QtWidgets.QLabel(
-            "Konvention: Felder als µ₀H in Tesla, γ = g·µ_B/ħ in rad/(s·T) "
+            tr("Konvention: Felder als µ₀H in Tesla, γ = g·µ_B/ħ in rad/(s·T) "
             "(Müller 2023, Kap. 2). Änderungen wirken ab dem nächsten "
             "(Auto-/Nach-)Fit; die Kittel/LLG-Auswertung rechnet sofort neu. "
-            "Speichern/Laden als Voreinstellung: Menü Datei → Einstellungen.")
+            "Speichern/Laden als Voreinstellung: Menü Datei → Einstellungen."))
         hinweis.setWordWrap(True)
         lay.addWidget(hinweis)
 
@@ -47,31 +48,31 @@ class ParameterDialog(QtWidgets.QDialog):
         self.g_spin.setSingleStep(0.01)
         self.g_spin.setValue(parameter.g_faktor)
         self.g_spin.setToolTip(
-            "Landé-g-Faktor. γ = g·µ_B/ħ wird daraus abgeleitet und überall\n"
+            tr("Landé-g-Faktor. γ = g·µ_B/ħ wird daraus abgeleitet und überall\n"
             "verwendet: Einzelfits (ΔH = 2ωα/γ), Fenstersuche und als\n"
-            "Startwert des Kittel-Fits.")
+            "Startwert des Kittel-Fits."))
         self.g_spin.valueChanged.connect(self._zeige_gamma)
-        form.addRow("g-Faktor:", self.g_spin)
+        form.addRow(tr("g-Faktor:"), self.g_spin)
 
         self.gamma_label = QtWidgets.QLabel("")
-        form.addRow("→ γ:", self.gamma_label)
+        form.addRow(tr("→ γ:"), self.gamma_label)
         self._zeige_gamma()
 
         self.chk_gamma_fest = QtWidgets.QCheckBox(
-            "γ im Kittel-Fit festhalten (nur µ₀M_eff fitten)")
+            tr("γ im Kittel-Fit festhalten (nur µ₀M_eff fitten)"))
         self.chk_gamma_fest.setChecked(parameter.gamma_fest)
         self.chk_gamma_fest.setToolTip(
-            "Kittel-oop-Fit mit festem γ (aus dem g-Faktor oben): nur µ₀M_eff frei.")
+            tr("Kittel-oop-Fit mit festem γ (aus dem g-Faktor oben): nur µ₀M_eff frei."))
         form.addRow("", self.chk_gamma_fest)
 
         self.geo_combo = RuhigeComboBox()
         self.geo_combo.addItems(list(GEOMETRIEN))
         self.geo_combo.setCurrentText(parameter.geometrie)
         self.geo_combo.setToolTip(
-            "Vorgabe für das Kittel/LLG-Auswertungsfenster:\n"
+            tr("Vorgabe für das Kittel/LLG-Auswertungsfenster:\n"
             "oop = Feld senkrecht zur Schicht (Gl. 2.24),\n"
-            "ip = Feld in der Schichtebene (Gl. 2.26).")
-        form.addRow("Kittel-Geometrie:", self.geo_combo)
+            "ip = Feld in der Schichtebene (Gl. 2.26)."))
+        form.addRow(tr("Kittel-Geometrie:"), self.geo_combo)
 
         self.breite_spin = RuhigeDoubleSpinBox()
         self.breite_spin.setRange(1.0, 30.0)
@@ -79,9 +80,9 @@ class ParameterDialog(QtWidgets.QDialog):
         self.breite_spin.setSingleStep(0.5)
         self.breite_spin.setValue(parameter.breite_faktor)
         self.breite_spin.setToolTip(
-            "Automatische Fensterbreite = Faktor × lokale Halbwertsbreite\n"
-            "der Resonanz. Größer = mehr Untergrund im Fit, kleiner = enger.")
-        form.addRow("Fensterbreite-Faktor:", self.breite_spin)
+            tr("Automatische Fensterbreite = Faktor × lokale Halbwertsbreite\n"
+            "der Resonanz. Größer = mehr Untergrund im Fit, kleiner = enger."))
+        form.addRow(tr("Fensterbreite-Faktor:"), self.breite_spin)
 
         self.r2_spin = RuhigeDoubleSpinBox()
         self.r2_spin.setRange(0.0, 1.0)
@@ -89,9 +90,9 @@ class ParameterDialog(QtWidgets.QDialog):
         self.r2_spin.setSingleStep(0.01)
         self.r2_spin.setValue(parameter.r2_schwelle)
         self.r2_spin.setToolTip(
-            "Sekundäre R²-Schwelle der Einzelfit-Bewertung (primär zählt\n"
-            "die Mehrkriterien-Einstufung).")
-        form.addRow("R²-Schwelle (Einzelfit):", self.r2_spin)
+            tr("Sekundäre R²-Schwelle der Einzelfit-Bewertung (primär zählt\n"
+            "die Mehrkriterien-Einstufung)."))
+        form.addRow(tr("R²-Schwelle (Einzelfit):"), self.r2_spin)
 
         self.r2min_spin = RuhigeDoubleSpinBox()
         self.r2min_spin.setRange(0.0, 1.0)
@@ -99,9 +100,9 @@ class ParameterDialog(QtWidgets.QDialog):
         self.r2min_spin.setSingleStep(0.01)
         self.r2min_spin.setValue(parameter.r2_min)
         self.r2min_spin.setToolTip(
-            "Nur Einzelfits mit R² ≥ diesem Wert gehen in den\n"
-            "Kittel-/LLG-Fit ein (zusätzlich zur Problem-Einstufung).")
-        form.addRow("R²-Minimum (Kittel/LLG):", self.r2min_spin)
+            tr("Nur Einzelfits mit R² ≥ diesem Wert gehen in den\n"
+            "Kittel-/LLG-Fit ein (zusätzlich zur Problem-Einstufung)."))
+        form.addRow(tr("R²-Minimum (Kittel/LLG):"), self.r2min_spin)
 
         self.alpha_max_spin = RuhigeDoubleSpinBox()
         self.alpha_max_spin.setRange(ALPHA_MAX_UNTERGRENZE, 2.0)
@@ -109,27 +110,27 @@ class ParameterDialog(QtWidgets.QDialog):
         self.alpha_max_spin.setStepType(QtWidgets.QAbstractSpinBox.AdaptiveDecimalStepType)
         self.alpha_max_spin.setValue(parameter.alpha_max)
         self.alpha_max_spin.setToolTip(
-            "Harte obere Schranke der Gilbert-Dämpfung α im Einzelfit.\n"
+            tr("Harte obere Schranke der Gilbert-Dämpfung α im Einzelfit.\n"
             "Standard 0.1 (Metalle/Granate). Für sehr breite Resonanzen\n"
             "(z. B. FeCr2S4 mit α ≈ 0.2–0.5) anheben – sonst klemmt der Fit\n"
             "an der Schranke ('alpha an Grenze'). Für sehr schwach gedämpfte\n"
-            "Proben bis 0.00001 absenkbar (Pfeile/Mausrad: dekadische Schritte).")
-        form.addRow("α-Obergrenze (Einzelfit):", self.alpha_max_spin)
+            "Proben bis 0.00001 absenkbar (Pfeile/Mausrad: dekadische Schritte)."))
+        form.addRow(tr("α-Obergrenze (Einzelfit):"), self.alpha_max_spin)
 
         self.alpha_plausibel_spin = RuhigeDoubleSpinBox()
         self.alpha_plausibel_spin.setRange(0.0, 2.0)
         self.alpha_plausibel_spin.setDecimals(5)
         self.alpha_plausibel_spin.setStepType(
             QtWidgets.QAbstractSpinBox.AdaptiveDecimalStepType)
-        self.alpha_plausibel_spin.setSpecialValueText("automatisch (α max / 2)")
+        self.alpha_plausibel_spin.setSpecialValueText(tr("automatisch (α max / 2)"))
         self.alpha_plausibel_spin.setValue(parameter.alpha_plausibel)
         self.alpha_plausibel_spin.setToolTip(
-            "Grenze des Kriteriums 'alpha unphysikalisch' (gelbe Warnung).\n"
+            tr("Grenze des Kriteriums 'alpha unphysikalisch' (gelbe Warnung).\n"
             "0 = automatisch (halbe α-Obergrenze). Bei Proben mit real breiten\n"
             "Linien (nanostrukturiertes CoFe, FeCr2S4) anheben, damit gute Fits\n"
             "nicht dauernd als problematisch gelten; bei schwach gedämpften\n"
-            "Proben bis 0.00001 absenkbar.")
-        form.addRow("α-Plausibilitätsgrenze:", self.alpha_plausibel_spin)
+            "Proben bis 0.00001 absenkbar."))
+        form.addRow(tr("α-Plausibilitätsgrenze:"), self.alpha_plausibel_spin)
 
         self.nachfenster_spin = RuhigeDoubleSpinBox()
         self.nachfenster_spin.setRange(0.0, 10.0)
@@ -138,36 +139,36 @@ class ParameterDialog(QtWidgets.QDialog):
         self.nachfenster_spin.setSpecialValueText("aus")
         self.nachfenster_spin.setValue(parameter.nachfenster_faktor)
         self.nachfenster_spin.setToolTip(
-            "Zweiter Fit-Durchgang (Auto-/Bereichs-Fit): Fitfenster =\n"
+            tr("Zweiter Fit-Durchgang (Auto-/Bereichs-Fit): Fitfenster =\n"
             "B_res ± Faktor × ΔH aus dem ersten Durchgang; übernommen nur,\n"
             "wenn der Nachfit unproblematisch ist. Bis ≈ ±3 ΔH ist die\n"
             "Linienbreite fensterunabhängig; auf dem breiten Detektions-\n"
             "fenster (Faktor 8) fällt sie bei strukturiertem Untergrund\n"
             "systematisch 5–15 % zu klein aus (Benchmark gegen LabVIEW-FTF).\n"
-            "0 = aus (nur ein Durchgang auf dem Detektionsfenster).")
-        form.addRow("Nachfenster (± ΔH-Vielfache):", self.nachfenster_spin)
+            "0 = aus (nur ein Durchgang auf dem Detektionsfenster)."))
+        form.addRow(tr("Nachfenster (± ΔH-Vielfache):"), self.nachfenster_spin)
 
         self.gewicht_combo = RuhigeComboBox()
-        self.gewicht_combo.addItems(["ungewichtet (Standard)", "gewichtet (GUM, w = 1/u²)"])
+        self.gewicht_combo.addItems([tr("ungewichtet (Standard)"), tr("gewichtet (GUM, w = 1/u²)")])
         self.gewicht_combo.setCurrentIndex(1 if parameter.gewichtet else 0)
         self.gewicht_combo.setToolTip(
-            "Kittel-/LLG-Fits: ungewichtet (Standard, alle Punkte gleich – wie\n"
+            tr("Kittel-/LLG-Fits: ungewichtet (Standard, alle Punkte gleich – wie\n"
             "das LabVIEW-FTF) oder optional gewichtet mit den 1σ-Unsicherheiten\n"
             "der Einzelfits (w = 1/u², ABW Abschn. 6.3; betont die präzisesten\n"
             "Punkte, wenige Punkte können dominieren).\n"
             "Weichen beide Ergebnisse stark voneinander ab, tragen Modell-\n"
-            "abweichungen (nicht Rauschen) die Streuung.")
-        form.addRow("Kittel-/LLG-Gewichtung:", self.gewicht_combo)
+            "abweichungen (nicht Rauschen) die Streuung."))
+        form.addRow(tr("Kittel-/LLG-Gewichtung:"), self.gewicht_combo)
 
         self.chk_bestaetigen = QtWidgets.QCheckBox(
-            "Manuelle Nachfits automatisch als „gut – bestätigt“ bewerten")
+            tr("Manuelle Nachfits automatisch als „gut – bestätigt“ bewerten"))
         self.chk_bestaetigen.setChecked(parameter.nachfit_bestaetigen)
         self.chk_bestaetigen.setToolTip(
-            "An (Standard): Grenzen ziehen, Bereichs-/Korridor-Fit und\n"
+            tr("An (Standard): Grenzen ziehen, Bereichs-/Korridor-Fit und\n"
             "'Nochmal fitten' gelten als vom Nutzer geprüft → grüner Punkt mit\n"
             "blauem Rand, gehen in Kittel/LLG ein. Das Kriterienergebnis bleibt\n"
             "einsehbar (Export: problematisch_auto). Aus: Kriterien entscheiden\n"
-            "auch nach manuellen Fits (gelb, wenn verletzt).")
+            "auch nach manuellen Fits (gelb, wenn verletzt)."))
         form.addRow("", self.chk_bestaetigen)
 
         lay.addLayout(form)
@@ -175,9 +176,9 @@ class ParameterDialog(QtWidgets.QDialog):
         knoepfe = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
             | QtWidgets.QDialogButtonBox.RestoreDefaults)
-        knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText("Übernehmen")
-        knoepfe.button(QtWidgets.QDialogButtonBox.Cancel).setText("Abbrechen")
-        knoepfe.button(QtWidgets.QDialogButtonBox.RestoreDefaults).setText("Standardwerte")
+        knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText(tr("Übernehmen"))
+        knoepfe.button(QtWidgets.QDialogButtonBox.Cancel).setText(tr("Abbrechen"))
+        knoepfe.button(QtWidgets.QDialogButtonBox.RestoreDefaults).setText(tr("Standardwerte"))
         knoepfe.accepted.connect(self.accept)
         knoepfe.rejected.connect(self.reject)
         knoepfe.button(QtWidgets.QDialogButtonBox.RestoreDefaults).clicked.connect(
@@ -186,7 +187,7 @@ class ParameterDialog(QtWidgets.QDialog):
 
     def _zeige_gamma(self) -> None:
         self.gamma_label.setText(
-            f"{gamma_aus_g(float(self.g_spin.value())):.4e} rad/(s·T)")
+            tr("{0:.4e} rad/(s·T)", gamma_aus_g(float(self.g_spin.value()))))
 
     def _standardwerte(self) -> None:
         standard = PhysikParameter()

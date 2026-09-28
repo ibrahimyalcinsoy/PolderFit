@@ -70,7 +70,7 @@ from ..fit.fenster_steuerung import (
 )
 from ..fit.korridor import Korridor, korridor_aus_linie
 from ..fit.linescan_fit import BEWERTUNG_TEXTE, FitErgebnis
-from ..fit.kriterien import kriterien_kurz, kriterien_text
+from .texte import gruende_tr, kriterien_kurz_tr, kriterien_text_tr, problem_text_tr
 from ..fit.parameter import PhysikParameter
 from ..persistenz.ergebnis_export import exportiere_excel, exportiere_csv, kittel_llg_flach
 from ..persistenz.einstellungen import (
@@ -110,6 +110,8 @@ from .stil import PolderFit_QSS
 from .widgets import RuhigeSpinBox
 from . import farben as F
 from .. import PROGRAMMNAME
+from ..sprache import (N_, SPRACHEN, gespeicherte_sprache, setze_sprache, speichere_sprache,
+                       sprache, tr)
 
 #: Quellcode-Repository (im Hilfe-Dialog verlinkt).
 REPO_URL = "https://github.com/ibrahimyalcinsoy/PolderFit"
@@ -119,11 +121,11 @@ _LOG_FARBEN = F.LOG_FARBEN
 
 #: Statusleisten-Text je aktivem Interaktionsmodus.
 _MODUS_TEXTE = {
-    "bereich": "Modus: Bereich neu fitten – Rechteck aufziehen · Esc bricht ab",
-    "zone": "Modus: Ausschlusszone – Rechteck aufziehen · Esc bricht ab",
-    "ausreisser": "Modus: Ausreißer markieren – Punkt anklicken oder Kasten aufziehen · Esc beendet",
-    "korridor": "Modus: Korridor anlegen – zwei Punkte entlang der Resonanz klicken · Esc bricht ab",
-    "anker": "Modus: Anker setzen – Klick setzt die nähere Korridorgrenze · Esc beendet",
+    "bereich": N_("Modus: Bereich neu fitten – Rechteck aufziehen · Esc bricht ab"),
+    "zone": N_("Modus: Ausschlusszone – Rechteck aufziehen · Esc bricht ab"),
+    "ausreisser": N_("Modus: Ausreißer markieren – Punkt anklicken oder Kasten aufziehen · Esc beendet"),
+    "korridor": N_("Modus: Korridor anlegen – zwei Punkte entlang der Resonanz klicken · Esc bricht ab"),
+    "anker": N_("Modus: Anker setzen – Klick setzt die nähere Korridorgrenze · Esc beendet"),
 }
 
 #: Verzoegerung der Auto-Sicherung nach der letzten Aenderung (ms).
@@ -135,7 +137,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"{PROGRAMMNAME} – Breitband-FMR-Auswertung")
+        self.setWindowTitle(tr("{0} – Breitband-FMR-Auswertung", PROGRAMMNAME))
         self.resize(1400, 860)
 
         self.stapel: StapelErgebnis | None = None
@@ -253,13 +255,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Voreinstellungen (Anzeige, Verarbeitung) anwenden.
         self._einstellungen_anwenden(self._einstellungen, physik=False, melden=False)
 
-        self.statusBar().showMessage("Bereit. Bitte eine TDMS-Datei laden (Strg+O).")
-        self._log(f"{PROGRAMMNAME} bereit. Bitte eine TDMS-Datei laden.", "info")
+        self.statusBar().showMessage(tr("Bereit. Bitte eine TDMS-Datei laden (Strg+O)."))
+        self._log(tr("{0} bereit. Bitte eine TDMS-Datei laden.", PROGRAMMNAME), "info")
         if self._einstellungen_geladen:
-            self._log(f"Voreinstellungen geladen: {standard_pfad()}", "auto")
+            self._log(tr("Voreinstellungen geladen: {0}", standard_pfad()), "auto")
         if autosicherung_pfad().exists():
-            self._log("Eine Auto-Sicherung des letzten Arbeitsstands ist vorhanden "
-                      "(Datei → Auto-Sicherung wiederherstellen).", "info")
+            self._log(tr("Eine Auto-Sicherung des letzten Arbeitsstands ist vorhanden "
+                      "(Datei → Auto-Sicherung wiederherstellen)."), "info")
 
     # --- Aufbau ------------------------------------------------------------
     def _baue_oberflaeche(self):
@@ -282,28 +284,28 @@ class Hauptfenster(QtWidgets.QMainWindow):
         steuer = QtWidgets.QGridLayout()
         steuer.setHorizontalSpacing(6)
         steuer.setVerticalSpacing(4)
-        self.btn_zurueck = QtWidgets.QPushButton("◀ Zurück")
-        self.btn_weiter = QtWidgets.QPushButton("Weiter ▶")
-        self.btn_naechstes_problem = QtWidgets.QPushButton("Problemfit ▶")
+        self.btn_zurueck = QtWidgets.QPushButton(tr("◀ Zurück"))
+        self.btn_weiter = QtWidgets.QPushButton(tr("Weiter ▶"))
+        self.btn_naechstes_problem = QtWidgets.QPushButton(tr("Problemfit ▶"))
         self.btn_naechstes_problem.setToolTip(
-            "Zum nächsten gelb/rot markierten Fit der angezeigten Mode springen\n"
-            "(ignorierte Punkte werden übersprungen). Rechtsklick/Umschalt: zurück.")
-        self.btn_voriges_problem = QtWidgets.QPushButton("◀ Problemfit")
-        self.btn_voriges_problem.setToolTip("Zum vorigen gelb/rot markierten Fit springen.")
+            tr("Zum nächsten gelb/rot markierten Fit der angezeigten Mode springen\n"
+            "(ignorierte Punkte werden übersprungen). Rechtsklick/Umschalt: zurück."))
+        self.btn_voriges_problem = QtWidgets.QPushButton(tr("◀ Problemfit"))
+        self.btn_voriges_problem.setToolTip(tr("Zum vorigen gelb/rot markierten Fit springen."))
         self.btn_voriges_problem.clicked.connect(lambda: self._naechster_problemfit(-1))
-        self.btn_neu = QtWidgets.QPushButton("Neu fitten")
+        self.btn_neu = QtWidgets.QPushButton(tr("Neu fitten"))
         self.btn_neu.setToolTip(
-            "Diese Frequenz (gewählte Mode) mit dem aktuellen Fenster bzw. Korridor\n"
-            "neu fitten.")
+            tr("Diese Frequenz (gewählte Mode) mit dem aktuellen Fenster bzw. Korridor\n"
+            "neu fitten."))
         self.mode_combo = QtWidgets.QComboBox()
-        self.mode_combo.addItem("M1", 1)
-        self.mode_combo.setToolTip("Angezeigte Mode – wie die Auswahl in der Korridorliste.")
+        self.mode_combo.addItem(tr("M1"), 1)
+        self.mode_combo.setToolTip(tr("Angezeigte Mode – wie die Auswahl in der Korridorliste."))
         self.mode_combo.activated.connect(self._mode_combo_gewaehlt)
         # Vollbereich-Umschalter direkt am Linescan-Panel (gespiegelt mit der
         # Menue-Aktion akt_vollbereich; Verbindung in _baue_aktionen).
-        self.chk_vollbereich = QtWidgets.QCheckBox("ganzer Feldsweep")
+        self.chk_vollbereich = QtWidgets.QCheckBox(tr("ganzer Feldsweep"))
         self.chk_vollbereich.setToolTip(
-            "Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
+            tr("Ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen."))
         self.btn_zurueck.clicked.connect(lambda: self._navigiere(-1))
         self.btn_weiter.clicked.connect(lambda: self._navigiere(+1))
         self.btn_neu.clicked.connect(self._neu_fitten)
@@ -325,17 +327,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.status_label.setObjectName("status_ignoriert")
         self.status_label.setAlignment(QtCore.Qt.AlignCenter)
         self.status_label.setToolTip(
-            "Wirksamer Status dieses Fits (Farbe/Form wie im Farbplot).")
+            tr("Wirksamer Status dieses Fits (Farbe/Form wie im Farbplot)."))
         steuer.addWidget(self.status_label, 2, 0)
         self.bewertung_combo = QtWidgets.QComboBox()
-        for text, art in (("gut bestätigen", "bestaetigt"),
+        for text, art in ((tr("gut bestätigen"), "bestaetigt"),
                           ("problematisch", "verworfen"),
-                          ("automatisch (Kriterien)", "auto"),
-                          ("ignorieren (Ausreißer)", "ignorieren")):
+                          (tr("automatisch (Kriterien)"), "auto"),
+                          (tr("ignorieren (Ausreißer)"), "ignorieren")):
             self.bewertung_combo.addItem(text, art)
         self.bewertung_combo.setToolTip(
-            "Bewertung dieses Fits setzen: gut bestätigen (Strg+1), problematisch (Strg+2),\n"
-            "automatisch nach Kriterien (Strg+3), ignorieren/wieder aufnehmen (Strg+I).")
+            tr("Bewertung dieses Fits setzen: gut bestätigen (Strg+1), problematisch (Strg+2),\n"
+            "automatisch nach Kriterien (Strg+3), ignorieren/wieder aufnehmen (Strg+I)."))
         self.bewertung_combo.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                            QtWidgets.QSizePolicy.Fixed)
         self._bewertung_blockiert = False
@@ -350,7 +352,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.label_info.setWordWrap(True)
         layout.addWidget(self.label_info)
 
-        dock = QtWidgets.QDockWidget("Linescan-Fit", self)
+        dock = QtWidgets.QDockWidget(tr("Linescan-Fit"), self)
         dock.setObjectName("linescan_dock")
         dock.setAllowedAreas(
             QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
@@ -392,219 +394,219 @@ class Hauptfenster(QtWidgets.QMainWindow):
         A = QtGui.QAction
 
         # --- Datei ----------------------------------------------------------
-        self.akt_laden = A("TDMS laden …", self)
+        self.akt_laden = A(tr("TDMS laden …"), self)
         self.akt_laden.setShortcut(QtGui.QKeySequence.Open)          # Strg+O
         self.akt_laden.triggered.connect(self._laden)
-        self.akt_projekt_laden = A("Projekt laden …", self)
+        self.akt_projekt_laden = A(tr("Projekt laden …"), self)
         self.akt_projekt_laden.setShortcut(QtGui.QKeySequence("Ctrl+Shift+O"))
         self.akt_projekt_laden.setToolTip(
-            "Gespeicherte Sitzung fortsetzen: TDMS wird neu gelesen, die Fits werden "
-            "mit den gespeicherten Fenstern deterministisch wiederhergestellt.")
+            tr("Gespeicherte Sitzung fortsetzen: TDMS wird neu gelesen, die Fits werden "
+            "mit den gespeicherten Fenstern deterministisch wiederhergestellt."))
         self.akt_projekt_laden.triggered.connect(lambda: self._projekt_laden())
-        self.akt_projekt_speichern = A("Projekt speichern …", self)
+        self.akt_projekt_speichern = A(tr("Projekt speichern …"), self)
         self.akt_projekt_speichern.setShortcut(QtGui.QKeySequence.Save)   # Strg+S
         self.akt_projekt_speichern.setToolTip(
-            "Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
+            tr("Sitzung als JSON sichern: Quelle, Kanal-Zuordnung, Auswahl, Fenster, "
             "Zonen, Korridore, Ausreißer, Bewertungen, Parameter und Verarbeitung "
-            "(nie: Zoom oder Fensterlayout).")
+            "(nie: Zoom oder Fensterlayout)."))
         self.akt_projekt_speichern.triggered.connect(lambda: self._projekt_speichern())
-        self.akt_autosicherung = A("Auto-Sicherung wiederherstellen …", self)
+        self.akt_autosicherung = A(tr("Auto-Sicherung wiederherstellen …"), self)
         self.akt_autosicherung.setToolTip(
-            "Letzten automatisch gesicherten Arbeitsstand laden (wird 15 s nach "
-            "jeder Änderung und beim Beenden geschrieben).")
+            tr("Letzten automatisch gesicherten Arbeitsstand laden (wird 15 s nach "
+            "jeder Änderung und beim Beenden geschrieben)."))
         self.akt_autosicherung.triggered.connect(self._autosicherung_wiederherstellen)
 
-        self.akt_alles_speichern = A("Alles speichern …", self)
+        self.akt_alles_speichern = A(tr("Alles speichern …"), self)
         self.akt_alles_speichern.setShortcut(QtGui.QKeySequence("Ctrl+Shift+S"))
         self.akt_alles_speichern.setToolTip(
-            "Projekt, Excel/CSV, Kittel/LLG-Auswertung, Farbplot-Bild und -Matrix, "
-            "TDMS und Einstellungen in einem Schritt in einen Ordner schreiben.")
+            tr("Projekt, Excel/CSV, Kittel/LLG-Auswertung, Farbplot-Bild und -Matrix, "
+            "TDMS und Einstellungen in einem Schritt in einen Ordner schreiben."))
         self.akt_alles_speichern.triggered.connect(self._alles_speichern)
-        self.akt_tdms = A("Fitkurven als TDMS …", self)
+        self.akt_tdms = A(tr("Fitkurven als TDMS …"), self)
         self.akt_tdms.setShortcut(QtGui.QKeySequence("Ctrl+Shift+T"))
         self.akt_tdms.triggered.connect(lambda: self._export_tdms())
-        self.akt_xlsx = A("Einzelfits als Excel …", self)
+        self.akt_xlsx = A(tr("Einzelfits als Excel …"), self)
         self.akt_xlsx.setShortcut(QtGui.QKeySequence("Ctrl+E"))
         self.akt_xlsx.setToolTip(
-            "Alle Fitparameter (B_res und ΔH in T und mT, α, Amplitude/Phase, "
-            "komplexe Amplitude, Offsets, Gütemaße, Status) + Kittel/LLG + Einstellungen.")
+            tr("Alle Fitparameter (B_res und ΔH in T und mT, α, Amplitude/Phase, "
+            "komplexe Amplitude, Offsets, Gütemaße, Status) + Kittel/LLG + Einstellungen."))
         self.akt_xlsx.triggered.connect(lambda: self._export_excel())
-        self.akt_csv = A("Einzelfits als CSV (Listendaten) …", self)
+        self.akt_csv = A(tr("Einzelfits als CSV (Listendaten) …"), self)
         self.akt_csv.setShortcut(QtGui.QKeySequence("Ctrl+Shift+E"))
         self.akt_csv.triggered.connect(lambda: self._export_csv())
-        self.akt_kittel_export = A("Kittel/LLG-Auswertung exportieren …", self)
+        self.akt_kittel_export = A(tr("Kittel/LLG-Auswertung exportieren …"), self)
         self.akt_kittel_export.setToolTip(
-            "Physikalische Parameter mit Fehlern (T und mT) als Excel + CSV, Plot als PNG/PDF.")
+            tr("Physikalische Parameter mit Fehlern (T und mT) als Excel + CSV, Plot als PNG/PDF."))
         self.akt_kittel_export.triggered.connect(lambda: self._export_kittel())
-        self.akt_farbplot_bild = A("Farbplot als Bild …", self)
-        self.akt_farbplot_bild.setToolTip("Aktuelle Ansicht des Farbplots mit Overlays (PNG/PDF/SVG).")
+        self.akt_farbplot_bild = A(tr("Farbplot als Bild …"), self)
+        self.akt_farbplot_bild.setToolTip(tr("Aktuelle Ansicht des Farbplots mit Overlays (PNG/PDF/SVG)."))
         self.akt_farbplot_bild.triggered.connect(lambda: self._export_farbplot_bild())
-        self.akt_matrix_csv = A("Farbplot-Matrix als CSV …", self)
+        self.akt_matrix_csv = A(tr("Farbplot-Matrix als CSV …"), self)
         self.akt_matrix_csv.setToolTip(
-            "Verarbeitete Matrix (nach Kette und Darstellung): Zeilen = Frequenzen, Spalten = Feld.")
+            tr("Verarbeitete Matrix (nach Kette und Darstellung): Zeilen = Frequenzen, Spalten = Feld."))
         self.akt_matrix_csv.triggered.connect(lambda: self._export_matrix_csv())
-        self.akt_spalten = A("Export-Spalten (Standard) …", self)
+        self.akt_spalten = A(tr("Export-Spalten (Standard) …"), self)
         self.akt_spalten.setToolTip(
-            "Welche Spaltengruppen jeder Excel-/CSV-Export enthält; als Voreinstellung speicherbar.")
+            tr("Welche Spaltengruppen jeder Excel-/CSV-Export enthält; als Voreinstellung speicherbar."))
         self.akt_spalten.triggered.connect(self._spalten_dialog)
 
-        self.akt_einst_speichern = A("Einstellungen speichern unter …", self)
+        self.akt_einst_speichern = A(tr("Einstellungen speichern unter …"), self)
         self.akt_einst_speichern.triggered.connect(self._einstellungen_speichern_unter)
-        self.akt_einst_laden = A("Einstellungen laden …", self)
+        self.akt_einst_laden = A(tr("Einstellungen laden …"), self)
         self.akt_einst_laden.triggered.connect(self._einstellungen_laden)
-        self.akt_einst_standard = A("Als Standard speichern (beim Start laden)", self)
-        self.akt_einst_standard.setToolTip(f"Speichert nach {standard_pfad()}")
+        self.akt_einst_standard = A(tr("Als Standard speichern (beim Start laden)"), self)
+        self.akt_einst_standard.setToolTip(tr("Speichert nach {0}", standard_pfad()))
         self.akt_einst_standard.triggered.connect(self._einstellungen_als_standard)
-        self.akt_einst_reset = A("Standardwerte wiederherstellen", self)
+        self.akt_einst_reset = A(tr("Standardwerte wiederherstellen"), self)
         self.akt_einst_reset.triggered.connect(self._einstellungen_zuruecksetzen)
 
-        self.akt_beenden = A("Beenden", self)
+        self.akt_beenden = A(tr("Beenden"), self)
         # QKeySequence.Quit ist unter Windows leer -> explizit Strg+Q.
         self.akt_beenden.setShortcut(QtGui.QKeySequence("Ctrl+Q"))
         self.akt_beenden.triggered.connect(self.close)
 
         # --- Bearbeiten (Rueckgaengig/Wiederholen) ---------------------------
-        self.akt_rueckgaengig = A("Rückgängig", self)
+        self.akt_rueckgaengig = A(tr("Rückgängig"), self)
         self.akt_rueckgaengig.setShortcut(QtGui.QKeySequence.Undo)        # Strg+Z
         self.akt_rueckgaengig.setToolTip(
-            "Letzte Änderung zurücknehmen: Korridor/Anker, Ausschlusszone, "
-            "Ausreißer, Bewertung oder Nachfit (Strg+Z).")
+            tr("Letzte Änderung zurücknehmen: Korridor/Anker, Ausschlusszone, "
+            "Ausreißer, Bewertung oder Nachfit (Strg+Z)."))
         self.akt_rueckgaengig.setEnabled(False)
         self.akt_rueckgaengig.triggered.connect(self._rueckgaengig)
-        self.akt_wiederholen = A("Wiederholen", self)
+        self.akt_wiederholen = A(tr("Wiederholen"), self)
         self.akt_wiederholen.setShortcuts(
             [QtGui.QKeySequence.Redo, QtGui.QKeySequence("Ctrl+Y")])      # Strg+Umschalt+Z / Strg+Y
         self.akt_wiederholen.setToolTip(
-            "Zurückgenommene Änderung wieder anwenden (Strg+Umschalt+Z oder Strg+Y).")
+            tr("Zurückgenommene Änderung wieder anwenden (Strg+Umschalt+Z oder Strg+Y)."))
         self.akt_wiederholen.setEnabled(False)
         self.akt_wiederholen.triggered.connect(self._wiederholen)
 
         # --- Funktionen (interaktive Modi sind checkbar und EXKLUSIV) --------
-        self.akt_fit = A("Auto-Fit (alle)", self)
+        self.akt_fit = A(tr("Auto-Fit (alle)"), self)
         self.akt_fit.setShortcut(QtGui.QKeySequence("F5"))
         self.akt_fit.setToolTip(
-            "Resonanz je Frequenz automatisch suchen und fitten (mit Dialog: "
+            tr("Resonanz je Frequenz automatisch suchen und fitten (mit Dialog: "
             "Frequenz/Feld von … bis …, Jumper). Mit Korridoren: jede Mode nur in ihrem "
-            "Korridor. Korridor- und Bereichs-Fit funktionieren auch ohne Auto-Fit.")
+            "Korridor. Korridor- und Bereichs-Fit funktionieren auch ohne Auto-Fit."))
         self.akt_fit.triggered.connect(self._auto_fit)
-        self.akt_bereich = A("Bereich neu fitten", self)
+        self.akt_bereich = A(tr("Bereich neu fitten"), self)
         self.akt_bereich.setShortcut(QtGui.QKeySequence("Ctrl+B"))
         self.akt_bereich.setCheckable(True)
         self.akt_bereich.setToolTip(
-            "Modus: Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche "
+            tr("Modus: Rechteck im Farbplot aufziehen → nur dort werden Fenstersuche "
             "und Fit wiederholt (löst Mehrdeutigkeiten neben der Mode auf). "
             "Optionen (Frequenz/Feld von … bis …, Modus, Fensterbreite, Resonanzen) "
-            "folgen im Dialog. Funktioniert auch ohne Auto-Fit. Esc bricht ab.")
+            "folgen im Dialog. Funktioniert auch ohne Auto-Fit. Esc bricht ab."))
         self.akt_bereich.toggled.connect(self._bereich_umschalten)
-        self.akt_korridor = A("Korridor anlegen", self)
+        self.akt_korridor = A(tr("Korridor anlegen"), self)
         self.akt_korridor.setShortcut(QtGui.QKeySequence("Ctrl+L"))
         self.akt_korridor.setCheckable(True)
         self.akt_korridor.setToolTip(
-            "Modus: zwei Punkte entlang der Resonanz im Farbplot klicken → Korridor "
+            tr("Modus: zwei Punkte entlang der Resonanz im Farbplot klicken → Korridor "
             "± Breite für die nächste Mode; danach im Panel „Korridore“ "
-            "den Korridor fitten. Funktioniert direkt nach dem Laden.")
+            "den Korridor fitten. Funktioniert direkt nach dem Laden."))
         self.akt_korridor.toggled.connect(self._korridor_modus)
-        self.akt_zone = A("Ausschlusszone einzeichnen", self)
+        self.akt_zone = A(tr("Ausschlusszone einzeichnen"), self)
         self.akt_zone.setCheckable(True)
         self.akt_zone.setToolTip(
-            "Modus: Rechteck aufziehen → Messpunkte darin werden aus allen Fits ausgenommen.")
+            tr("Modus: Rechteck aufziehen → Messpunkte darin werden aus allen Fits ausgenommen."))
         self.akt_zone.toggled.connect(self._zone_modus)
-        self.akt_ausreisser = A("Ausreißer markieren", self)
+        self.akt_ausreisser = A(tr("Ausreißer markieren"), self)
         self.akt_ausreisser.setShortcut(QtGui.QKeySequence("Ctrl+M"))
         self.akt_ausreisser.setCheckable(True)
         self.akt_ausreisser.setToolTip(
-            "Modus: Fit-Punkte im Farbplot anklicken oder per Kasten markieren → "
+            tr("Modus: Fit-Punkte im Farbplot anklicken oder per Kasten markieren → "
             "ignoriert (grau): raus aus Darstellung und ALLEN Rechnungen (insb. Kittel-Fit). "
-            "Reversibel: Rückgängig und Liste im Ausreißer-Panel. Esc beendet.")
+            "Reversibel: Rückgängig und Liste im Ausreißer-Panel. Esc beendet."))
         self.akt_ausreisser.toggled.connect(self._ausreisser_modus)
-        self.akt_kittel = A("Kittel/LLG-Auswertung …", self)
+        self.akt_kittel = A(tr("Kittel/LLG-Auswertung …"), self)
         self.akt_kittel.setShortcut(QtGui.QKeySequence("Ctrl+K"))
         self.akt_kittel.setToolTip(
-            "Eigenes Auswertungsfenster: Kittel- und LLG-Fit mit Feld auf der "
-            "x-Achse, Punkte direkt im Plot entfernen, Export mit Fehlermaßen (T und mT).")
+            tr("Eigenes Auswertungsfenster: Kittel- und LLG-Fit mit Feld auf der "
+            "x-Achse, Punkte direkt im Plot entfernen, Export mit Fehlermaßen (T und mT)."))
         self.akt_kittel.triggered.connect(self._kittel_llg)
-        self.akt_physik = A("Physikalische Parameter …", self)
+        self.akt_physik = A(tr("Physikalische Parameter …"), self)
         self.akt_physik.setShortcut(QtGui.QKeySequence("Ctrl+P"))
         self.akt_physik.setToolTip(
-            "g-Faktor/γ, Kittel-Geometrie, Fensterbreite-Faktor, R²-Schwellen, "
+            tr("g-Faktor/γ, Kittel-Geometrie, Fensterbreite-Faktor, R²-Schwellen, "
             "α-Grenzen, Resonanzen je Linescan und Nachfit-Bewertung einstellen "
-            "(Konvention: µ₀H in Tesla, γ = g·µ_B/ħ; Müller 2023, Kap. 2).")
+            "(Konvention: µ₀H in Tesla, γ = g·µ_B/ħ; Müller 2023, Kap. 2)."))
         self.akt_physik.triggered.connect(self._physik_dialog)
 
         # Bewertung des aktuellen Fits.
-        self.akt_bew_gut = A("Aktuellen Fit als gut bestätigen", self)
+        self.akt_bew_gut = A(tr("Aktuellen Fit als gut bestätigen"), self)
         self.akt_bew_gut.setShortcut(QtGui.QKeySequence("Ctrl+1"))
         self.akt_bew_gut.triggered.connect(lambda: self._bewerte_aktuellen("bestaetigt"))
-        self.akt_bew_problem = A("Aktuellen Fit als problematisch markieren", self)
+        self.akt_bew_problem = A(tr("Aktuellen Fit als problematisch markieren"), self)
         self.akt_bew_problem.setShortcut(QtGui.QKeySequence("Ctrl+2"))
         self.akt_bew_problem.triggered.connect(lambda: self._bewerte_aktuellen("verworfen"))
-        self.akt_bew_auto = A("Aktuellen Fit automatisch bewerten (Kriterien)", self)
+        self.akt_bew_auto = A(tr("Aktuellen Fit automatisch bewerten (Kriterien)"), self)
         self.akt_bew_auto.setShortcut(QtGui.QKeySequence("Ctrl+3"))
         self.akt_bew_auto.triggered.connect(lambda: self._bewerte_aktuellen("auto"))
-        self.akt_bew_ignorieren = A("Aktuellen Fit ignorieren / wieder aufnehmen", self)
+        self.akt_bew_ignorieren = A(tr("Aktuellen Fit ignorieren / wieder aufnehmen"), self)
         self.akt_bew_ignorieren.setShortcut(QtGui.QKeySequence("Ctrl+I"))
         self.akt_bew_ignorieren.triggered.connect(lambda: self._bewerte_aktuellen("ignorieren"))
-        self.akt_bew_alle_auto = A("Alle Bewertungen auf automatisch zurücksetzen", self)
+        self.akt_bew_alle_auto = A(tr("Alle Bewertungen auf automatisch zurücksetzen"), self)
         self.akt_bew_alle_auto.triggered.connect(self._alle_bewertungen_auto)
-        self.akt_fits_loeschen = A("Fit-Ergebnisse löschen …", self)
+        self.akt_fits_loeschen = A(tr("Fit-Ergebnisse löschen …"), self)
         self.akt_fits_loeschen.setToolTip(
-            "Ergebnisse verwerfen (rückgängig mit Strg+Z): alle Fits oder nur die der "
-            "angezeigten Mode. Korridore, Zonen und Einstellungen bleiben.")
+            tr("Ergebnisse verwerfen (rückgängig mit Strg+Z): alle Fits oder nur die der "
+            "angezeigten Mode. Korridore, Zonen und Einstellungen bleiben."))
         self.akt_fits_loeschen.triggered.connect(self._fits_loeschen_dialog)
 
         # --- Ansicht --------------------------------------------------------
-        self.akt_vollbild = A("Vollbild", self)
+        self.akt_vollbild = A(tr("Vollbild"), self)
         self.akt_vollbild.setShortcut(QtGui.QKeySequence("F11"))
         self.akt_vollbild.setCheckable(True)
-        self.akt_vollbild.setToolTip("Vollbildmodus ein-/ausschalten (F11; Esc verlässt ihn).")
+        self.akt_vollbild.setToolTip(tr("Vollbildmodus ein-/ausschalten (F11; Esc verlässt ihn)."))
         self.akt_vollbild.toggled.connect(self._vollbild_umschalten)
-        self.akt_layout_reset = A("Fensterlayout zurücksetzen", self)
+        self.akt_layout_reset = A(tr("Fensterlayout zurücksetzen"), self)
         self.akt_layout_reset.setShortcut(QtGui.QKeySequence("Ctrl+Shift+R"))
         self.akt_layout_reset.setToolTip(
-            "Farbplot, Zoom und Panels auf den Auslieferungszustand bringen – "
-            "ohne Daten oder Fits zu verlieren.")
+            tr("Farbplot, Zoom und Panels auf den Auslieferungszustand bringen – "
+            "ohne Daten oder Fits zu verlieren."))
         self.akt_layout_reset.triggered.connect(self._layout_zuruecksetzen)
-        self.akt_vollbereich = A("Linescan: ganzer Feldsweep", self)
+        self.akt_vollbereich = A(tr("Linescan: ganzer Feldsweep"), self)
         self.akt_vollbereich.setCheckable(True)
         self.akt_vollbereich.setToolTip(
-            "Im Linescan-Panel den ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen.")
+            tr("Im Linescan-Panel den ganzen Feldsweep zeigen statt aufs Resonanzband zu zoomen."))
         self.akt_vollbereich.toggled.connect(self._vollbereich_umschalten)
         # Checkbox im Linescan-Panel spiegelt die Aktion (beide Richtungen;
         # setChecked mit unveraendertem Wert loest kein toggled aus -> keine Schleife).
         self.chk_vollbereich.toggled.connect(self.akt_vollbereich.setChecked)
         self.akt_vollbereich.toggled.connect(self.chk_vollbereich.setChecked)
-        self.akt_zoom = A("Zoom (Mausrad / Kästchen)", self)
+        self.akt_zoom = A(tr("Zoom (Mausrad / Kästchen)"), self)
         self.akt_zoom.setCheckable(True)
         self.akt_zoom.setChecked(False)
         self.akt_zoom.setToolTip(
-            "Zoom in der Übersicht per Mausrad und aufgezogenem Kästchen ein-/ausschalten "
-            "(Standard aus). Doppelklick setzt den Zoom zurück; Tasten +/-/0 wirken immer.")
+            tr("Zoom in der Übersicht per Mausrad und aufgezogenem Kästchen ein-/ausschalten "
+            "(Standard aus). Doppelklick setzt den Zoom zurück; Tasten +/-/0 wirken immer."))
         self.akt_zoom.toggled.connect(self.matrix.setze_zoom_aktiv)
-        self.akt_problemfits = A("Problemfits ausblenden", self)
+        self.akt_problemfits = A(tr("Problemfits ausblenden"), self)
         self.akt_problemfits.setCheckable(True)
         self.akt_problemfits.setToolTip(
-            "Problematische (gelb) und fehlgeschlagene (rot) Fits im Farbplot ausblenden.")
+            tr("Problematische (gelb) und fehlgeschlagene (rot) Fits im Farbplot ausblenden."))
         self.akt_problemfits.toggled.connect(self._problemfits_umschalten)
-        self.akt_ausreisser_anzeigen = A("Ignorierte Punkte (Ausreißer) grau anzeigen", self)
+        self.akt_ausreisser_anzeigen = A(tr("Ignorierte Punkte (Ausreißer) grau anzeigen"), self)
         self.akt_ausreisser_anzeigen.setCheckable(True)
         self.akt_ausreisser_anzeigen.toggled.connect(self.matrix.setze_ausreisser_anzeigen)
-        self.akt_nebenmoden = A("Weitere Moden (M2 …) anzeigen", self)
+        self.akt_nebenmoden = A(tr("Weitere Moden (M2 …) anzeigen"), self)
         self.akt_nebenmoden.setCheckable(True)
         self.akt_nebenmoden.setChecked(True)
         self.akt_nebenmoden.toggled.connect(self.matrix.setze_nebenmoden_anzeigen)
-        self.akt_ungefittete = A("Ungefittete Frequenzen überspringen", self)
+        self.akt_ungefittete = A(tr("Ungefittete Frequenzen überspringen"), self)
         self.akt_ungefittete.setCheckable(True)
         self.akt_ungefittete.setChecked(True)
         self.akt_ungefittete.setToolTip(
-            "Beim Blättern (Pfeiltasten, Zurück/Weiter) nur gefittete Frequenzen der\n"
-            "angezeigten Mode anspringen – z. B. nach einem Auto-Fit mit Jumper.")
+            tr("Beim Blättern (Pfeiltasten, Zurück/Weiter) nur gefittete Frequenzen der\n"
+            "angezeigten Mode anspringen – z. B. nach einem Auto-Fit mit Jumper."))
 
         # Farbskala als Auswahlgruppe.
         self.farbskala_gruppe = QtGui.QActionGroup(self)
         self.farbskala_gruppe.setExclusive(True)
         self.akt_farbskalen: dict[str, QtGui.QAction] = {}
         for name, text in FARBSKALEN.items():
-            akt = A(text, self)
+            akt = A(tr(text), self)
             akt.setCheckable(True)
             akt.setData(name)
             akt.triggered.connect(lambda _c=False, n=name: self._farbskala_setzen(n))
@@ -613,37 +615,37 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_farbskalen["viridis"].setChecked(True)
 
         # Panel-Umschalter (Verbindung mit dem Dock in der jeweiligen _baue_*_dock-Methode).
-        self.akt_verarbeitung = A("Panel: Verarbeitung", self)
+        self.akt_verarbeitung = A(tr("Panel: Verarbeitung"), self)
         self.akt_verarbeitung.setToolTip(
-            "Verarbeitung des Farbplots (divide-slice, derivative-divide, "
+            tr("Verarbeitung des Farbplots (divide-slice, derivative-divide, "
             "relation-amplitude, Farbskala) ein-/ausblenden – funktioniert direkt nach dem "
-            "Laden, ganz ohne Fit.")
-        self.akt_zonen_panel = A("Panel: Korridore && Zonen", self)
+            "Laden, ganz ohne Fit."))
+        self.akt_zonen_panel = A(tr("Panel: Korridore && Zonen"), self)
         self.akt_zonen_panel.setToolTip(
-            "Fit-Werkzeuge ein-/ausblenden: Korridore je Mode (nur im Korridor "
-            "fitten) und Ausschlusszonen (Messpunkte aus allen Fits ausnehmen).")
-        self.akt_linescan = A("Panel: Linescan-Fit", self)
+            tr("Fit-Werkzeuge ein-/ausblenden: Korridore je Mode (nur im Korridor "
+            "fitten) und Ausschlusszonen (Messpunkte aus allen Fits ausnehmen)."))
+        self.akt_linescan = A(tr("Panel: Linescan-Fit"), self)
         self.akt_linescan.setToolTip(
-            "Linescan-Fit-Panel ein-/ausblenden (abdockbar für den zweiten Monitor).")
+            tr("Linescan-Fit-Panel ein-/ausblenden (abdockbar für den zweiten Monitor)."))
         self.akt_linescan.setCheckable(True)
         self.akt_linescan.setChecked(False)
         self.akt_linescan.toggled.connect(self.linescan_dock.setVisible)
         self.linescan_dock.visibilityChanged.connect(self.akt_linescan.setChecked)
-        self.akt_ausreisser_panel = A("Panel: Ausreißer-Liste", self)
+        self.akt_ausreisser_panel = A(tr("Panel: Ausreißer-Liste"), self)
         self.akt_ausreisser_panel.setToolTip(
-            "Liste der ignorierten Punkte ein-/ausblenden.")
-        self.akt_aktivitaet = A("Panel: Aktivität", self)
-        self.akt_aktivitaet.setToolTip("Aktivitäts- und Protokoll-Panel ein-/ausblenden.")
-        self.akt_trace = A("Panel: Call-Trace (Debug)", self)
+            tr("Liste der ignorierten Punkte ein-/ausblenden."))
+        self.akt_aktivitaet = A(tr("Panel: Aktivität"), self)
+        self.akt_aktivitaet.setToolTip(tr("Aktivitäts- und Protokoll-Panel ein-/ausblenden."))
+        self.akt_trace = A(tr("Panel: Call-Trace (Debug)"), self)
         self.akt_trace.setToolTip(
-            "Entwickler-Werkzeug: zeigt live, welche polderfit-Funktionen aufgerufen "
-            "werden. Nur zur Fehlersuche einschalten.")
+            tr("Entwickler-Werkzeug: zeigt live, welche polderfit-Funktionen aufgerufen "
+            "werden. Nur zur Fehlersuche einschalten."))
 
         # --- Hilfe ----------------------------------------------------------
-        self.akt_hilfe = A("Bedienung & Infos …", self)
+        self.akt_hilfe = A(tr("Bedienung & Infos …"), self)
         self.akt_hilfe.setShortcut(QtGui.QKeySequence.HelpContents)       # F1
         self.akt_hilfe.triggered.connect(self._zeige_hilfe)
-        self.akt_repo = A("Repository öffnen", self)
+        self.akt_repo = A(tr("Repository öffnen"), self)
         self.akt_repo.triggered.connect(
             lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(REPO_URL)))
 
@@ -657,19 +659,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_logo.setText(f" {PROGRAMMNAME}")
         self.btn_logo.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.btn_logo.setAutoRaise(True)
-        self.btn_logo.setToolTip("Bedienung & Infos")
+        self.btn_logo.setToolTip(tr("Bedienung & Infos"))
         self.btn_logo.setStyleSheet(
             "font-weight: 600; font-size: 14px; padding: 2px 10px; border: none;")
         self.btn_logo.clicked.connect(self._zeige_hilfe)
         mb.setCornerWidget(self.btn_logo, QtCore.Qt.TopLeftCorner)
 
-        m_datei = mb.addMenu("&Datei")
+        m_datei = mb.addMenu(tr("&Datei"))
         m_datei.addAction(self.akt_laden)
         m_datei.addAction(self.akt_projekt_laden)
         m_datei.addAction(self.akt_projekt_speichern)
         m_datei.addAction(self.akt_autosicherung)
         m_datei.addSeparator()
-        self.menue_speichern = m_datei.addMenu("&Speichern / Export")
+        self.menue_speichern = m_datei.addMenu(tr("&Speichern / Export"))
         self.menue_speichern.addAction(self.akt_alles_speichern)
         self.menue_speichern.addSeparator()
         self.menue_speichern.addAction(self.akt_xlsx)
@@ -680,7 +682,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.menue_speichern.addAction(self.akt_tdms)
         self.menue_speichern.addSeparator()
         self.menue_speichern.addAction(self.akt_spalten)
-        self.menue_einstellungen = m_datei.addMenu("&Einstellungen")
+        self.menue_einstellungen = m_datei.addMenu(tr("&Einstellungen"))
         self.menue_einstellungen.addAction(self.akt_physik)
         self.menue_einstellungen.addAction(self.akt_spalten)
         self.menue_einstellungen.addSeparator()
@@ -691,20 +693,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_datei.addSeparator()
         m_datei.addAction(self.akt_beenden)
 
-        m_bearbeiten = mb.addMenu("&Bearbeiten")
+        m_bearbeiten = mb.addMenu(tr("&Bearbeiten"))
         m_bearbeiten.addAction(self.akt_rueckgaengig)
         m_bearbeiten.addAction(self.akt_wiederholen)
         m_bearbeiten.addSeparator()
         m_bearbeiten.addAction(self.akt_fits_loeschen)
 
-        self.funktionen_menue = mb.addMenu("Fun&ktionen")
+        self.funktionen_menue = mb.addMenu(tr("Fun&ktionen"))
         self.funktionen_menue.addAction(self.akt_fit)
         self.funktionen_menue.addAction(self.akt_bereich)
         self.funktionen_menue.addAction(self.akt_korridor)
         self.funktionen_menue.addAction(self.akt_zone)
         self.funktionen_menue.addSeparator()
         self.funktionen_menue.addAction(self.akt_ausreisser)
-        self.menue_bewertung = self.funktionen_menue.addMenu("Be&wertung des aktuellen Fits")
+        self.menue_bewertung = self.funktionen_menue.addMenu(tr("Be&wertung des aktuellen Fits"))
         self.menue_bewertung.addAction(self.akt_bew_gut)
         self.menue_bewertung.addAction(self.akt_bew_problem)
         self.menue_bewertung.addAction(self.akt_bew_auto)
@@ -715,7 +717,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.funktionen_menue.addSeparator()
         self.funktionen_menue.addAction(self.akt_physik)
 
-        m_ansicht = mb.addMenu("&Ansicht")
+        m_ansicht = mb.addMenu(tr("&Ansicht"))
         m_ansicht.addAction(self.akt_vollbild)
         m_ansicht.addAction(self.akt_layout_reset)
         m_ansicht.addSeparator()
@@ -725,9 +727,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_ansicht.addAction(self.akt_ausreisser_anzeigen)
         m_ansicht.addAction(self.akt_nebenmoden)
         m_ansicht.addAction(self.akt_ungefittete)
-        self.menue_farbskala = m_ansicht.addMenu("Farbskala des Farbplots")
+        self.menue_farbskala = m_ansicht.addMenu(tr("Farbskala des Farbplots"))
         for akt in self.akt_farbskalen.values():
             self.menue_farbskala.addAction(akt)
+        self.menue_sprache = m_ansicht.addMenu(tr("Sprache / Language"))
+        self.sprache_gruppe = QtGui.QActionGroup(self)
+        self.sprache_gruppe.setExclusive(True)
+        self.akt_sprachen: dict[str, QtGui.QAction] = {}
+        for code, name in SPRACHEN.items():
+            akt = QtGui.QAction(name, self)
+            akt.setCheckable(True)
+            akt.setChecked(code == sprache())
+            akt.triggered.connect(lambda _c=False, c=code: self._sprache_waehlen(c))
+            self.sprache_gruppe.addAction(akt)
+            self.menue_sprache.addAction(akt)
+            self.akt_sprachen[code] = akt
         m_ansicht.addSeparator()
         m_ansicht.addAction(self.akt_verarbeitung)
         m_ansicht.addAction(self.akt_zonen_panel)
@@ -737,7 +751,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         m_ansicht.addAction(self.akt_trace)
         self.menue_ansicht = m_ansicht  # weitere Panels haengen sich hier ein
 
-        m_hilfe = mb.addMenu("&Hilfe")
+        m_hilfe = mb.addMenu(tr("&Hilfe"))
         m_hilfe.addAction(self.akt_hilfe)
         m_hilfe.addAction(self.akt_repo)
 
@@ -750,7 +764,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_aktivitaet_dock(self):
         """Andockbares (abtrennbares) Panel mit Fortschritt und Live-Protokoll."""
-        dock = QtWidgets.QDockWidget("Aktivität / Hintergrund", self)
+        dock = QtWidgets.QDockWidget(tr("Aktivität / Hintergrund"), self)
         dock.setObjectName("aktivitaet_dock")
         dock.setAllowedAreas(
             QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
@@ -766,7 +780,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         lay = QtWidgets.QVBoxLayout(inhalt)
         lay.setContentsMargins(10, 8, 10, 10)
 
-        self.aktivitaet_label = QtWidgets.QLabel("Bereit.")
+        self.aktivitaet_label = QtWidgets.QLabel(tr("Bereit."))
         self.aktivitaet_label.setObjectName("aktivitaet")
         self.aktivitaet_label.setWordWrap(True)
         lay.addWidget(self.aktivitaet_label)
@@ -787,16 +801,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
         lay.addWidget(self.protokoll_ansicht, 1)
 
         fuss = QtWidgets.QHBoxLayout()
-        self.btn_abbrechen_dock = QtWidgets.QPushButton("Abbrechen")
+        self.btn_abbrechen_dock = QtWidgets.QPushButton(tr("Abbrechen"))
         self.btn_abbrechen_dock.setObjectName("abbrechen")
         self.btn_abbrechen_dock.setToolTip(
-            "Laufenden Auto-/Bereichs-/Korridor-Fit geordnet beenden; bisherige "
-            "Ergebnisse bleiben erhalten.")
+            tr("Laufenden Auto-/Bereichs-/Korridor-Fit geordnet beenden; bisherige "
+            "Ergebnisse bleiben erhalten."))
         self.btn_abbrechen_dock.clicked.connect(self._job_abbrechen)
         self.btn_abbrechen_dock.setVisible(False)
         fuss.addWidget(self.btn_abbrechen_dock)
         fuss.addStretch(1)
-        leeren = QtWidgets.QPushButton("Protokoll leeren")
+        leeren = QtWidgets.QPushButton(tr("Protokoll leeren"))
         leeren.clicked.connect(self.protokoll_ansicht.clear)
         fuss.addWidget(leeren)
         lay.addLayout(fuss)
@@ -817,7 +831,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_navigator_dock(self):
         """Navigator-Minimap (links); erscheint automatisch beim Zoomen der Übersicht."""
-        dock = QtWidgets.QDockWidget("Navigator", self)
+        dock = QtWidgets.QDockWidget(tr("Navigator"), self)
         dock.setObjectName("navigator_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
@@ -836,7 +850,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_verarbeitung_dock(self):
         """Verarbeitung (links): divide-slice, derivative-divide (kompakt)."""
-        dock = QtWidgets.QDockWidget("Verarbeitung (Farbplot)", self)
+        dock = QtWidgets.QDockWidget(tr("Verarbeitung (Farbplot)"), self)
         dock.setObjectName("verarbeitung_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
@@ -862,7 +876,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_zonen_dock(self):
         """Fit-Werkzeuge (links): Korridore (Moden) und Ausschlusszonen."""
-        dock = QtWidgets.QDockWidget("Korridore", self)
+        dock = QtWidgets.QDockWidget(tr("Korridore"), self)
         dock.setObjectName("zonen_dock")
         dock.setAllowedAreas(
             QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
@@ -889,7 +903,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_ausreisser_dock(self):
         """Ausreisser-Liste (rechts); erscheint mit dem Markier-Modus."""
-        dock = QtWidgets.QDockWidget("Ausreißer (ignoriert)", self)
+        dock = QtWidgets.QDockWidget(tr("Ausreißer (ignoriert)"), self)
         dock.setObjectName("ausreisser_dock")
         dock.setAllowedAreas(
             QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
@@ -912,7 +926,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _baue_trace_dock(self):
         """Call-Trace-Panel (rechts, abdockbar); standardmaessig ausgeblendet."""
-        dock = QtWidgets.QDockWidget("Call-Trace (Debug)", self)
+        dock = QtWidgets.QDockWidget(tr("Call-Trace (Debug)"), self)
         dock.setObjectName("trace_dock")
         dock.setAllowedAreas(
             QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
@@ -940,7 +954,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if an:
             if not self.isFullScreen():
                 self.showFullScreen()
-            self.statusBar().showMessage("Vollbild – F11 oder Esc beendet.", 5000)
+            self.statusBar().showMessage(tr("Vollbild – F11 oder Esc beendet."), 5000)
         else:
             if self.isFullScreen():
                 self.showNormal()
@@ -976,18 +990,49 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not self.isFullScreen():
             self.showNormal()
             self.showMaximized()
-        self._log("Fensterlayout zurückgesetzt.", "info")
+        self._log(tr("Fensterlayout zurückgesetzt."), "info")
 
     def closeEvent(self, event):  # noqa: N802 (Qt-Name)
         if self._job_laeuft:
             antwort = QtWidgets.QMessageBox.question(
-                self, "Beenden", "Ein Hintergrundprozess läuft noch. Trotzdem beenden?")
+                self, tr("Beenden"), tr("Ein Hintergrundprozess läuft noch. Trotzdem beenden?"))
             if antwort != QtWidgets.QMessageBox.Yes:
                 event.ignore()
                 return
         self._autosicherung_timer.stop()
         self._autosicherung_schreiben()
         super().closeEvent(event)
+
+    # --- Oberflaechensprache -----------------------------------------------
+    _NEUSTART_FRAGE = {
+        "en": ("Language", "The language changes after PolderFit is restarted.\n"
+               "Restart now? The current work is saved as an auto-backup\n"
+               "(File → Restore auto-backup)."),
+        "de": ("Sprache", "Die Sprache wird nach einem Neustart von PolderFit übernommen.\n"
+               "Jetzt neu starten? Der Arbeitsstand wird als Auto-Sicherung gespeichert\n"
+               "(Datei → Auto-Sicherung wiederherstellen)."),
+    }
+
+    def _sprache_waehlen(self, code: str) -> None:
+        """Sprachwahl speichern; wirkt nach Neustart (auf Wunsch sofort)."""
+        try:
+            speichere_sprache(code)
+        except OSError as exc:
+            self._log(tr("Sprachwahl nicht gespeichert: {0}", exc), "warn")
+            return
+        if code == sprache():
+            return
+        titel, text = self._NEUSTART_FRAGE[code]
+        antwort = QtWidgets.QMessageBox.question(self, titel, text)
+        if antwort == QtWidgets.QMessageBox.Yes:
+            self._neu_starten()
+
+    def _neu_starten(self) -> None:
+        if not self.close():
+            return
+        argumente = [] if getattr(sys, "frozen", False) else ["-m", "polderfit.app"]
+        QtCore.QProcess.startDetached(sys.executable, argumente)
+        QtWidgets.QApplication.quit()
 
     # --- Modus-Verwaltung (exklusiv, sichtbar, Esc bricht ab) ----------------
     def _auf_modus_geaendert(self, modus: str | None):
@@ -1009,9 +1054,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.zonenpanel.setze_trenner_modus_aktiv(False)
         if modus is None:
             self.modus_label.setVisible(False)
-            self.statusBar().showMessage("Modus beendet.", 4000)
+            self.statusBar().showMessage(tr("Modus beendet."), 4000)
         else:
-            text = _MODUS_TEXTE.get(modus, modus)
+            text = tr(_MODUS_TEXTE.get(modus, modus))
             self.modus_label.setText(text.split(" – ")[0])
             self.modus_label.setVisible(True)
             self.statusBar().showMessage(text)
@@ -1019,16 +1064,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _modus_start_erlaubt(self, braucht_fits: bool = False) -> bool:
         """Gemeinsame Vorbedingungen aller Interaktionsmodi (nicht-modal gemeldet)."""
         if self._job_laeuft:
-            self._log("Es läuft ein Hintergrundprozess – Modus nicht gestartet.", "warn")
+            self._log(tr("Es läuft ein Hintergrundprozess – Modus nicht gestartet."), "warn")
             return False
         if self.stapel is None or self.datensatz_voll is None:
-            self._log("Modus nicht verfügbar: bitte zuerst eine TDMS-Datei laden.", "warn")
-            self.statusBar().showMessage("Bitte zuerst eine TDMS-Datei laden.", 5000)
+            self._log(tr("Modus nicht verfügbar: bitte zuerst eine TDMS-Datei laden."), "warn")
+            self.statusBar().showMessage(tr("Bitte zuerst eine TDMS-Datei laden."), 5000)
             return False
         if braucht_fits and not self.stapel.index_gefittet():
-            self._log("Modus nicht verfügbar: es gibt noch keine Fit-Punkte "
-                      "(Auto-Fit, Korridor- oder Bereichs-Fit ausführen).", "warn")
-            self.statusBar().showMessage("Noch keine Fits vorhanden.", 5000)
+            self._log(tr("Modus nicht verfügbar: es gibt noch keine Fit-Punkte "
+                      "(Auto-Fit, Korridor- oder Bereichs-Fit ausführen)."), "warn")
+            self.statusBar().showMessage(tr("Noch keine Fits vorhanden."), 5000)
             return False
         return True
 
@@ -1041,8 +1086,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
             self.akt_bereich.setChecked(False)
             return
-        self._log("Bereich neu fitten: Rechteck um die Mode aufziehen "
-                  "(Esc bricht ab).", "info")
+        self._log(tr("Bereich neu fitten: Rechteck um die Mode aufziehen "
+                  "(Esc bricht ab)."), "info")
         self.matrix.starte_bereichs_fit(self._bereich_gewaehlt)
 
     def _zone_modus(self, an: bool):
@@ -1056,8 +1101,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.akt_zone.setChecked(False)
             return
         self._dock_schmal_halten(self.zonen_dock, breite=300)
-        self._log("Ausschlusszone: Rechteck um die auszuschließenden Punkte "
-                  "aufziehen (Esc bricht ab).", "info")
+        self._log(tr("Ausschlusszone: Rechteck um die auszuschließenden Punkte "
+                  "aufziehen (Esc bricht ab)."), "info")
         self.matrix.starte_ausschluss_zeichnen(self._zone_gezeichnet)
 
     # --- Korridore (Moden) ---------------------------------------------------------
@@ -1083,17 +1128,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
             neu = korridor_aus_linie(mode, float(b1), f1_ghz * 1e9, float(b2), f2_ghz * 1e9,
                                      halbbreite)
         except ValueError as exc:
-            self._log(f"Korridor: {exc}", "warn")
+            self._log(tr("Korridor: {0}", exc), "warn")
             return
         vorher = self._korridor_schatten
         self._korridore.append(neu)
         self._mode_aktiv = mode
         self._zeige_korridore()                 # erst Liste, dann Auswahl (sonst Reset auf M1)
         self.zonenpanel.setze_mode_aktiv(mode)
-        self._merke_korridor_aenderung(f"Korridor M{mode} angelegt", vorher)
-        self._log(f"Korridor M{mode} angelegt: ±{halbbreite*1e3:.0f} mT um "
-                  f"({b1:.3f} T, {f1_ghz:.2f} GHz) – ({b2:.3f} T, {f2_ghz:.2f} GHz). "
-                  "Anker setzen/ziehen zum Nachführen; dann „Korridor fitten …“.", "ok")
+        self._merke_korridor_aenderung(tr("Korridor M{0} angelegt", mode), vorher)
+        self._log(tr("Korridor M{0} angelegt: ±{1:.0f} mT um ({2:.3f} T, {3:.2f} GHz) – "
+                     "({4:.3f} T, {5:.2f} GHz). Anker setzen/ziehen zum Nachführen; dann "
+                     "„Korridor fitten …“.", mode, halbbreite * 1e3, b1, f1_ghz, b2, f2_ghz), "ok")
         self._zeige_aktuellen()
 
     def _anker_modus(self, an: bool):
@@ -1104,7 +1149,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         if self.zonenpanel.korridor_aktiv() is None:
             self.zonenpanel.setze_anker_modus_aktiv(False)
-            self._log("Anker setzen: zuerst einen Korridor anlegen.", "warn")
+            self._log(tr("Anker setzen: zuerst einen Korridor anlegen."), "warn")
             return
         if not (self._modus_start_erlaubt() and self._mapping_vorhanden()):
             self.zonenpanel.setze_anker_modus_aktiv(False)
@@ -1129,14 +1174,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
             else:
                 hi = b
         if hi <= lo:
-            self._log("Anker: Grenzen würden sich kreuzen – nicht übernommen.", "warn")
+            self._log(tr("Anker: Grenzen würden sich kreuzen – nicht übernommen."), "warn")
             return
         vorher = self._korridor_schatten
         toleranz = self._frequenz_toleranz()
         korridor.anker_setzen(f, lo, hi, toleranz_hz=toleranz)
         self._zeige_korridore()
-        self._merke_korridor_aenderung(f"Anker M{korridor.mode} gesetzt", vorher)
-        self._log(f"Anker M{korridor.mode} bei {f_ghz:.3f} GHz: {lo:.4f} – {hi:.4f} T.", "ok")
+        self._merke_korridor_aenderung(tr("Anker M{0} gesetzt", korridor.mode), vorher)
+        self._log(tr("Anker M{0} bei {1:.3f} GHz: {2:.4f} – {3:.4f} T.", korridor.mode, f_ghz, lo, hi), "ok")
         self._zeige_aktuellen()
 
     # --- Trennlinien (manuelle Dip-Grenzen im Korridor) ----------------------------
@@ -1146,22 +1191,22 @@ class Hauptfenster(QtWidgets.QMainWindow):
         korridor = self._korridor_fuer(self._mode_aktiv)
         if an and (korridor is None or korridor.n_dips < 2):
             self.zonenpanel.setze_trenner_modus_aktiv(False)
-            self._log("Trennlinie: zuerst im Korridor mehr als eine Resonanz vorgeben.", "warn")
+            self._log(tr("Trennlinie: zuerst im Korridor mehr als eine Resonanz vorgeben."), "warn")
             return
         self.fitansicht.setze_trenner_modus(bool(an))
         self.zonenpanel.setze_trenner_modus_aktiv(bool(an))
         self._zeige_aktuellen()
         if an:
             self._dock_schmal_halten(self.linescan_dock, breite=500)
-            text = ("Modus: Trennlinie setzen – im Linescan-Panel zwischen zwei Dips klicken "
-                    "(gelbe Linie ziehbar) · Esc beendet")
-            self.modus_label.setText("Modus: Trennlinie setzen")
+            text = (tr("Modus: Trennlinie setzen – im Linescan-Panel zwischen zwei Dips klicken "
+                    "(gelbe Linie ziehbar) · Esc beendet"))
+            self.modus_label.setText(tr("Modus: Trennlinie setzen"))
             self.modus_label.setVisible(True)
             self.statusBar().showMessage(text)
             self._log(text, "info")
         elif self.matrix.modus is None:
             self.modus_label.setVisible(False)
-            self.statusBar().showMessage("Modus beendet.", 4000)
+            self.statusBar().showMessage(tr("Modus beendet."), 4000)
 
     def _trenner_geaendert(self, positionen: list):
         """Trennlinien an der angezeigten Frequenz gesetzt/gezogen: in den Korridor
@@ -1181,8 +1226,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             zu_klein = [seg for seg in segmente_aus_trennern(g[0], g[1], positionen)
                         if np.count_nonzero((ls.feld >= seg[0]) & (ls.feld <= seg[1])) < MIN_PUNKTE_FIT]
             if zu_klein or len(segmente_aus_trennern(g[0], g[1], positionen)) < len(positionen) + 1:
-                text = (f"Trennlinie nicht übernommen: ein Segment hätte weniger als "
-                        f"{MIN_PUNKTE_FIT} Messpunkte – zwischen die Dips klicken.")
+                text = (tr("Trennlinie nicht übernommen: ein Segment hätte weniger als {0} "
+                           "Messpunkte – zwischen die Dips klicken.", MIN_PUNKTE_FIT))
                 self._log(text, "warn")
                 self.statusBar().showMessage(text, 8000)
                 self._zeige_aktuellen()
@@ -1195,16 +1240,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
         nachher = self._korridor_schatten
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
-            f"Trennlinie M{korridor.mode} bei {f/1e9:.2f} GHz",
+            tr("Trennlinie M{0} bei {1:.2f} GHz", korridor.mode, f / 1e9),
             lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
             lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
         self._auswertung_nachziehen()
-        self._log(f"Trennlinie(n) M{korridor.mode} bei {f/1e9:.2f} GHz: "
+        self._log(tr("Trennlinie(n) M{0} bei {1:.2f} GHz: ", korridor.mode, f / 1e9)
                   + ", ".join(f"{t:.4f} T" for t in positionen)
-                  + f" – gilt entlang der Mode ({len(korridor.trenner)} Stützstelle(n))"
-                  + (f"; Fit: {erg.problem_text}" if erg is not None else ""), "ok")
+                  + tr(" – gilt entlang der Mode ({0} Stützstelle(n))", len(korridor.trenner))
+                  + (tr("; Fit: {0}", problem_text_tr(erg)) if erg is not None else ""), "ok")
 
     def _trenner_loeschen(self):
         st = self.stapel
@@ -1216,13 +1261,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not korridor.trenner_entfernen(f, toleranz_hz=self._frequenz_toleranz()):
             if korridor.trenner:
                 korridor.trenner = []
-                self._log(f"Alle Trennlinien von M{korridor.mode} gelöscht.", "info")
+                self._log(tr("Alle Trennlinien von M{0} gelöscht.", korridor.mode), "info")
             else:
                 return
         else:
-            self._log(f"Trennlinie M{korridor.mode} bei {f/1e9:.2f} GHz gelöscht.", "info")
+            self._log(tr("Trennlinie M{0} bei {1:.2f} GHz gelöscht.", korridor.mode, f / 1e9), "info")
         self._zeige_korridore()
-        self._merke_korridor_aenderung(f"Trennlinie M{korridor.mode} gelöscht", vorher)
+        self._merke_korridor_aenderung(tr("Trennlinie M{0} gelöscht", korridor.mode), vorher)
         self._zeige_aktuellen()
 
     def _frequenz_toleranz(self) -> float:
@@ -1240,7 +1285,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         vorher = self._korridor_schatten
         self.zonenpanel.setze_korridore(self._korridore, self._korridor_statistik())
         self._korridor_schatten = self._korridore_kopie()
-        self._merke_korridor_aenderung(f"Anker M{mode} verschoben", vorher)
+        self._merke_korridor_aenderung(tr("Anker M{0} verschoben", mode), vorher)
         self._zeige_aktuellen()
 
     def _korridor_gewaehlt(self, mode: int):
@@ -1274,13 +1319,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         fits_nachher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
                         if self.stapel is not None else {})
         self._merke_aenderung(
-            f"Korridor M{mode} entfernt",
+            tr("Korridor M{0} entfernt", mode),
             lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
             lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
         self._auswertung_nachziehen()
-        self._log(f"Korridor M{mode} entfernt (samt Fits dieser Mode).", "info")
+        self._log(tr("Korridor M{0} entfernt (samt Fits dieser Mode).", mode), "info")
 
     def _mode_ohne_korridor_entfernen(self, mode: int):
         """Zeile einer Mode ohne Korridor (AutoWindow M1, Auto-Fit-Moden) entfernen:
@@ -1304,7 +1349,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         vorher = self._korridor_schatten
         korridor.anker_entfernen(index)
         self._zeige_korridore()
-        self._merke_korridor_aenderung(f"Anker M{mode} entfernt", vorher)
+        self._merke_korridor_aenderung(tr("Anker M{0} entfernt", mode), vorher)
         self._zeige_aktuellen()
 
     def _korridor_statistik(self) -> dict:
@@ -1354,7 +1399,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         vorher = self._korridor_schatten
         korridor.breite_setzen(halbbreite)
         self._zeige_korridore()
-        self._merke_korridor_aenderung(f"Korridor M{mode}: ±{halbbreite*1e3:.0f} mT", vorher)
+        self._merke_korridor_aenderung(tr("Korridor M{0}: ±{1:.0f} mT", mode, halbbreite * 1e3), vorher)
         self._zeige_aktuellen()
 
     def _dips_geaendert(self, mode: int, n: int, methode: str = "summe", auto: bool | None = None):
@@ -1370,9 +1415,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 if auto is not None:
                     korridor.dips_auto = bool(auto)
                 self._zeige_korridore()
-                self._log(f"Korridor M{mode}: Verfahren „{methode}“"
-                          + (", Anzahl automatisch (BIC)" if auto else "")
-                          + " – gilt ab dem nächsten Korridor-Fit.", "info")
+                self._log(tr("Korridor M{0}: Verfahren „{1}“", mode, methode)
+                          + (tr(", Anzahl automatisch (BIC)") if auto else "")
+                          + tr(" – gilt ab dem nächsten Korridor-Fit."), "info")
             return
         vorher = self._korridor_schatten
         fits_vorher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
@@ -1397,15 +1442,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         fits_nachher = (self._fit_zustand(range(len(self.stapel.ergebnisse)))
                         if self.stapel is not None else {})
         self._merke_aenderung(
-            f"Korridor M{mode}: {n} Resonanz(en)",
+            tr("Korridor M{0}: {1} Resonanz(en)", mode, n),
             lambda: (self._korridore_setzen(vorher), self._fit_zustand_setzen(fits_vorher)),
             lambda: (self._korridore_setzen(nachher), self._fit_zustand_setzen(fits_nachher)))
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
         self._auswertung_nachziehen()
-        self._log(f"Korridor M{mode}: {n} Resonanz(en) vorgegeben"
-                  + (f" – Moden {', '.join(f'M{m}' for m in korridor.moden)}; je Frequenz wird "
-                     "zwischen den Dips hart getrennt und jeder Dip einzeln gefittet."
+        self._log(tr("Korridor M{0}: {1} Resonanz(en) vorgegeben", mode, n)
+                  + (tr(" – Moden {0}; je Frequenz wird zwischen den Dips hart getrennt und "
+                        "jeder Dip einzeln gefittet.", ', '.join((f'M{m}' for m in korridor.moden)))
                      if n > 1 else "."), "info")
 
     def _daten_bereich(self) -> tuple[float, float, float, float]:
@@ -1443,19 +1488,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Korridor(e) fitten: je Frequenz ein Einzelfit auf den Punkten des
         Korridors (``mode``; ``None`` = alle Korridore nacheinander)."""
         if self.stapel is None:
-            self._log("Korridor-Fit: bitte zuerst eine TDMS-Datei laden.", "warn")
+            self._log(tr("Korridor-Fit: bitte zuerst eine TDMS-Datei laden."), "warn")
             return
         korridore = ([k for k in self._korridore if k.enthaelt_mode(int(mode))]
                      if mode is not None else list(self._korridore))
         if not korridore:
-            self._log("Korridor-Fit: bitte zuerst einen Korridor anlegen.", "warn")
+            self._log(tr("Korridor-Fit: bitte zuerst einen Korridor anlegen."), "warn")
             return
         if self._job_laeuft or not self._mapping_vorhanden():
             return
         stapel = self.stapel
         abgedeckt = {k.mode: zaehle_korridor(stapel, k) for k in korridore}
         if all(n == 0 for n in abgedeckt.values()):
-            text = "Korridor-Fit: der Korridor liegt an keiner Frequenz im Datenbereich."
+            text = tr("Korridor-Fit: der Korridor liegt an keiner Frequenz im Datenbereich.")
             self._log(text, "warn")
             self.statusBar().showMessage(text)
             return
@@ -1464,16 +1509,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
         dialog = BereichsFitDialog(
             b_von, b_bis, f_von_ghz, f_bis_ghz,
             modus_vorgabe=self._bereich_modus, breite_vorgabe=None,
-            titel=f"Korridor {namen} fitten",
-            info_text=(f"Korridor {namen}: je Frequenz ein Einzelfit nur auf den Messpunkten "
-                       f"im Korridor ({', '.join(f'M{m}: {n} Frequenzen' for m, n in abgedeckt.items())})."),
+            titel=tr("Korridor {0} fitten", namen),
+            info_text=(tr("Korridor {0}: je Frequenz ein Einzelfit nur auf den Messpunkten im "
+                          "Korridor ({1}).", namen, ', '.join((tr("M{0}: {1} Frequenzen", m, n) for m, n in abgedeckt.items())))),
             daten_bereich=self._daten_bereich(), mit_feld=False, mit_breite=False,
             schritt_vorgabe=self._bereich_schritt,
             dips_auto_vorgabe=(any(k.dips_auto for k in korridore)
                                if any(k.n_dips > 1 for k in korridore) else None),
             parent=self)
         if not dialog.exec():
-            self._log("Korridor-Fit abgebrochen.", "info")
+            self._log(tr("Korridor-Fit abgebrochen."), "info")
             return
         modus = dialog.modus()
         f_von, f_bis = dialog.frequenz_bereich()
@@ -1494,7 +1539,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 def fortschritt(k, n, erg, _m=korridor.mode):
                     melde(k, n, self._fortschritt_text(k, n, erg),
                           daten=(erg.frequenz, erg.B_res, F.status_von(erg)),
-                          phase=f"Korridor M{_m}")
+                          phase=tr("Korridor M{0}", _m))
                 neu, ueber = fitte_korridor(stapel, korridor, modus=modus,
                                             fortschritt=fortschritt,
                                             frequenz_min=f_von, frequenz_max=f_bis,
@@ -1513,16 +1558,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 self._mode_aktiv = int(korridore[0].mode)
                 self.zonenpanel.setze_mode_aktiv(self._mode_aktiv)
                 self.matrix.zeige_korridore(self._korridore, aktiv=self._mode_aktiv)
-            self._nach_nachfit(neu, fits_vorher, f"Korridor-Fit {namen}")
+            self._nach_nachfit(neu, fits_vorher, tr("Korridor-Fit {0}", namen))
             probleme = 0
             for korridor in korridore:
                 for m in korridor.moden:
                     liste = stapel.ergebnisse_mode(m)
                     probleme += sum(1 for i in set(neu) if liste[i].gefittet and liste[i].problematisch)
-            jumper = f", jede {schritt}. Frequenz" if schritt > 1 else ""
-            text = (f"Korridor-Fit {namen} ({f_von/1e9:.2f}–{f_bis/1e9:.2f} GHz{jumper}): "
-                    f"{len(neu)} gefittet, {probleme} problematisch, "
-                    f"{len(set(uebersprungen))} übersprungen.")
+            jumper = tr(", jede {0}. Frequenz", schritt) if schritt > 1 else ""
+            text = (tr("Korridor-Fit {0} ({1:.2f}–{2:.2f} GHz{3}): {4} gefittet, {5} "
+                       "problematisch, {6} übersprungen.", namen, f_von / 1e9, f_bis / 1e9, jumper, len(neu), probleme, len(set(uebersprungen))))
             self._log(text, "warn" if probleme else "ok")
             am_rand = 0
             for korridor in korridore:
@@ -1531,19 +1575,19 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     am_rand += sum(1 for i in set(neu) if liste[i].gefittet
                                    and "B_res am Fensterrand" in liste[i].problem_gruende)
             if neu and am_rand > 0.3 * len(neu):
-                self._log(f"Hinweis: {am_rand} Fits mit „B_res am Fensterrand“ – der Korridor "
-                          "ist zu eng oder liegt neben der Resonanz (bei mehreren Dips müssen "
-                          "ALLE Dips im Korridor liegen): Breite „± mT“ erhöhen oder Anker "
-                          "nachsetzen und erneut fitten.", "warn")
+                self._log(tr("Hinweis: {0} Fits mit „B_res am Fensterrand“ – der Korridor ist zu "
+                             "eng oder liegt neben der Resonanz (bei mehreren Dips müssen ALLE Dips "
+                             "im Korridor liegen): Breite „± mT“ erhöhen oder Anker nachsetzen und "
+                             "erneut fitten.", am_rand), "warn")
             self.statusBar().showMessage(text)
             self._zeige_korridore()
 
-        self._starte_job(aufgabe, bei_fertig, f"Korridor-Fit {namen} läuft …", live="ergaenzen")
+        self._starte_job(aufgabe, bei_fertig, tr("Korridor-Fit {0} läuft …", namen), live="ergaenzen")
 
     @staticmethod
     def _fortschritt_text(k, n, erg) -> str:
         if erg.problematisch:
-            status = "⚠ " + erg.problem_text
+            status = "⚠ " + problem_text_tr(erg)
         else:
             status = f"✓ B_res={erg.B_res:.3f} T, µ₀ΔH={erg.dH_mT:.2f} mT"
         return f"  {k}/{n}  f={erg.frequenz/1e9:6.2f} GHz  {status}"
@@ -1576,11 +1620,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         self.matrix.setze_ausreisser_modus(True, gewaehlt=self._ausreisser_gewaehlt)
         self._dock_schmal_halten(self.ausreisser_dock, breite=300)
-        self._log("Ausreißer markieren aktiv: Punkt anklicken oder Kasten aufziehen "
-                  "(Klick auf einen grauen Punkt nimmt ihn wieder auf). Esc beendet.", "info")
+        self._log(tr("Ausreißer markieren aktiv: Punkt anklicken oder Kasten aufziehen "
+                  "(Klick auf einen grauen Punkt nimmt ihn wieder auf). Esc beendet."), "info")
         if self.akt_problemfits.isChecked():
-            text = ("Problemfits sind ausgeblendet und damit nicht markierbar – "
-                    "Ansicht → Problemfits ausblenden abschalten.")
+            text = (tr("Problemfits sind ausgeblendet und damit nicht markierbar – "
+                    "Ansicht → Problemfits ausblenden abschalten."))
             self._log(text, "warn")
             self.statusBar().showMessage(text, 8000)
 
@@ -1595,32 +1639,32 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _rueckgaengig(self) -> None:
         if self._job_laeuft:
-            self._log("Rückgängig: bitte warten, ein Hintergrundprozess läuft.", "warn")
+            self._log(tr("Rückgängig: bitte warten, ein Hintergrundprozess läuft."), "warn")
             return
         if not self._undo_stapel:
-            self._log("Nichts rückgängig zu machen.", "info")
+            self._log(tr("Nichts rückgängig zu machen."), "info")
             return
         beschreibung, vorher, nachher = self._undo_stapel.pop()
         vorher()
         self._redo_stapel.append((beschreibung, vorher, nachher))
         self._aktualisiere_undo_aktionen()
-        self._log(f"Rückgängig: {beschreibung}.", "ok")
-        self.statusBar().showMessage(f"Rückgängig: {beschreibung}.", 5000)
+        self._log(tr("Rückgängig: {0}.", beschreibung), "ok")
+        self.statusBar().showMessage(tr("Rückgängig: {0}.", beschreibung), 5000)
         self._autosicherung_anstossen()
 
     def _wiederholen(self) -> None:
         if self._job_laeuft:
-            self._log("Wiederholen: bitte warten, ein Hintergrundprozess läuft.", "warn")
+            self._log(tr("Wiederholen: bitte warten, ein Hintergrundprozess läuft."), "warn")
             return
         if not self._redo_stapel:
-            self._log("Nichts zu wiederholen.", "info")
+            self._log(tr("Nichts zu wiederholen."), "info")
             return
         beschreibung, vorher, nachher = self._redo_stapel.pop()
         nachher()
         self._undo_stapel.append((beschreibung, vorher, nachher))
         self._aktualisiere_undo_aktionen()
-        self._log(f"Wiederholt: {beschreibung}.", "ok")
-        self.statusBar().showMessage(f"Wiederholt: {beschreibung}.", 5000)
+        self._log(tr("Wiederholt: {0}.", beschreibung), "ok")
+        self.statusBar().showMessage(tr("Wiederholt: {0}.", beschreibung), 5000)
         self._autosicherung_anstossen()
 
     def _undo_verwerfen(self) -> None:
@@ -1633,11 +1677,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_rueckgaengig.setEnabled(bool(self._undo_stapel))
         self.akt_wiederholen.setEnabled(bool(self._redo_stapel))
         self.akt_rueckgaengig.setText(
-            f"Rückgängig: {self._undo_stapel[-1][0]}" if self._undo_stapel
-            else "Rückgängig")
+            tr("Rückgängig: {0}", self._undo_stapel[-1][0]) if self._undo_stapel
+            else tr("Rückgängig"))
         self.akt_wiederholen.setText(
-            f"Wiederholen: {self._redo_stapel[-1][0]}" if self._redo_stapel
-            else "Wiederholen")
+            tr("Wiederholen: {0}", self._redo_stapel[-1][0]) if self._redo_stapel
+            else tr("Wiederholen"))
 
     # Schnappschuss-Helfer -----------------------------------------------------
     def _korridore_kopie(self) -> list[Korridor]:
@@ -1746,11 +1790,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.status_fortschritt.setFixedWidth(170)
         self.status_fortschritt.setRange(0, 100)
         self.status_fortschritt.setValue(0)
-        self.status_fortschritt.setFormat("%p %")
-        self.btn_abbrechen = QtWidgets.QPushButton("Abbrechen")
+        self.status_fortschritt.setFormat(tr("%p %"))
+        self.btn_abbrechen = QtWidgets.QPushButton(tr("Abbrechen"))
         self.btn_abbrechen.setObjectName("abbrechen")
         self.btn_abbrechen.setToolTip(
-            "Laufenden Fit geordnet beenden – bisherige Ergebnisse bleiben erhalten.")
+            tr("Laufenden Fit geordnet beenden – bisherige Ergebnisse bleiben erhalten."))
         self.btn_abbrechen.clicked.connect(self._job_abbrechen)
         for w in (self.status_spinner, self.status_job, self.status_fortschritt, self.btn_abbrechen):
             w.setVisible(False)
@@ -1777,7 +1821,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         Overlay beginnt leer) oder ``"ergaenzen"`` (Nachfit: bestehende Punkte bleiben).
         """
         if self._job_laeuft:
-            self._log("Es läuft bereits ein Hintergrundprozess – bitte warten.", "warn")
+            self._log(tr("Es läuft bereits ein Hintergrundprozess – bitte warten."), "warn")
             return
         # Kein Interaktionsmodus parallel zu einem Hintergrund-Job.
         self.matrix.beende_modus()
@@ -1804,9 +1848,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.btn_abbrechen_dock.setVisible(bool(abbrechbar))
         self.btn_abbrechen_dock.setEnabled(True)
         self._spinner_timer.start()
-        self.matrix.zeige_hinweis(f"{titel}\nFortschritt in der Statusleiste; Ergebnis am Ende")
-        self.statusBar().showMessage(f"{titel} – das Programm arbeitet, Fortschritt in "
-                                     "Statusleiste und Aktivität.")
+        self.matrix.zeige_hinweis(tr("{0}\nFortschritt in der Statusleiste; Ergebnis am Ende", titel))
+        self.statusBar().showMessage(tr("{0} – das Programm arbeitet, Fortschritt in Statusleiste und "
+                                        "Aktivität.", titel))
         if live == "neu":
             self.matrix.aktualisiere_resonanz(np.array([]), np.array([]))   # altes Overlay weg
         # Aktivitaet nur fuer die Dauer des Jobs einblenden (unten, flach) -
@@ -1840,10 +1884,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._job_abgebrochen = True
         self.btn_abbrechen.setEnabled(False)
         self.btn_abbrechen_dock.setEnabled(False)
-        self.status_job.setText(f"{self._job_titel}  – Abbruch angefordert, beende …")
-        self._setze_aktivitaet(f"{self._job_titel} – Abbruch angefordert, beende …")
-        self._log("Abbruch angefordert – der laufende Schritt wird noch beendet, "
-                  "bisherige Ergebnisse bleiben erhalten.", "warn")
+        self.status_job.setText(tr("{0}  – Abbruch angefordert, beende …", self._job_titel))
+        self._setze_aktivitaet(tr("{0} – Abbruch angefordert, beende …", self._job_titel))
+        self._log(tr("Abbruch angefordert – der laufende Schritt wird noch beendet, "
+                  "bisherige Ergebnisse bleiben erhalten."), "warn")
 
     def _spinner_tick(self) -> None:
         self._spinner_index = (self._spinner_index + 1) % len(self._SPINNER)
@@ -1855,13 +1899,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self.status_fortschritt.setValue(self._busy_wert)
             self.fortschritt_balken.setValue(self._busy_wert)
             sekunden = time.monotonic() - self._job_start
-            self.status_job.setText(f"{self._job_titel}  {sekunden:.0f} s")
+            self.status_job.setText(tr("{0}  {1:.0f} s", self._job_titel, sekunden))
 
     def _auf_phase(self, phase: str) -> None:
         self._job_phase = phase
         self._phase_start = time.monotonic()
         self._job_i = self._job_n = 0
-        self._log(f"  Phase: {phase}", "auto")
+        self._log(tr("  Phase: {0}", phase), "auto")
 
     def _auf_fortschritt(self, i: int, n: int) -> None:
         self._job_i, self._job_n = int(i), int(n)
@@ -1871,11 +1915,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         prozent = int(round(100.0 * i / n))
         self.fortschritt_balken.setRange(0, n)
         self.fortschritt_balken.setValue(i)
-        self.status_fortschritt.setFormat("%p %")
+        self.status_fortschritt.setFormat(tr("%p %"))
         self.status_fortschritt.setValue(prozent)
         verstrichen = time.monotonic() - self._job_start
         phase_zeit = time.monotonic() - self._phase_start
-        rest = f" · noch ≈ {phase_zeit / i * (n - i):.0f} s" if i > 0 and i < n else ""
+        rest = tr(" · noch ≈ {0:.0f} s", phase_zeit / i * (n - i)) if i > 0 and i < n else ""
         phase = f" {self._job_phase}" if self._job_phase else ""
         text = f"{self._job_titel}{phase}: {i}/{n} ({prozent} %) · {verstrichen:.0f} s{rest}"
         self.status_job.setText(text)
@@ -1918,9 +1962,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _auf_fehler(self, text: str) -> None:
         self._job_anzeige_beenden()
-        erste = text.splitlines()[0] if text else "Unbekannter Fehler"
-        self._log("FEHLER: " + erste, "problem")
-        QtWidgets.QMessageBox.critical(self, "Fehler", text)
+        erste = text.splitlines()[0] if text else tr("Unbekannter Fehler")
+        self._log(tr("FEHLER: ") + erste, "problem")
+        QtWidgets.QMessageBox.critical(self, tr("Fehler"), text)
         self._job_aufraeumen()
 
     def _job_aufraeumen(self) -> None:
@@ -1935,7 +1979,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._job_laeuft = False
         self.fortschritt_balken.setRange(0, 1)
         self.fortschritt_balken.setValue(0)
-        self._setze_aktivitaet("Bereit.")
+        self._setze_aktivitaet(tr("Bereit."))
         self._setze_bedienelemente(True)
         # Automatisch eingeblendetes Aktivitaets-Panel wieder schliessen -
         # der Farbplot soll das Bild dominieren (Protokoll bleibt erhalten).
@@ -1962,7 +2006,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self._job_laeuft:
             return
         pfad, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "TDMS-Datei laden", self._letzter_ordner, "TDMS (*.tdms)")
+            self, tr("TDMS-Datei laden"), self._letzter_ordner, tr("TDMS (*.tdms)"))
         if not pfad:
             return
         self._letzter_ordner = os.path.dirname(pfad)
@@ -1976,8 +2020,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         try:
             struktur, warnungen = inspiziere_tdms(pfad)
         except Exception as fehler:
-            self._log(f"FEHLER beim Inspizieren: {fehler}", "problem")
-            QtWidgets.QMessageBox.critical(self, "TDMS laden", str(fehler))
+            self._log(tr("FEHLER beim Inspizieren: {0}", fehler), "problem")
+            QtWidgets.QMessageBox.critical(self, tr("TDMS laden"), str(fehler))
             return
         for warnung in warnungen:
             self._log("⚠ " + warnung, "warn")
@@ -1988,15 +2032,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if zuordnung_vorgabe is not None:
             dialog._setze_zuordnung(zuordnung_vorgabe, layout_vorgabe)
         if not dialog.exec():
-            self._log("Laden abgebrochen (Zuordnung nicht bestätigt).", "info")
+            self._log(tr("Laden abgebrochen (Zuordnung nicht bestätigt)."), "info")
             return
         zuordnung, layout = dialog.ergebnis()
 
         def aufgabe(melde):
-            melde(0, 0, f"Lade {os.path.basename(pfad)} … (große Dateien brauchen "
-                        "bis zu einer Minute)", phase="TDMS lesen")
+            melde(0, 0, tr("Lade {0} … (große Dateien brauchen bis zu einer Minute)", os.path.basename(pfad)), phase=tr("TDMS lesen"))
             datensatz = lade_tdms(pfad, zuordnung=zuordnung, layout=layout)
-            melde(0, 0, f"Prüfe Datensatz ({len(datensatz)} Frequenzen) …", phase="Prüfen")
+            melde(0, 0, tr("Prüfe Datensatz ({0} Frequenzen) …", len(datensatz)), phase=tr("Prüfen"))
             bericht = pruefe_datensatz(datensatz)
             return (pfad, datensatz, bericht)
 
@@ -2006,23 +2049,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 self._log("⚠ " + warnung, "warn")
             vorschau = VorschauDialog(datensatz, bericht, parent=self)
             if not vorschau.exec():
-                self._log("Import verworfen – Zuordnung erneut bearbeiten.", "info")
+                self._log(tr("Import verworfen – Zuordnung erneut bearbeiten."), "info")
                 self._lade_mit_mapping(pfad_, zuordnung, datensatz.format_typ)
                 return
             if bericht.warnungen:
                 for warnung in bericht.warnungen:
-                    self._log("⚠ Validierung: " + warnung, "warn")
+                    self._log(tr("⚠ Validierung: ") + warnung, "warn")
             self._datensatz_uebernehmen(datensatz)
             self._log(
-                f"Geladen: {os.path.basename(pfad_)} – {datensatz.format_typ}, "
-                f"{len(datensatz)} Frequenzen (Profil: "
-                f"{datensatz.meta.get('mapping_profil', 'manuell')}).", "ok")
+                tr("Geladen: {0} – {1}, {2} Frequenzen (Profil: {3}).", os.path.basename(pfad_), datensatz.format_typ, len(datensatz), datensatz.meta.get('mapping_profil', tr('manuell'))), "ok")
             self.statusBar().showMessage(
-                f"Geladen: {os.path.basename(pfad_)} ({datensatz.format_typ}, "
-                f"{len(datensatz)} Frequenzen). Daten ansehen (Verarbeitung), "
-                f"Korridor/Bereich fitten oder Auto-Fit starten.")
+                tr("Geladen: {0} ({1}, {2} Frequenzen). Daten ansehen (Verarbeitung), "
+                   "Korridor/Bereich fitten oder Auto-Fit starten.", os.path.basename(pfad_), datensatz.format_typ, len(datensatz)))
 
-        self._starte_job(aufgabe, bei_fertig, f"Lade {os.path.basename(pfad)} …",
+        self._starte_job(aufgabe, bei_fertig, tr("Lade {0} …", os.path.basename(pfad)),
                          abbrechbar=False)
 
     def _datensatz_uebernehmen(self, datensatz) -> None:
@@ -2069,9 +2109,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self.stapel is not None and self.stapel.datensatz.meta.get("zuordnung"):
             return True
         QtWidgets.QMessageBox.information(
-            self, "Hinweis",
-            "Der Datensatz hat keine Kanal-Zuordnung. Bitte die TDMS-Datei über "
-            "'TDMS laden' öffnen und die Kanäle den Rollen zuordnen.")
+            self, tr("Hinweis"),
+            tr("Der Datensatz hat keine Kanal-Zuordnung. Bitte die TDMS-Datei über "
+            "'TDMS laden' öffnen und die Kanäle den Rollen zuordnen."))
         return False
 
     def _frage_auswahl(self):
@@ -2095,7 +2135,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         for k in mehr_dips:
             k.dips_auto = dialog.dips_auto()
         if not auswahl.ist_neutral:
-            self._log("Auswertungsauswahl: "
+            self._log(tr("Auswertungsauswahl: ")
                       + auswahl.beschreibung(self.datensatz_voll), "info")
         return auswahl
 
@@ -2112,7 +2152,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._physik = parameter
         self._einstellungen.physik = parameter.als_dict()
         if not leise:
-            self._log("Physikalische Parameter: " + parameter.beschreibung(), "ok")
+            self._log(tr("Physikalische Parameter: ") + parameter.beschreibung(), "ok")
         if self.stapel is not None:
             # Wirkt sofort auf alle NACHfits (fitte_neu nutzt den Stapel);
             # bestehende Ergebnisse bleiben, bis neu gefittet wird.
@@ -2124,9 +2164,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             st.nachfenster_faktor = parameter.nachfenster_faktor
             st.nachfit_bestaetigen = parameter.nachfit_bestaetigen
             if not leise and st.index_gefittet():
-                self._log("Hinweis: bestehende Einzelfits bleiben unverändert – "
+                self._log(tr("Hinweis: bestehende Einzelfits bleiben unverändert – "
                           "neue Parameter wirken ab dem nächsten (Auto-/Nach-)Fit; "
-                          "die Kittel/LLG-Auswertung rechnet sofort neu.", "info")
+                          "die Kittel/LLG-Auswertung rechnet sofort neu."), "info")
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
         self._autosicherung_anstossen()
@@ -2154,7 +2194,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         """Auto-Fit mit Dialog (Bereich, Jumper). Mode 1 mit Korridor: Fit nur im
         Korridor; sonst AutoWindow-Fenstersuche wie in der validierten Basis."""
         if self.stapel is None or self.datensatz_voll is None:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            QtWidgets.QMessageBox.information(self, tr("Hinweis"), tr("Bitte zuerst eine TDMS-Datei laden."))
             return
         if not self._mapping_vorhanden():
             return
@@ -2166,24 +2206,24 @@ class Hauptfenster(QtWidgets.QMainWindow):
         korridor_m1 = self._korridor_fuer(1)
         weitere = [k for k in self._korridore if int(k.mode) >= 2 or k.n_dips > 1]
         if korridor_m1 is not None:
-            self._log("Auto-Fit: Mode 1 hat einen Korridor – gefittet wird nur darin "
-                      "(keine Fenstersuche).", "info")
+            self._log(tr("Auto-Fit: Mode 1 hat einen Korridor – gefittet wird nur darin "
+                      "(keine Fenstersuche)."), "info")
         if weitere:
-            self._log("Auto-Fit: anschließend werden die Korridore "
+            self._log(tr("Auto-Fit: anschließend werden die Korridore ")
                       + ", ".join(f"M{k.mode}" for k in weitere)
-                      + " gefittet (je Mode nur im Korridor).", "info")
+                      + tr(" gefittet (je Mode nur im Korridor)."), "info")
 
         def aufgabe(melde):
             n = len(datensatz.linescans)
             schritt = max(1, n // 50)  # ~50 Protokollzeilen + alle Problemfits
 
             def fortschritt_fenster(k, total):
-                melde(k, total, "", phase="Fenstersuche")
+                melde(k, total, "", phase=tr("Fenstersuche"))
 
             def fortschritt(i, total, erg):
                 zeige = (i == 0) or (i + 1 == total) or ((i + 1) % schritt == 0) or erg.problematisch
                 melde(i + 1, total, self._fortschritt_text(i + 1, total, erg) if zeige else "",
-                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase=tr("Einzelfits"))
 
             stapel = fitte_alle(datensatz, gamma=physik.gamma,
                                 breite_faktor=physik.breite_faktor,
@@ -2206,7 +2246,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 def fortschritt_k(k, n, erg, _m=korridor.mode):
                     melde(k, n, self._fortschritt_text(k, n, erg) if erg.problematisch else "",
                           daten=(erg.frequenz, erg.B_res, F.status_von(erg)),
-                          phase=f"Korridor M{_m}")
+                          phase=tr("Korridor M{0}", _m))
                 fitte_korridor(stapel, korridor, fortschritt=fortschritt_k,
                                abbruch=melde.abgebrochen,
                                schritt=max(1, int(auswahl.n_frequenz)),   # Jumper absolut
@@ -2224,26 +2264,25 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 liste = stapel.nebenmoden[k]
                 n_k = sum(1 for e in liste if e.gefittet)
                 p_k = sum(1 for e in liste if e.gefittet and e.problematisch)
-                self._log(f"Korridor M{k}: {n_k} Fits, {p_k} problematisch.",
+                self._log(tr("Korridor M{0}: {1} Fits, {2} problematisch.", k, n_k, p_k),
                           "warn" if p_k else "ok")
             if not self._korridore and n_fit and n_prob > 0.2 * n_fit:
-                self._log("Hinweis: viele Problemfits – bei mehreren Moden (z. B. vermiedene "
+                self._log(tr("Hinweis: viele Problemfits – bei mehreren Moden (z. B. vermiedene "
                           "Kreuzung) je Mode einen Korridor anlegen und „Korridor fitten …“ "
-                          "verwenden; die Fenstersuche kann dort zwischen den Ästen springen.",
+                          "verwenden; die Fenstersuche kann dort zwischen den Ästen springen."),
                           "info")
             if n_fit < len(stapel.ergebnisse):
-                self._log(f"Auto-Fit abgebrochen: {n_fit} von {len(stapel.ergebnisse)} "
-                          f"Frequenzen gefittet, {n_prob} problematisch – der Rest bleibt "
-                          "„nicht gefittet“ (Korridor/Bereich fitten den Rest bei Bedarf).", "warn")
+                self._log(tr("Auto-Fit abgebrochen: {0} von {1} Frequenzen gefittet, {2} "
+                             "problematisch – der Rest bleibt „nicht gefittet“ (Korridor/Bereich "
+                             "fitten den Rest bei Bedarf).", n_fit, len(stapel.ergebnisse), n_prob), "warn")
             else:
-                self._log(f"Auto-Fit fertig: {n_fit} Fits, {n_prob} problematisch.", art)
+                self._log(tr("Auto-Fit fertig: {0} Fits, {1} problematisch.", n_fit, n_prob), art)
             for grund, anzahl in stapel.problem_statistik().items():
-                self._log(f"   • {grund}: {anzahl}", "warn")
+                self._log(f"   • {tr(grund)}: {anzahl}", "warn")
             self.statusBar().showMessage(
-                f"Auto-Fit {'abgebrochen' if n_fit < len(stapel.ergebnisse) else 'fertig'}. "
-                f"{n_fit} Fits, {n_prob} problematisch.")
+                tr("Auto-Fit {0}. {1} Fits, {2} problematisch.", tr('abgebrochen') if n_fit < len(stapel.ergebnisse) else tr('fertig'), n_fit, n_prob))
 
-        self._starte_job(aufgabe, bei_fertig, "Auto-Fit läuft …", live="neu")
+        self._starte_job(aufgabe, bei_fertig, tr("Auto-Fit läuft …"), live="neu")
 
     def _bereich_gewaehlt(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
         """Callback nach dem Aufziehen: Optionen abfragen, dann im Bereich neu fitten."""
@@ -2255,7 +2294,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                    breite_vorgabe=self._bereich_breite,
                                    daten_bereich=self._daten_bereich(), parent=self)
         if not dialog.exec():
-            self._log("Bereichs-Fit abgebrochen.", "info")
+            self._log(tr("Bereichs-Fit abgebrochen."), "info")
             return
         modus = dialog.modus()
         breite = dialog.breite_punkte()
@@ -2270,7 +2309,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         def aufgabe(melde):
             def fortschritt(k, n, erg):
                 melde(k, n, self._fortschritt_text(k, n, erg),
-                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase="Einzelfits")
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase=tr("Einzelfits"))
             return fitte_bereich(stapel, feld_min, feld_max, f_min, f_max,
                                  breite_faktor=self._physik.breite_faktor,
                                  modus=modus, breite_punkte=breite,
@@ -2278,18 +2317,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
         def bei_fertig(res):
             neu, uebersprungen = res
-            self._nach_nachfit(neu, fits_vorher, "Bereichs-Fit")
+            self._nach_nachfit(neu, fits_vorher, tr("Bereichs-Fit"))
             probleme = [i for i in neu if stapel.ergebnisse[i].problematisch]
-            breite_text = f", Breite {breite} Punkte" if breite else ""
-            text = (f"Bereichs-Fit [{feld_min:.3f}–{feld_max:.3f} T, "
-                    f"{f_min/1e9:.2f}–{f_max/1e9:.2f} GHz{breite_text}]: "
-                    f"{len(neu)} gefittet, {len(probleme)} problematisch, "
-                    f"{len(uebersprungen)} übersprungen (ohne Daten/Modus 'ergänzen').")
+            breite_text = tr(", Breite {0} Punkte", breite) if breite else ""
+            text = (tr("Bereichs-Fit [{0:.3f}–{1:.3f} T, {2:.2f}–{3:.2f} GHz{4}]: {5} "
+                       "gefittet, {6} problematisch, {7} übersprungen (ohne Daten/Modus "
+                       "'ergänzen').", feld_min, feld_max, f_min / 1e9, f_max / 1e9, breite_text, len(neu), len(probleme), len(uebersprungen)))
             self._log(text, "warn" if probleme else "ok")
             self.statusBar().showMessage(text)
 
         self._starte_job(aufgabe, bei_fertig,
-                         f"Bereichs-Fit {f_min/1e9:.1f}–{f_max/1e9:.1f} GHz …", live="ergaenzen")
+                         tr("Bereichs-Fit {0:.1f}–{1:.1f} GHz …", f_min / 1e9, f_max / 1e9), live="ergaenzen")
 
     # --- Overlay / Anzeige ---------------------------------------------------
     def _status_liste(self) -> list[str]:
@@ -2301,14 +2339,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _tooltip_text(self, i: int, status: str) -> str:
         e = self.stapel.ergebnisse[i]
         if not e.gefittet:
-            return f"f = {e.frequenz/1e9:.3f} GHz – nicht gefittet"
+            return tr("f = {0:.3f} GHz – nicht gefittet", e.frequenz / 1e9)
         zeilen = [f"<b>f = {e.frequenz/1e9:.3f} GHz</b>",
                   f"B_res = {e.B_res:.4f} T ({e.B_res_mT:.1f} mT)",
                   f"µ₀ΔH = {e.dH_mT:.2f} mT &nbsp; α = {e.alpha:.2e}",
                   f"R² = {e.R2:.4f}",
-                  f"Status: {F.STATUS_TEXTE.get(status, status)}"]
+                  tr("Status: {0}", tr(F.STATUS_TEXTE.get(status, status)))]
         if e.problem_gruende and status not in ("gut", "bestaetigt"):
-            zeilen.append("Gründe: " + ", ".join(e.problem_gruende))
+            zeilen.append(tr("Gründe: ") + gruende_tr(e.problem_gruende))
         for k in sorted(self.stapel.nebenmoden):
             ek = self.stapel.nebenmoden[k][i]
             if ek.gefittet:
@@ -2358,8 +2396,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
         # Wertbasiert markieren: der Stapel kann (Jumper) weniger Frequenzen
         # enthalten als die angezeigte Matrix.
         self.matrix.markiere_frequenz_wert(e.frequenz)
-        self.status_label.setText(F.STATUS_KURZ.get(status, status))
-        self.status_label.setToolTip(F.STATUS_TEXTE.get(status, status))
+        self.status_label.setText(tr(F.STATUS_KURZ.get(status, status)))
+        self.status_label.setToolTip(tr(F.STATUS_TEXTE.get(status, status)))
         self.status_label.setObjectName(f"status_{status}")
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
@@ -2370,21 +2408,18 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if idx >= 0:
             self.bewertung_combo.setCurrentIndex(idx)
         self._bewertung_blockiert = False
-        self.status_label.setToolTip(F.STATUS_TEXTE.get(status, status)
-                                     + ("\nKriterien: " + kriterien_text(e) if e.gefittet else ""))
+        self.status_label.setToolTip(tr(F.STATUS_TEXTE.get(status, status))
+                                     + (tr("\nKriterien: ") + kriterien_text_tr(e) if e.gefittet else ""))
         punkte_im_fenster = int(np.count_nonzero((voll.feld >= unten) & (voll.feld <= oben)))
         if not e.gefittet:
-            text = (f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
-                    f"noch nicht gefittet – grüne Grenzen ziehen oder „Nochmal fitten“ "
-                    f"fittet diese Frequenz │ Fenster {punkte_im_fenster} Pkt")
+            text = (tr("[{0}/{1}] f={2:.3f} GHz │ noch nicht gefittet – grüne Grenzen ziehen "
+                       "oder „Nochmal fitten“ fittet diese Frequenz │ Fenster {3} Pkt", i + 1, len(self.stapel.ergebnisse), e.frequenz / 1e9, punkte_im_fenster))
         else:
             text = (
-                f"[{i+1}/{len(self.stapel.ergebnisse)}] f={e.frequenz/1e9:.3f} GHz │ "
-                f"B_res={e.B_res:.4f} T ({e.B_res_mT:.1f} mT) │ µ₀ΔH={e.dH_mT:.2f} mT │ "
-                f"α={e.alpha:.2e} │ R²={e.R2:.4f} │ Fenster {punkte_im_fenster} Pkt │ "
-                f"{kriterien_kurz(e)}")
+                tr("[{0}/{1}] f={2:.3f} GHz │ B_res={3:.4f} T ({4:.1f} mT) │ µ₀ΔH={5:.2f} "
+                   "mT │ α={6:.2e} │ R²={7:.4f} │ Fenster {8} Pkt │ {9}", i + 1, len(self.stapel.ergebnisse), e.frequenz / 1e9, e.B_res, e.B_res_mT, e.dH_mT, e.alpha, e.R2, punkte_im_fenster, kriterien_kurz_tr(e)))
         self.label_info.setText(text)
-        self.label_info.setToolTip(kriterien_text(e) if e.gefittet else "")
+        self.label_info.setToolTip(kriterien_text_tr(e) if e.gefittet else "")
         self.statusBar().showMessage(text)
 
     def _fits_loeschen_dialog(self) -> None:
@@ -2393,10 +2428,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if st is None or self._job_laeuft:
             return
         box = QtWidgets.QMessageBox(self)
-        box.setWindowTitle("Fit-Ergebnisse löschen")
-        box.setText("Welche Ergebnisse verwerfen? (Rückgängig: Strg+Z)")
-        alle = box.addButton("Alle Fits", QtWidgets.QMessageBox.AcceptRole)
-        mode = box.addButton(f"Nur Mode M{self._mode_aktiv}", QtWidgets.QMessageBox.AcceptRole)
+        box.setWindowTitle(tr("Fit-Ergebnisse löschen"))
+        box.setText(tr("Welche Ergebnisse verwerfen? (Rückgängig: Strg+Z)"))
+        alle = box.addButton(tr("Alle Fits"), QtWidgets.QMessageBox.AcceptRole)
+        mode = box.addButton(tr("Nur Mode M{0}", self._mode_aktiv), QtWidgets.QMessageBox.AcceptRole)
         box.addButton(QtWidgets.QMessageBox.Cancel)
         box.exec()
         if box.clickedButton() is alle:
@@ -2427,15 +2462,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
         nachher = self._fit_zustand(indizes)
         ausreisser_nachher = list(st.ausreisser)
         self._merke_aenderung(
-            "Fit-Ergebnisse gelöscht" + ("" if mode is None else f" (M{mode})"),
+            tr("Fit-Ergebnisse gelöscht") + ("" if mode is None else tr(" (M{0})", mode)),
             lambda: (self._fit_zustand_setzen(vorher), self._ausreisser_setzen(ausreisser_vorher)),
             lambda: (self._fit_zustand_setzen(nachher), self._ausreisser_setzen(ausreisser_nachher)))
         self._aktualisiere_overlay()
         self._zeige_korridore()
         self._zeige_aktuellen()
         self._auswertung_nachziehen()
-        self._log("Fit-Ergebnisse gelöscht" + ("" if mode is None else f" (Mode M{mode})")
-                  + " – Korridore und Einstellungen bleiben erhalten.", "info")
+        self._log(tr("Fit-Ergebnisse gelöscht") + ("" if mode is None else tr(" (Mode M{0})", mode))
+                  + tr(" – Korridore und Einstellungen bleiben erhalten."), "info")
 
     def _mode_combo_syncen(self, mode: int) -> None:
         """Moden-Auswahl im Linescan-Panel mit Korridoren/aktiver Mode abgleichen."""
@@ -2519,8 +2554,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                     if e.gefittet and e.problematisch and not st.ist_ausreisser(i)
                     and not st.ist_ausreisser_mode(i, mode)]
         if not probleme:
-            self.statusBar().showMessage("Keine problematischen Fits mehr.", 5000)
-            self._log("Keine problematischen Fits mehr.", "ok")
+            self.statusBar().showMessage(tr("Keine problematischen Fits mehr."), 5000)
+            self._log(tr("Keine problematischen Fits mehr."), "ok")
             return
         if richtung >= 0:
             weiter = [i for i in probleme if i > self.aktueller_index]
@@ -2532,8 +2567,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._zeige_aktuellen()
         if umlauf:
             self.statusBar().showMessage(
-                f"Umlauf: wieder beim {'ersten' if richtung >= 0 else 'letzten'} Problemfit "
-                f"({len(probleme)} insgesamt).", 5000)
+                tr("Umlauf: wieder beim {0} Problemfit ({1} insgesamt).", tr('ersten') if richtung >= 0 else tr('letzten'), len(probleme)), 5000)
 
     # --- Bewertung ----------------------------------------------------------------
     def _bewertung_gewaehlt(self, index: int) -> None:
@@ -2567,13 +2601,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 self._ausreisser_wieder_aufnehmen([i])
             else:
                 if not e.gefittet:
-                    self._log("Bewertung: diese Frequenz ist noch nicht gefittet.", "warn")
+                    self._log(tr("Bewertung: diese Frequenz ist noch nicht gefittet."), "warn")
                     return
                 self._ausreisser_gewaehlt([i])
             self._zeige_aktuellen()
             return
         if not e.gefittet:
-            self._log("Bewertung: diese Frequenz ist noch nicht gefittet.", "warn")
+            self._log(tr("Bewertung: diese Frequenz ist noch nicht gefittet."), "warn")
             return
         if mode == 1 and st.ist_ausreisser(i):
             self._ausreisser_wieder_aufnehmen([i])
@@ -2581,15 +2615,14 @@ class Hauptfenster(QtWidgets.QMainWindow):
         neu = st.bewerte(i, art, mode=mode)
         nachher = self._fit_zustand([i])
         self._merke_aenderung(
-            f"Bewertung „{BEWERTUNG_TEXTE.get(neu.bewertung, art)}“ (f={e.frequenz/1e9:.2f} GHz)",
+            tr("Bewertung „{0}“ (f={1:.2f} GHz)", tr(BEWERTUNG_TEXTE.get(neu.bewertung, art)), e.frequenz / 1e9),
             lambda: self._fit_zustand_setzen(vorher),
             lambda: self._fit_zustand_setzen(nachher))
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
-        self._log(f"Bewertung f={e.frequenz/1e9:.2f} GHz: {neu.bewertung_text} "
-                  f"(Kriterien: {'problematisch' if neu.problematisch_auto else 'OK'}).",
+        self._log(tr("Bewertung f={0:.2f} GHz: {1} (Kriterien: {2}).", e.frequenz / 1e9, tr(neu.bewertung_text), tr('problematisch') if neu.problematisch_auto else 'OK'),
                   "ok" if not neu.problematisch else "warn")
 
     def _alle_bewertungen_auto(self) -> None:
@@ -2598,20 +2631,20 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         indizes = [i for i, e in enumerate(st.ergebnisse) if e.bewertung != "auto"]
         if not indizes:
-            self._log("Alle Bewertungen sind bereits automatisch.", "info")
+            self._log(tr("Alle Bewertungen sind bereits automatisch."), "info")
             return
         vorher = self._fit_zustand(indizes)
         for i in indizes:
             st.bewerte(i, "auto")
         nachher = self._fit_zustand(indizes)
-        self._merke_aenderung("Alle Bewertungen auf automatisch",
+        self._merke_aenderung(tr("Alle Bewertungen auf automatisch"),
                               lambda: self._fit_zustand_setzen(vorher),
                               lambda: self._fit_zustand_setzen(nachher))
         self._aktualisiere_overlay()
         self._zeige_aktuellen()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
-        self._log(f"{len(indizes)} Bewertung(en) auf automatisch zurückgesetzt.", "ok")
+        self._log(tr("{0} Bewertung(en) auf automatisch zurückgesetzt.", len(indizes)), "ok")
 
     # --- Nachfitten einzelner Frequenzen ------------------------------------------
     def _grenzen_geaendert(self, unten: float, oben: float):
@@ -2625,17 +2658,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
-            f"Grenzen gezogen (f={erg.frequenz/1e9:.2f} GHz)",
+            tr("Grenzen gezogen (f={0:.2f} GHz)", erg.frequenz / 1e9),
             lambda: self._fit_zustand_setzen(fits_vorher),
             lambda: self._fit_zustand_setzen(fits_nachher))
         self._zeige_aktuellen()
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
-        self._log(f"Neu gefittet f={erg.frequenz/1e9:.2f} GHz "
-                  f"[{unten:.3f}–{oben:.3f} T] → "
-                  f"{'⚠ ' + erg.problem_text if erg.problematisch else '✓ ' + erg.problem_text}"
-                  f" · B_res={erg.B_res:.4f} T, µ₀ΔH={erg.dH_mT:.2f} mT, R²={erg.R2:.4f}",
+        self._log(tr("Neu gefittet f={0:.2f} GHz [{1:.3f}–{2:.3f} T] → {3} · B_res={4:.4f} "
+                     "T, µ₀ΔH={5:.2f} mT, R²={6:.4f}", erg.frequenz / 1e9, unten, oben, ('⚠ ' if erg.problematisch else '✓ ') + problem_text_tr(erg), erg.B_res, erg.dH_mT, erg.R2),
                   "warn" if erg.problematisch else "ok")
         self._warne_fenster_zu_breit(i)
 
@@ -2651,17 +2682,17 @@ class Hauptfenster(QtWidgets.QMainWindow):
         mode = self._mode_aktiv
         korridor = self._korridor_fuer(mode)
         if korridor is None and mode != 1:
-            self._log(f"Mode {mode}: kein Korridor – bitte zuerst einen Korridor anlegen.", "warn")
+            self._log(tr("Mode {0}: kein Korridor – bitte zuerst einen Korridor anlegen.", mode), "warn")
             return None
         if korridor is not None:
             vorher = self._korridor_schatten
             f = st.datensatz.linescans[i].frequenz
             korridor.anker_setzen(f, unten, oben, toleranz_hz=self._frequenz_toleranz())
             self._zeige_korridore()
-            self._merke_korridor_aenderung(f"Anker M{mode} aus Grenzen", vorher)
+            self._merke_korridor_aenderung(tr("Anker M{0} aus Grenzen", mode), vorher)
             erg = fitte_mode(st, i, korridor, bestaetigen=None)
             if erg is None:
-                self._log("Korridor bei dieser Frequenz leer.", "warn")
+                self._log(tr("Korridor bei dieser Frequenz leer."), "warn")
             return erg
         return _fitte_neu_mit_nachfenster(st, i, unten, oben, bestaetigen=None)
 
@@ -2671,8 +2702,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         anteil = fenster_anteil(self.stapel, i)
         if anteil >= FENSTER_ANTEIL_WARNUNG:
-            text = (f"Fenster umfasst {anteil:.0%} des Feldsweeps – Linienbreite wird "
-                    f"überschätzt. Grenzen enger an die Resonanz ziehen.")
+            text = (tr("Fenster umfasst {0:.0%} des Feldsweeps – Linienbreite wird "
+                       "überschätzt. Grenzen enger an die Resonanz ziehen.", anteil))
             self.statusBar().showMessage(text, 8000)
             self._log(text, "warn")
 
@@ -2688,7 +2719,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         fits_nachher = self._fit_zustand([i])
         self._merke_aenderung(
-            f"Nochmal gefittet (f={erg.frequenz/1e9:.2f} GHz)",
+            tr("Nochmal gefittet (f={0:.2f} GHz)", erg.frequenz / 1e9),
             lambda: self._fit_zustand_setzen(fits_vorher),
             lambda: self._fit_zustand_setzen(fits_nachher))
         self._zeige_aktuellen()
@@ -2721,7 +2752,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if geometrie in ("oop", "ip") and geometrie != self._physik.geometrie:
             self._physik = replace(self._physik, geometrie=geometrie)
             self._einstellungen.physik = self._physik.als_dict()
-            self._log(f"Kittel-Geometrie: {geometrie} (gilt auch für den Export).", "info")
+            self._log(tr("Kittel-Geometrie: {0} (gilt auch für den Export).", geometrie), "info")
 
     def _kittel_llg(self):
         """Oeffnet das Kittel/LLG-Auswertungsfenster (eigenes, nicht-modales Fenster)."""
@@ -2733,8 +2764,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         fenster.activateWindow()
         n_ausreisser = len(self.stapel.ausreisser)
         if n_ausreisser:
-            self._log(f"Kittel/LLG: {n_ausreisser} Ausreißer ausgeschlossen "
-                      f"({len(self.stapel.ergebnisse_aktiv())} Punkte verbleiben).", "info")
+            self._log(tr("Kittel/LLG: {0} Ausreißer ausgeschlossen ({1} Punkte verbleiben).", n_ausreisser, len(self.stapel.ergebnisse_aktiv())), "info")
 
     def _auswertungsfenster_zu(self, *_args):
         self._auswertungsfenster = None
@@ -2754,7 +2784,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _fits_vorhanden(self) -> bool:
         if not self.stapel or not self.stapel.index_gefittet():
             QtWidgets.QMessageBox.information(
-                self, "Hinweis", "Bitte zuerst fitten (Auto-Fit, Korridor oder Bereich).")
+                self, tr("Hinweis"), tr("Bitte zuerst fitten (Auto-Fit, Korridor oder Bereich)."))
             return False
         return True
 
@@ -2866,12 +2896,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if not self._fits_vorhanden():
             return None
         if pfad is None:
-            pfad = self._speicher_dialog("Excel speichern", self._basisname() + ".xlsx",
-                                         "Excel (*.xlsx)")
+            pfad = self._speicher_dialog(tr("Excel speichern"), self._basisname() + ".xlsx",
+                                         tr("Excel (*.xlsx)"))
             if not pfad:
                 return None
         opt = self._export_optionen()
-        with self._beschaeftigt(f"Schreibe Excel: {os.path.basename(pfad)} …"):
+        with self._beschaeftigt(tr("Schreibe Excel: {0} …", os.path.basename(pfad))):
             exportiere_excel(self.stapel.ergebnisse, pfad, self._global_parameter(),
                              ausreisser=self.stapel.ausreisser,
                              spalten=opt.get("spalten") or None,
@@ -2882,15 +2912,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
                              nebenmoden=self.stapel.nebenmoden,
                              verwendet_moden=self._kittel_indizes_moden(),
                              ausreisser_moden=self.stapel.ausreisser_moden)
-        self.statusBar().showMessage(f"Excel gespeichert: {pfad}")
-        self._log(f"Excel gespeichert: {os.path.basename(pfad)}", "ok")
+        self.statusBar().showMessage(tr("Excel gespeichert: {0}", pfad))
+        self._log(tr("Excel gespeichert: {0}", os.path.basename(pfad)), "ok")
         return pfad
 
     def _export_csv(self, pfad: str | None = None) -> str | None:
         if not self._fits_vorhanden():
             return None
         if pfad is None:
-            pfad = self._speicher_dialog("CSV speichern", self._basisname() + ".csv", "CSV (*.csv)")
+            pfad = self._speicher_dialog(tr("CSV speichern"), self._basisname() + ".csv", tr("CSV (*.csv)"))
             if not pfad:
                 return None
         opt = self._export_optionen()
@@ -2900,61 +2930,61 @@ class Hauptfenster(QtWidgets.QMainWindow):
                        verwendet=self._kittel_indizes(),
                        deutsch=bool(opt.get("csv_deutsch", False)),
                        zugeschnitten=self.stapel.zugeschnitten)
-        self.statusBar().showMessage(f"CSV gespeichert: {pfad}")
-        self._log(f"CSV gespeichert: {os.path.basename(pfad)}", "ok")
+        self.statusBar().showMessage(tr("CSV gespeichert: {0}", pfad))
+        self._log(tr("CSV gespeichert: {0}", os.path.basename(pfad)), "ok")
         return pfad
 
     def _export_tdms(self, pfad: str | None = None) -> str | None:
         if not self._fits_vorhanden():
             return None
         if pfad is None:
-            pfad = self._speicher_dialog("TDMS speichern", self._basisname() + "_fit.tdms",
-                                         "TDMS (*.tdms)")
+            pfad = self._speicher_dialog(tr("TDMS speichern"), self._basisname() + "_fit.tdms",
+                                         tr("TDMS (*.tdms)"))
             if not pfad:
                 return None
         st = self.stapel
         indizes = st.index_gefittet()
         schreibe_ergebnis_tdms(pfad, [st.zugeschnitten[i] for i in indizes],
                                [st.ergebnisse[i].fitkurve for i in indizes])
-        self.statusBar().showMessage(f"TDMS gespeichert: {pfad}")
-        self._log(f"TDMS gespeichert: {os.path.basename(pfad)}", "ok")
+        self.statusBar().showMessage(tr("TDMS gespeichert: {0}", pfad))
+        self._log(tr("TDMS gespeichert: {0}", os.path.basename(pfad)), "ok")
         return pfad
 
     def _export_kittel(self, basis: str | None = None) -> list[str]:
         if not self._fits_vorhanden():
             return []
         if basis is None:
-            pfad = self._speicher_dialog("Kittel/LLG-Auswertung exportieren",
-                                         self._basisname() + "_kittel_llg.xlsx", "Excel (*.xlsx)")
+            pfad = self._speicher_dialog(tr("Kittel/LLG-Auswertung exportieren"),
+                                         self._basisname() + "_kittel_llg.xlsx", tr("Excel (*.xlsx)"))
             if not pfad:
                 return []
             basis = os.path.splitext(pfad)[0]
         fenster = self._auswertungsfenster_holen()
-        with self._beschaeftigt("Schreibe Kittel/LLG-Auswertung (Excel, CSV, Plot) …"):
+        with self._beschaeftigt(tr("Schreibe Kittel/LLG-Auswertung (Excel, CSV, Plot) …")):
             dateien = fenster.exportiere(basis, csv_deutsch=bool(self._export_optionen().get("csv_deutsch")))
-        self._log("Kittel/LLG exportiert: " + ", ".join(os.path.basename(d) for d in dateien), "ok")
+        self._log(tr("Kittel/LLG exportiert: ") + ", ".join(os.path.basename(d) for d in dateien), "ok")
         return dateien
 
     def _export_farbplot_bild(self, pfad: str | None = None) -> str | None:
         if self.datensatz_voll is None:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            QtWidgets.QMessageBox.information(self, tr("Hinweis"), tr("Bitte zuerst eine TDMS-Datei laden."))
             return None
         if pfad is None:
-            pfad = self._speicher_dialog("Farbplot als Bild", self._basisname() + "_farbplot.png",
-                                         "PNG (*.png);;PDF (*.pdf);;SVG (*.svg)")
+            pfad = self._speicher_dialog(tr("Farbplot als Bild"), self._basisname() + "_farbplot.png",
+                                         tr("PNG (*.png);;PDF (*.pdf);;SVG (*.svg)"))
             if not pfad:
                 return None
         self.matrix.speichere_bild(pfad)
-        self._log(f"Farbplot gespeichert: {os.path.basename(pfad)}", "ok")
+        self._log(tr("Farbplot gespeichert: {0}", os.path.basename(pfad)), "ok")
         return pfad
 
     def _export_matrix_csv(self, pfad: str | None = None) -> str | None:
         if self.datensatz_voll is None:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            QtWidgets.QMessageBox.information(self, tr("Hinweis"), tr("Bitte zuerst eine TDMS-Datei laden."))
             return None
         if pfad is None:
-            pfad = self._speicher_dialog("Farbplot-Matrix als CSV",
-                                         self._basisname() + "_matrix.csv", "CSV (*.csv)")
+            pfad = self._speicher_dialog(tr("Farbplot-Matrix als CSV"),
+                                         self._basisname() + "_matrix.csv", tr("CSV (*.csv)"))
             if not pfad:
                 return None
         feld, freq, matrix = self.matrix.verarbeitete_matrix()
@@ -2968,13 +2998,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             tab.to_csv(pfad, sep=";", decimal=",", encoding="utf-8-sig")
         else:
             tab.to_csv(pfad)
-        self._log(f"Farbplot-Matrix gespeichert: {os.path.basename(pfad)} "
-                  f"({self.verarbeitung.kette().beschreibung()} · {self.verarbeitung.anzeige_modus()})", "ok")
+        self._log(tr("Farbplot-Matrix gespeichert: {0} ({1} · {2})", os.path.basename(pfad), self.verarbeitung.kette().beschreibung(), self.verarbeitung.anzeige_modus()), "ok")
         return pfad
 
     def _alles_speichern(self) -> None:
         if self.datensatz_voll is None:
-            QtWidgets.QMessageBox.information(self, "Hinweis", "Bitte zuerst eine TDMS-Datei laden.")
+            QtWidgets.QMessageBox.information(self, tr("Hinweis"), tr("Bitte zuerst eine TDMS-Datei laden."))
             return
         hat_fits = bool(self.stapel and self.stapel.index_gefittet())
         ordner = self._letzter_ordner or os.path.dirname(self.stapel.datensatz.quelle) or os.getcwd()
@@ -2988,7 +3017,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         basis = os.path.join(ordner, wahl["basis"])
         geschrieben: list[str] = []
         fehler: list[str] = []
-        self._log(f"Alles speichern nach {ordner} …", "info")
+        self._log(tr("Alles speichern nach {0} …", ordner), "info")
         schritte = {
             "projekt": lambda: self._projekt_speichern(basis + ".polderfit-projekt.json"),
             "excel": lambda: self._export_excel(basis + ".xlsx"),
@@ -3003,21 +3032,21 @@ class Hauptfenster(QtWidgets.QMainWindow):
         }
         for teil in wahl["teile"]:
             try:
-                with self._beschaeftigt(f"Alles speichern: {teil} …"):
+                with self._beschaeftigt(tr("Alles speichern: {0} …", teil)):
                     res = schritte[teil]()
             except Exception as exc:
                 fehler.append(f"{teil}: {exc}")
-                self._log(f"FEHLER beim Speichern ({teil}): {exc}", "problem")
+                self._log(tr("FEHLER beim Speichern ({0}): {1}", teil, exc), "problem")
                 continue
             if isinstance(res, (list, tuple)):
                 geschrieben += [r for r in res if r]
             elif res:
                 geschrieben.append(str(res))
-        text = f"{len(geschrieben)} Datei(en) in {ordner} geschrieben."
+        text = tr("{0} Datei(en) in {1} geschrieben.", len(geschrieben), ordner)
         if fehler:
-            text += "\n\nFehler:\n" + "\n".join(fehler)
+            text += tr("\n\nFehler:\n") + "\n".join(fehler)
         self._log(text.replace("\n", " "), "problem" if fehler else "ok")
-        QtWidgets.QMessageBox.information(self, "Alles speichern", text)
+        QtWidgets.QMessageBox.information(self, tr("Alles speichern"), text)
 
     def _spalten_dialog(self) -> None:
         dialog = SpaltenDialog(self._einstellungen.export, parent=self)
@@ -3025,9 +3054,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         self._einstellungen.export = dialog.einstellungen()
         gruppen = self._einstellungen.export.get("spalten") or ["alle"]
-        self._log("Export-Spalten: " + ", ".join(gruppen)
-                  + (", nur gefittete" if self._einstellungen.export.get("nur_gefittete") else "")
-                  + (", CSV deutsch" if self._einstellungen.export.get("csv_deutsch") else ""), "ok")
+        self._log(tr("Export-Spalten: ") + ", ".join(gruppen)
+                  + (tr(", nur gefittete") if self._einstellungen.export.get("nur_gefittete") else "")
+                  + (tr(", CSV deutsch") if self._einstellungen.export.get("csv_deutsch") else ""), "ok")
 
     # --- Ausschlusszonen ------------------------------------------------------
     def _zone_gezeichnet(self, feld_min, feld_max, f_min_ghz, f_max_ghz):
@@ -3052,14 +3081,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
             zonen_nachher = list(stapel.ausschlusszonen)
             fits_nachher = self._fit_zustand(betroffen_vorab)
             self._merke_aenderung(
-                "Ausschlusszone hinzugefügt",
+                tr("Ausschlusszone hinzugefügt"),
                 lambda: self._zonen_zustand_setzen(zonen_vorher, fits_vorher),
                 lambda: self._zonen_zustand_setzen(zonen_nachher, fits_nachher))
-            self._log(f"Ausschlusszone [{feld_min:.3f}–{feld_max:.3f} T, "
-                      f"{f_min_ghz:.2f}–{f_max_ghz:.2f} GHz] aktiv: "
-                      f"{len(betroffen)} Linescans neu gefittet.", "ok")
+            self._log(tr("Ausschlusszone [{0:.3f}–{1:.3f} T, {2:.2f}–{3:.2f} GHz] aktiv: {4} "
+                         "Linescans neu gefittet.", feld_min, feld_max, f_min_ghz, f_max_ghz, len(betroffen)), "ok")
 
-        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone anwenden …", abbrechbar=False)
+        self._starte_job(aufgabe, bei_fertig, tr("Ausschlusszone anwenden …"), abbrechbar=False)
 
     def _zone_entfernen(self, zonen_index: int):
         if not self.stapel or zonen_index >= len(self.stapel.ausschlusszonen):
@@ -3088,12 +3116,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             zonen_nachher = list(stapel.ausschlusszonen)
             fits_nachher = self._fit_zustand(betroffen_vorab)
             self._merke_aenderung(
-                "Ausschlusszone entfernt",
+                tr("Ausschlusszone entfernt"),
                 lambda: self._zonen_zustand_setzen(zonen_vorher, fits_vorher),
                 lambda: self._zonen_zustand_setzen(zonen_nachher, fits_nachher))
-            self._log(f"Ausschlusszone entfernt: {len(betroffen)} Linescans neu gefittet.", "ok")
+            self._log(tr("Ausschlusszone entfernt: {0} Linescans neu gefittet.", len(betroffen)), "ok")
 
-        self._starte_job(aufgabe, bei_fertig, "Ausschlusszone entfernen …", abbrechbar=False)
+        self._starte_job(aufgabe, bei_fertig, tr("Ausschlusszone entfernen …"), abbrechbar=False)
 
     # --- Ausreisser-Management -----------------------------------------------
     def _merke_ausreisser_aenderung(self, beschreibung: str,
@@ -3121,15 +3149,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         for i in neu:
             self.stapel.ausreisser_umschalten(i)
         self._merke_ausreisser_aenderung(
-            f"Ausreißer markiert ({len(neu)} Punkt(e))", vorher)
+            tr("Ausreißer markiert ({0} Punkt(e))", len(neu)), vorher)
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
         frequenzen = [self.stapel.ergebnisse[i].frequenz / 1e9 for i in neu]
-        self._log(f"Ignoriert (Ausreißer): {len(neu)} Punkt(e) "
-                  f"({', '.join(f'{f:.2f}' for f in frequenzen[:6])}"
-                  f"{' …' if len(frequenzen) > 6 else ''} GHz) – "
-                  f"insgesamt {len(self.stapel.ausreisser)} ausgeschlossen.", "ok")
+        self._log(tr("Ignoriert (Ausreißer): {0} Punkt(e) ({1}{2} GHz) – insgesamt {3} "
+                     "ausgeschlossen.", len(neu), ', '.join((f'{f:.2f}' for f in frequenzen[:6])), ' …' if len(frequenzen) > 6 else '', len(self.stapel.ausreisser)), "ok")
 
     def _ausreisser_wieder_aufnehmen(self, indizes: list[int]):
         """Aus der Liste: Punkte wieder in Darstellung und Rechnungen aufnehmen."""
@@ -3140,12 +3166,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if self.stapel.ist_ausreisser(i):
                 self.stapel.ausreisser_umschalten(i)
         self._merke_ausreisser_aenderung(
-            f"Ausreißer wieder aufgenommen ({len(indizes)})", vorher)
+            tr("Ausreißer wieder aufgenommen ({0})", len(indizes)), vorher)
         self._aktualisiere_overlay()
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
-        self._log(f"{len(indizes)} Punkt(e) wieder aufgenommen – "
-                  f"verbleibend {len(self.stapel.ausreisser)} ignoriert.", "ok")
+        self._log(tr("{0} Punkt(e) wieder aufgenommen – verbleibend {1} ignoriert.", len(indizes), len(self.stapel.ausreisser)), "ok")
 
     # Ausreisser je Mode (nur Kittel/LLG-Auswertung dieser Mode) ----------------
     def _ausreisser_moden_setzen(self, liste) -> None:
@@ -3175,14 +3200,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
         for i, k in neu:
             self.stapel.ausreisser_mode_umschalten(i, k)
         self._merke_ausreisser_moden_aenderung(
-            f"Punkt(e) je Mode ausgeschlossen ({len(neu)})", vorher)
+            tr("Punkt(e) je Mode ausgeschlossen ({0})", len(neu)), vorher)
         self._aktualisiere_overlay()
         self._auswertung_nachziehen()
         beschreibung = ", ".join(f"{self.stapel.ergebnisse[i].frequenz/1e9:.2f} GHz/M{k}"
                                  for i, k in neu[:6])
-        self._log(f"Nur für die Auswertung je Mode ausgeschlossen: {len(neu)} Punkt(e) "
-                  f"({beschreibung}{' …' if len(neu) > 6 else ''}) – insgesamt "
-                  f"{len(self.stapel.ausreisser_moden)}.", "ok")
+        self._log(tr("Nur für die Auswertung je Mode ausgeschlossen: {0} Punkt(e) ({1}{2}) "
+                     "– insgesamt {3}.", len(neu), beschreibung, ' …' if len(neu) > 6 else '', len(self.stapel.ausreisser_moden)), "ok")
 
     def _ausreisser_mode_wieder_aufnehmen(self, paare) -> None:
         if not self.stapel or not paare:
@@ -3192,33 +3216,29 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if self.stapel.ist_ausreisser_mode(i, k):
                 self.stapel.ausreisser_mode_umschalten(i, k)
         self._merke_ausreisser_moden_aenderung(
-            f"Punkt(e) je Mode wieder aufgenommen ({len(paare)})", vorher)
+            tr("Punkt(e) je Mode wieder aufgenommen ({0})", len(paare)), vorher)
         self._aktualisiere_overlay()
         self._auswertung_nachziehen()
-        self._log(f"{len(paare)} Punkt(e) je Mode wieder aufgenommen – verbleibend "
-                  f"{len(self.stapel.ausreisser_moden)}.", "ok")
+        self._log(tr("{0} Punkt(e) je Mode wieder aufgenommen – verbleibend {1}.", len(paare), len(self.stapel.ausreisser_moden)), "ok")
 
     # --- Projekt speichern / laden / Auto-Sicherung --------------------------
     def _projekt_speichern(self, pfad: str | None = None) -> str | None:
         if not self.stapel or not self.stapel.index_gefittet():
             QtWidgets.QMessageBox.information(
-                self, "Hinweis", "Bitte zuerst fitten – gespeichert wird der "
-                "komplette Auswertungszustand.")
+                self, tr("Hinweis"), tr("Bitte zuerst fitten – gespeichert wird der "
+                "komplette Auswertungszustand."))
             return None
         if pfad is None:
-            pfad = self._speicher_dialog("Projekt speichern",
+            pfad = self._speicher_dialog(tr("Projekt speichern"),
                                          self._basisname() + ".polderfit-projekt.json",
-                                         "PolderFit-Projekt (*.json)")
+                                         tr("PolderFit-Projekt (*.json)"))
             if not pfad:
                 return None
         speichere_sitzung(self.stapel, pfad, physik=self._physik.als_dict(),
                           verarbeitung=self.verarbeitung.kette().als_dict(),
                           korridore=self._korridore)
-        self._log(f"Projekt gespeichert: {os.path.basename(pfad)} "
-                  f"({len(self.stapel.index_gefittet())} Fits, "
-                  f"{len(self.stapel.ausreisser)} Ausreißer, "
-                  f"{len(self.stapel.ausschlusszonen)} Zonen, "
-                  f"{len(self._korridore)} Korridore).", "ok")
+        self._log(tr("Projekt gespeichert: {0} ({1} Fits, {2} Ausreißer, {3} Zonen, {4} "
+                     "Korridore).", os.path.basename(pfad), len(self.stapel.index_gefittet()), len(self.stapel.ausreisser), len(self.stapel.ausschlusszonen), len(self._korridore)), "ok")
         return pfad
 
     def _autosicherung_anstossen(self) -> None:
@@ -3234,15 +3254,15 @@ class Hauptfenster(QtWidgets.QMainWindow):
             speichere_sitzung(self.stapel, str(pfad), physik=self._physik.als_dict(),
                               verarbeitung=self.verarbeitung.kette().als_dict(),
                               korridore=self._korridore)
-            self._log(f"Auto-Sicherung geschrieben ({pfad.name}).", "auto")
+            self._log(tr("Auto-Sicherung geschrieben ({0}).", pfad.name), "auto")
         except Exception as exc:  # nie den Arbeitsfluss stoeren
-            self._log(f"Auto-Sicherung fehlgeschlagen: {exc}", "warn")
+            self._log(tr("Auto-Sicherung fehlgeschlagen: {0}", exc), "warn")
 
     def _autosicherung_wiederherstellen(self) -> None:
         pfad = autosicherung_pfad()
         if not pfad.exists():
             QtWidgets.QMessageBox.information(
-                self, "Auto-Sicherung", f"Keine Auto-Sicherung vorhanden ({pfad}).")
+                self, tr("Auto-Sicherung"), tr("Keine Auto-Sicherung vorhanden ({0}).", pfad))
             return
         self._projekt_laden(str(pfad))
 
@@ -3251,24 +3271,24 @@ class Hauptfenster(QtWidgets.QMainWindow):
             return
         if pfad is None:
             pfad, _ = QtWidgets.QFileDialog.getOpenFileName(
-                self, "Projekt laden", self._letzter_ordner, "PolderFit-Projekt (*.json)")
+                self, tr("Projekt laden"), self._letzter_ordner, tr("PolderFit-Projekt (*.json)"))
             if not pfad:
                 return
             self._letzter_ordner = os.path.dirname(pfad)
         try:
             daten = lade_sitzung(pfad)
         except Exception as fehler:
-            QtWidgets.QMessageBox.critical(self, "Projekt laden", str(fehler))
+            QtWidgets.QMessageBox.critical(self, tr("Projekt laden"), str(fehler))
             return
 
         quelle = daten.get("quelle", "")
         if not Path(quelle).exists():
             QtWidgets.QMessageBox.information(
-                self, "Projekt laden",
-                f"Die TDMS-Quelle {quelle!r} wurde nicht gefunden. "
-                "Bitte die Messdatei auswählen.")
+                self, tr("Projekt laden"),
+                tr("Die TDMS-Quelle {0!r} wurde nicht gefunden. Bitte die Messdatei "
+                   "auswählen.", quelle))
             quelle, _ = QtWidgets.QFileDialog.getOpenFileName(
-                self, "TDMS-Quelle des Projekts", self._letzter_ordner, "TDMS (*.tdms)")
+                self, tr("TDMS-Quelle des Projekts"), self._letzter_ordner, tr("TDMS (*.tdms)"))
             if not quelle:
                 return
 
@@ -3278,7 +3298,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         auswahl_dict = daten.get("auswertungsauswahl")
 
         def aufgabe(melde):
-            melde(0, 0, f"Lade {os.path.basename(quelle)} …", phase="TDMS lesen")
+            melde(0, 0, tr("Lade {0} …", os.path.basename(quelle)), phase=tr("TDMS lesen"))
             if zuordnung is not None:
                 voll = lade_tdms(quelle, zuordnung=zuordnung,
                                  layout=daten.get("format_typ"))
@@ -3288,12 +3308,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             if auswahl_dict:
                 auswahl = Auswertungsauswahl.aus_dict(auswahl_dict)
                 reduziert = auswahl.reduziere_felder(voll)   # volles Frequenzgitter
-            melde(0, 0, "Stelle Fits mit gespeicherten Fenstern wieder her …", phase="Fits")
+            melde(0, 0, tr("Stelle Fits mit gespeicherten Fenstern wieder her …"), phase=tr("Fits"))
             b_min, b_max = reduziert.feld_bereich()
             korridore = korridore_aus_sitzung(daten, b_min, b_max)
             stapel = stelle_stapel_wieder_her(
                 daten, reduziert, korridore=korridore,
-                fortschritt=lambda k, n, e: melde(k, n, "", phase="Fits wiederherstellen"))
+                fortschritt=lambda k, n, e: melde(k, n, "", phase=tr("Fits wiederherstellen")))
             return (voll, stapel, korridore)
 
         def bei_fertig(res):
@@ -3335,15 +3355,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
             self._zeige_aktuellen()
             if self._auswertungsfenster is not None:
                 self._auswertungsfenster.aktualisiere()
-            self._log(f"Projekt geladen: {os.path.basename(pfad)} – "
-                      f"{len(stapel.index_gefittet())} Fits wiederhergestellt, "
-                      f"{len(stapel.ausreisser)} Ausreißer, "
-                      f"{len(stapel.ausschlusszonen)} Zonen, "
-                      f"{len(self._korridore)} Korridore.", "ok")
+            self._log(tr("Projekt geladen: {0} – {1} Fits wiederhergestellt, {2} Ausreißer, {3} "
+                         "Zonen, {4} Korridore.", os.path.basename(pfad), len(stapel.index_gefittet()), len(stapel.ausreisser), len(stapel.ausschlusszonen), len(self._korridore)), "ok")
             self.statusBar().showMessage(
-                f"Projekt geladen ({len(stapel.index_gefittet())} Fits).")
+                tr("Projekt geladen ({0} Fits).", len(stapel.index_gefittet())))
 
-        self._starte_job(aufgabe, bei_fertig, f"Lade Projekt {os.path.basename(pfad)} …",
+        self._starte_job(aufgabe, bei_fertig, tr("Lade Projekt {0} …", os.path.basename(pfad)),
                          abbrechbar=False)
 
     # --- Einstellungen (Voreinstellungen) -------------------------------------
@@ -3381,39 +3398,39 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self._bereich_breite = einst.bereichsfit.get("breite_punkte")
         self.verarbeitung.setze_kette(einst.verarbeitungskette(), melden=self.datensatz_voll is not None)
         if melden:
-            self._log("Einstellungen angewendet.", "ok")
+            self._log(tr("Einstellungen angewendet."), "ok")
 
     def _einstellungen_speichern_unter(self) -> None:
-        pfad = self._speicher_dialog("Einstellungen speichern", "polderfit" + DATEI_ENDUNG,
-                                     f"PolderFit-Einstellungen (*{DATEI_ENDUNG});;JSON (*.json)")
+        pfad = self._speicher_dialog(tr("Einstellungen speichern"), "polderfit" + DATEI_ENDUNG,
+                                     tr("PolderFit-Einstellungen (*{0});;JSON (*.json)", DATEI_ENDUNG))
         if not pfad:
             return
         speichere_einstellungen(self._einstellungen_sammeln(), pfad)
-        self._log(f"Einstellungen gespeichert: {os.path.basename(pfad)}", "ok")
+        self._log(tr("Einstellungen gespeichert: {0}", os.path.basename(pfad)), "ok")
 
     def _einstellungen_laden(self) -> None:
         pfad, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Einstellungen laden", self._letzter_ordner,
-            f"PolderFit-Einstellungen (*{DATEI_ENDUNG});;JSON (*.json)")
+            self, tr("Einstellungen laden"), self._letzter_ordner,
+            tr("PolderFit-Einstellungen (*{0});;JSON (*.json)", DATEI_ENDUNG))
         if not pfad:
             return
         try:
             einst = lade_einstellungen(pfad)
         except Exception as exc:
-            QtWidgets.QMessageBox.critical(self, "Einstellungen laden", str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Einstellungen laden"), str(exc))
             return
         self._einstellungen_anwenden(einst)
-        self._log(f"Einstellungen geladen: {os.path.basename(pfad)}", "ok")
+        self._log(tr("Einstellungen geladen: {0}", os.path.basename(pfad)), "ok")
 
     def _einstellungen_als_standard(self) -> None:
         pfad = speichere_einstellungen(self._einstellungen_sammeln(), standard_pfad())
-        self._log(f"Als Standard gespeichert (wird beim Start geladen): {pfad}", "ok")
-        self.statusBar().showMessage(f"Standard-Einstellungen gespeichert: {pfad}", 6000)
+        self._log(tr("Als Standard gespeichert (wird beim Start geladen): {0}", pfad), "ok")
+        self.statusBar().showMessage(tr("Standard-Einstellungen gespeichert: {0}", pfad), 6000)
 
     def _einstellungen_zuruecksetzen(self) -> None:
         self._einstellungen_anwenden(Einstellungen())
-        self._log("Einstellungen auf Programm-Standard zurückgesetzt (Datei bleibt, bis "
-                  "„Als Standard speichern“ erneut ausgeführt wird).", "ok")
+        self._log(tr("Einstellungen auf Programm-Standard zurückgesetzt (Datei bleibt, bis "
+                  "„Als Standard speichern“ erneut ausgeführt wird)."), "ok")
 
     # --- Verarbeitung / Ansicht ----------------------------------------------
     def _verarbeitung_geaendert(self, kette, anzeige_modus: str):
@@ -3424,11 +3441,11 @@ class Hauptfenster(QtWidgets.QMainWindow):
         try:
             self.matrix.setze_verarbeitung(kette, anzeige_modus)
         except ValueError as fehler:
-            self._log(f"Verarbeitung nicht anwendbar: {fehler}", "warn")
+            self._log(tr("Verarbeitung nicht anwendbar: {0}", fehler), "warn")
             return
         mat, ext = self.matrix.thumbnail()
         self.navigator.zeige(mat, ext)
-        self._log(f"Verarbeitung: {kette.beschreibung()} · Anzeige {anzeige_modus}", "auto")
+        self._log(tr("Verarbeitung: {0} · Anzeige {1}", kette.beschreibung(), anzeige_modus), "auto")
 
     def _farbskala_geaendert(self, name: str) -> None:
         """Vom Verarbeitungspanel: Farbskala uebernehmen (Menue folgt)."""
@@ -3498,14 +3515,13 @@ class Hauptfenster(QtWidgets.QMainWindow):
     def _baue_hilfe_dialog(self) -> QtWidgets.QDialog:
         """Hilfe-Dialog: Bedienung und Repository-Link."""
         dlg = QtWidgets.QDialog(self)
-        dlg.setWindowTitle(f"{PROGRAMMNAME} – Hilfe & Infos")
+        dlg.setWindowTitle(tr("{0} – Hilfe & Infos", PROGRAMMNAME))
         dlg.resize(700, 620)
         lay = QtWidgets.QVBoxLayout(dlg)
 
         kopf = QtWidgets.QHBoxLayout()
         titel = QtWidgets.QLabel(
-            f"<b style='font-size:16px'>{PROGRAMMNAME}</b><br>"
-            "Breitband-FMR-Auswertung")
+            tr("<b style='font-size:16px'>{0}</b><br>Breitband-FMR-Auswertung", PROGRAMMNAME))
         titel.setTextFormat(QtCore.Qt.RichText)
         kopf.addWidget(titel, 1)
         lay.addLayout(kopf)
@@ -3516,16 +3532,121 @@ class Hauptfenster(QtWidgets.QMainWindow):
         lay.addWidget(browser, 1)
 
         knoepfe = QtWidgets.QDialogButtonBox()
-        b_repo = knoepfe.addButton("Repository öffnen", QtWidgets.QDialogButtonBox.ActionRole)
+        b_repo = knoepfe.addButton(tr("Repository öffnen"), QtWidgets.QDialogButtonBox.ActionRole)
         b_repo.clicked.connect(
             lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(REPO_URL)))
-        b_zu = knoepfe.addButton("Schließen", QtWidgets.QDialogButtonBox.AcceptRole)
+        b_zu = knoepfe.addButton(tr("Schließen"), QtWidgets.QDialogButtonBox.AcceptRole)
         b_zu.clicked.connect(dlg.accept)
         lay.addWidget(knoepfe)
         return dlg
 
     @staticmethod
     def _hilfe_html() -> str:
+        if sprache() == "en":
+            return Hauptfenster._hilfe_html_en()
+        return Hauptfenster._hilfe_html_de()
+
+    @staticmethod
+    def _hilfe_html_en() -> str:
+        return f"""
+        <html><body style="font-size:12px; line-height:1.45">
+        <p><b>{PROGRAMMNAME}</b> analyses broadband FMR measurements (bbFMR): read TDMS files,
+        fit the resonance signal at each frequency and derive the material parameters.
+        The map can also be used <b>for viewing data only</b> (processing:
+        derivative divide, divide slice, … – no fit required).</p>
+
+        <h3>Workflow</h3>
+        <ol>
+          <li><b>Load TDMS</b> (Ctrl+O). The measurement then fills the color plot; the
+              processing panel appears (exactly one processing step active, explanation on
+              mouse hover, color scale selectable).</li>
+          <li><b>Physical parameters</b> (Ctrl+P, optional) – g-factor/γ, Kittel geometry
+              (oop/ip), window width factor, R² thresholds, α upper limit and
+              α plausibility limit.</li>
+          <li><b>Fitting – three ways, all available right after loading:</b>
+              <ul>
+              <li><b>Auto-fit (all)</b> (F5): dialog with jumper (absolute on the frequency grid),
+                  range (default: everything, “use zoom region”), expected resonances per
+                  window and optionally “determine number automatically (BIC)”; then window
+                  search and fit per frequency, followed by all corridors.</li>
+              <li><b>Corridors per mode</b> (Ctrl+L or panel “Corridors”): two clicks along
+                  the resonance → corridor ± width (M1, M2 …). Anchors are created by dragging
+                  the green limits in the linescan panel or the handles in the color plot;
+                  in between, values are interpolated linearly. “Resonances in corridor” = n dips:
+                  sum fit with B_res per dip in its segment (alternative: hard separation),
+                  set separators (yellow) in the linescan panel, optionally number via BIC.
+                  “Fit corridor …” only uses the points inside the corridor.</li>
+              <li><b>Refit region</b> (Ctrl+B): rectangle in the color plot (mode 1).</li>
+              </ul>
+              In the <b>linescan panel</b> (appears with the first fit or a click into the map)
+              “M1/M2 …” shows the selected mode (corridor list). Dragging the green limits sets
+              an anchor at this frequency and refits; “Refit” repeats the fit.
+              <i>Back/Next/Problem fit ◀ ▶</i> drive the correction pass.</li>
+          <li><b>Rating</b>: color and shape of the points follow DIN EN 60073 –
+              <span style="color:{F.TEXT_GRUEN}"><b>green ●</b> good</span> (blue edge = confirmed
+              by the user), <span style="color:{F.TEXT_GELB}"><b>yellow ▲</b> problematic</span>
+              (check), <span style="color:{F.TEXT_ROT}"><b>red ✕</b> fit failed</span>,
+              <span style="color:{F.TEXT_GRAU}"><b>grey ●</b> ignored</span>. A targeted
+              refit at one frequency (dragging limits, “Refit”, separator) counts as
+              confirmed (can be switched off: Ctrl+P); corridor/region fits are rated by the
+              criteria. Criteria are shown compactly as codes in the linescan panel (tooltip
+              shows details). Re-rate: selection list in the linescan panel or Ctrl+1 good,
+              Ctrl+2 problematic, Ctrl+3 automatic, Ctrl+I ignore; hovering a point in the
+              color plot shows f, B_res, µ₀ΔH in mT, α, R² and status.</li>
+          <li><b>Mark outliers</b> (Ctrl+M) – click points or drag a box to
+              ignore them; reversible (list + undo). Ignored points are excluded from ALL
+              evaluations and flagged in the export.</li>
+          <li><b>Kittel/LLG evaluation</b> (Ctrl+K) – separate window with the field on the x axis:
+              toolbar with Select (click/box), Zoom, Pan; “Hide selection” (Del) removes points
+              from the evaluation – also in the color plot (grey); the fit is recalculated
+              immediately; results in T and mT; export Excel + CSV + plot.</li>
+          <li><b>Saving</b> (File → Save / Export): <b>Save everything</b>
+              (Ctrl+Shift+S) writes project, Excel/CSV, Kittel/LLG, color plot image and
+              matrix, TDMS and settings into one folder. Excel/CSV contain all fit
+              parameters (B_res and µ₀ΔH in T <b>and mT</b>, α, amplitude/phase, complex
+              amplitude, offsets, quality measures, status, further modes) – column groups
+              selectable under “Export columns”. <b>Settings</b> (physics, processing,
+              display, export) can be saved, loaded and set as the start default.</li>
+        </ol>
+
+        <h3>Interactive modes</h3>
+        <ul>
+          <li>At most <b>one</b> mode is active at any time (refit region, corridor, anchor,
+              exclusion zone, mark outliers); the active mode is checked in the
+              “Functions” menu and shown on the right of the status bar.</li>
+          <li><b>Esc</b> cancels any mode; starting a mode ends the previous one.</li>
+          <li><b>Ctrl+Z / Ctrl+Shift+Z</b> (also Ctrl+Y): undo and redo changes –
+              corridors/anchors, exclusion zones, outliers, ratings and refits.</li>
+        </ul>
+
+        <h3>Overview – navigation, zoom, window</h3>
+        <ul>
+          <li><b>Click</b>: select a frequency → the corresponding linescan is loaded.</li>
+          <li><b>Zoom</b> is off by default – switch it on under <i>View → Zoom</i>.
+              Then: dragging a box zooms, mouse wheel in/out. <b>Double-click</b>: reset zoom.</li>
+          <li><b>Shift+mouse wheel</b> or <b>↑/↓</b> (Home/End, Page↑/↓): change frequency.</li>
+          <li><b>F11</b>: full screen (Esc leaves it). <b>View → Reset window layout</b>
+              (Ctrl+Shift+R) restores the color plot and panels without losing data.</li>
+          <li>The mouse wheel over input fields only acts when the field has focus – no
+              accidental changes while scrolling.</li>
+          <li>The working state is saved automatically 15 s after every change
+              (File → Restore auto-backup). Zoom, window layout and axis sizes are never
+              saved.</li>
+          <li>During auto-fit, region/corridor fit and loading, the status bar shows
+              phase, progress, elapsed and estimated remaining time; fitted points
+              appear immediately in the color plot. <b>Cancel</b> ends the fit cleanly –
+              results so far are kept.</li>
+          <li><b>Language</b>: View → Language (English/Deutsch); takes effect after a restart.</li>
+        </ul>
+
+        <hr>
+        <p>Source code and documentation:<br>
+        <a href="{REPO_URL}">{REPO_URL}</a></p>
+        </body></html>
+        """
+
+    @staticmethod
+    def _hilfe_html_de() -> str:
         return f"""
         <html><body style="font-size:12px; line-height:1.45">
         <p><b>{PROGRAMMNAME}</b> wertet Breitband-FMR-Messungen (bbFMR) aus: TDMS-Dateien einlesen,
@@ -3613,6 +3734,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
               Phase, Stand, verstrichene und geschätzte Restzeit; die gefitteten Punkte
               erscheinen sofort im Farbplot. <b>Abbrechen</b> beendet den Fit geordnet –
               bisherige Ergebnisse bleiben.</li>
+          <li><b>Sprache</b>: Ansicht → Sprache (English/Deutsch); wirkt nach einem Neustart.</li>
         </ul>
 
         <hr>
@@ -3648,6 +3770,7 @@ def starte_gui(argv=None):
     except Exception:
         pass
 
+    setze_sprache(gespeicherte_sprache())
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv or _sys.argv)
     app.setApplicationName(PROGRAMMNAME)
     app.setOrganizationName("PolderFit")

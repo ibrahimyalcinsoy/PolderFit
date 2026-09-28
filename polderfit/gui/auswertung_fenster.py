@@ -45,28 +45,31 @@ from ..auswertung.moden import (
 from ..persistenz.ergebnis_export import kittel_llg_punkte_tabelle, kittel_llg_tabelle
 from ..physik.kittel_llg import kittel_ip, kittel_oop, linienbreite
 from . import farben as F
+from ..sprache import N_, tr
 
 #: Relative Trefferdistanz (Anteil der Achsenspanne) fuer den Einzelklick.
 _KLICK_TOLERANZ = 0.03
 #: Mindest-Mausbewegung (Anteil der Spanne), ab der ein Klick zum Kasten wird.
 _BOX_SCHWELLE_REL = 0.02
-_HINWEIS = ("Auswählen: Punkt anklicken (an/aus) oder Kasten aufziehen → "
-            "„Auswahl ausblenden“ (Entf)")
+_HINWEIS = N_("Auswählen: Punkt anklicken (an/aus) oder Kasten aufziehen → "
+              "„Auswahl ausblenden“ (Entf)")
 
 
 class _Werkzeugleiste(NavigationToolbar2QT):
     """Matplotlib-Werkzeugleiste, reduziert auf Gesamtansicht, Verschieben, Zoom."""
 
     toolitems = [
-        ("Home", "Gesamtansicht (alle Punkte)", "home", "home"),
-        ("Pan", "Verschieben: linke Maustaste ziehen\nZoomen: rechte Maustaste ziehen",
+        ("Home", N_("Gesamtansicht (alle Punkte)"), "home", "home"),
+        ("Pan", N_("Verschieben: linke Maustaste ziehen\nZoomen: rechte Maustaste ziehen"),
          "move", "pan"),
-        ("Zoom", "Hineinzoomen: Rechteck aufziehen", "zoom_to_rect", "zoom"),
+        ("Zoom", N_("Hineinzoomen: Rechteck aufziehen"), "zoom_to_rect", "zoom"),
     ]
 
     def __init__(self, canvas, parent=None):
         super().__init__(canvas, parent, coordinates=True)
         self.gesamtansicht = None
+        for _text, tip, _bild, methode in self.toolitems:
+            self._actions[methode].setToolTip(tr(tip))
 
     def home(self, *args):
         if self.gesamtansicht is not None:
@@ -102,7 +105,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self._hole_parameter = hole_parameter
         self._cb_geometrie = geometrie_geaendert
         self.setWindowFlag(QtCore.Qt.Window, True)  # eigenes Fenster, nicht modal
-        self.setWindowTitle("Kittel/LLG-Auswertung")
+        self.setWindowTitle(tr("Kittel/LLG-Auswertung"))
         self.resize(1080, 640)
         self._hole_stapel = hole_stapel
         self._cb_markieren = ausreisser_markieren
@@ -137,17 +140,17 @@ class AuswertungsFenster(QtWidgets.QDialog):
         lay = QtWidgets.QVBoxLayout(self)
 
         kopf = QtWidgets.QHBoxLayout()
-        kopf.addWidget(QtWidgets.QLabel("Kittel-Geometrie:"))
+        kopf.addWidget(QtWidgets.QLabel(tr("Kittel-Geometrie:")))
         self.geo_combo = QtWidgets.QComboBox()
         self.geo_combo.addItems(["oop", "ip"])
         self.geo_combo.setCurrentText(geometrie)
         self.geo_combo.currentTextChanged.connect(self._geometrie_gewaehlt)
         kopf.addWidget(self.geo_combo)
         kopf.addSpacing(12)
-        self.mode_label = QtWidgets.QLabel("Mode:")
+        self.mode_label = QtWidgets.QLabel(tr("Mode:"))
         self.mode_combo = QtWidgets.QComboBox()
         self.mode_combo.setToolTip(
-            "Mode 1 … n (je ein Korridor mit eigenem Kittel-/LLG-Fit) oder alle Moden.")
+            tr("Mode 1 … n (je ein Korridor mit eigenem Kittel-/LLG-Fit) oder alle Moden."))
         self.mode_combo.currentIndexChanged.connect(
             lambda _i: self.aktualisiere(ansicht_behalten=False))
         kopf.addWidget(self.mode_label)
@@ -155,14 +158,14 @@ class AuswertungsFenster(QtWidgets.QDialog):
         self.mode_label.setVisible(False)
         self.mode_combo.setVisible(False)
         kopf.addSpacing(16)
-        self.hinweis = QtWidgets.QLabel(_HINWEIS)
+        self.hinweis = QtWidgets.QLabel(tr(_HINWEIS))
         self.hinweis.setToolTip(
-            "Werkzeug „Auswählen“: Punkt anklicken schaltet ihn in die Auswahl (blauer\n"
+            tr("Werkzeug „Auswählen“: Punkt anklicken schaltet ihn in die Auswahl (blauer\n"
             "Ring, in beiden Plots), Kasten aufziehen fügt alle Punkte darin hinzu.\n"
             "„Auswahl ausblenden“ (Entf) schließt sie aus der Auswertung aus – auch im\n"
             "Hauptfenster/Farbplot (grau; bei mehreren Moden nur für die jeweilige Mode).\n"
             "Zoom/Verschieben für dichte Punktwolken; „ausgeblendete Punkte zeigen“ +\n"
-            "„Auswahl einblenden“ nimmt Punkte wieder auf. Esc = Auswahl aufheben.")
+            "„Auswahl einblenden“ nimmt Punkte wieder auf. Esc = Auswahl aufheben."))
         kopf.addWidget(self.hinweis, 1)
         lay.addLayout(kopf)
 
@@ -185,18 +188,18 @@ class AuswertungsFenster(QtWidgets.QDialog):
         lay.addLayout(inhalt, 1)
 
         fuss = QtWidgets.QHBoxLayout()
-        self.btn_rueckgaengig = QtWidgets.QPushButton("Rückgängig (letzter Schritt)")
+        self.btn_rueckgaengig = QtWidgets.QPushButton(tr("Rückgängig (letzter Schritt)"))
         self.btn_rueckgaengig.clicked.connect(self._rueckgaengig)
         fuss.addWidget(self.btn_rueckgaengig)
         fuss.addStretch(1)
-        self.btn_export = QtWidgets.QPushButton("Exportieren … (Excel + CSV + Plot)")
+        self.btn_export = QtWidgets.QPushButton(tr("Exportieren … (Excel + CSV + Plot)"))
         self.btn_export.setToolTip(
-            "Excel (Parameter mit 1σ-Fehlern in T und mT, alle Punkte; bei mehreren\n"
+            tr("Excel (Parameter mit 1σ-Fehlern in T und mT, alle Punkte; bei mehreren\n"
             "Moden zusätzlich je Mode ein Blatt), CSV der Punkte (Listendaten) und\n"
-            "Plot als PNG + PDF.")
+            "Plot als PNG + PDF."))
         self.btn_export.clicked.connect(self._exportieren)
         fuss.addWidget(self.btn_export)
-        btn_zu = QtWidgets.QPushButton("Schließen")
+        btn_zu = QtWidgets.QPushButton(tr("Schließen"))
         btn_zu.clicked.connect(self.close)
         fuss.addWidget(btn_zu)
         lay.addLayout(fuss)
@@ -210,12 +213,12 @@ class AuswertungsFenster(QtWidgets.QDialog):
     def _werkzeuge_einrichten(self) -> None:
         leiste = self.werkzeuge
         erste = leiste.actions()[0]
-        self.act_auswahl = QtGui.QAction("Auswählen", self)
+        self.act_auswahl = QtGui.QAction(tr("Auswählen"), self)
         self.act_auswahl.setCheckable(True)
         self.act_auswahl.setChecked(True)
         self.act_auswahl.setToolTip(
-            "Auswahlwerkzeug: Punkt anklicken (an/aus) oder Kasten aufziehen.\n"
-            "Aktiv, solange Verschieben/Zoom aus sind.")
+            tr("Auswahlwerkzeug: Punkt anklicken (an/aus) oder Kasten aufziehen.\n"
+            "Aktiv, solange Verschieben/Zoom aus sind."))
         self.act_auswahl.triggered.connect(self._auswahl_werkzeug)
         leiste.insertAction(erste, self.act_auswahl)
         leiste.insertSeparator(erste)
@@ -225,24 +228,24 @@ class AuswertungsFenster(QtWidgets.QDialog):
         koordinaten = next((a for a in leiste.actions()
                             if leiste.widgetForAction(a) is getattr(leiste, "locLabel", None)),
                            None)
-        self.act_ausblenden = QtGui.QAction("Auswahl ausblenden", self)
+        self.act_ausblenden = QtGui.QAction(tr("Auswahl ausblenden"), self)
         self.act_ausblenden.setShortcuts([QtGui.QKeySequence(QtCore.Qt.Key_Delete),
                                           QtGui.QKeySequence(QtCore.Qt.Key_Backspace)])
         self.act_ausblenden.setToolTip(
-            "Gewählte Punkte aus der Kittel-/LLG-Auswertung ausschließen (Entf) –\n"
-            "wird ins Hauptfenster/den Farbplot übernommen (grau); rückgängig: Strg+Z.")
+            tr("Gewählte Punkte aus der Kittel-/LLG-Auswertung ausschließen (Entf) –\n"
+            "wird ins Hauptfenster/den Farbplot übernommen (grau); rückgängig: Strg+Z."))
         self.act_ausblenden.triggered.connect(self._ausblenden)
-        self.act_einblenden = QtGui.QAction("Auswahl einblenden", self)
+        self.act_einblenden = QtGui.QAction(tr("Auswahl einblenden"), self)
         self.act_einblenden.setToolTip(
-            "Gewählte ausgeblendete (graue) Punkte wieder in die Auswertung aufnehmen.")
+            tr("Gewählte ausgeblendete (graue) Punkte wieder in die Auswertung aufnehmen."))
         self.act_einblenden.triggered.connect(self._einblenden)
-        self.act_aufheben = QtGui.QAction("Auswahl aufheben", self)
+        self.act_aufheben = QtGui.QAction(tr("Auswahl aufheben"), self)
         self.act_aufheben.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape))
-        self.act_aufheben.setToolTip("Auswahl leeren (Esc).")
+        self.act_aufheben.setToolTip(tr("Auswahl leeren (Esc)."))
         self.act_aufheben.triggered.connect(self._auswahl_aufheben)
-        self.chk_ausgeblendete = QtWidgets.QCheckBox("ausgeblendete Punkte zeigen")
+        self.chk_ausgeblendete = QtWidgets.QCheckBox(tr("ausgeblendete Punkte zeigen"))
         self.chk_ausgeblendete.setToolTip(
-            "Ausgeblendete Punkte grau (hohl) anzeigen – auswählbar zum Wiederaufnehmen.")
+            tr("Ausgeblendete Punkte grau (hohl) anzeigen – auswählbar zum Wiederaufnehmen."))
         self.chk_ausgeblendete.toggled.connect(
             lambda _an: self.aktualisiere(ansicht_behalten=False))
         leiste.insertSeparator(koordinaten)
@@ -314,8 +317,8 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 self.mode_combo.clear()
                 self.mode_combo.blockSignals(False)
             return
-        gewuenscht = ([(f"Mode {k}", k) for k in moden]
-                      + [("Alle Moden", ALLE_MODEN)])
+        gewuenscht = ([(tr("Mode {0}", k), k) for k in moden]
+                      + [(tr("Alle Moden"), ALLE_MODEN)])
         vorhanden = [(self.mode_combo.itemText(i), self.mode_combo.itemData(i))
                      for i in range(self.mode_combo.count())]
         if vorhanden == gewuenscht:
@@ -338,8 +341,8 @@ class AuswertungsFenster(QtWidgets.QDialog):
         if not self._moden_aktiv:
             return ""
         if mode == ALLE_MODEN:
-            return " – alle Moden"
-        return f" – Mode {mode}"
+            return tr(" – alle Moden")
+        return tr(" – Mode {0}", mode)
 
     # --- Auswertung + Darstellung -------------------------------------------
     def aktualisiere(self, ansicht_behalten: bool = True) -> None:
@@ -366,7 +369,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
             self._punkt_b = self._punkt_f = self._punkt_dh = np.array([])
             self._kandidaten_setzen([], [])
             self._auto_ansicht = None
-            self.param_text.setHtml("<p>Keine Fits vorhanden.</p>")
+            self.param_text.setHtml(tr("<p>Keine Fits vorhanden.</p>"))
             self._auswahl_geaendert(zeichnen=False)
             self.canvas.draw_idle()
             return
@@ -401,7 +404,7 @@ class AuswertungsFenster(QtWidgets.QDialog):
         einzeln = len(reihen) == 1
         for r in reihen:
             farbe = self._farbe(r.mode, einzeln)
-            label = "verwendete Fits" if einzeln else f"Mode {r.mode}"
+            label = tr("verwendete Fits") if einzeln else tr("Mode {0}", r.mode)
             # Dispersionsplot: Feld (x) gegen Frequenz (y); Linienbreite ueber dem Feld.
             self.ax_disp.plot(r.b, r.f / 1e9, "o", ms=4.5, color=farbe, mec="white",
                               mew=0.6, label=label)
@@ -417,12 +420,12 @@ class AuswertungsFenster(QtWidgets.QDialog):
                 bb = kittel_oop(ff, kit["mu0Meff"], kit["gamma"])
             linie = F.TEXT if einzeln else farbe
             self.ax_disp.plot(bb, ff / 1e9, "-", color=linie,
-                              label="Kittel-Fit" if einzeln else f"Kittel M{r.mode}")
+                              label=tr("Kittel-Fit") if einzeln else tr("Kittel M{0}", r.mode))
             reihenfolge = np.argsort(r.b)
             self.ax_lb.plot(
                 r.b[reihenfolge],
                 linienbreite(r.f[reihenfolge], llg["mu0Hinh"], llg["alpha"], llg["gamma"]) * 1e3,
-                "-", color=linie, label="LLG-Fit" if einzeln else f"LLG M{r.mode}")
+                "-", color=linie, label=tr("LLG-Fit") if einzeln else tr("LLG M{0}", r.mode))
         ausgeblendet = (self._ausgeblendete_punkte(stapel, modi)
                         if self.chk_ausgeblendete.isChecked() else [])
         if ausgeblendet:
@@ -433,13 +436,13 @@ class AuswertungsFenster(QtWidgets.QDialog):
                             mfc="none", mec=F.NEUTRAL_GRAU, mew=1.0, label="ausgeblendet")
         self._kandidaten_setzen(reihen, ausgeblendet)
         zusatz = self._titel_zusatz(mode)
-        self.ax_disp.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
-        self.ax_disp.set_ylabel("Frequenz (GHz)")
-        self.ax_disp.set_title(f"Dispersion (Kittel, {geometrie}){zusatz}")
+        self.ax_disp.set_xlabel(tr(r"Resonanzfeld $\mu_0 H_{res}$ (T)"))
+        self.ax_disp.set_ylabel(tr("Frequenz (GHz)"))
+        self.ax_disp.set_title(tr("Dispersion (Kittel, {0}){1}", geometrie, zusatz))
         self.ax_disp.legend(fontsize=8)
-        self.ax_lb.set_xlabel(r"Resonanzfeld $\mu_0 H_{res}$ (T)")
-        self.ax_lb.set_ylabel(r"Linienbreite $\mu_0\Delta H$ (mT)")
-        self.ax_lb.set_title(f"Linienbreite (LLG){zusatz}")
+        self.ax_lb.set_xlabel(tr(r"Resonanzfeld $\mu_0 H_{res}$ (T)"))
+        self.ax_lb.set_ylabel(tr(r"Linienbreite $\mu_0\Delta H$ (mT)"))
+        self.ax_lb.set_title(tr("Linienbreite (LLG){0}", zusatz))
         self.ax_lb.legend(fontsize=8)
         for ax in (self.ax_disp, self.ax_lb):
             self._markierung[ax] = ax.plot([], [], "o", ms=10, mfc="none", mec=F.SIGNAL_BLAU,
@@ -488,21 +491,19 @@ class AuswertungsFenster(QtWidgets.QDialog):
 
     def _zeige_parameter(self, stapel, mode: int) -> None:
         paare = list(getattr(stapel, "ausreisser_moden", []))
-        zeilen = [f"<p><b>Punkte:</b> {self._punkt_indizes.size} verwendet, "
-                  f"{len(stapel.ausreisser)} Ausreißer ausgeblendet"
-                  + (f", {len(paare)} Punkt(e) nur je Mode ausgeschlossen" if paare else "")
+        zeilen = [tr("<p><b>Punkte:</b> {0} verwendet, {1} Ausreißer ausgeblendet", self._punkt_indizes.size, len(stapel.ausreisser))
+                  + (tr(", {0} Punkt(e) nur je Mode ausgeschlossen", len(paare)) if paare else "")
                   + "</p>"]
         if self._moden_aktiv:
-            was = "alle Moden" if mode == ALLE_MODEN else f"Mode {mode} (Korridor M{mode})"
+            was = tr("alle Moden") if mode == ALLE_MODEN else tr("Mode {0} (Korridor M{0})", mode)
             zeilen.append(f"<p><b>Mode:</b> {was}</p>")
         mehrere = len(self._reihen) > 1
         irgendein_fit = False
         for r in self._reihen.values():
             if mehrere:
-                zeilen.append(f"<h3 style='color:{self._farbe(r.mode, False)}'>"
-                              f"Mode {r.mode} – {r.n} Punkte</h3>")
+                zeilen.append(tr("<h3 style='color:{0}'>Mode {1} – {2} Punkte</h3>", self._farbe(r.mode, False), r.mode, r.n))
             if r.info is None:
-                zeilen.append(f"<p style='color:{F.TEXT_ROT}'>{r.fehler}</p>")
+                zeilen.append(f"<p style='color:{F.TEXT_ROT}'>{tr(r.fehler)}</p>")
                 continue
             irgendein_fit = True
             kit, llg = r.info["kittel"], r.info["llg"]
@@ -523,17 +524,12 @@ class AuswertungsFenster(QtWidgets.QDialog):
                               f"= {w(kit['mu0Hu'], kit['mu0Hu_err'], 1e3, '.2f')} mT</li>")
             zeilen.append(f"<li>γ = {kit['gamma']:.4e} rad/(s·T)</li>"
                           f"<li>R² = {kit['R2']:.5f}</li></ul>")
-            zeilen.append(f"<{ueberschrift}>LLG (Dämpfung)</{ueberschrift}><ul>"
-                          f"<li>α = {w(llg['alpha'], llg['alpha_err'], fmt='.3e')}</li>"
-                          f"<li>µ₀ΔH<sub>0</sub> (inhomogen) = "
-                          f"{w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f')} mT "
-                          f"= {w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1.0, '.5f')} T</li>"
-                          f"<li>R² = {llg['R2']:.5f}</li></ul>")
+            zeilen.append(tr("<{0}>LLG (Dämpfung)</{0}><ul><li>α = {1}</li><li>µ₀ΔH<sub>0</sub> "
+                             "(inhomogen) = {2} mT = {3} T</li><li>R² = {4:.5f}</li></ul>", ueberschrift, w(llg['alpha'], llg['alpha_err'], fmt='.3e'), w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1e3, '.3f'), w(llg['mu0Hinh'], llg['mu0Hinh_err'], 1.0, '.5f'), llg['R2']))
         if irgendein_fit:
-            modus = "gewichtet" if self._gewichtet else "ungewichtet"
-            zeilen.append(f"<p style='color:{F.TEXT_SCHWACH};font-size:11px'>Kittel-/LLG-Fit "
-                          f"{modus} (umschaltbar: Strg+P). Unsicherheiten der Parameter: "
-                          "im Export.</p>")
+            modus = tr("gewichtet") if self._gewichtet else tr("ungewichtet")
+            zeilen.append(tr("<p style='color:{0};font-size:11px'>Kittel-/LLG-Fit {1} (umschaltbar: "
+                             "Strg+P). Unsicherheiten der Parameter: im Export.</p>", F.TEXT_SCHWACH, modus))
         self.param_text.setHtml("".join(zeilen))
 
     # --- Auswahl / Ausblenden -------------------------------------------------
@@ -570,10 +566,10 @@ class AuswertungsFenster(QtWidgets.QDialog):
         if self._auswahl:
             f_ghz = sorted(self._kand_f[pos] / 1e9)
             liste = ", ".join(f"{f:.2f}" for f in f_ghz[:5]) + (" …" if len(f_ghz) > 5 else "")
-            self.hinweis.setText(f"{len(self._auswahl)} Punkt(e) ausgewählt ({liste} GHz) – "
-                                 "Entf = ausblenden, Esc = Auswahl aufheben")
+            self.hinweis.setText(tr("{0} Punkt(e) ausgewählt ({1} GHz) – Entf = ausblenden, Esc = Auswahl "
+                                    "aufheben", len(self._auswahl), liste))
         else:
-            self.hinweis.setText(_HINWEIS)
+            self.hinweis.setText(tr(_HINWEIS))
         if zeichnen:
             self.canvas.draw_idle()
 
@@ -753,8 +749,8 @@ class AuswertungsFenster(QtWidgets.QDialog):
         if stapel is None or not stapel.ergebnisse:
             return
         pfad, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Auswertung exportieren", "kittel_llg_auswertung.xlsx",
-            "Excel (*.xlsx)")
+            self, tr("Auswertung exportieren"), "kittel_llg_auswertung.xlsx",
+            tr("Excel (*.xlsx)"))
         if not pfad:
             return
         basis, _endung = os.path.splitext(pfad)
@@ -762,4 +758,4 @@ class AuswertungsFenster(QtWidgets.QDialog):
         csv_deutsch = bool(getattr(p, "csv_deutsch", False)) if p is not None else False
         dateien = self.exportiere(basis, csv_deutsch=csv_deutsch)
         QtWidgets.QMessageBox.information(
-            self, "Export", "Gespeichert:\n" + "\n".join(dateien))
+            self, tr("Export"), tr("Gespeichert:\n") + "\n".join(dateien))

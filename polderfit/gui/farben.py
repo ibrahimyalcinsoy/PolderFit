@@ -36,6 +36,7 @@ Klassen unterscheiden koennen (DIN EN ISO 9241-125).
 """
 
 from __future__ import annotations
+from ..sprache import N_, tr
 
 # --- Signalfarben (Bedeutung siehe Modulkopf) -------------------------------
 SIGNAL_ROT = "#D0021B"      # RAL 3020 Verkehrsrot   - Gefahr / schwerer Fehler
@@ -90,22 +91,22 @@ STATUS_MARKER = {
 }
 #: Klartext je Status (Legende, Tooltips, Export).
 STATUS_TEXTE = {
-    "gut": "gut (automatisch)",
-    "bestaetigt": "gut (vom Nutzer bestätigt)",
-    "problem": "problematisch – prüfen",
-    "fehler": "Fit fehlgeschlagen",
-    "ignoriert": "ignoriert (Ausreißer)",
-    "nebenmode": "weitere Resonanz (Nebenmode)",
+    "gut": N_("gut (automatisch)"),
+    "bestaetigt": N_("gut (vom Nutzer bestätigt)"),
+    "problem": N_("problematisch – prüfen"),
+    "fehler": N_("Fit fehlgeschlagen"),
+    "ignoriert": N_("ignoriert (Ausreißer)"),
+    "nebenmode": N_("weitere Resonanz (Nebenmode)"),
 }
 
 #: Kurztexte mit Symbol (Status-Chip im Linescan-Panel).
 STATUS_KURZ = {
-    "gut": "● gut",
-    "bestaetigt": "● gut, bestätigt",
-    "problem": "▲ problematisch",
-    "fehler": "✕ fehlgeschlagen",
-    "ignoriert": "● ignoriert",
-    "nebenmode": "◇ Nebenmode",
+    "gut": N_("● gut"),
+    "bestaetigt": N_("● gut, bestätigt"),
+    "problem": N_("▲ problematisch"),
+    "fehler": N_("✕ fehlgeschlagen"),
+    "ignoriert": N_("● ignoriert"),
+    "nebenmode": N_("◇ Nebenmode"),
 }
 
 #: Farben des Aktivitaetsprotokolls je Meldungsart (gleiche Semantik).

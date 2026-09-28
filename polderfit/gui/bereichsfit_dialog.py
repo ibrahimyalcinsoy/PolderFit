@@ -14,11 +14,12 @@ from __future__ import annotations
 from PySide6 import QtWidgets
 
 from .widgets import RuhigeDoubleSpinBox, RuhigeSpinBox
+from ..sprache import N_, tr
 
 #: Anzeige-Texte des Ueberschreib-Modus (Reihenfolge = Combo-Reihenfolge).
 _MODUS_TEXTE = {
-    "ueberschreiben": "überschreiben (alle Fits im Bereich ersetzen)",
-    "ergaenzen": "ergänzen (nur problematische/ungefittete Fits ersetzen)",
+    "ueberschreiben": N_("überschreiben (alle Fits im Bereich ersetzen)"),
+    "ergaenzen": N_("ergänzen (nur problematische/ungefittete Fits ersetzen)"),
 }
 
 
@@ -41,28 +42,27 @@ class BereichsFitDialog(QtWidgets.QDialog):
         (beim Korridor-Fit nicht - der Korridor ist das Fenster). ``schritt_vorgabe``:
         Jumper "jede n-te Frequenz" anbieten (``None`` = ausblenden)."""
         super().__init__(parent)
-        self.setWindowTitle(titel or "Bereich neu fitten")
+        self.setWindowTitle(titel or tr("Bereich neu fitten"))
         lay = QtWidgets.QVBoxLayout(self)
 
         info = QtWidgets.QLabel(info_text or (
-            f"Rechteck: {feld_min:.3f} – {feld_max:.3f} T, "
-            f"{f_min_ghz:.2f} – {f_max_ghz:.2f} GHz.\n"
-            "Dort werden Fenstersuche und Fit wiederholt; Ergebnisse außerhalb "
-            "bleiben unangetastet."))
+            tr("Rechteck: {0:.3f} – {1:.3f} T, {2:.2f} – {3:.2f} GHz.\n"
+               "Dort werden Fenstersuche und Fit wiederholt; Ergebnisse außerhalb "
+               "bleiben unangetastet.", feld_min, feld_max, f_min_ghz, f_max_ghz)))
         info.setWordWrap(True)
         lay.addWidget(info)
 
         form = QtWidgets.QFormLayout()
         self.modus_combo = QtWidgets.QComboBox()
         for schluessel, text in _MODUS_TEXTE.items():
-            self.modus_combo.addItem(text, schluessel)
+            self.modus_combo.addItem(tr(text), schluessel)
         self.modus_combo.setToolTip(
-            "überschreiben: alle Fits im Bereich neu rechnen.\n"
-            "ergänzen: nur problematische oder noch nicht gefittete Frequenzen.")
+            tr("überschreiben: alle Fits im Bereich neu rechnen.\n"
+            "ergänzen: nur problematische oder noch nicht gefittete Frequenzen."))
         index = self.modus_combo.findData(modus_vorgabe)
         if index >= 0:
             self.modus_combo.setCurrentIndex(index)
-        form.addRow("Modus:", self.modus_combo)
+        form.addRow(tr("Modus:"), self.modus_combo)
 
         # Bereich: Frequenz von/bis, Feld von/bis.
         d_bmin, d_bmax, d_fmin, d_fmax = daten_bereich or (feld_min, feld_max, f_min_ghz, f_max_ghz)
@@ -79,50 +79,50 @@ class BereichsFitDialog(QtWidgets.QDialog):
             box.setToolTip(tip)
             return box
 
-        self.f_von = _spin(d_fmin - spanne_f, d_fmax + spanne_f, f_min_ghz, 3, 0.5, " GHz",
-                           "Untere Frequenzgrenze des Neu-Fits.")
-        self.f_bis = _spin(d_fmin - spanne_f, d_fmax + spanne_f, f_max_ghz, 3, 0.5, " GHz",
-                           "Obere Frequenzgrenze des Neu-Fits.")
-        self.b_von = _spin(d_bmin - spanne_b, d_bmax + spanne_b, feld_min, 4, 0.05, " T",
-                           "Untere Feldgrenze des Neu-Fits (µ₀H in Tesla).")
-        self.b_bis = _spin(d_bmin - spanne_b, d_bmax + spanne_b, feld_max, 4, 0.05, " T",
-                           "Obere Feldgrenze des Neu-Fits (µ₀H in Tesla).")
-        form.addRow("Frequenz von:", self.f_von)
-        form.addRow("Frequenz bis:", self.f_bis)
+        self.f_von = _spin(d_fmin - spanne_f, d_fmax + spanne_f, f_min_ghz, 3, 0.5, tr(" GHz"),
+                           tr("Untere Frequenzgrenze des Neu-Fits."))
+        self.f_bis = _spin(d_fmin - spanne_f, d_fmax + spanne_f, f_max_ghz, 3, 0.5, tr(" GHz"),
+                           tr("Obere Frequenzgrenze des Neu-Fits."))
+        self.b_von = _spin(d_bmin - spanne_b, d_bmax + spanne_b, feld_min, 4, 0.05, tr(" T"),
+                           tr("Untere Feldgrenze des Neu-Fits (µ₀H in Tesla)."))
+        self.b_bis = _spin(d_bmin - spanne_b, d_bmax + spanne_b, feld_max, 4, 0.05, tr(" T"),
+                           tr("Obere Feldgrenze des Neu-Fits (µ₀H in Tesla)."))
+        form.addRow(tr("Frequenz von:"), self.f_von)
+        form.addRow(tr("Frequenz bis:"), self.f_bis)
         if mit_feld:
-            form.addRow("Feld von:", self.b_von)
-            form.addRow("Feld bis:", self.b_bis)
+            form.addRow(tr("Feld von:"), self.b_von)
+            form.addRow(tr("Feld bis:"), self.b_bis)
         self.schritt_spin = RuhigeSpinBox()
         self.schritt_spin.setRange(1, 1000)
         self.schritt_spin.setValue(max(1, int(schritt_vorgabe or 1)))
-        self.schritt_spin.setPrefix("jede ")
-        self.schritt_spin.setSuffix(". Frequenz")
+        self.schritt_spin.setPrefix(tr("jede "))
+        self.schritt_spin.setSuffix(tr(". Frequenz"))
         self.schritt_spin.setToolTip(
-            "Jumper: nur jede n-te Frequenz des Bereichs fitten (schneller;\n"
-            "1 = alle Frequenzen).")
+            tr("Jumper: nur jede n-te Frequenz des Bereichs fitten (schneller;\n"
+            "1 = alle Frequenzen)."))
         if schritt_vorgabe is not None:
-            form.addRow("Jumper:", self.schritt_spin)
-        self.chk_dips_auto = QtWidgets.QCheckBox("Anzahl der Dips je Frequenz automatisch (BIC)")
+            form.addRow(tr("Jumper:"), self.schritt_spin)
+        self.chk_dips_auto = QtWidgets.QCheckBox(tr("Anzahl der Dips je Frequenz automatisch (BIC)"))
         self.chk_dips_auto.setToolTip(
-            "Zusatzoption: je Frequenz werden 1 … n Linien gefittet und das sparsamste\n"
+            tr("Zusatzoption: je Frequenz werden 1 … n Linien gefittet und das sparsamste\n"
             "Modell gewählt, das die Daten erklärt (BIC). Wo weniger Dips sind, entfällt\n"
             "die überzählige Linie. Nur Summenfit; manuelle Trennlinien haben Vorrang.\n"
-            "Rechenzeit etwa 2–3-fach. Aus = Verhalten wie bisher.")
+            "Rechenzeit etwa 2–3-fach. Aus = Verhalten wie bisher."))
         self.chk_dips_auto.setChecked(bool(dips_auto_vorgabe))
         if dips_auto_vorgabe is not None:
             form.addRow("", self.chk_dips_auto)
         lay.addLayout(form)
 
         breite_zeile = QtWidgets.QHBoxLayout()
-        self.chk_breite = QtWidgets.QCheckBox("Fensterbreite fest:")
+        self.chk_breite = QtWidgets.QCheckBox(tr("Fensterbreite fest:"))
         self.chk_breite.setToolTip(
-            "Statt der automatischen Fensterbreite eine feste Breite in\n"
+            tr("Statt der automatischen Fensterbreite eine feste Breite in\n"
             "Feldpunkten um das gefundene Fensterzentrum erzwingen -\n"
-            "der Hebel gegen zu enge Automatik-Fenster.")
+            "der Hebel gegen zu enge Automatik-Fenster."))
         self.breite_spin = RuhigeSpinBox()
         self.breite_spin.setRange(4, 100000)
         self.breite_spin.setValue(breite_vorgabe or 15)
-        self.breite_spin.setSuffix(" Punkte")
+        self.breite_spin.setSuffix(tr(" Punkte"))
         self.breite_spin.setEnabled(breite_vorgabe is not None)
         self.chk_breite.setChecked(breite_vorgabe is not None)
         self.chk_breite.toggled.connect(self.breite_spin.setEnabled)
@@ -138,8 +138,8 @@ class BereichsFitDialog(QtWidgets.QDialog):
 
         knoepfe = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
-        knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText("Neu fitten")
-        knoepfe.button(QtWidgets.QDialogButtonBox.Cancel).setText("Abbrechen")
+        knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText(tr("Neu fitten"))
+        knoepfe.button(QtWidgets.QDialogButtonBox.Cancel).setText(tr("Abbrechen"))
         knoepfe.accepted.connect(self.accept)
         knoepfe.rejected.connect(self.reject)
         lay.addWidget(knoepfe)

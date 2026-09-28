@@ -16,6 +16,7 @@ from PySide6 import QtWidgets
 from ..fit.auswahl import Auswertungsauswahl, parse_bereiche
 from ..io.datensatz import Messdatensatz
 from .widgets import RuhigeComboBox, RuhigeDoubleSpinBox, RuhigeSpinBox as RuhigeSpinBoxWrapper
+from ..sprache import tr
 
 
 class AuswahlDialog(QtWidgets.QDialog):
@@ -30,7 +31,7 @@ class AuswahlDialog(QtWidgets.QDialog):
         sichtbarer Farbplot-Ausschnitt; belegt den Bereich vor (Zoom vor
         letzter Auswahl)."""
         super().__init__(parent)
-        self.setWindowTitle("Auto-Fit: Bereich & Jumper")
+        self.setWindowTitle(tr("Auto-Fit: Bereich & Jumper"))
         self.setModal(True)
         self._datensatz = datensatz
         vorgabe = letzte if letzte is not None else Auswertungsauswahl()
@@ -48,32 +49,32 @@ class AuswahlDialog(QtWidgets.QDialog):
 
         lay = QtWidgets.QVBoxLayout(self)
         kopf = QtWidgets.QLabel(
-            f"Auswertung von <b>{len(datensatz)}</b> Linescans "
-            f"({f_min_ghz:.2f}-{f_max_ghz:.2f} GHz, {b_min:.3f}-{b_max:.3f} T). "
-            f"Unterabtastung beschleunigt; Bereiche grenzen die Auswertung ein. "
-            f"<b>Tipp:</b> Ein enger Feldbereich und „jeder n-te Feldpunkt“ "
-            f"machen den Auto-Fit deutlich schneller – bei mehreren Resonanzen besonders.")
+            tr("Auswertung von <b>{0}</b> Linescans ({1:.2f}-{2:.2f} GHz, "
+               "{3:.3f}-{4:.3f} T). Unterabtastung beschleunigt; Bereiche grenzen die "
+               "Auswertung ein. <b>Tipp:</b> Ein enger Feldbereich und „jeder n-te "
+               "Feldpunkt“ machen den Auto-Fit deutlich schneller – bei mehreren "
+               "Resonanzen besonders.", len(datensatz), f_min_ghz, f_max_ghz, b_min, b_max))
         kopf.setWordWrap(True)
         lay.addWidget(kopf)
 
         # --- Jumper (jeden n-ten Punkt) --------------------------------------
-        grp_n = QtWidgets.QGroupBox("Nur jeden n-ten Messpunkt auswerten")
+        grp_n = QtWidgets.QGroupBox(tr("Nur jeden n-ten Messpunkt auswerten"))
         form_n = QtWidgets.QFormLayout(grp_n)
         self.n_frequenz = QtWidgets.QSpinBox()
         self.n_frequenz.setRange(1, max(1, len(datensatz)))
         self.n_frequenz.setValue(vorgabe.n_frequenz)
-        self.n_frequenz.setToolTip("1 = jede Frequenz; 10 = jede 10. Frequenz (Linescan).")
-        form_n.addRow("Frequenzachse - jeder n-te Linescan:", self.n_frequenz)
+        self.n_frequenz.setToolTip(tr("1 = jede Frequenz; 10 = jede 10. Frequenz (Linescan)."))
+        form_n.addRow(tr("Frequenzachse - jeder n-te Linescan:"), self.n_frequenz)
         self.n_feld = QtWidgets.QSpinBox()
         maximal_feld = max((ls.feld.size for ls in datensatz.linescans), default=1)
         self.n_feld.setRange(1, max(1, maximal_feld // 4))
         self.n_feld.setValue(vorgabe.n_feld)
-        self.n_feld.setToolTip("1 = jeder Feldpunkt; 10 = jeder 10. Punkt je Linescan.")
-        form_n.addRow("Feldachse - jeder n-te Punkt:", self.n_feld)
+        self.n_feld.setToolTip(tr("1 = jeder Feldpunkt; 10 = jeder 10. Punkt je Linescan."))
+        form_n.addRow(tr("Feldachse - jeder n-te Punkt:"), self.n_feld)
         lay.addWidget(grp_n)
 
         # --- Auszuwertender Bereich ------------------------------------------
-        grp_b = QtWidgets.QGroupBox("Auszuwertender Bereich")
+        grp_b = QtWidgets.QGroupBox(tr("Auszuwertender Bereich"))
         form_b = QtWidgets.QFormLayout(grp_b)
 
         def _spin(minimum, maximum, wert, dezimalen, schritt, suffix):
@@ -89,30 +90,30 @@ class AuswahlDialog(QtWidgets.QDialog):
         self.f_min = _spin(f_min_ghz - spanne_f, f_max_ghz + spanne_f,
                            (vorgabe.frequenz_min_hz / 1e9
                             if vorgabe.frequenz_min_hz is not None else f_min_ghz),
-                           3, 0.5, " GHz")
+                           3, 0.5, tr(" GHz"))
         self.f_max = _spin(f_min_ghz - spanne_f, f_max_ghz + spanne_f,
                            (vorgabe.frequenz_max_hz / 1e9
                             if vorgabe.frequenz_max_hz is not None else f_max_ghz),
-                           3, 0.5, " GHz")
-        form_b.addRow("Frequenz von:", self.f_min)
-        form_b.addRow("Frequenz bis:", self.f_max)
+                           3, 0.5, tr(" GHz"))
+        form_b.addRow(tr("Frequenz von:"), self.f_min)
+        form_b.addRow(tr("Frequenz bis:"), self.f_max)
 
         spanne_b = max(b_max - b_min, 1e-9)
         self.b_min = _spin(b_min - spanne_b, b_max + spanne_b,
                            vorgabe.feld_min_t if vorgabe.feld_min_t is not None else b_min,
-                           4, 0.05, " T")
+                           4, 0.05, tr(" T"))
         self.b_max = _spin(b_min - spanne_b, b_max + spanne_b,
                            vorgabe.feld_max_t if vorgabe.feld_max_t is not None else b_max,
-                           4, 0.05, " T")
-        form_b.addRow("Feld von:", self.b_min)
-        form_b.addRow("Feld bis:", self.b_max)
+                           4, 0.05, tr(" T"))
+        form_b.addRow(tr("Feld von:"), self.b_min)
+        form_b.addRow(tr("Feld bis:"), self.b_max)
         roi_zeile = QtWidgets.QHBoxLayout()
-        self.btn_zoom = QtWidgets.QPushButton("Zoom-Ausschnitt übernehmen")
-        self.btn_zoom.setToolTip("Sichtbaren Ausschnitt des Farbplots als Bereich verwenden.")
+        self.btn_zoom = QtWidgets.QPushButton(tr("Zoom-Ausschnitt übernehmen"))
+        self.btn_zoom.setToolTip(tr("Sichtbaren Ausschnitt des Farbplots als Bereich verwenden."))
         self.btn_zoom.setEnabled(zoom_bereich is not None)
         self.btn_zoom.clicked.connect(self._zoom_uebernehmen)
         roi_zeile.addWidget(self.btn_zoom)
-        self.btn_alles = QtWidgets.QPushButton("Ganzer Bereich")
+        self.btn_alles = QtWidgets.QPushButton(tr("Ganzer Bereich"))
         # Gebundene Methoden statt Lambdas: ein Lambda, das ``self`` einfaengt, bildet
         # einen Referenzzyklus, und ein parentloser Dialog wuerde dann erst beim
         # Interpreter-Ende (nach der QApplication) freigegeben -> Absturz.
@@ -125,33 +126,33 @@ class AuswahlDialog(QtWidgets.QDialog):
 
         self.ausschluss = QtWidgets.QLineEdit(
             "; ".join(f"{lo/1e9:g}-{hi/1e9:g}" for lo, hi in vorgabe.frequenz_ausschluss))
-        self.ausschluss.setPlaceholderText("z. B. 3-5; 10.2-11")
+        self.ausschluss.setPlaceholderText(tr("z. B. 3-5; 10.2-11"))
         self.ausschluss.setToolTip(
-            "Frequenzbaender (GHz), die NICHT ausgewertet werden - mehrere mit ';' trennen.")
-        form_b.addRow("Frequenz-Ausschluesse (GHz):", self.ausschluss)
+            tr("Frequenzbaender (GHz), die NICHT ausgewertet werden - mehrere mit ';' trennen."))
+        form_b.addRow(tr("Frequenz-Ausschluesse (GHz):"), self.ausschluss)
         lay.addWidget(grp_b)
 
         # Resonanzen je Fenster (ohne Korridore) und BIC-Option.
-        grp_r = QtWidgets.QGroupBox("Resonanzen")
+        grp_r = QtWidgets.QGroupBox(tr("Resonanzen"))
         form_r = QtWidgets.QFormLayout(grp_r)
         self.dips_spin = RuhigeSpinBoxWrapper()
         self.dips_spin.setRange(1, 4)
         self.dips_spin.setValue(max(1, int(n_dips_vorgabe or 1)))
         self.dips_spin.setToolTip(
-            "Erwartete Zahl nahe beieinander liegender Resonanzen (Dips) im gefundenen\n"
+            tr("Erwartete Zahl nahe beieinander liegender Resonanzen (Dips) im gefundenen\n"
             "Fenster jeder Frequenz. 1 = klassisch. Bei > 1 werden alle Dips wie im\n"
             "Korridor per Summenfit mit Segment-Schranken gefittet (Mode 1 = erster Dip).\n"
-            "Mit vorhandenen Korridoren bestimmen die Korridore die Moden.")
+            "Mit vorhandenen Korridoren bestimmen die Korridore die Moden."))
         if n_dips_vorgabe is not None:
-            form_r.addRow("je Fenster erwartet:", self.dips_spin)
+            form_r.addRow(tr("je Fenster erwartet:"), self.dips_spin)
         else:
-            hinweis_r = QtWidgets.QLabel("Moden = vorhandene Korridore (werden mitgefittet).")
+            hinweis_r = QtWidgets.QLabel(tr("Moden = vorhandene Korridore (werden mitgefittet)."))
             form_r.addRow(hinweis_r)
-        self.chk_dips_auto = QtWidgets.QCheckBox("Anzahl je Frequenz automatisch (BIC)")
+        self.chk_dips_auto = QtWidgets.QCheckBox(tr("Anzahl je Frequenz automatisch (BIC)"))
         self.chk_dips_auto.setToolTip(
-            "Je Frequenz werden 1 … n Linien gefittet und das sparsamste Modell gewählt,\n"
+            tr("Je Frequenz werden 1 … n Linien gefittet und das sparsamste Modell gewählt,\n"
             "das die Daten erklärt. Wo weniger Dips sind, entfällt die überzählige Linie.\n"
-            "Nur Summenfit; manuelle Trennlinien haben Vorrang. Rechenzeit etwa 2–3-fach.")
+            "Nur Summenfit; manuelle Trennlinien haben Vorrang. Rechenzeit etwa 2–3-fach."))
         self.chk_dips_auto.setChecked(bool(dips_auto_vorgabe))
         form_r.addRow("", self.chk_dips_auto)
         self.dips_spin.valueChanged.connect(self._dips_geaendert)
@@ -165,7 +166,7 @@ class AuswahlDialog(QtWidgets.QDialog):
 
         self.knoepfe = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
-        self.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText("Auswertung starten")
+        self.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText(tr("Auswertung starten"))
         self.knoepfe.accepted.connect(self._pruefe_und_akzeptiere)
         self.knoepfe.rejected.connect(self.reject)
         lay.addWidget(self.knoepfe)
@@ -203,7 +204,7 @@ class AuswahlDialog(QtWidgets.QDialog):
     def _zoom_uebernehmen(self) -> None:
         if self._zoom_bereich is not None:
             self.setze_bereich(*self._zoom_bereich)
-            self.bereich_hinweis.setText("Bereich = sichtbarer Farbplot-Ausschnitt (Zoom).")
+            self.bereich_hinweis.setText(tr("Bereich = sichtbarer Farbplot-Ausschnitt (Zoom)."))
 
     def auswahl(self) -> Auswertungsauswahl:
         """Aktuelle Auswahl aus den Dialogfeldern (wirft ValueError bei Parsefehler)."""
@@ -235,7 +236,7 @@ class AuswahlDialog(QtWidgets.QDialog):
             auswahl = self.auswahl()
         except ValueError as fehler:
             self.zusammenfassung.setText(
-                f'<span style="color:#C0392B">{fehler}</span>')
+                tr('<span style="color:#C0392B">{0}</span>', fehler))
             self.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
             return
         n_linescans = auswahl.waehle_indizes(self._datensatz).size
@@ -244,9 +245,8 @@ class AuswahlDialog(QtWidgets.QDialog):
                     if beispiel is not None else 0)
         farbe = "#C0392B" if n_linescans == 0 or n_punkte < 4 else "#2E7D38"
         self.zusammenfassung.setText(
-            f'<span style="color:{farbe}">{auswahl.beschreibung()} - '
-            f'{n_linescans} von {len(self._datensatz)} Linescans, '
-            f'~{n_punkte} Feldpunkte je Linescan.</span>')
+            tr('<span style="color:{0}">{1} - {2} von {3} Linescans, ~{4} Feldpunkte '
+               "je Linescan.</span>", farbe, auswahl.beschreibung(), n_linescans, len(self._datensatz), n_punkte))
         self.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(
             n_linescans > 0 and n_punkte >= 4)
 
@@ -254,6 +254,6 @@ class AuswahlDialog(QtWidgets.QDialog):
         try:
             self.auswahl()
         except ValueError as fehler:
-            QtWidgets.QMessageBox.warning(self, "Auswahl", str(fehler))
+            QtWidgets.QMessageBox.warning(self, tr("Auswahl"), str(fehler))
             return
         self.accept()

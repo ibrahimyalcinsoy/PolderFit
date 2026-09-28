@@ -31,6 +31,8 @@ Linux/macOS: `source .venv/bin/activate` statt `.venv\Scripts\activate`.
 
 TDMS laden → Auto-Fit `F5` → Korridor je Mode `Strg+L` → „Korridor fitten …“ → Kittel/LLG `Strg+K` → Export.
 
+Oberflächensprache: *View/Ansicht → Language / Sprache* (English/Deutsch, Standard English; wirkt nach Neustart).
+
 | Verzeichnis | Inhalt |
 |---|---|
 | `polderfit/` | `io` (TDMS), `physik` (χ, Kittel/LLG), `fit` (AutoWindow, Einzelfit, Korridore), `auswertung`, `persistenz`, `gui` |

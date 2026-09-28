@@ -51,6 +51,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from ..io.datensatz import Messdatensatz
 from ..verarbeitung import ANZEIGE_MODI, Verarbeitungskette, anzeige_transform
 from . import farben as F
+from ..sprache import tr
 
 #: Robuste Farbskala: NaN-feste Perzentile gegen Ausreisser (v. a. nach
 #: derivative divide, wo einzelne Punkte um Groessenordnungen herausragen
@@ -355,15 +356,15 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self.ax.set_facecolor("#FCFCFD")
         for kante in self.ax.spines.values():
             kante.set_color(F.RAND_STARK)
-        self.ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
-        self.ax.set_ylabel("Frequenz (GHz)")
-        self.ax.text(0.5, 0.55, "Keine Messung geladen",
+        self.ax.set_xlabel(tr(r"Feld $\mu_0 H$ (T)"))
+        self.ax.set_ylabel(tr("Frequenz (GHz)"))
+        self.ax.text(0.5, 0.55, tr("Keine Messung geladen"),
                      transform=self.ax.transAxes, ha="center", va="center",
                      fontsize=15, fontweight="bold", color=F.TEXT_SCHWACH)
         self.ax.text(0.5, 0.45,
-                     "Datei → „TDMS laden …“ (Strg+O) öffnet eine Messung.\n"
+                     tr("Datei → „TDMS laden …“ (Strg+O) öffnet eine Messung.\n"
                      "Danach lässt sich die Karte allein zur Datenansicht nutzen\n"
-                     "(Verarbeitung: derivative divide, divide slice, …).",
+                     "(Verarbeitung: derivative divide, divide slice, …)."),
                      transform=self.ax.transAxes, ha="center", va="center",
                      fontsize=10, color=F.TEXT_SCHWACH)
         self._tight_layout_sicher()
@@ -406,20 +407,20 @@ class MatrixAnsicht(FigureCanvasQTAgg):
             self.ax.imshow(matrix, aspect="auto", origin="lower", cmap=self._farbskala,
                            extent=list(self._extent), vmin=vmin, vmax=vmax)
         self.ax.set_autoscale_on(False)  # Overlays/Marker veraendern den Zoom nicht
-        self.ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
-        self.ax.set_ylabel("Frequenz (GHz)")
+        self.ax.set_xlabel(tr(r"Feld $\mu_0 H$ (T)"))
+        self.ax.set_ylabel(tr("Frequenz (GHz)"))
         beschreibung = self._kette.beschreibung() if self._kette is not None else "roh"
-        anzeige = ANZEIGE_MODI.get(self._anzeige_modus, self._anzeige_modus)
+        anzeige = tr(ANZEIGE_MODI.get(self._anzeige_modus, self._anzeige_modus))
         if beschreibung == "roh":
-            titel = f"Übersicht S21 roh · {anzeige}"
+            titel = tr("Übersicht S21 roh · {0}", anzeige)
         else:
-            titel = f"Übersicht S21: {beschreibung} · {anzeige}"
+            titel = tr("Übersicht S21: {0} · {1}", beschreibung, anzeige)
         # Titel darf das Layout nie breiter machen als die Achse: umbrechen.
         self.ax.set_title(titel, fontsize=10, wrap=True)
         hinweis = self.ax.text(
             0.5, -0.13,
-            "klicken = Frequenz · Kästchen ziehen = Zoom · Mausrad = rein/raus · "
-            "Doppelklick = zurück · ↑/↓ · ⇧+Rad · Punkt überfahren = Fit-Info",
+            tr("klicken = Frequenz · Kästchen ziehen = Zoom · Mausrad = rein/raus · "
+            "Doppelklick = zurück · ↑/↓ · ⇧+Rad · Punkt überfahren = Fit-Info"),
             transform=self.ax.transAxes, ha="center", va="top",
             fontsize=7.2, color=F.TEXT_SCHWACH)
         # Vom Layout ausnehmen: sonst wuerde jeder tight_layout-Aufruf die
@@ -634,7 +635,7 @@ class MatrixAnsicht(FigureCanvasQTAgg):
         self._markierung.set_path_effects(
             [pe.Stroke(linewidth=3.4, foreground="#00000088"), pe.Normal()])
         self._marker_label = self.ax.annotate(
-            f"{f_ghz:.2f} GHz", xy=(0.0, f_ghz), xycoords=("axes fraction", "data"),
+            tr("{0:.2f} GHz", f_ghz), xy=(0.0, f_ghz), xycoords=("axes fraction", "data"),
             xytext=(5, 3), textcoords="offset points", color="white", fontsize=8,
             fontweight="bold", zorder=7,
             path_effects=[pe.Stroke(linewidth=2.2, foreground="#00000099"), pe.Normal()])

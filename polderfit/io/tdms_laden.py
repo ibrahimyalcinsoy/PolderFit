@@ -38,6 +38,7 @@ from .kanal_mapping import (
     finde_profil,
     schlage_layout_vor,
 )
+from ..sprache import tr
 
 
 class MappingErforderlich(ValueError):
@@ -413,17 +414,16 @@ class PruefBericht:
     def als_text(self) -> str:
         """Kompakte, menschenlesbare Zusammenfassung fuer Dialog und Protokoll."""
         zeilen = [
-            f"Frequenzen: {self.n_frequenzen}  "
-            f"({self.freq_min_hz/1e9:.3f} – {self.freq_max_hz/1e9:.3f} GHz)",
-            f"Feldpunkte je Linescan: {self.punkte_min} – {self.punkte_max}",
-            f"Feldbereich: {self.feld_min_t:.4f} – {self.feld_max_t:.4f} T",
-            f"NaN-Anteil im Signal: {self.nan_anteil:.2%}",
+            tr("Frequenzen: {0}  ({1:.3f} – {2:.3f} GHz)", self.n_frequenzen, self.freq_min_hz / 1e9, self.freq_max_hz / 1e9),
+            tr("Feldpunkte je Linescan: {0} – {1}", self.punkte_min, self.punkte_max),
+            tr("Feldbereich: {0:.4f} – {1:.4f} T", self.feld_min_t, self.feld_max_t),
+            tr("NaN-Anteil im Signal: {0:.2%}", self.nan_anteil),
         ]
         if self.warnungen:
-            zeilen.append("Warnungen:")
+            zeilen.append(tr("Warnungen:"))
             zeilen.extend(f"  • {w}" for w in self.warnungen)
         else:
-            zeilen.append("Keine Auffaelligkeiten.")
+            zeilen.append(tr("Keine Auffaelligkeiten."))
         return "\n".join(zeilen)
 
 
@@ -435,7 +435,7 @@ def pruefe_datensatz(datensatz: Messdatensatz) -> PruefBericht:
     """
     bericht = PruefBericht(n_frequenzen=len(datensatz))
     if not datensatz.linescans:
-        bericht.warnungen.append("Datensatz enthaelt keine Linescans.")
+        bericht.warnungen.append(tr("Datensatz enthaelt keine Linescans."))
         return bericht
 
     groessen = [ls.feld.size for ls in datensatz.linescans]
@@ -448,13 +448,13 @@ def pruefe_datensatz(datensatz: Messdatensatz) -> PruefBericht:
 
     if bericht.punkte_min < 4:
         bericht.warnungen.append(
-            f"Mindestens ein Linescan hat nur {bericht.punkte_min} Feldpunkte (< 4) – "
-            "zu wenig fuer einen Fit."
+            tr("Mindestens ein Linescan hat nur {0} Feldpunkte (< 4) – zu wenig fuer "
+               "einen Fit.", bericht.punkte_min)
         )
 
     # Frequenzachse: streng aufsteigend und ohne Doppelungen.
     if frequenzen.size > 1 and not np.all(np.diff(frequenzen) > 0):
-        bericht.warnungen.append("Frequenzachse ist nicht streng aufsteigend (Doppelungen?).")
+        bericht.warnungen.append(tr("Frequenzachse ist nicht streng aufsteigend (Doppelungen?)."))
 
     # Feldachse je Linescan: nach dem Laden aufsteigend sortiert; ein konstantes
     # Feld (keinerlei Variation) deutet auf einen falsch zugeordneten Kanal hin.
@@ -464,7 +464,7 @@ def pruefe_datensatz(datensatz: Messdatensatz) -> PruefBericht:
     )
     if nicht_monoton:
         bericht.warnungen.append(
-            f"{nicht_monoton} Linescan(s) mit nicht aufsteigender Feldachse."
+            tr("{0} Linescan(s) mit nicht aufsteigender Feldachse.", nicht_monoton)
         )
     konstant = sum(
         1 for ls in datensatz.linescans
@@ -472,7 +472,7 @@ def pruefe_datensatz(datensatz: Messdatensatz) -> PruefBericht:
     )
     if konstant:
         bericht.warnungen.append(
-            f"{konstant} Linescan(s) mit konstantem Feld – Feldkanal richtig zugeordnet?"
+            tr("{0} Linescan(s) mit konstantem Feld – Feldkanal richtig zugeordnet?", konstant)
         )
 
     # NaN-Anteil ueber Feld und Signal.
@@ -485,7 +485,7 @@ def pruefe_datensatz(datensatz: Messdatensatz) -> PruefBericht:
     bericht.nan_anteil = (n_nan / n_werte) if n_werte else 0.0
     if n_nan:
         bericht.warnungen.append(
-            f"{n_nan} nicht-endliche Werte (NaN/Inf) in Feld/Signal ({bericht.nan_anteil:.2%})."
+            tr("{0} nicht-endliche Werte (NaN/Inf) in Feld/Signal ({1:.2%}).", n_nan, bericht.nan_anteil)
         )
 
     return bericht

@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
+from ..sprache import tr
 
 
 class NavigatorAnsicht(FigureCanvasQTAgg):
@@ -52,7 +53,7 @@ class NavigatorAnsicht(FigureCanvasQTAgg):
         self.ax.set_autoscale_on(False)
         self.ax.set_xticks([])
         self.ax.set_yticks([])
-        self.ax.set_title("Navigator – Gesamtübersicht", fontsize=8)
+        self.ax.set_title(tr("Navigator – Gesamtübersicht"), fontsize=8)
         self._extent = extent
         self._rect = None
         self._viewport = None

@@ -19,6 +19,7 @@ import threading
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import polderfit
+from ..sprache import tr
 
 #: Wurzelpfad des Pakets – der Filter lässt nur Frames aus diesem Baum durch.
 _PAKET_PFAD = os.path.dirname(os.path.abspath(polderfit.__file__))
@@ -97,14 +98,14 @@ class TracePanel(QtWidgets.QWidget):
         lay.setContentsMargins(10, 8, 10, 10)
 
         kopf = QtWidgets.QHBoxLayout()
-        self.chk_aktiv = QtWidgets.QCheckBox("Tracing aktiv")
+        self.chk_aktiv = QtWidgets.QCheckBox(tr("Tracing aktiv"))
         self.chk_aktiv.setToolTip(
-            "Zeigt live, welche polderfit-Funktionen aufgerufen werden. Nur zur "
-            "Fehlersuche einschalten – das Profiling kostet Rechenzeit.")
+            tr("Zeigt live, welche polderfit-Funktionen aufgerufen werden. Nur zur "
+            "Fehlersuche einschalten – das Profiling kostet Rechenzeit."))
         self.chk_aktiv.toggled.connect(self._umschalten)
         kopf.addWidget(self.chk_aktiv)
         kopf.addStretch(1)
-        leeren = QtWidgets.QPushButton("Leeren")
+        leeren = QtWidgets.QPushButton(tr("Leeren"))
         leeren.clicked.connect(lambda: self.ansicht.clear())
         kopf.addWidget(leeren)
         lay.addLayout(kopf)

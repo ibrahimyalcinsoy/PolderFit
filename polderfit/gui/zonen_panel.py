@@ -19,6 +19,7 @@ from PySide6 import QtCore, QtWidgets
 
 from ..fit.korridor import METHODEN_TEXTE
 from .widgets import RuhigeComboBox, RuhigeSpinBox
+from ..sprache import tr
 
 
 class ZonenPanel(QtWidgets.QWidget):
@@ -72,46 +73,46 @@ class ZonenPanel(QtWidgets.QWidget):
         lay.setSpacing(8)
 
         # --- Korridore (Moden) ---------------------------------------------------
-        grp_k = QtWidgets.QGroupBox("Korridore (Moden)")
+        grp_k = QtWidgets.QGroupBox(tr("Korridore (Moden)"))
         grp_k.setToolTip(
-            "Je Mode ein Korridor entlang der Resonanz. Jede Mode wird NUR auf den\n"
+            tr("Je Mode ein Korridor entlang der Resonanz. Jede Mode wird NUR auf den\n"
             "Messpunkten ihres Korridors gefittet (Einzelfit, kein Summenfit).\n"
             "Ohne Korridor gilt für Mode 1 das AutoWindow-Fenster des Auto-Fits.\n"
-            "Die gewählte Zeile ist die Mode im Linescan-Panel.")
+            "Die gewählte Zeile ist die Mode im Linescan-Panel."))
         k_lay = QtWidgets.QVBoxLayout(grp_k)
 
         self.korridor_liste = QtWidgets.QListWidget()
         self.korridor_liste.setMaximumHeight(96)
-        self.korridor_liste.setToolTip("Gewählte Zeile = Mode im Linescan-Panel.")
+        self.korridor_liste.setToolTip(tr("Gewählte Zeile = Mode im Linescan-Panel."))
         self.korridor_liste.currentRowChanged.connect(self._zeile_gewaehlt)
         k_lay.addWidget(self.korridor_liste)
 
         zeile1 = QtWidgets.QHBoxLayout()
-        self.btn_neu = QtWidgets.QPushButton("Korridor anlegen")
+        self.btn_neu = QtWidgets.QPushButton(tr("Korridor anlegen"))
         self.btn_neu.setCheckable(True)
         self.btn_neu.setToolTip(
-            "Zwei Punkte entlang der Resonanz im Farbplot klicken → neuer Korridor\n"
-            "± Breite (nächste Mode-Nummer). Esc oder erneuter Klick bricht ab.")
+            tr("Zwei Punkte entlang der Resonanz im Farbplot klicken → neuer Korridor\n"
+            "± Breite (nächste Mode-Nummer). Esc oder erneuter Klick bricht ab."))
         self.btn_neu.toggled.connect(self._korridor_umgeschaltet)
         zeile1.addWidget(self.btn_neu, 1)
         self.breite_spin = RuhigeSpinBox()
         self.breite_spin.setRange(1, 500)
         self.breite_spin.setValue(10)
         self.breite_spin.setPrefix("± ")
-        self.breite_spin.setSuffix(" mT")
+        self.breite_spin.setSuffix(tr(" mT"))
         self.breite_spin.setToolTip(
-            "Halbe Korridorbreite (eng halten): gilt für den gewählten Korridor – Ändern\n"
-            "setzt alle seine Anker sofort auf Mitte ± Wert – und für neu angelegte.")
+            tr("Halbe Korridorbreite (eng halten): gilt für den gewählten Korridor – Ändern\n"
+            "setzt alle seine Anker sofort auf Mitte ± Wert – und für neu angelegte."))
         self.breite_spin.valueChanged.connect(self._breite_gewaehlt)
         zeile1.addWidget(self.breite_spin)
         k_lay.addLayout(zeile1)
 
         zeile_d = QtWidgets.QHBoxLayout()
-        lbl_d = QtWidgets.QLabel("Resonanzen im Korridor:")
+        lbl_d = QtWidgets.QLabel(tr("Resonanzen im Korridor:"))
         lbl_d.setToolTip(
-            "Vorgabe: so viele Dips liegen in diesem Korridor. Bei > 1 wird der Korridor\n"
+            tr("Vorgabe: so viele Dips liegen in diesem Korridor. Bei > 1 wird der Korridor\n"
             "je Frequenz zwischen den Dips hart getrennt (Hard Crop) und jeder Dip einzeln\n"
-            "gefittet - kein Summenfit. Jeder Dip bekommt eine eigene Mode-Nummer.")
+            "gefittet - kein Summenfit. Jeder Dip bekommt eine eigene Mode-Nummer."))
         zeile_d.addWidget(lbl_d, 1)
         self.dips_spin = RuhigeSpinBox()
         self.dips_spin.setRange(1, 4)
@@ -124,27 +125,27 @@ class ZonenPanel(QtWidgets.QWidget):
         for schluessel, text in METHODEN_TEXTE.items():
             self.methode_combo.addItem(text, schluessel)
         self.methode_combo.setToolTip(
-            "harte Trennung: Korridor wird je Frequenz zwischen den Dips getrennt, jeder\n"
+            tr("harte Trennung: Korridor wird je Frequenz zwischen den Dips getrennt, jeder\n"
             "Dip einzeln gefittet (Nachbar-Dip abgezogen).\n"
             "Summenfit: alle Dips gemeinsam auf den Korridorpunkten, jedes B_res hart auf\n"
-            "sein Segment beschränkt (gemeinsamer Untergrund).")
+            "sein Segment beschränkt (gemeinsamer Untergrund)."))
         self.methode_combo.currentIndexChanged.connect(self._dips_gewaehlt)
         self.methode_combo.setVisible(False)
         k_lay.addWidget(self.methode_combo)
         zeile_t = QtWidgets.QHBoxLayout()
-        self.btn_trenner = QtWidgets.QPushButton("Trennlinie setzen")
+        self.btn_trenner = QtWidgets.QPushButton(tr("Trennlinie setzen"))
         self.btn_trenner.setCheckable(True)
         self._trenner_tip = (
-            "Im Linescan-Panel zwischen zwei Dips klicken → gelbe Trennlinie (harte\n"
+            tr("Im Linescan-Panel zwischen zwei Dips klicken → gelbe Trennlinie (harte\n"
             "Grenze). Sie wandert entlang der Mode mit (relativ zur Korridormitte) und\n"
             "gilt für alle Fits dieses Korridors; an anderen Frequenzen nachsetzen oder\n"
-            "ziehen, wenn sie abweicht. Esc oder erneuter Klick auf den Knopf beendet.")
+            "ziehen, wenn sie abweicht. Esc oder erneuter Klick auf den Knopf beendet."))
         self.btn_trenner.setToolTip(self._trenner_tip)
         self.btn_trenner.toggled.connect(
             lambda an: self._cb_trenner_umschalten and self._cb_trenner_umschalten(bool(an)))
         zeile_t.addWidget(self.btn_trenner, 1)
-        self.btn_trenner_loeschen = QtWidgets.QPushButton("löschen")
-        self.btn_trenner_loeschen.setToolTip("Trennlinien an der angezeigten Frequenz löschen.")
+        self.btn_trenner_loeschen = QtWidgets.QPushButton(tr("löschen"))
+        self.btn_trenner_loeschen.setToolTip(tr("Trennlinien an der angezeigten Frequenz löschen."))
         self.btn_trenner_loeschen.clicked.connect(
             lambda: self._cb_trenner_loeschen and self._cb_trenner_loeschen())
         zeile_t.addWidget(self.btn_trenner_loeschen)
@@ -156,27 +157,27 @@ class ZonenPanel(QtWidgets.QWidget):
         zeile2 = QtWidgets.QHBoxLayout()
         # "Anker setzen" ist kein Knopf mehr: Anker entstehen durch Ziehen der
         # gruenen Grenzen im Linescan-Panel oder der Griffe im Farbplot.
-        self.btn_anker = QtWidgets.QPushButton("Anker setzen")
+        self.btn_anker = QtWidgets.QPushButton(tr("Anker setzen"))
         self.btn_anker.setCheckable(True)
         self.btn_anker.toggled.connect(self._anker_umgeschaltet)
         self.btn_anker.setVisible(False)
-        self.btn_entfernen = QtWidgets.QPushButton("Entfernen")
+        self.btn_entfernen = QtWidgets.QPushButton(tr("Entfernen"))
         self.btn_entfernen.setToolTip(
-            "Gewählte Zeile entfernen: Korridor samt Fits seiner Moden, bei Auto-Fit-Moden\n"
-            "(ohne Korridor) nur die Fits dieser Mode. Rückgängig mit Strg+Z.")
+            tr("Gewählte Zeile entfernen: Korridor samt Fits seiner Moden, bei Auto-Fit-Moden\n"
+            "(ohne Korridor) nur die Fits dieser Mode. Rückgängig mit Strg+Z."))
         self.btn_entfernen.clicked.connect(self._entfernen_geklickt)
         zeile2.addWidget(self.btn_entfernen, 1)
         k_lay.addLayout(zeile2)
 
         zeile3 = QtWidgets.QHBoxLayout()
-        self.btn_fit = QtWidgets.QPushButton("Korridor fitten …")
+        self.btn_fit = QtWidgets.QPushButton(tr("Korridor fitten …"))
         self.btn_fit.setToolTip(
-            "Gewählte Mode an allen Frequenzen im Korridor fitten (Einzelfit je\n"
-            "Frequenz, nur Punkte im Korridor). Dialog: Frequenzbereich, Modus, Jumper.")
+            tr("Gewählte Mode an allen Frequenzen im Korridor fitten (Einzelfit je\n"
+            "Frequenz, nur Punkte im Korridor). Dialog: Frequenzbereich, Modus, Jumper."))
         self.btn_fit.clicked.connect(lambda: self._cb_korridor_fit and self._cb_korridor_fit(self.mode_aktiv()))
         zeile3.addWidget(self.btn_fit, 1)
-        self.btn_fit_alle = QtWidgets.QPushButton("Alle")
-        self.btn_fit_alle.setToolTip("Alle Korridore nacheinander fitten.")
+        self.btn_fit_alle = QtWidgets.QPushButton(tr("Alle"))
+        self.btn_fit_alle.setToolTip(tr("Alle Korridore nacheinander fitten."))
         self.btn_fit_alle.clicked.connect(lambda: self._cb_korridor_fit and self._cb_korridor_fit(None))
         zeile3.addWidget(self.btn_fit_alle)
         k_lay.addLayout(zeile3)
@@ -184,21 +185,21 @@ class ZonenPanel(QtWidgets.QWidget):
         lay.addWidget(grp_k)
 
         # --- Ausschlusszonen --------------------------------------------------
-        grp_zonen = QtWidgets.QGroupBox("Ausschlusszonen")
+        grp_zonen = QtWidgets.QGroupBox(tr("Ausschlusszonen"))
         grp_zonen.setToolTip(
-            "Messpunkte in einer Zone (Rechteck Feld × Frequenz) werden aus ALLEN\n"
-            "(Nach-)Fits ausgenommen; betroffene Linescans rechnen sofort neu.")
+            tr("Messpunkte in einer Zone (Rechteck Feld × Frequenz) werden aus ALLEN\n"
+            "(Nach-)Fits ausgenommen; betroffene Linescans rechnen sofort neu."))
         zonen_lay = QtWidgets.QVBoxLayout(grp_zonen)
-        self.btn_zone = QtWidgets.QPushButton("Zone einzeichnen")
+        self.btn_zone = QtWidgets.QPushButton(tr("Zone einzeichnen"))
         self.btn_zone.setCheckable(True)
-        self.btn_zone.setToolTip("Rechteck im Farbplot aufziehen. Esc oder erneuter Klick bricht ab.")
+        self.btn_zone.setToolTip(tr("Rechteck im Farbplot aufziehen. Esc oder erneuter Klick bricht ab."))
         self.btn_zone.toggled.connect(self._zone_umgeschaltet)
         zonen_lay.addWidget(self.btn_zone)
         self.zonen_liste = QtWidgets.QListWidget()
         self.zonen_liste.setMaximumHeight(90)
         zonen_lay.addWidget(self.zonen_liste)
-        self.btn_zone_entfernen = QtWidgets.QPushButton("Zone entfernen")
-        self.btn_zone_entfernen.setToolTip("Gewählte (sonst zuletzt gezeichnete) Zone entfernen.")
+        self.btn_zone_entfernen = QtWidgets.QPushButton(tr("Zone entfernen"))
+        self.btn_zone_entfernen.setToolTip(tr("Gewählte (sonst zuletzt gezeichnete) Zone entfernen."))
         self.btn_zone_entfernen.clicked.connect(self._zone_entfernen_geklickt)
         zonen_lay.addWidget(self.btn_zone_entfernen)
         grp_zonen.setVisible(False)   # Zonen nur noch ueber Menue Funktionen (Strg+Z = rueckgaengig)
@@ -212,8 +213,7 @@ class ZonenPanel(QtWidgets.QWidget):
         self.zonen_liste.clear()
         for zone in zonen:
             self.zonen_liste.addItem(
-                f"{zone.feld_min:.3f}–{zone.feld_max:.3f} T, "
-                f"{zone.frequenz_min/1e9:.2f}–{zone.frequenz_max/1e9:.2f} GHz")
+                tr("{0:.3f}–{1:.3f} T, {2:.2f}–{3:.2f} GHz", zone.feld_min, zone.feld_max, zone.frequenz_min / 1e9, zone.frequenz_max / 1e9))
 
     def setze_korridore(self, korridore, statistik: dict | None = None,
                         extra_moden=None) -> None:
@@ -240,9 +240,9 @@ class ZonenPanel(QtWidgets.QWidget):
             if m in moden or m == 1:
                 continue
             stat = statistik.get(m)
-            text = f"M{m} · Auto-Fit (Resonanz {m} je Fenster)"
+            text = tr("M{0} · Auto-Fit (Resonanz {0} je Fenster)", m)
             if stat:
-                text += f" · {stat[0]} Fits" + (f" ({stat[1]} ⚠)" if stat[1] else "")
+                text += tr(" · {0} Fits", stat[0]) + (f" ({stat[1]} ⚠)" if stat[1] else "")
             item = QtWidgets.QListWidgetItem(text)
             item.setData(QtCore.Qt.UserRole, int(m))
             self.korridor_liste.addItem(item)
@@ -253,9 +253,9 @@ class ZonenPanel(QtWidgets.QWidget):
             self.korridor_liste.addItem(item)
             for j, m in enumerate(k.moden[1:], start=2):
                 stat = statistik.get(m)
-                text = f"   ↳ M{m} · Dip {j} von {len(k.moden)}"
+                text = tr("   ↳ M{0} · Dip {1} von {2}", m, j, len(k.moden))
                 if stat:
-                    text += f" · {stat[0]} Fits" + (f" ({stat[1]} ⚠)" if stat[1] else "")
+                    text += tr(" · {0} Fits", stat[0]) + (f" ({stat[1]} ⚠)" if stat[1] else "")
                 sub = QtWidgets.QListWidgetItem(text)
                 sub.setData(QtCore.Qt.UserRole, int(m))
                 self.korridor_liste.addItem(sub)
@@ -272,15 +272,15 @@ class ZonenPanel(QtWidgets.QWidget):
     @staticmethod
     def _zeile_text(mode: int, korridor, stat) -> str:
         if korridor is None:
-            text = f"M{mode} · AutoWindow (kein Korridor)"
+            text = tr("M{0} · AutoWindow (kein Korridor)", mode)
         else:
             n = len(korridor.anker)
-            text = f"M{mode} · {n} Anker"
+            text = tr("M{0} · {1} Anker", mode, n)
             if korridor.n_dips > 1:
-                text += f" · {korridor.n_dips} Dips"
+                text += tr(" · {0} Dips", korridor.n_dips)
         if stat:
             n_fit, n_prob = stat
-            text += f" · {n_fit} Fits" + (f" ({n_prob} ⚠)" if n_prob else "")
+            text += tr(" · {0} Fits", n_fit) + (f" ({n_prob} ⚠)" if n_prob else "")
         return text
 
     def mode_aktiv(self) -> int:
@@ -349,7 +349,7 @@ class ZonenPanel(QtWidgets.QWidget):
 
         self.trenner_box.setEnabled(mehrere)
         self.btn_trenner.setToolTip(self._trenner_tip if mehrere else
-                                    "Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen.")
+                                    tr("Erst „Resonanzen im Korridor“ auf 2 oder mehr stellen."))
         self.btn_anker.setEnabled(hat)
         self.btn_trenner.setEnabled(hat and self.korridor_aktiv().n_dips > 1)
         self.btn_fit.setEnabled(hat)

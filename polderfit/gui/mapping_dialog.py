@@ -30,14 +30,15 @@ from ..io.kanal_mapping import (
     standard_profil_verzeichnis,
 )
 from ..io.tdms_laden import PruefBericht
+from ..sprache import N_, tr
 
 #: Anzeige-Text fuer "Rolle nicht zugeordnet" (nur optionale Rollen).
-_KEINE = "(nicht zugeordnet)"
+_KEINE = N_("(nicht zugeordnet)")
 
 #: Anzeige-Texte der Speicher-Layouts.
 _LAYOUT_TEXTE = {
-    "unsortiert": "unsortiert/roh (Matrix: je Feldschritt ein Frequenzsweep)",
-    "sortiert": "sortiert/vorverarbeitet (ein Eintrag je Messpunkt)",
+    "unsortiert": N_("unsortiert/roh (Matrix: je Feldschritt ein Frequenzsweep)"),
+    "sortiert": N_("sortiert/vorverarbeitet (ein Eintrag je Messpunkt)"),
 }
 
 
@@ -48,7 +49,7 @@ class MappingDialog(QtWidgets.QDialog):
                  profile: list[MappingProfil], vorschlag: MappingProfil | None = None,
                  parent=None):
         super().__init__(parent)
-        self.setWindowTitle("TDMS-Kanaele zuordnen")
+        self.setWindowTitle(tr("TDMS-Kanaele zuordnen"))
         self.setModal(True)
         self.resize(680, 520)
         # Erst nach dem vollstaendigen Aufbau darf _pruefe() laufen: das Fuellen
@@ -62,25 +63,25 @@ class MappingDialog(QtWidgets.QDialog):
         lay = QtWidgets.QVBoxLayout(self)
 
         kopf = QtWidgets.QLabel(
-            f"<b>{Path(pfad).name}</b> – bitte die Kanaele den Rollen zuordnen. "
-            f"Pflichtrollen sind mit * markiert.")
+            tr("<b>{0}</b> – bitte die Kanaele den Rollen zuordnen. Pflichtrollen "
+               "sind mit * markiert.", Path(pfad).name))
         kopf.setWordWrap(True)
         lay.addWidget(kopf)
 
         # Profil-Zeile: anwenden / speichern / laden.
         profil_reihe = QtWidgets.QHBoxLayout()
-        profil_reihe.addWidget(QtWidgets.QLabel("Profil:"))
+        profil_reihe.addWidget(QtWidgets.QLabel(tr("Profil:")))
         self.profil_combo = QtWidgets.QComboBox()
-        self.profil_combo.addItem("– manuell / Heuristik –", None)
+        self.profil_combo.addItem(tr("– manuell / Heuristik –"), None)
         for p in self._profile:
             passt = " ✓" if p.passt_auf(struktur) else ""
             self.profil_combo.addItem(p.name + passt, p)
         self.profil_combo.currentIndexChanged.connect(self._profil_gewaehlt)
         profil_reihe.addWidget(self.profil_combo, 1)
-        btn_speichern = QtWidgets.QPushButton("Profil speichern …")
+        btn_speichern = QtWidgets.QPushButton(tr("Profil speichern …"))
         btn_speichern.clicked.connect(self._profil_speichern)
         profil_reihe.addWidget(btn_speichern)
-        btn_laden = QtWidgets.QPushButton("Profil laden …")
+        btn_laden = QtWidgets.QPushButton(tr("Profil laden …"))
         btn_laden.clicked.connect(self._profil_laden)
         profil_reihe.addWidget(btn_laden)
         lay.addLayout(profil_reihe)
@@ -89,18 +90,18 @@ class MappingDialog(QtWidgets.QDialog):
         gitter = QtWidgets.QGridLayout()
         gitter.setColumnStretch(1, 1)
         gitter.setColumnStretch(2, 1)
-        gitter.addWidget(QtWidgets.QLabel("<i>Rolle</i>"), 0, 0)
-        gitter.addWidget(QtWidgets.QLabel("<i>Gruppe</i>"), 0, 1)
-        gitter.addWidget(QtWidgets.QLabel("<i>Kanal</i>"), 0, 2)
+        gitter.addWidget(QtWidgets.QLabel(tr("<i>Rolle</i>")), 0, 0)
+        gitter.addWidget(QtWidgets.QLabel(tr("<i>Gruppe</i>")), 0, 1)
+        gitter.addWidget(QtWidgets.QLabel(tr("<i>Kanal</i>")), 0, 2)
         self._gruppe_combos: dict[str, QtWidgets.QComboBox] = {}
         self._kanal_combos: dict[str, QtWidgets.QComboBox] = {}
         for zeile, rolle in enumerate(ROLLEN, start=1):
             stern = " *" if rolle.erforderlich else ""
-            gitter.addWidget(QtWidgets.QLabel(rolle.label + stern), zeile, 0)
+            gitter.addWidget(QtWidgets.QLabel(tr(rolle.label) + stern), zeile, 0)
 
             g_combo = QtWidgets.QComboBox()
             if not rolle.erforderlich:
-                g_combo.addItem(_KEINE)
+                g_combo.addItem(tr(_KEINE))
             g_combo.addItems(self._gruppen)
             g_combo.currentTextChanged.connect(
                 lambda _t, r=rolle.name: self._fuelle_kanaele(r))
@@ -116,11 +117,11 @@ class MappingDialog(QtWidgets.QDialog):
 
         # Layout-Wahl.
         layout_reihe = QtWidgets.QHBoxLayout()
-        layout_reihe.addWidget(QtWidgets.QLabel("Speicher-Layout:"))
+        layout_reihe.addWidget(QtWidgets.QLabel(tr("Speicher-Layout:")))
         self.layout_combo = QtWidgets.QComboBox()
-        self.layout_combo.addItem("automatisch aus Kanal-Laengen", None)
+        self.layout_combo.addItem(tr("automatisch aus Kanal-Laengen"), None)
         for l in LAYOUTS:
-            self.layout_combo.addItem(_LAYOUT_TEXTE[l], l)
+            self.layout_combo.addItem(tr(_LAYOUT_TEXTE[l]), l)
         self.layout_combo.currentIndexChanged.connect(lambda _i: self._pruefe())
         layout_reihe.addWidget(self.layout_combo, 1)
         lay.addLayout(layout_reihe)
@@ -132,7 +133,7 @@ class MappingDialog(QtWidgets.QDialog):
 
         self.knoepfe = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
-        self.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText("Weiter zur Vorschau")
+        self.knoepfe.button(QtWidgets.QDialogButtonBox.Ok).setText(tr("Weiter zur Vorschau"))
         self.knoepfe.accepted.connect(self.accept)
         self.knoepfe.rejected.connect(self.reject)
         lay.addWidget(self.knoepfe)
@@ -158,7 +159,7 @@ class MappingDialog(QtWidgets.QDialog):
         for rolle in ROLLEN:
             gruppe = self._gruppe_combos[rolle.name].currentText()
             kanal = self._kanal_combos[rolle.name].currentData()
-            if gruppe == _KEINE or not kanal:
+            if gruppe == tr(_KEINE) or not kanal:
                 continue
             ergebnis[rolle.name] = (gruppe, kanal)
         return ergebnis
@@ -181,7 +182,7 @@ class MappingDialog(QtWidgets.QDialog):
             g_combo = self._gruppe_combos[rolle.name]
             if paar is None:
                 if not rolle.erforderlich:
-                    g_combo.setCurrentText(_KEINE)
+                    g_combo.setCurrentText(tr(_KEINE))
                 continue
             gruppe, kanal = paar
             if gruppe not in self._struktur:
@@ -201,9 +202,9 @@ class MappingDialog(QtWidgets.QDialog):
         k_combo = self._kanal_combos[rollen_name]
         k_combo.blockSignals(True)
         k_combo.clear()
-        if gruppe != _KEINE and gruppe in self._struktur:
+        if gruppe != tr(_KEINE) and gruppe in self._struktur:
             for kanal, laenge in self._struktur[gruppe].items():
-                k_combo.addItem(f"{kanal}  ({laenge} Werte)", kanal)
+                k_combo.addItem(tr("{0}  ({1} Werte)", kanal, laenge), kanal)
         k_combo.blockSignals(False)
         self._pruefe()
 
@@ -218,24 +219,24 @@ class MappingDialog(QtWidgets.QDialog):
         fehlt = fehlende_rollen(self._struktur, zuordnung)
         if fehlt:
             QtWidgets.QMessageBox.warning(
-                self, "Profil speichern",
-                f"Zuordnung unvollstaendig (fehlende Pflichtrollen: {', '.join(fehlt)}).")
+                self, tr("Profil speichern"),
+                tr("Zuordnung unvollstaendig (fehlende Pflichtrollen: {0}).", ', '.join(fehlt)))
             return
         name, ok = QtWidgets.QInputDialog.getText(
-            self, "Profil speichern", "Profilname (z. B. Messrechner-Bezeichnung):")
+            self, tr("Profil speichern"), tr("Profilname (z. B. Messrechner-Bezeichnung):"))
         if not ok or not name.strip():
             return
         name = name.strip()
         layout = self.layout() or schlage_layout_vor(self._struktur, zuordnung)
         if layout is None:
             QtWidgets.QMessageBox.warning(
-                self, "Profil speichern",
-                "Layout nicht automatisch bestimmbar – bitte explizit waehlen.")
+                self, tr("Profil speichern"),
+                tr("Layout nicht automatisch bestimmbar – bitte explizit waehlen."))
             return
         verzeichnis = standard_profil_verzeichnis()
         vorgabe = verzeichnis / (name.replace(" ", "_") + ".json")
         pfad, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Profil speichern", str(vorgabe), "JSON (*.json)")
+            self, tr("Profil speichern"), str(vorgabe), tr("JSON (*.json)"))
         if not pfad:
             return
         profil = MappingProfil(name=name, layout=layout, zuordnung=zuordnung)
@@ -246,13 +247,13 @@ class MappingDialog(QtWidgets.QDialog):
 
     def _profil_laden(self) -> None:
         pfad, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Profil laden", str(standard_profil_verzeichnis()), "JSON (*.json)")
+            self, tr("Profil laden"), str(standard_profil_verzeichnis()), tr("JSON (*.json)"))
         if not pfad:
             return
         try:
             profil = lade_profil(pfad)
         except Exception as fehler:
-            QtWidgets.QMessageBox.warning(self, "Profil laden", str(fehler))
+            QtWidgets.QMessageBox.warning(self, tr("Profil laden"), str(fehler))
             return
         self._profile.append(profil)
         passt = " ✓" if profil.passt_auf(self._struktur) else ""
@@ -268,21 +269,21 @@ class MappingDialog(QtWidgets.QDialog):
         meldungen: list[str] = []
         if fehlt:
             labels = [ROLLEN[[r.name for r in ROLLEN].index(f)].label for f in fehlt]
-            meldungen.append("Fehlende Pflichtrollen: " + ", ".join(labels))
+            meldungen.append(tr("Fehlende Pflichtrollen: ") + ", ".join(labels))
         vorschlag = schlage_layout_vor(self._struktur, zuordnung)
         if self.layout_combo.currentData() is None:
             if vorschlag is not None:
-                meldungen.append(f"Layout-Vorschlag: {_LAYOUT_TEXTE[vorschlag]}")
+                meldungen.append(tr("Layout-Vorschlag: {0}", tr(_LAYOUT_TEXTE[vorschlag])))
             elif not fehlt:
                 meldungen.append(
-                    "Layout nicht automatisch bestimmbar (Kanal-Laengen passen zu "
-                    "keinem bekannten Muster) – bitte explizit waehlen.")
+                    tr("Layout nicht automatisch bestimmbar (Kanal-Laengen passen zu "
+                    "keinem bekannten Muster) – bitte explizit waehlen."))
         # Doppelt vergebene Kanaele sind fast immer ein Versehen.
         paare = list(zuordnung.values())
         doppelte = {p for p in paare if paare.count(p) > 1}
         if doppelte:
             meldungen.append(
-                "Achtung: derselbe Kanal ist mehreren Rollen zugeordnet: "
+                tr("Achtung: derselbe Kanal ist mehreren Rollen zugeordnet: ")
                 + ", ".join(f"{g}/{k}" for g, k in sorted(doppelte)))
         ok_erlaubt = not fehlt and (
             self.layout_combo.currentData() is not None or vorschlag is not None)
@@ -291,7 +292,7 @@ class MappingDialog(QtWidgets.QDialog):
             knopf.setEnabled(ok_erlaubt)
         farbe = "#C0392B" if (fehlt or doppelte) else "#2E7D38"
         self.status_label.setText(
-            f'<span style="color:{farbe}">' + "<br>".join(meldungen) + "</span>"
+            tr('<span style="color:{0}">', farbe) + "<br>".join(meldungen) + tr("</span>")
             if meldungen else "")
 
 
@@ -304,15 +305,13 @@ class VorschauDialog(QtWidgets.QDialog):
     def __init__(self, datensatz: Messdatensatz, bericht: PruefBericht,
                  warnungen: list[str] | None = None, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Import-Vorschau")
+        self.setWindowTitle(tr("Import-Vorschau"))
         self.setModal(True)
         self.resize(640, 480)
         lay = QtWidgets.QVBoxLayout(self)
 
         kopf = QtWidgets.QLabel(
-            f"<b>{Path(datensatz.quelle).name}</b> – "
-            f"Profil: {datensatz.meta.get('mapping_profil', '?')}, "
-            f"Layout: {datensatz.format_typ}")
+            tr("<b>{0}</b> – Profil: {1}, Layout: {2}", Path(datensatz.quelle).name, datensatz.meta.get('mapping_profil', '?'), datensatz.format_typ))
         kopf.setWordWrap(True)
         lay.addWidget(kopf)
 
@@ -332,7 +331,7 @@ class VorschauDialog(QtWidgets.QDialog):
         tabelle = QtWidgets.QTableWidget()
         tabelle.setColumnCount(5)
         tabelle.setHorizontalHeaderLabels(
-            ["f (GHz)", "Punkte", "B min (T)", "B max (T)", "⟨|S21|⟩"])
+            [tr("f (GHz)"), tr("Punkte"), tr("B min (T)"), tr("B max (T)"), tr("⟨|S21|⟩")])
         tabelle.horizontalHeader().setStretchLastSection(True)
         tabelle.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         n = len(datensatz.linescans)
@@ -353,12 +352,12 @@ class VorschauDialog(QtWidgets.QDialog):
         lay.addWidget(tabelle, 1)
 
         knoepfe = QtWidgets.QDialogButtonBox()
-        b_ok = knoepfe.addButton("Uebernehmen", QtWidgets.QDialogButtonBox.AcceptRole)
-        b_zurueck = knoepfe.addButton("Zuordnung aendern", QtWidgets.QDialogButtonBox.RejectRole)
+        b_ok = knoepfe.addButton(tr("Uebernehmen"), QtWidgets.QDialogButtonBox.AcceptRole)
+        b_zurueck = knoepfe.addButton(tr("Zuordnung aendern"), QtWidgets.QDialogButtonBox.RejectRole)
         b_ok.clicked.connect(self.accept)
         b_zurueck.clicked.connect(self.reject)
         if not bericht.in_ordnung:
-            b_ok.setText("Trotz Warnungen uebernehmen")
+            b_ok.setText(tr("Trotz Warnungen uebernehmen"))
         lay.addWidget(knoepfe)
         # Fokus bewusst auf "Zuordnung aendern", wenn es Warnungen gibt.
         (b_zurueck if not bericht.in_ordnung else b_ok).setDefault(True)
