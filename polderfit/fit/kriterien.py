@@ -64,7 +64,22 @@ MIN_PUNKTE_FIT: int = 12
 
 #: Eine Linie mit mu0*dH unter diesem Vielfachen des Feldschritts ist nicht
 #: aufgeloest (Nadel-Linie auf 1-2 Messpunkten) und gilt als problematisch.
+#: Standardwert; wirksam ist :func:`dh_min_feldschritte` (Physik-Parameter,
+#: 0 = Kriterium aus - z. B. YIG, dessen Linie schmaler als das Feldraster ist).
 DH_MIN_FELDSCHRITTE: float = 1.5
+_dh_min_feldschritte: float = DH_MIN_FELDSCHRITTE
+
+
+def dh_min_feldschritte() -> float:
+    """Wirksame Aufloesungsschwelle von Kriterium (h) in Feldschritten (0 = aus)."""
+    return _dh_min_feldschritte
+
+
+def setze_dh_min_feldschritte(wert: float) -> None:
+    """Setzt die Aufloesungsschwelle (GUI: Physik-Parameter); ``<= 0`` = aus."""
+    global _dh_min_feldschritte
+    wert = float(wert)
+    _dh_min_feldschritte = wert if np.isfinite(wert) and wert > 0 else 0.0
 
 
 def an_grenze(wert: float, unten: float, oben: float, rel: float = GRENZ_NAEHE_REL) -> bool:
@@ -75,6 +90,19 @@ def an_grenze(wert: float, unten: float, oben: float, rel: float = GRENZ_NAEHE_R
     if spanne <= 0:
         return False
     return (wert <= unten + rel * spanne) or (wert >= oben - rel * spanne)
+
+
+def an_grenze_log(wert: float, unten: float, oben: float,
+                  rel: float = GRENZ_NAEHE_REL) -> bool:
+    """Wie :func:`an_grenze`, aber auf logarithmischer Skala (fuer alpha).
+
+    Die alpha-Schranken ueberspannen Dekaden (1e-5 ... 0.1): linear laege jedes
+    alpha < ~1e-3 (YIG, Granate) innerhalb 1 % der Spanne an der Untergrenze.
+    """
+    if not (np.isfinite(wert) and wert > 0 and unten > 0 and oben > unten):
+        return an_grenze(wert, unten, oben, rel)
+    return an_grenze(float(np.log10(wert)), float(np.log10(unten)),
+                     float(np.log10(oben)), rel)
 
 
 def alpha_min_zu(alpha_max: float) -> float:
@@ -109,7 +137,8 @@ GRUND_NICHT_GEFITTET: str = "nicht gefittet"
 
 
 def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
-                alpha_plausibel: float | None = None) -> tuple[bool, list[str]]:
+                alpha_plausibel: float | None = None,
+                dh_min: float | None = None) -> tuple[bool, list[str]]:
     """Stuft ein :class:`FitErgebnis` ein und liefert ``(problematisch, gruende)``.
 
     ``alpha_max`` ist die im Fit verwendete harte alpha-Schranke (Kriterien b
@@ -118,7 +147,8 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
     Standard-Plausibilitaetsgrenze ``alpha_max/2`` fuer Kriterium d - fuer
     "exotische" Proben mit real breiten Linien (nanostrukturiertes CoFe,
     FeCr2S4) sonst dauernd "alpha unphysikalisch". Ein Wert ``<= 0``/``None``
-    bedeutet Automatik.
+    bedeutet Automatik. ``dh_min`` (Feldschritte, Kriterium h) ersetzt die
+    wirksame Schwelle :func:`dh_min_feldschritte`; ``0`` schaltet (h) ab.
 
     Ein Fit ist problematisch, wenn EINE der folgenden Bedingungen zutrifft:
 
@@ -151,7 +181,7 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
 
     alpha, phi, b_res = erg.alpha, erg.phi, erg.B_res
     # (b) Parameter an Schranke
-    if an_grenze(alpha, alpha_min_zu(alpha_max), alpha_max):
+    if an_grenze_log(alpha, alpha_min_zu(alpha_max), alpha_max):
         gruende.append("alpha an Grenze")
     if an_grenze(phi, PHI_MIN, PHI_MAX):
         gruende.append("phi an Grenze")
@@ -173,9 +203,10 @@ def bewerte_fit(erg, alpha_max: float = ALPHA_MAX,
     n_punkte = int(np.size(feld)) if feld is not None else 0
     if 0 < n_punkte < MIN_PUNKTE_FIT:
         gruende.append("zu wenige Punkte")
-    if n_punkte >= 2:
+    schwelle = dh_min_feldschritte() if dh_min is None else float(dh_min)
+    if n_punkte >= 2 and schwelle > 0:
         schritt = float(np.ptp(np.asarray(feld, dtype=float))) / (n_punkte - 1)
-        if schritt > 0 and np.isfinite(erg.dH) and erg.dH < DH_MIN_FELDSCHRITTE * schritt:
+        if schritt > 0 and np.isfinite(erg.dH) and erg.dH < schwelle * schritt:
             gruende.append("Linie nicht aufgelöst")
 
     # (a) Residuum (primaer: normiertes Residuum, skalenfrei)
@@ -207,7 +238,8 @@ KRITERIEN_GRUPPEN: dict[str, tuple[str, str]] = {
     "B_res am Fensterrand": ("F", "Fenster: B_res am Rand des Fitfensters"),
     "B_res ausserhalb Fenster": ("F", "Fenster: B_res außerhalb des Fitfensters"),
     "zu wenige Punkte": ("F", "Fenster: weniger als %d Messpunkte" % MIN_PUNKTE_FIT),
-    "Linie nicht aufgelöst": ("F", "Fenster: µ₀ΔH unter %.1f Feldschritten" % DH_MIN_FELDSCHRITTE),
+    "Linie nicht aufgelöst": ("F", "Fenster: µ₀ΔH unter der Mindestzahl Feldschritte "
+                                  "(Physikalische Parameter)"),
     "keine Unsicherheiten": ("U", "Unsicherheit: keine Kovarianz bestimmbar"),
     "B_res-Unsicherheit zu gross": ("U", "Unsicherheit: u(B_res)/B_res > %.0f %%"
                                     % (100 * B_RES_REL_UNSICHERHEIT_MAX)),

@@ -5,13 +5,13 @@
 | | Kriterium | Bedingung | Konstante |
 |---|---|---|---|
 | a | Residuum | `rmse_norm > 0.35` (RMSE/Signalhub nach Untergrundabzug); Notbremse `chi2_red > 1e6` | `RMSE_NORM_SCHWELLE`, `CHI2_RED_NOTBREMSE` |
-| b | an Schranke | `alpha`, `phi`, `B_res` innerhalb 1 % des Schrankenabstands | `GRENZ_NAEHE_REL` |
+| b | an Schranke | `alpha`, `phi`, `B_res` innerhalb 1 % des Schrankenabstands (`alpha` logarithmisch) | `GRENZ_NAEHE_REL` |
 | c | außerhalb | `B_res` ∉ Fenster | |
 | d | unphysikalisch | `alpha > alpha_plausibel` (Standard `alpha_max/2` = 0.05; einstellbar `Strg+P`) | `ALPHA_PLAUSIBEL_MAX` |
 | e | Konvergenz/Kovarianz | kein Erfolg; keine Unsicherheiten **und** `rmse_norm > 0.10` | `RMSE_NORM_EXZELLENT` |
 | f | Unsicherheit | `B_res_err/|B_res| > 2 %` | `B_RES_REL_UNSICHERHEIT_MAX` |
 | g | zu wenige Punkte | weniger als 12 Messpunkte im Fenster/Korridor | `MIN_PUNKTE_FIT` |
-| h | Linie nicht aufgelöst | `µ0ΔH < 1,5` Feldschritte | `DH_MIN_FELDSCHRITTE` |
+| h | Linie nicht aufgelöst | `µ0ΔH < 1,5` Feldschritte (einstellbar `Strg+P`, 0 = aus; YIG) | `DH_MIN_FELDSCHRITTE` |
 
 R² ist **kein** Gütemaß (Untergrund dominiert die Varianz → R² ≈ 1 auch ohne Resonanz). `chi2_red` (Rauschen aus zweiten Differenzen, MAD/√6) wird exportiert, nicht zur Einstufung genutzt.
 
@@ -21,7 +21,7 @@ Nur unproblematische Fits gehen in Kittel/LLG (`_gute_ergebnisse`). Schwellen ni
 
 ## Nutzer-Bewertung und Status-Farben
 
-`FitErgebnis.bewertung` ∈ `auto` (Kriterien entscheiden) · `bestaetigt` (gilt als gut) · `verworfen` (gilt als problematisch); `problematisch` ist der wirksame Zustand, `problematisch_auto` das reine Kriterienergebnis (beides im Export). Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) werden standardmäßig `bestaetigt` (`nachfit_bestaetigen`, Strg+P); Bereichs-/Grenzgeraden-Fits über viele Frequenzen, Zonen-Nachrechnungen und Projekt-Wiederherstellung bleiben `auto`. `setze_bewertung` liefert eine Kopie (Undo-sicher).
+`FitErgebnis.bewertung` ∈ `auto` (Kriterien entscheiden) · `bestaetigt` (gilt als gut) · `verworfen` (gilt als problematisch); `problematisch` ist der wirksame Zustand, `problematisch_auto` das reine Kriterienergebnis (beides im Export). Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) werden standardmäßig `bestaetigt` (`nachfit_bestaetigen`, Strg+P); Bereichs-/Grenzgeraden-Fits über viele Frequenzen, Zonen-Nachrechnungen und Projekt-Wiederherstellung bleiben `auto`. *Bewertung → Alle Fits nachfitten und als gut bestätigen* erzwingt `bestaetigt` für alle Fits der Mode (außer `verworfen`/Ausreißer). Änderungen an α-Plausibilität/Auflösung (`Strg+P`) bewerten bestehende Fits sofort neu (`bewerte_alle_neu`). `setze_bewertung` liefert eine Kopie (Undo-sicher).
 
 Farben und Formen nach DIN EN 60073 / ISO 3864 (`gui/farben.py`); Form als zweites Merkmal (DIN EN ISO 9241-125):
 

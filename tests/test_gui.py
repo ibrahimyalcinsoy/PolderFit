@@ -366,3 +366,53 @@ def test_arbeiter_drosselt_fortschritt(app):
     assert len(zwischen) == 200                     # Live-Daten vollstaendig
     a._melde(5, 200, text="Zeile", phase="Einzelfits")
     assert empfangen[-1] == 5                       # Textzeilen tragen ihren Fortschritt
+
+
+def _yig_stapel(w, n=6):
+    """Schmale Linien (dH ~ 1.1 Feldschritte): Kriterium 'Linie nicht aufgeloest'."""
+    from polderfit.fit.batch import fitte_alle
+    from polderfit.physik.fitmodell import s21_modell
+    from polderfit.physik.konstanten import GAMMA_STANDARD
+    B = np.linspace(0.40, 0.50, 286)   # Schritt 0.35 mT
+    ls = []
+    for f in np.linspace(6e9, 8e9, n):
+        omega = 2 * np.pi * f
+        s = s21_modell(B, 0.45, 5e-4, 1e-3, 0.6, 0.02, 0.29, 0.0, 0.0, omega,
+                       GAMMA_STANDARD, float(B.mean()))
+        ls.append(Linescan(frequenz=float(f), feld=B, re=s.real, im=s.imag))
+    ds = Messdatensatz(quelle="t", format_typ="sortiert", linescans=ls)
+    ds.meta["zuordnung"] = {"re": ("g", "k")}
+    w.matrix.zeige(ds)
+    w.datensatz_voll = ds
+    w._nach_autofit(fitte_alle(ds))
+    return w.stapel
+
+
+def test_aufloesung_neu_bewerten_und_alle_bestaetigen(app, monkeypatch):
+    from dataclasses import replace
+    from polderfit.fit.kriterien import DH_MIN_FELDSCHRITTE, setze_dh_min_feldschritte
+    from polderfit.gui.hauptfenster import Hauptfenster
+    w = Hauptfenster()
+    w._physik_uebernehmen(replace(w._physik, dh_min_feldschritte=DH_MIN_FELDSCHRITTE), leise=True)
+    try:
+        st = _yig_stapel(w)
+        assert all("Linie nicht aufgelöst" in e.problem_gruende for e in st.ergebnisse)
+        # Schwelle aus -> sofort ohne Neufit neu eingestuft.
+        w._physik_uebernehmen(replace(w._physik, dh_min_feldschritte=0.0), leise=True)
+        assert not any(e.problematisch for e in st.ergebnisse)
+        w._physik_uebernehmen(replace(w._physik, dh_min_feldschritte=DH_MIN_FELDSCHRITTE),
+                              leise=True)
+        assert all(e.problematisch for e in st.ergebnisse)
+        # Erzwingen: alle nachfitten + bestaetigen, Undo stellt die Kriterien wieder her.
+        monkeypatch.setattr(QtWidgets.QMessageBox, "question",
+                            staticmethod(lambda *a, **k: QtWidgets.QMessageBox.Yes))
+        w._alle_nachfitten_bestaetigen()
+        for _ in range(20):
+            if not w._job_laeuft:
+                break
+            _pumpe(250)
+        assert all(e.bewertung == "bestaetigt" and not e.problematisch for e in st.ergebnisse)
+        w._rueckgaengig()
+        assert all(e.problematisch for e in w.stapel.ergebnisse)
+    finally:
+        setze_dh_min_feldschritte(DH_MIN_FELDSCHRITTE)

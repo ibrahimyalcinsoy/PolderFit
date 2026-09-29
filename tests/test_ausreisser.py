@@ -177,3 +177,18 @@ def test_ungueltige_ausreisser_indizes_werden_verworfen(tmp_path):
     ds2 = lade_tdms(daten["quelle"], zuordnung=zuordnung, layout=daten["format_typ"])
     stapel2 = stelle_stapel_wieder_her(daten, ds2)
     assert stapel2.ausreisser == [0]
+
+
+def test_autofit_behaelt_ausschlusszonen(tmp_path):
+    tdms_pfad = tmp_path / "messung.tdms"
+    _schreibe_sortiert_fmr(tdms_pfad)
+    ds = lade_tdms(tdms_pfad)
+    zone = Ausschlusszone(0.70, 0.72, 0.0, 1e12)   # Flanke der unteren Resonanzen
+    stapel = fitte_alle(ds, ausschlusszonen=[zone])
+    assert stapel.ausschlusszonen == [zone]
+    assert any(u < 0.70 and o > 0.72 for u, o in stapel.fenster)   # Zone liegt im Fenster
+    for ls, e in zip(stapel.zugeschnitten, stapel.ergebnisse):
+        assert not np.any((ls.feld >= 0.70) & (ls.feld <= 0.72))
+        assert not np.any((e.feld >= 0.70) & (e.feld <= 0.72))
+    voll = stapel.datensatz.linescans[0].feld   # Datensatz selbst unveraendert
+    assert np.any((voll >= 0.70) & (voll <= 0.72))

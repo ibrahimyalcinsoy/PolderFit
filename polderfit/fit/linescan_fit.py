@@ -96,6 +96,8 @@ class FitErgebnis:
     #: Nur Summenfit: Einzelbeitraege ``[(mode, kurve_nur_diese_Linie_plus_Untergrund)]``
     #: aller Dips des Korridors (Anzeige gestrichelt im Linescan-Panel).
     beitraege: list = field(default=None, repr=False)
+    #: Harte alpha-Obergrenze dieses Fits (fuer die Neubewertung ohne Neufit).
+    alpha_max_fit: float = field(default=np.nan, repr=False)
 
     # --- abgeleitete Groessen (Anzeige in mT) ------------------------------
     @property
@@ -298,6 +300,7 @@ def _guetemasse(B, s21, kurve, p, B_ref, n_param):
 def _abschliessen(erg: FitErgebnis, alpha_max: float,
                   alpha_plausibel: float | None) -> FitErgebnis:
     """Kriterien anwenden; ``problematisch_auto`` = reines Kriterienergebnis."""
+    erg.alpha_max_fit = float(alpha_max)
     erg.problematisch, erg.problem_gruende = bewerte_fit(
         erg, alpha_max=alpha_max, alpha_plausibel=alpha_plausibel)
     erg.problematisch_auto = erg.problematisch

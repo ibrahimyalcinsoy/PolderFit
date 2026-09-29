@@ -31,6 +31,10 @@ from ..physik.konstanten import GAMMA_STANDARD
 _HALB_MAX: float = 0.4
 #: Mindest-Prominenz (in MAD-Sigma), ab der ein Kandidat als verlaesslich gilt.
 _PROMINENZ_MIN: float = 4.0
+#: Mindestzahl Messpunkte im Auto-Fenster (8 Fitparameter; mit Marge ueber
+#: ``MIN_PUNKTE_FIT``): bei Linien schmaler als das Feldraster (YIG) wuerde das
+#: FWHM-/Raster-Fenster sonst bei ungleichmaessigem Raster < 12 Punkte fassen.
+_MIN_PUNKTE_FENSTER: int = 16
 
 
 def _detrend_residuum(feld: np.ndarray, s21: np.ndarray) -> np.ndarray:
@@ -202,6 +206,8 @@ def _fenster_um(feld: np.ndarray, rein: np.ndarray, b_res: float,
     spacing = float(np.ptp(B)) / B.size if B.size else 0.01
     fwhm = _fwhm_um(B, rein, b_res, fallback=10.0 * spacing)
     halb = max(breite_faktor * fwhm / 2.0, 6.0 * spacing)
+    if B.size >= _MIN_PUNKTE_FENSTER:
+        halb = max(halb, float(np.sort(np.abs(B - b_res))[_MIN_PUNKTE_FENSTER - 1]))
     halb = min(halb, _HALB_MAX)
     unten = max(b_res - halb, float(B.min()))
     oben = min(b_res + halb, float(B.max()))

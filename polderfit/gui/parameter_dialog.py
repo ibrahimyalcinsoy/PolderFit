@@ -35,7 +35,8 @@ class ParameterDialog(QtWidgets.QDialog):
         hinweis = QtWidgets.QLabel(
             tr("Konvention: Felder als µ₀H in Tesla, γ = g·µ_B/ħ in rad/(s·T) "
             "(Müller 2023, Kap. 2). Änderungen wirken ab dem nächsten "
-            "(Auto-/Nach-)Fit; die Kittel/LLG-Auswertung rechnet sofort neu. "
+            "(Auto-/Nach-)Fit; α-Plausibilität und Auflösung bewerten bestehende "
+            "Fits sofort neu, die Kittel/LLG-Auswertung rechnet sofort neu. "
             "Speichern/Laden als Voreinstellung: Menü Datei → Einstellungen."))
         hinweis.setWordWrap(True)
         lay.addWidget(hinweis)
@@ -132,6 +133,21 @@ class ParameterDialog(QtWidgets.QDialog):
             "Proben bis 0.00001 absenkbar."))
         form.addRow(tr("α-Plausibilitätsgrenze:"), self.alpha_plausibel_spin)
 
+        self.dh_min_spin = RuhigeDoubleSpinBox()
+        self.dh_min_spin.setRange(0.0, 5.0)
+        self.dh_min_spin.setDecimals(1)
+        self.dh_min_spin.setSingleStep(0.1)
+        self.dh_min_spin.setSpecialValueText(tr("aus"))
+        self.dh_min_spin.setValue(parameter.dh_min_feldschritte)
+        self.dh_min_spin.setToolTip(
+            tr("Kriterium 'Linie nicht aufgelöst': µ₀ΔH unter diesem Vielfachen\n"
+            "des Feldschritts gilt als problematisch (Standard 1.5, fängt\n"
+            "Nadel-Fits auf 1–2 Punkten ab). Bei Proben, deren Linie schmaler\n"
+            "als das Feldraster ist (z. B. YIG), senken oder 0 = aus: B_res\n"
+            "bleibt gut bestimmt (Kittel), µ₀ΔH/α sind dann rasterbegrenzt.\n"
+            "Wirkt sofort auf alle bestehenden Fits (ohne Neufit)."))
+        form.addRow(tr("Auflösung: µ₀ΔH ≥ … Feldschritte:"), self.dh_min_spin)
+
         self.nachfenster_spin = RuhigeDoubleSpinBox()
         self.nachfenster_spin.setRange(0.0, 10.0)
         self.nachfenster_spin.setDecimals(1)
@@ -200,6 +216,7 @@ class ParameterDialog(QtWidgets.QDialog):
         self.r2min_spin.setValue(standard.r2_min)
         self.alpha_max_spin.setValue(standard.alpha_max)
         self.alpha_plausibel_spin.setValue(standard.alpha_plausibel)
+        self.dh_min_spin.setValue(standard.dh_min_feldschritte)
         self.nachfenster_spin.setValue(standard.nachfenster_faktor)
         self.gewicht_combo.setCurrentIndex(1 if standard.gewichtet else 0)
         self.chk_bestaetigen.setChecked(standard.nachfit_bestaetigen)
@@ -216,6 +233,7 @@ class ParameterDialog(QtWidgets.QDialog):
             r2_min=float(self.r2min_spin.value()),
             alpha_max=float(self.alpha_max_spin.value()),
             alpha_plausibel=float(self.alpha_plausibel_spin.value()),
+            dh_min_feldschritte=float(self.dh_min_spin.value()),
             nachfenster_faktor=float(self.nachfenster_spin.value()),
             gewichtet=self.gewicht_combo.currentIndex() == 1,
             nachfit_bestaetigen=self.chk_bestaetigen.isChecked(),

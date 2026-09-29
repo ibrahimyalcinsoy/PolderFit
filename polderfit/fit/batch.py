@@ -19,7 +19,7 @@ from ..physik.fitmodell import Startwerte, s21_modell
 from .auswahl import Auswertungsauswahl
 from .autowindows import auto_fenster_alle, fenster_aus_trasse, schneide_band
 from .korridor import Anker, Korridor, dip_segmente, segmente_aus_trennern
-from .kriterien import ALPHA_MAX
+from .kriterien import ALPHA_MAX, bewerte_fit
 from .linescan_fit import FitErgebnis, fitte_linescan, fitte_linescan_summe, setze_bewertung
 
 #: Standard des zweiten Fit-Durchgangs: Fitfenster = B_res +/- Faktor * mu0*dH
@@ -45,8 +45,8 @@ class Ausschlusszone:
 
     Interaktiv im Farbplot eingezeichnet (z. B. ein stoerender, zur Feldachse
     paralleler Abschnitt). Wirkt auf alle Nachfit-Wege (``fitte_neu`` und
-    alles, was darauf aufbaut); ein neuer Auto-Fit setzt die Zonenliste des
-    neuen Stapels bewusst leer auf.
+    alles, was darauf aufbaut) und bleibt bei einem neuen Auto-Fit desselben
+    Datensatzes erhalten (Fenstersuche und Fits ohne die Zonenpunkte).
     """
 
     feld_min: float
@@ -242,6 +242,27 @@ class StapelErgebnis:
         liste[index] = neu
         return neu
 
+    def bewerte_alle_neu(self) -> int:
+        """Wendet die Kriterien mit den aktuellen Einstellungen (alpha-
+        Plausibilitaet, Aufloesungsschwelle) erneut auf alle gefitteten
+        Ergebnisse aller Moden an - ohne Neufit. Nutzer-Bewertungen bleiben.
+        Liefert die Zahl der Fits, deren Einstufung sich geaendert hat."""
+        geaendert = 0
+        for liste in [self.ergebnisse, *self.nebenmoden.values()]:
+            for i, e in enumerate(liste):
+                if e is None or not e.gefittet:
+                    continue
+                a_max = e.alpha_max_fit if np.isfinite(e.alpha_max_fit) else self.alpha_max
+                prob, gruende = bewerte_fit(e, alpha_max=a_max,
+                                            alpha_plausibel=self.alpha_plausibel)
+                if prob == e.problematisch_auto and gruende == list(e.problem_gruende):
+                    continue
+                neu = setze_bewertung(replace(e, problematisch_auto=prob,
+                                              problem_gruende=gruende), e.bewertung)
+                geaendert += int(neu.problematisch != e.problematisch)
+                liste[i] = neu
+        return geaendert
+
     def problem_statistik(self) -> dict[str, int]:
         """Aufschluesselung: wie oft trat welcher Problemgrund auf."""
         zaehler: dict[str, int] = {}
@@ -335,6 +356,7 @@ def fitte_alle(
     korridor: Korridor | None = None,
     n_dips: int = 1,
     dips_auto: bool = False,
+    ausschlusszonen: list[Ausschlusszone] | None = None,
 ) -> StapelErgebnis:
     """Fittet alle Linescans automatisch (AutoWindows + Beschnitt + Einzelfit).
 
@@ -364,12 +386,17 @@ def fitte_alle(
     je Linescan. ``n_dips > 1``: im gefundenen Fenster werden ``n_dips``
     Resonanzen gefittet (Summenfit mit Segment-Schranken wie im Korridor,
     optional ``dips_auto`` = Anzahl per BIC); Mode 1 = erster Dip, weitere in
-    ``nebenmoden``.
+    ``nebenmoden``. ``ausschlusszonen``: Punkte darin fehlen in Fenstersuche
+    und Fits; die Zonen gehen in den neuen Stapel ueber.
     """
     fit_indizes = None
     if auswahl is not None and not auswahl.ist_neutral:
         fit_indizes = set(int(i) for i in auswahl.waehle_indizes(datensatz))
         datensatz = auswahl.reduziere_felder(datensatz)
+    zonen = list(ausschlusszonen or [])
+    fit_daten = (replace(datensatz, linescans=[ohne_ausschlusszonen(ls, zonen)
+                                               for ls in datensatz.linescans])
+                 if zonen else datensatz)
 
     if korridor is not None and korridor.definiert:
         fenster = []
@@ -379,10 +406,10 @@ def fitte_alle(
                  if ls.feld.size else None)
             fenster.append(g if g is not None else (np.nan, np.nan))
     elif zentren is not None:
-        fenster = fenster_aus_trasse(datensatz, zentren, gamma, breite_faktor,
+        fenster = fenster_aus_trasse(fit_daten, zentren, gamma, breite_faktor,
                                      alpha_erwartet=alpha_erwartet)
     else:
-        fenster = auto_fenster_alle(datensatz, gamma, breite_faktor,
+        fenster = auto_fenster_alle(fit_daten, gamma, breite_faktor,
                                     fortschritt=fortschritt_fenster)
     stapel = StapelErgebnis(
         datensatz=datensatz, gamma=gamma, r2_schwelle=r2_schwelle, fenster=list(fenster),
@@ -390,6 +417,7 @@ def fitte_alle(
         alpha_plausibel=alpha_plausibel,
         nachfit_bestaetigen=nachfit_bestaetigen,
         auto_n_dips=max(1, int(n_dips)), auto_dips_auto=bool(dips_auto),
+        ausschlusszonen=zonen,
     )
     n = len(datensatz.linescans)
     for i, ls in enumerate(datensatz.linescans):
@@ -413,7 +441,7 @@ def fitte_alle(
             stapel.ergebnisse.append(FitErgebnis.platzhalter(ls.frequenz, ls.feld))
             continue
         ergebnis, beschnitten, verwendet = fitte_mit_nachfenster(
-            ls, fenster[i], gamma, alpha_max=alpha_max,
+            fit_daten.linescans[i], fenster[i], gamma, alpha_max=alpha_max,
             nachfenster_faktor=nachfenster_faktor, alpha_plausibel=alpha_plausibel)
         stapel.fenster[i] = verwendet
         stapel.zugeschnitten.append(beschnitten)

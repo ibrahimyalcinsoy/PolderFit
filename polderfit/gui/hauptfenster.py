@@ -69,6 +69,7 @@ from ..fit.fenster_steuerung import (
     _fitte_neu_mit_nachfenster,
 )
 from ..fit.korridor import Korridor, korridor_aus_linie
+from ..fit.kriterien import setze_dh_min_feldschritte
 from ..fit.linescan_fit import BEWERTUNG_TEXTE, FitErgebnis
 from .texte import gruende_tr, kriterien_kurz_tr, kriterien_text_tr, problem_text_tr
 from ..fit.parameter import PhysikParameter
@@ -164,6 +165,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         #: Einstellbare physikalische Parameter (g-Faktor/gamma, Geometrie,
         #: Fensterfaktor, Schwellen, alpha-Grenzen, Moden) - Dialog: Strg+P.
         self._physik = self._einstellungen.physik_parameter()
+        setze_dh_min_feldschritte(self._physik.dh_min_feldschritte)
         # Offenes Kittel/LLG-Auswertungsfenster (hoechstens eines).
         self._auswertungsfenster: AuswertungsFenster | None = None
         #: Zuletzt benutzter Ordner fuer Dialoge.
@@ -548,6 +550,12 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.akt_bew_ignorieren.triggered.connect(lambda: self._bewerte_aktuellen("ignorieren"))
         self.akt_bew_alle_auto = A(tr("Alle Bewertungen auf automatisch zurücksetzen"), self)
         self.akt_bew_alle_auto.triggered.connect(self._alle_bewertungen_auto)
+        self.akt_bew_alle_gut = A(tr("Alle Fits nachfitten und als gut bestätigen …"), self)
+        self.akt_bew_alle_gut.setToolTip(
+            tr("Wie „Neu fitten“ an jeder gefitteten Frequenz der angezeigten Mode, danach "
+               "jeweils „gut – bestätigt“ (unabhängig von den Kriterien). „Verworfen“ und "
+               "Ausreißer bleiben. Rückgängig mit Strg+Z."))
+        self.akt_bew_alle_gut.triggered.connect(self._alle_nachfitten_bestaetigen)
         self.akt_fits_loeschen = A(tr("Fit-Ergebnisse löschen …"), self)
         self.akt_fits_loeschen.setToolTip(
             tr("Ergebnisse verwerfen (rückgängig mit Strg+Z): alle Fits oder nur die der "
@@ -713,6 +721,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.menue_bewertung.addAction(self.akt_bew_ignorieren)
         self.menue_bewertung.addSeparator()
         self.menue_bewertung.addAction(self.akt_bew_alle_auto)
+        self.menue_bewertung.addAction(self.akt_bew_alle_gut)
         self.funktionen_menue.addAction(self.akt_kittel)
         self.funktionen_menue.addSeparator()
         self.funktionen_menue.addAction(self.akt_physik)
@@ -1765,6 +1774,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                        self.akt_projekt_speichern, self.akt_projekt_laden,
                        self.akt_autosicherung, self.akt_bew_gut, self.akt_bew_problem,
                        self.akt_bew_auto, self.akt_bew_ignorieren, self.akt_bew_alle_auto,
+                       self.akt_bew_alle_gut,
                        self.akt_einst_laden, self.akt_einst_reset):
             aktion.setEnabled(an)
         for knopf in (self.btn_zurueck, self.btn_weiter, self.btn_neu,
@@ -2149,7 +2159,9 @@ class Hauptfenster(QtWidgets.QMainWindow):
 
     def _physik_uebernehmen(self, parameter: PhysikParameter, leise: bool = False) -> None:
         """Setzt neue Parameter und rechnet die Kittel/LLG-Auswertung neu."""
+        alt = self._physik
         self._physik = parameter
+        setze_dh_min_feldschritte(parameter.dh_min_feldschritte)
         self._einstellungen.physik = parameter.als_dict()
         if not leise:
             self._log(tr("Physikalische Parameter: ") + parameter.beschreibung(), "ok")
@@ -2163,6 +2175,16 @@ class Hauptfenster(QtWidgets.QMainWindow):
             st.alpha_plausibel = parameter.alpha_plausibel_wirksam
             st.nachfenster_faktor = parameter.nachfenster_faktor
             st.nachfit_bestaetigen = parameter.nachfit_bestaetigen
+            if (alt.dh_min_feldschritte != parameter.dh_min_feldschritte
+                    or alt.alpha_plausibel != parameter.alpha_plausibel):
+                # Reine Bewertungskriterien: bestehende Fits sofort neu einstufen.
+                n = st.bewerte_alle_neu()
+                self._aktualisiere_overlay()
+                self._zeige_aktuellen()
+                if not leise:
+                    self._log(tr("Kriterien neu angewandt (ohne Neufit): {0} Fits neu "
+                                 "eingestuft, {1} problematisch.", n,
+                                 len(st.index_problematisch())), "ok")
             if not leise and st.index_gefittet():
                 self._log(tr("Hinweis: bestehende Einzelfits bleiben unverändert – "
                           "neue Parameter wirken ab dem nächsten (Auto-/Nach-)Fit; "
@@ -2177,7 +2199,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
         self.stapel = stapel
         self._undo_verwerfen()  # Undo-Stapel gehoert zum alten Stapel
         self._aktualisiere_overlay()
-        # Neuer Stapel: Ausschlusszonen beginnen leer.
+        # Ausschlusszonen des vorigen Stapels hat fitte_alle uebernommen.
         self.zonenpanel.setze_zonen(stapel.ausschlusszonen)
         self.matrix.zeige_ausschlusszonen(stapel.ausschlusszonen)
         self._zeige_korridore()
@@ -2203,6 +2225,10 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if auswahl is None:
             return
         physik = self._physik
+        zonen = list(self.stapel.ausschlusszonen)
+        if zonen:
+            self._log(tr("Auto-Fit: {0} Ausschlusszone(n) bleiben aktiv (Punkte darin "
+                         "werden nicht gefittet; entfernen im Zonen-Panel).", len(zonen)), "info")
         korridor_m1 = self._korridor_fuer(1)
         weitere = [k for k in self._korridore if int(k.mode) >= 2 or k.n_dips > 1]
         if korridor_m1 is not None:
@@ -2238,7 +2264,8 @@ class Hauptfenster(QtWidgets.QMainWindow):
                                 abbruch=melde.abgebrochen,
                                 korridor=korridor_m1,
                                 n_dips=(1 if self._korridore else self._auto_n_dips),
-                                dips_auto=self._auto_dips_auto)
+                                dips_auto=self._auto_dips_auto,
+                                ausschlusszonen=zonen)
             for korridor in weitere:
                 if melde.abgebrochen():
                     break
@@ -2645,6 +2672,58 @@ class Hauptfenster(QtWidgets.QMainWindow):
         if self._auswertungsfenster is not None:
             self._auswertungsfenster.aktualisiere()
         self._log(tr("{0} Bewertung(en) auf automatisch zurückgesetzt.", len(indizes)), "ok")
+
+    def _alle_nachfitten_bestaetigen(self) -> None:
+        """„Neu fitten“ an allen gefitteten Frequenzen der angezeigten Mode (aktuelles
+        Fenster/Korridor), jeweils als „gut – bestätigt“ bewertet (erzwungen)."""
+        st = self.stapel
+        if not st or not st.ergebnisse or self._job_laeuft:
+            return
+        mode = self._mode_aktiv
+        liste = st.ergebnisse_mode(mode)
+        indizes = [i for i, e in enumerate(liste)
+                   if e.gefittet and e.bewertung != "verworfen"
+                   and not st.ist_ausreisser(i) and not st.ist_ausreisser_mode(i, mode)]
+        if not indizes:
+            self._log(tr("Keine gefitteten Frequenzen in Mode M{0}.", mode), "info")
+            return
+        n_prob = sum(1 for i in indizes if liste[i].problematisch)
+        antwort = QtWidgets.QMessageBox.question(
+            self, tr("Alle nachfitten und bestätigen"),
+            tr("{0} Fits der Mode M{1} (davon {2} problematisch) mit ihrem aktuellen "
+               "Fenster neu fitten und unabhängig von den Kriterien als „gut – bestätigt“ "
+               "bewerten?\n\n„Verworfen“ markierte Fits und Ausreißer bleiben unverändert. "
+               "Rückgängig mit Strg+Z.", len(indizes), mode, n_prob))
+        if antwort != QtWidgets.QMessageBox.Yes:
+            return
+        korridor = self._korridor_fuer(mode)
+        fits_vorher = self._fit_zustand(indizes)
+
+        def aufgabe(melde):
+            fertig = []
+            for k, i in enumerate(indizes):
+                if melde.abgebrochen():
+                    break
+                if korridor is not None:
+                    fitte_mode(st, i, korridor, bestaetigen=True)
+                elif mode == 1:
+                    unten, oben = st.fenster[i]
+                    _fitte_neu_mit_nachfenster(st, i, unten, oben, bestaetigen=True)
+                erg = st.bewerte(i, "bestaetigt", mode)   # auch ohne Korridor (Mode >= 2)
+                fertig.append(i)
+                melde(k + 1, len(indizes), "",
+                      daten=(erg.frequenz, erg.B_res, F.status_von(erg)), phase=tr("Nachfits"))
+            return fertig
+
+        def bei_fertig(fertig):
+            self._nach_nachfit(fertig, fits_vorher, tr("Alle nachgefittet und bestätigt"))
+            rest = sum(1 for i in fertig if st.ergebnisse_mode(mode)[i].problematisch)
+            self._log(tr("{0} Fits nachgefittet und als gut bestätigt ({1} ohne verwertbares "
+                         "Ergebnis bleiben problematisch).", len(fertig), rest),
+                      "warn" if rest else "ok")
+
+        self._starte_job(aufgabe, bei_fertig, tr("Alle nachfitten und bestätigen …"),
+                         live="ergaenzen")
 
     # --- Nachfitten einzelner Frequenzen ------------------------------------------
     def _grenzen_geaendert(self, unten: float, oben: float):
@@ -3328,6 +3407,7 @@ class Hauptfenster(QtWidgets.QMainWindow):
                 except Exception:
                     pass
             self.datensatz_voll = voll
+            stapel.bewerte_alle_neu()   # Kriterien der Sitzungsparameter
             self.stapel = stapel
             self._undo_verwerfen()
             if auswahl_dict:

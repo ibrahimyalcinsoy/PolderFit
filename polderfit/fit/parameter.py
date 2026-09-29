@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, fields
 
 from .batch import NACHFENSTER_FAKTOR_STANDARD
-from .kriterien import ALPHA_MAX
+from .kriterien import ALPHA_MAX, DH_MIN_FELDSCHRITTE
 from ..physik.konstanten import G_FAKTOR_STANDARD, gamma_aus_g
 from ..sprache import tr
 
@@ -63,6 +63,9 @@ class PhysikParameter:
     #: "gut – vom Nutzer bestaetigt" bewerten (Bereichs-/Grenzgeraden-Fits ueber
     #: viele Frequenzen nicht - dort entscheiden die Kriterien).
     nachfit_bestaetigen: bool = True
+    #: Kriterium "Linie nicht aufgeloest": mu0*dH unter so vielen Feldschritten
+    #: gilt als problematisch (0 = aus; YIG: Linie schmaler als das Raster).
+    dh_min_feldschritte: float = DH_MIN_FELDSCHRITTE
 
     @property
     def gamma(self) -> float:
@@ -80,12 +83,15 @@ class PhysikParameter:
                      else f"auto ({self.alpha_max / 2:g})")
         return tr("g={0:.4f} (γ={1:.4e} rad/(s·T)){2}, Geometrie {3}, Fensterfaktor {4:g}, "
                   "R²-Schwelle {5:g}, R²-Min (Kittel) {6:g}, α max {7:g}, α plausibel {8}, "
-                  "Nachfenster ±{9:g}·ΔH, Kittel/LLG {10}, Nachfits {11}",
+                  "Nachfenster ±{9:g}·ΔH, Kittel/LLG {10}, Nachfits {11}, "
+                  "Auflösung ΔH ≥ {12}",
                   self.g_faktor, self.gamma, fest, self.geometrie, self.breite_faktor,
                   self.r2_schwelle, self.r2_min, self.alpha_max, plausibel,
                   self.nachfenster_faktor,
                   tr("gewichtet") if self.gewichtet else tr("ungewichtet"),
-                  tr("bestätigen") if self.nachfit_bestaetigen else tr("automatisch bewerten"))
+                  tr("bestätigen") if self.nachfit_bestaetigen else tr("automatisch bewerten"),
+                  (tr("{0:g} Feldschritte", self.dh_min_feldschritte)
+                   if self.dh_min_feldschritte > 0 else tr("aus")))
 
     # --- Serialisierung -------------------------------------------------------
     def als_dict(self) -> dict:

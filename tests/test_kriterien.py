@@ -122,3 +122,56 @@ def test_problemgruende_im_klartext():
     problematisch, gruende = bewerte_fit(Dummy())
     assert problematisch
     assert any("alpha" in g for g in gruende)
+
+
+def _dummy_fit(alpha=8e-4, dH=0.4e-3, schritt=0.35e-3, n=16):
+    from polderfit.fit.linescan_fit import FitErgebnis
+    feld = 0.45 + schritt * np.arange(n)
+    return FitErgebnis(frequenz=7e9, erfolg=True, B_res=float(feld.mean()), B_res_err=1e-5,
+                       alpha=alpha, dH=dH, phi=0.5, rmse_norm=0.02, chi2_red=1.0,
+                       B_fenster_min=float(feld[0]), B_fenster_max=float(feld[-1]),
+                       kovarianz_ok=True, feld=feld)
+
+
+def test_kleines_alpha_nicht_an_grenze():
+    # YIG: alpha ~ 1e-3 liegt linear innerhalb 1 % von [1e-5, 0.1] - logarithmisch nicht.
+    from polderfit.fit.kriterien import an_grenze_log
+    assert "alpha an Grenze" not in bewerte_fit(_dummy_fit(dH=2e-3))[1]
+    assert not bewerte_fit(_dummy_fit(dH=2e-3))[0]
+    assert an_grenze_log(1.05e-5, 1e-5, 0.1) and an_grenze_log(0.095, 1e-5, 0.1)
+    assert "alpha an Grenze" in bewerte_fit(_dummy_fit(alpha=0.0999, dH=2e-3))[1]
+
+
+def test_aufloesungsschwelle_einstellbar():
+    from polderfit.fit.kriterien import dh_min_feldschritte, setze_dh_min_feldschritte
+    erg = _dummy_fit()   # dH = 1.14 Feldschritte
+    assert bewerte_fit(erg)[1] == ["Linie nicht aufgelöst"]
+    assert not bewerte_fit(erg, dh_min=1.0)[0]
+    alt = dh_min_feldschritte()
+    try:
+        setze_dh_min_feldschritte(0)
+        assert not bewerte_fit(erg)[0]
+    finally:
+        setze_dh_min_feldschritte(alt)
+
+
+def test_bewerte_alle_neu_ohne_neufit():
+    from polderfit.fit.batch import StapelErgebnis
+    from polderfit.fit.kriterien import dh_min_feldschritte, setze_dh_min_feldschritte
+    from polderfit.fit.linescan_fit import _abschliessen, setze_bewertung
+    from polderfit.io.datensatz import Messdatensatz
+    ergs = [_abschliessen(_dummy_fit(), 0.1, None) for _ in range(3)]
+    ergs[2] = setze_bewertung(ergs[2], "verworfen")
+    ds = Messdatensatz(quelle="t", format_typ="sortiert", linescans=[
+        Linescan(frequenz=7e9, feld=e.feld, re=np.zeros(16), im=np.zeros(16)) for e in ergs])
+    stapel = StapelErgebnis(datensatz=ds, ergebnisse=ergs)
+    assert all(e.problematisch for e in stapel.ergebnisse)
+    alt = dh_min_feldschritte()
+    try:
+        setze_dh_min_feldschritte(0)
+        assert stapel.bewerte_alle_neu() == 2
+        assert [e.problematisch for e in stapel.ergebnisse] == [False, False, True]
+        assert stapel.ergebnisse[2].bewertung == "verworfen"
+        assert not stapel.ergebnisse[2].problematisch_auto
+    finally:
+        setze_dh_min_feldschritte(alt)

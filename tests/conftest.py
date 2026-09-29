@@ -2,6 +2,11 @@
 """Gemeinsame Test-Fixtures und Pfade zu den Beispiel-TDMS-Dateien."""
 
 import os
+import tempfile
+
+# Nie gegen die echte Konfiguration laufen: sonst ueberschreibt ein Test-Stapel
+# die Auto-Sicherung bzw. Einstellungen des Nutzers (~/.config/polderfit).
+os.environ["POLDERFIT_KONFIG"] = tempfile.mkdtemp(prefix="polderfit-test-konfig-")
 
 import pytest
 
