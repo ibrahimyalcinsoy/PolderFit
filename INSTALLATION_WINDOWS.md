@@ -1,147 +1,33 @@
-# PolderFit unter Windows installieren und starten
+# Installation (Windows)
 
-Diese Anleitung führt **Schritt für Schritt** durch die komplette Installation –
-ohne Vorkenntnisse. Einfach von oben nach unten abarbeiten. Jeder Schritt ist
-einzeln aufgeführt und erklärt, was passiert und woran man erkennt, dass es
-geklappt hat.
+## 1. Python and Git
 
-> **Zeitaufwand:** ca. 15–20 Minuten.
-> **Voraussetzung:** Windows 10 oder 11 mit Internetverbindung und den Rechten,
-> Programme zu installieren.
+- Python ≥ 3.11: <https://www.python.org/downloads/windows/> – tick **“Add python.exe to PATH”**
+- Git: <https://git-scm.com/download/win> – default settings
 
----
-
-## Schritt 1 – Python installieren
-
-PolderFit ist in Python geschrieben. Python muss zuerst installiert werden.
-
-1. Webseite öffnen: <https://www.python.org/downloads/windows/>
-2. Auf den großen gelben Knopf **„Download Python 3.x.x“** klicken
-   (es muss **Version 3.11 oder neuer** sein).
-3. Die heruntergeladene Datei (`python-3.x.x-amd64.exe`) per Doppelklick starten.
-4. **WICHTIG – nicht überspringen:** Ganz unten im Installationsfenster den Haken
-   bei **„Add python.exe to PATH“** setzen. ✅
-   (Ohne diesen Haken funktionieren die späteren Befehle nicht.)
-5. Auf **„Install Now“** klicken und warten, bis „Setup was successful“ erscheint.
-6. Fenster mit **„Close“** schließen.
-
-**Erfolgskontrolle:** Im Startmenü `cmd` eintippen, **Eingabeaufforderung** öffnen,
-folgendes eingeben und mit Enter bestätigen:
+Check in a new Command Prompt (`cmd`):
 
 ```bat
 python --version
-```
-
-Wenn eine Zeile wie `Python 3.12.4` erscheint, hat alles geklappt. Erscheint
-stattdessen eine Fehlermeldung, wurde der Haken aus Schritt 4 vergessen – dann
-Python deinstallieren und neu installieren.
-
----
-
-## Schritt 2 – Git installieren
-
-Git wird benötigt, um das Programm von GitHub herunterzuladen.
-
-1. Webseite öffnen: <https://git-scm.com/download/win>
-2. Der Download (**„64-bit Git for Windows Setup“**) startet automatisch.
-3. Die Datei per Doppelklick starten.
-4. Bei allen Fragen im Installationsfenster einfach immer auf **„Next“** klicken,
-   am Ende auf **„Install“**, danach auf **„Finish“**.
-   (Die Standardeinstellungen sind völlig in Ordnung.)
-
-**Erfolgskontrolle:** Eine **neue** Eingabeaufforderung öffnen (siehe Schritt 1)
-und eingeben:
-
-```bat
 git --version
 ```
 
-Erscheint z. B. `git version 2.45.1`, ist Git einsatzbereit.
-
----
-
-## Schritt 3 – Das Programm herunterladen
-
-Jetzt wird PolderFit von GitHub auf den eigenen Rechner geladen.
-
-1. Eingabeaufforderung öffnen (Startmenü → `cmd` → Enter).
-2. In den eigenen Benutzerordner wechseln (dort landet das Programm):
-
-   ```bat
-   cd %USERPROFILE%
-   ```
-
-3. Das Programm herunterladen:
-
-   ```bat
-   git clone https://github.com/ibrahimyalcinsoy/PolderFit.git
-   ```
-
-4. In den heruntergeladenen Ordner wechseln:
-
-   ```bat
-   cd PolderFit
-   ```
-
-**Erfolgskontrolle:** Der Befehl `dir` zeigt jetzt unter anderem die Dateien
-`README.md` und `pyproject.toml` an.
-
----
-
-## Schritt 4 – Umgebung einrichten (virtuelle Umgebung + Abhängigkeiten)
-
-Damit PolderFit sauber und ohne Konflikte läuft, bekommt es eine eigene, abgekapselte
-Python-Umgebung.
-
-1. Virtuelle Umgebung anlegen:
-
-   ```bat
-   python -m venv .venv
-   ```
-
-2. Virtuelle Umgebung aktivieren:
-
-   ```bat
-   .venv\Scripts\activate
-   ```
-
-   Danach steht am Zeilenanfang **`(.venv)`** – das zeigt, dass die Umgebung
-   aktiv ist.
-
-3. PolderFit samt grafischer Oberfläche und allen benötigten Paketen installieren
-   (das dauert ein paar Minuten und lädt einiges aus dem Internet):
-
-   ```bat
-   pip install -e ".[gui]"
-   ```
-
-   Wenn am Ende eine Zeile wie `Successfully installed polderfit-2.0.0 ...` erscheint,
-   ist die Installation fertig.
-
----
-
-## Schritt 5 – Das Programm starten
+## 2. Install
 
 ```bat
+cd %USERPROFILE%
+git clone https://github.com/ibrahimyalcinsoy/PolderFit.git
+cd PolderFit
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[gui]"
 polderfit
 ```
 
-Die grafische Oberfläche von PolderFit öffnet sich (maximiert). **Fertig!** 🎉
+Linux/macOS: `source .venv/bin/activate` instead of `.venv\Scripts\activate`.
+If `polderfit` is not found: `python -m polderfit.app`
 
-> **Tipps für Windows:** `F11` schaltet den Vollbildmodus ein und aus (`Esc` verlässt ihn), `Strg+Q` beendet, `Ansicht → Fensterlayout zurücksetzen` (`Strg+Umschalt+R`) bringt den Farbplot und die Panels ohne Datenverlust in die Grundstellung. Eigene Voreinstellungen (`Datei → Einstellungen → Als Standard speichern`) und die Auto-Sicherung des Arbeitsstands liegen unter `%APPDATA%\PolderFit`. Bei Bildschirmskalierung 125 %/150 % wird die Oberfläche automatisch mitskaliert.
-
-Falls der Befehl `polderfit` einmal nicht funktioniert, geht alternativ auch:
-
-```bat
-python -m polderfit.app
-```
-
----
-
-## Beim nächsten Mal starten
-
-Python, Git und die Installation sind dann schon vorhanden. Es genügen **zwei**
-Befehle in der Eingabeaufforderung:
+## Start
 
 ```bat
 cd %USERPROFILE%\PolderFit
@@ -149,23 +35,16 @@ cd %USERPROFILE%\PolderFit
 polderfit
 ```
 
-> **Tipp:** Damit man sich diese Befehle nicht merken muss, kann man sie in eine
-> Startdatei schreiben. Dazu im Ordner `PolderFit` mit dem Editor eine Datei
-> `start.bat` mit folgendem Inhalt anlegen und künftig einfach doppelklicken:
->
-> ```bat
-> @echo off
-> cd /d "%USERPROFILE%\PolderFit"
-> call .venv\Scripts\activate
-> polderfit
-> ```
+Optional `start.bat` (double-click):
 
----
+```bat
+@echo off
+cd /d "%USERPROFILE%\PolderFit"
+call .venv\Scripts\activate
+polderfit
+```
 
-## Auf eine neue Version aktualisieren
-
-Liegt bereits eine (ältere) Version im Ordner `PolderFit`, wird sie so durch den
-neuesten Stand von GitHub ersetzt:
+## Update
 
 ```bat
 cd %USERPROFILE%\PolderFit
@@ -175,25 +54,17 @@ git reset --hard origin/main
 pip install -e ".[gui]"
 ```
 
-`git reset --hard origin/main` überschreibt alle Programmdateien mit der neuesten
-Version (selbst geänderte Programmdateien gehen verloren); eigene Dateien im Ordner
-(Messdaten, Projekte) bleiben erhalten. Meldet `git fetch` „not a git repository“
-(Ordner stammt z. B. aus einer ZIP): Ordner umbenennen (`ren PolderFit PolderFit_alt`)
-und ab Schritt 3 neu installieren.
+Program files are overwritten; own files (measurements, projects) are kept.
+“not a git repository” (e.g. folder from ZIP): `ren PolderFit PolderFit_old`, then step 2.
 
----
+## Troubleshooting
 
-## Häufige Probleme
-
-| Problem | Lösung |
+| Problem | Fix |
 |---|---|
-| `python` wird nicht erkannt | Haken **„Add python.exe to PATH“** bei der Installation vergessen (Schritt 1, Punkt 4). Python deinstallieren und neu installieren. |
-| `git` wird nicht erkannt | Git neu installieren (Schritt 2) und eine **neue** Eingabeaufforderung öffnen. |
-| `.venv\Scripts\activate` bringt einen Fehler | Sicherstellen, dass man sich im Ordner `PolderFit` befindet (`cd %USERPROFILE%\PolderFit`) und Schritt 4 Punkt 1 ausgeführt wurde. |
-| Bei `pip install` bricht der Download ab | Internetverbindung prüfen und den Befehl einfach erneut ausführen. |
-| Fenster der Oberfläche öffnet sich nicht | Prüfen, ob `(.venv)` am Zeilenanfang steht; falls nicht, zuerst `.venv\Scripts\activate` ausführen. |
-| Farbplot oder Panels sehen verschoben/zu schmal aus | `Ansicht → Fensterlayout zurücksetzen` (`Strg+Umschalt+R`). |
-| Arbeitsstand nach Absturz weg | `Datei → Auto-Sicherung wiederherstellen` (letzter Stand, max. 15 s alt). |
-
-Weitergehende Hinweise zur Bedienung und zur Fehlersuche stehen in der
-ausführlichen Dokumentation im Ordner [`docs/`](docs/).
+| `python` not recognized | Reinstall Python with “Add python.exe to PATH” |
+| `git` not recognized | Reinstall Git, open a new `cmd` |
+| `.venv\Scripts\activate` fails | `cd %USERPROFILE%\PolderFit`, `python -m venv .venv` |
+| `pip install` aborts | Check internet connection, run again |
+| GUI does not open | Prompt must start with `(.venv)` → `.venv\Scripts\activate` |
+| Plot/panels misplaced | View → Reset window layout (`Ctrl+Shift+R`) |
+| Work lost after crash | File → Restore auto-backup |
