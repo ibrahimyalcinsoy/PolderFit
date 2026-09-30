@@ -1,18 +1,18 @@
-# Ausreißer, Projektdateien, Einstellungen, Speichern
+# Outliers, projects, settings, saving
 
-**Ausreißer / ignorieren** (`Strg+M` im Farbplot, `Strg+I` für den aktuellen Fit oder im Kittel-Fenster `Strg+K`): Punkt aus Kittel/LLG, Plots und Globalparametern entfernt (grau, Status `ignoriert`); Einzelfit bleibt; Spalte `ausreisser` im Export; Panel *Wieder aufnehmen*; rückgängig per `Strg+Z`.
+**Outliers / ignore** (`Ctrl+M` in the color plot, `Ctrl+I` for the current fit, or in the Kittel window `Ctrl+K`): point removed from Kittel/LLG, plots and global parameters (gray, status `ignoriert`); single fit kept; column `ausreisser` in export; panel *Re-include*; `Ctrl+Z`.
 
-**Kittel-Fenster:** Werkzeugleiste *Auswählen* (Klick schaltet einen Punkt an/aus, Kasten fügt hinzu), Gesamtansicht, Verschieben, Zoom. *Auswahl ausblenden* (`Entf`) übernimmt die Punkte ins Hauptfenster/den Farbplot (grau; bei mehreren Moden nur für die jeweilige Mode). *ausgeblendete Punkte zeigen* + *Auswahl einblenden* nimmt sie wieder auf; `Esc` hebt die Auswahl auf.
+**Kittel window:** toolbar *Select* (click toggles a point, box adds), full view, pan, zoom. *Hide selection* (`Del`) applies to main window/color plot (gray; per mode). *Show hidden points* + *Show selection* re-includes; `Esc` clears the selection.
 
-![Auswahl](abb/abb_kittel_unsort.png)
+![Selection](abb/abb_kittel_unsort.png)
 
-**Projekt** (`Datei → Projekt speichern`, JSON Formatversion 4): Quelle, Kanal-Zuordnung, Auswertungsauswahl, γ, Fenster je Frequenz, Zonen, **Korridore** (je Mode, mit Ergebnissen der Moden 2…n), Ausreißer, **Bewertung je Fit**, Platzhalter (nicht gefittet), Modenzahl, physikalische Parameter, Verarbeitungskette, `programm`. Laden = TDMS neu lesen + **alle Fits deterministisch neu rechnen**. Nie gespeichert: Zoom, Fensterlayout, Achsengeometrie (*Ansicht → Fensterlayout zurücksetzen* stellt den Auslieferungszustand her).
+**Project** (*File → Save project*, JSON): source, channel mapping, evaluation selection, γ, windows, zones, **corridors** (per mode, with results of modes 2…n), outliers, **rating per fit**, unfitted placeholders, number of modes, physical parameters, processing chain, `programm`. Loading = re-read TDMS + **recompute all fits deterministically**. Never saved: zoom, window layout.
 
-**Auto-Sicherung:** 15 s nach jeder Änderung und beim Beenden wird der Arbeitsstand als Projekt in das Konfigurationsverzeichnis geschrieben (`Datei → Auto-Sicherung wiederherstellen`).
+**Auto-backup:** 15 s after every change and on exit (*File → Restore auto-backup*).
 
-**Einstellungen** (`Datei → Einstellungen`): physikalische Parameter, Verarbeitungskette, Anzeige (Farbskala, Zoom, Problemfits, …), Export-Spalten, Bereichsfit-Optionen → `*.polderfit-einstellungen.json`; *Als Standard speichern* legt sie im Konfigurationsverzeichnis ab (Windows `%APPDATA%\PolderFit`, Linux `~/.config/polderfit`, macOS `~/Library/Application Support/PolderFit`; Umgebungsvariable `POLDERFIT_KONFIG`) und lädt sie beim Start.
+**Settings** (*File → Settings*): physical parameters, processing chain, display, export columns, region fit options → `*.polderfit-einstellungen.json`; *Save as default* stores them in the config directory (Windows `%APPDATA%\PolderFit`, Linux `~/.config/polderfit`, macOS `~/Library/Application Support/PolderFit`; env `POLDERFIT_KONFIG`), loaded at start.
 
-**Speichern / Export** (`Datei → Speichern / Export`): *Alles speichern* (`Strg+Umschalt+S`) schreibt gewählte Bestandteile mit gemeinsamem Basisnamen in einen Ordner – Projekt, Excel, CSV, Kittel/LLG (Excel + CSV + PNG/PDF), Farbplot-Bild, Farbplot-Matrix, TDMS, Einstellungen. Excel/CSV der Einzelfits enthalten alle Parameter in Spaltengruppen (*Export-Spalten*, als Voreinstellung speicherbar): Resonanzfeld und Linienbreite in **T und mT**, α, Amplitude/Phase/komplexe Amplitude, Untergrund, Gütemaße, Fenster, Status/Bewertung, Temperatur; je weiterer Mode ein Blatt *Einzelfits_M<k>*; Blatt *Global* mit Kittel/LLG (T und mT) und Einstellungen; Zusatzblätter *Einstellungen*, *Zonen_Korridore*, *Ausreisser*. CSV wahlweise deutsch (`;`, Dezimalkomma).
+**Save / export:** *Save everything* (`Ctrl+Shift+S`) writes selected parts with a common base name: project, Excel, CSV, Kittel/LLG (Excel + CSV + PNG/PDF), color plot image/matrix, TDMS, settings. Excel/CSV contain all parameters in column groups (*Export columns*): resonance field and linewidth in **T and mT**, α, amplitude/phase, background, quality, window, status/rating, temperature; one sheet *Einzelfits_M<k>* per further mode; sheet *Global* (Kittel/LLG); extra sheets *Einstellungen*, *Zonen_Korridore*, *Ausreisser*. CSV optionally German (`;`, decimal comma).
 
 ```python
 speichere_sitzung(stapel, "sitzung.json", physik=p.als_dict(), verarbeitung=kette.als_dict(), korridore=korridore)

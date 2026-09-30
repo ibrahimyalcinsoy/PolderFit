@@ -1,6 +1,6 @@
 # Python tool for bbFMR
 
-**Version 2.2.107 · Last updated 30.09.2026**
+**Version 2.2.108 · Last updated 30.09.2026**
 [Documentation](https://ibrahimyalcinsoy.github.io/PolderFit/) · [Installation (Windows)](INSTALLATION_WINDOWS.md)
 
 > [!CAUTION]

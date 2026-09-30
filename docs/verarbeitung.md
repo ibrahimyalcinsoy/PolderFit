@@ -1,16 +1,16 @@
-# Verarbeitung des Farbplots (nur Darstellung)
+# Color plot processing (display only)
 
-Portiert aus *pybbfmr*, Grundlage Maier-Flaig et al., RSI 89, 076101 (2018). **Kein Einfluss auf Fits** – der Linescan-Fit läuft immer auf dem rohen S21.
+Ported from *pybbfmr*, based on Maier-Flaig et al., RSI 89, 076101 (2018). **No effect on fits** – the linescan fit always uses raw S21.
 
-| Schritt | Formel / Wirkung | Parameter |
+| Step | Formula / effect | Parameters |
 |---|---|---|
-| divide slice | `Z / Z[:, i_ref]` – entfernt `V_BG(ω)·e^{iφ}` | Index/Wert, Achse Feld/Frequenz |
-| derivative divide | `[S(H+ΔH) − S(H−ΔH)] / [S(H)·ΔH] ≈ −iωA′ ∂χ/∂ω` (Gl. 4) | `Δn` (Standard 4), `mitteln`, Achse |
-| relation amplitude (in der Oberfläche ausgeblendet) | `Z[i] / Z[i+Δn]` | `Δn` |
+| divide slice | `Z / Z[:, i_ref]` – removes `V_BG(ω)·e^{iφ}` | index/value, axis field/frequency |
+| derivative divide | `[S(H+ΔH) − S(H−ΔH)] / [S(H)·ΔH] ≈ −iωA′ ∂χ/∂ω` (eq. 4) | `Δn` (default 4), `mitteln`, axis |
+| relation amplitude (hidden in GUI) | `Z[i] / Z[i+Δn]` | `Δn` |
 
-Standard nach dem Laden: derivative divide, Δn = 4, Farbskala 2–98 %-Perzentile. Ränder → NaN (pybbfmr: 0).
+Default after loading: derivative divide, Δn = 4, color scale 2–98 % percentiles. Edges → NaN (pybbfmr: 0).
 
-Bedienung (Panel *Verarbeitung*): **genau eine** Operation aktiv (Einschalten schaltet die andere ab; „Alles aus“ = Rohdaten), jede Option mit Hover-Erklärung, Farbskala wählbar (Viridis, Grau, Cividis, Magma, Rot-Blau; auch *Ansicht → Farbskala*). Mausrad wirkt in Eingabefeldern nur mit Fokus; Änderungen sind entprellt (150 ms). Das Figur-Layout wird vor jedem Neuzeichnen zurückgesetzt – der frühere Fehler „Farbplot wird bei Δn-Mausrad immer schmaler“ ist damit behoben. Export: *Farbplot als Bild* (PNG/PDF/SVG mit Overlays) und *Farbplot-Matrix als CSV* (verarbeitete Matrix). Kette und Farbskala sind Teil der [Voreinstellungen](ausreisser.md) und der Projektdatei.
+Panel *Processing*: **one** operation active (“All off” = raw data); color scales Viridis, Gray, Cividis, Magma, Red-Blue (also *View → Color scale*). Export: *Color plot as image* (PNG/PDF/SVG with overlays), *Color plot matrix as CSV*. Chain and color scale are stored in [settings](ausreisser.md) and the project file.
 
 ```python
 feld, freq, Z = ds.komplexe_matrix()

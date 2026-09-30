@@ -1,30 +1,30 @@
-site_name: PolderFit – Breitband-FMR-Auswertung
-site_description: Wie der PolderFit-Code funktioniert – verständlich erklärt, mit Tuning- und Troubleshooting-Anleitung
+site_name: Python tool for bbFMR
+site_description: bbFMR evaluation – how the code works, tuning and troubleshooting
 site_author: Ibrahim Yalcinsoy
-copyright: "© 2026 Ibrahim Yalcinsoy – alle Rechte vorbehalten."
+copyright: "© 2026 Ibrahim Yalcinsoy – all rights reserved."
 docs_dir: docs
 theme:
   name: readthedocs
   highlightjs: true
 nav:
-  - Start: index.md
-  - "Schnellreferenz: Größen · Formeln · Quellen": referenz.md
-  - Installation und Start: installation.md
-  - Die Messdaten (TDMS): datenformate.md
-  - Kanal-Mapping und Profile: kanal-mapping.md
-  - Verarbeitung des Farbplots: verarbeitung.md
-  - Auswertungsauswahl (Bereiche und Frequenzauswahl): auswertungsauswahl.md
-  - Interaktives Fitten: interaktives-fitten.md
-  - Ausreißer und Projektdateien: ausreisser.md
-  - Ablauf der Auswertung: pipeline.md
-  - AutoWindow im Detail: autowindow.md
-  - Physikalisches Modell und Fit: physik-und-fit.md
-  - Bewertung der Fits: bewertung.md
-  - Parameter und Feineinstellung: tuning.md
-  - Fehlerdiagnose: troubleshooting.md
-  - Robustheitsprüfung über reale Messdaten: test-harness.md
-# Die Schnellreferenz verlinkt Original-PDFs im (gitignorierten) Ordner
-# Dokumente/ – ausserhalb des docs-Baums, daher keine Warnung dafuer.
+  - Home: index.md
+  - "Quick reference: quantities · formulas · sources": referenz.md
+  - Installation and start: installation.md
+  - Measurement data (TDMS): datenformate.md
+  - Channel mapping and profiles: kanal-mapping.md
+  - Color plot processing: verarbeitung.md
+  - Evaluation selection (ranges, jumpers): auswertungsauswahl.md
+  - Interactive fitting: interaktives-fitten.md
+  - Outliers, projects, settings: ausreisser.md
+  - Pipeline: pipeline.md
+  - AutoWindow: autowindow.md
+  - Physics and fit: physik-und-fit.md
+  - Fit rating: bewertung.md
+  - Parameters and tuning: tuning.md
+  - Troubleshooting: troubleshooting.md
+  - Comparison with LabVIEW FTF: vergleich-ftf.md
+  - Robustness check (real data): test-harness.md
+# Links outside the docs tree: no warning.
 validation:
   links:
     not_found: info

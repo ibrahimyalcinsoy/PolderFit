@@ -1,23 +1,23 @@
-# Robustheitsprüfung (reale Messdaten)
+# Robustness check (real data)
 
-`python tests/autowindow_runner.py [--no-plots] [--rerun-failed-only]` – Daten unter `testdata/`, 90 s je Datei, mehrere Prozesse. Prüfung unabhängig vom AutoWindow reimplementiert (Selbsttest: absichtlich falsche Fenster werden erkannt); Ground Truth = Band der sortierten Gegenstücke.
+`python tests/autowindow_runner.py [--no-plots] [--rerun-failed-only]` – data in `testdata/`, 90 s per file, several processes. Check re-implemented independently of AutoWindow (self-test: deliberately wrong windows are detected); ground truth = band of the sorted counterparts.
 
-| Status | Bedeutung |
+| Status | Meaning |
 |---|---|
-| `OK` | Fenster plausibel, Fit unauffällig |
-| `WINDOW_FLAGGED` | Fensterproblem, **gemeldet** (zulässig) |
-| `WINDOW_FAIL` | Fensterproblem, **still** (Fehlerfall) |
-| `KEIN_ZIEL` | keine Resonanz im Feldbereich |
-| Datei: `CRASH`, `TIMEOUT`, `NICHT_FMR` | |
+| `OK` | window plausible, fit fine |
+| `WINDOW_FLAGGED` | window problem, **reported** (allowed) |
+| `WINDOW_FAIL` | window problem, **silent** (failure) |
+| `KEIN_ZIEL` | no resonance in field range |
+| file: `CRASH`, `TIMEOUT`, `NICHT_FMR` | |
 
-Letzter Lauf (286 Linescan-Dateien, 25 Probentypen, 12 GB, ~131 000 Resonanzen; `tests/AUTOWINDOW_ROBUSTHEIT_BERICHT.md`):
+Last run (286 linescan files, 25 sample types, 12 GB, ~131 000 resonances; `tests/AUTOWINDOW_ROBUSTHEIT_BERICHT.md`):
 
-| | Baseline | aktuell |
+| | Baseline | Current |
 |---|---|---|
 | CRASH | 38 | 0 |
-| still falsch | 2,3 % | 0,4 % (sortiert: 0) |
-| OK + gemeldet | 97,7 % | 99,6 % |
+| silently wrong | 2.3 % | 0.4 % (sorted: 0) |
+| OK + reported | 97.7 % | 99.6 % |
 
-Ergebnisse: `tests/autowindow_results.json`, Plots `diag/`. FTF-Benchmark: `benchmark_ftf/BERICHT.md`, `python benchmark_ftf/run_benchmark.py`.
+Results: `tests/autowindow_results.json`, plots `diag/`. FTF benchmark: `benchmark_ftf/BERICHT.md`, `python benchmark_ftf/run_benchmark.py`.
 
 ![Benchmark](abb/abb_benchmark.png)

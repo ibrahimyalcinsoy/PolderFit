@@ -1,37 +1,37 @@
-# Bewertung der Fits
+# Fit rating
 
-`bewerte_fit` (`fit/kriterien.py`) – problematisch, sobald **eine** Bedingung zutrifft:
+`bewerte_fit` (`fit/kriterien.py`) – problematic as soon as **one** condition holds:
 
-| | Kriterium | Bedingung | Konstante |
+| | Criterion | Condition | Constant |
 |---|---|---|---|
-| a | Residuum | `rmse_norm > 0.35` (RMSE/Signalhub nach Untergrundabzug); Notbremse `chi2_red > 1e6` | `RMSE_NORM_SCHWELLE`, `CHI2_RED_NOTBREMSE` |
-| b | an Schranke | `alpha`, `phi`, `B_res` innerhalb 1 % des Schrankenabstands (`alpha` logarithmisch) | `GRENZ_NAEHE_REL` |
-| c | außerhalb | `B_res` ∉ Fenster | |
-| d | unphysikalisch | `alpha > alpha_plausibel` (Standard `alpha_max/2` = 0.05; einstellbar `Strg+P`) | `ALPHA_PLAUSIBEL_MAX` |
-| e | Konvergenz/Kovarianz | kein Erfolg; keine Unsicherheiten **und** `rmse_norm > 0.10` | `RMSE_NORM_EXZELLENT` |
-| f | Unsicherheit | `B_res_err/|B_res| > 2 %` | `B_RES_REL_UNSICHERHEIT_MAX` |
-| g | zu wenige Punkte | weniger als 12 Messpunkte im Fenster/Korridor | `MIN_PUNKTE_FIT` |
-| h | Linie nicht aufgelöst | `µ0ΔH < 1,5` Feldschritte (einstellbar `Strg+P`, 0 = aus; YIG) | `DH_MIN_FELDSCHRITTE` |
+| a | residual | `rmse_norm > 0.35` (RMSE/signal swing after background removal); emergency brake `chi2_red > 1e6` | `RMSE_NORM_SCHWELLE`, `CHI2_RED_NOTBREMSE` |
+| b | at bound | `alpha`, `phi`, `B_res` within 1 % of the bound range (`alpha` logarithmic) | `GRENZ_NAEHE_REL` |
+| c | outside | `B_res` ∉ window | |
+| d | unphysical | `alpha > alpha_plausibel` (default `alpha_max/2` = 0.05; `Ctrl+P`) | `ALPHA_PLAUSIBEL_MAX` |
+| e | convergence/covariance | no success; no uncertainties **and** `rmse_norm > 0.10` | `RMSE_NORM_EXZELLENT` |
+| f | uncertainty | `B_res_err/|B_res| > 2 %` | `B_RES_REL_UNSICHERHEIT_MAX` |
+| g | too few points | < 12 points in window/corridor | `MIN_PUNKTE_FIT` |
+| h | line not resolved | `µ0ΔH < 1.5` field steps (`Ctrl+P`, 0 = off; YIG) | `DH_MIN_FELDSCHRITTE` |
 
-R² ist **kein** Gütemaß (Untergrund dominiert die Varianz → R² ≈ 1 auch ohne Resonanz). `chi2_red` (Rauschen aus zweiten Differenzen, MAD/√6) wird exportiert, nicht zur Einstufung genutzt.
+R² is **no** quality measure (background dominates the variance → R² ≈ 1 even without resonance). `chi2_red` (noise from second differences, MAD/√6) is exported, not used for rating.
 
-![Kriterien](abb/abb_kriterien.png)
+![Criteria](abb/abb_kriterien.png)
 
-Nur unproblematische Fits gehen in Kittel/LLG (`_gute_ergebnisse`). Schwellen nicht zur Schönung lockern. Bei mehreren Moden werden b–d für jede Mode geprüft.
+Only unproblematic fits enter Kittel/LLG (`_gute_ergebnisse`). With several modes, b–d are checked per mode.
 
-## Nutzer-Bewertung und Status-Farben
+## User rating and status colors
 
-`FitErgebnis.bewertung` ∈ `auto` (Kriterien entscheiden) · `bestaetigt` (gilt als gut) · `verworfen` (gilt als problematisch); `problematisch` ist der wirksame Zustand, `problematisch_auto` das reine Kriterienergebnis (beides im Export). Gezielte Einzel-Nachfits (Grenzen ziehen, Nochmal fitten) werden standardmäßig `bestaetigt` (`nachfit_bestaetigen`, Strg+P); Bereichs-/Grenzgeraden-Fits über viele Frequenzen, Zonen-Nachrechnungen und Projekt-Wiederherstellung bleiben `auto`. *Bewertung → Alle Fits nachfitten und als gut bestätigen* erzwingt `bestaetigt` für alle Fits der Mode (außer `verworfen`/Ausreißer). Änderungen an α-Plausibilität/Auflösung (`Strg+P`) bewerten bestehende Fits sofort neu (`bewerte_alle_neu`). `setze_bewertung` liefert eine Kopie (Undo-sicher).
+`FitErgebnis.bewertung` ∈ `auto` (criteria decide) · `bestaetigt` (counts as good) · `verworfen` (counts as problematic); `problematisch` = effective state, `problematisch_auto` = criteria only (both exported). Targeted single refits are `bestaetigt` by default (`nachfit_bestaetigen`, `Ctrl+P`); region/corridor fits, zone recomputation and project restore stay `auto`. *Functions → Rating of the current fit → Refit all fits and confirm as good* sets `bestaetigt` for all fits of the mode (except `verworfen`/outliers). Changing α plausibility/resolution (`Ctrl+P`) re-rates existing fits (`bewerte_alle_neu`). `setze_bewertung` returns a copy (undo-safe).
 
-Farben und Formen nach DIN EN 60073 / ISO 3864 (`gui/farben.py`); Form als zweites Merkmal (DIN EN ISO 9241-125):
+Colors and shapes per DIN EN 60073 / ISO 3864 (`gui/farben.py`); shape as second cue (DIN EN ISO 9241-125):
 
-| Status | Farbe | Marker | Bedeutung |
+| Status | Color | Marker | Meaning |
 |---|---|---|---|
-| `gut` | grün | ● | Kriterien erfüllt |
-| `bestaetigt` | grün, blauer Rand | ● | vom Nutzer als gut bestätigt |
-| `problem` | gelb | ▲ | Kriterien verletzt oder vom Nutzer verworfen – prüfen |
-| `fehler` | rot | ✕ | keine Konvergenz / kein Ergebnis |
-| `ignoriert` | grau, dunkler Rand | ● | Ausreißer (nur mit *Ansicht → Ignorierte anzeigen*) oder nicht gefittet |
-| Mode k ≥ 2 | Mode-Farbe | ● | Korridor-Fit einer weiteren Mode (Status wie Mode 1) |
+| `gut` | green | ● | criteria met |
+| `bestaetigt` | green, blue edge | ● | confirmed good by user |
+| `problem` | yellow | ▲ | criteria violated or rejected by user – check |
+| `fehler` | red | ✕ | no convergence / no result |
+| `ignoriert` | gray, dark edge | ● | outlier (only with *View → Show ignored points (outliers) in gray*) or not fitted |
+| mode k ≥ 2 | mode color | ● | corridor fit of a further mode |
 
-Blau kennzeichnet aktive Modi, Auswahl und Bedienzustände; gelb Warnungen im Protokoll, rot Fehler.
+Blue marks active modes, selection and control states; yellow warnings in the log, red errors.

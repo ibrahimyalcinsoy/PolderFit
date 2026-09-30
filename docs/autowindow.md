@@ -1,15 +1,15 @@
 # AutoWindow
 
-Kritischster Schritt: falsches Fenster ⇒ falsche Werte ohne Optimierer-Fehler. Prinzip: **die Resonanz wandert mit f (Kittel), Störungen sitzen bei festen Feldern.**
+Most critical step: wrong window ⇒ wrong values without optimizer error. Principle: **the resonance moves with f (Kittel), disturbances sit at fixed fields.**
 
-| Schritt | Funktion | Kern |
+| Step | Function | Core |
 |---|---|---|
-| 1 Untergrundabzug je Linescan | `_detrend_residuum` | Polynom (Grad ≈ 1 je 0,5 T, 2…6) an Re/Im; Residuum `\|S21 − P(B)\|` |
-| 2 Stationärabzug (nur gemeinsames Feldgitter) | `_stationaeren_untergrund_abziehen` | `stat[B] = median_f r(f,B)`; `max(0, r − stat)` |
-| 3 Kandidat + Prominenz | `_kandidat` | `argmax`; `s = (max − med)/(1,4826·MAD)`; verlässlich ab `s ≥ 4` |
-| 4 glatte lokale Trasse | `_glatte_lokale_trasse` | gleitende robuste Gerade (31 Punkte, MAD-Verwerfung); Rückfall: robustes Polynom ≤ 2 |
-| 5 Fenster | `_fenster_um` | Kandidat, wenn prominent + trassenkonsistent, sonst Trasse + `_verfeinere_zentrum`; Halbbreite `max(8·FWHM/2, 6ΔB)`, Deckel 0,4 T |
+| 1 background removal per linescan | `_detrend_residuum` | polynomial (degree ≈ 1 per 0.5 T, 2…6) on Re/Im; residual `\|S21 − P(B)\|` |
+| 2 stationary removal (common field grid only) | `_stationaeren_untergrund_abziehen` | `stat[B] = median_f r(f,B)`; `max(0, r − stat)` |
+| 3 candidate + prominence | `_kandidat` | `argmax`; `s = (max − med)/(1.4826·MAD)`; reliable for `s ≥ 4` |
+| 4 smooth local track | `_glatte_lokale_trasse` | moving robust line (31 points, MAD rejection); fallback: robust polynomial ≤ 2 |
+| 5 window | `_fenster_um` | candidate if prominent + on track, else track + `_verfeinere_zentrum`; half-width `max(8·FWHM/2, 6ΔB)`, cap 0.4 T |
 
 ![AutoWindow](abb/abb_autowindow.png)
 
-Grenzen: ΔH ≳ 0,3 T (Deckel, Polynom verschluckt Linie), sehr schwaches Signal nahe ip, AFM-Proben, dominante stationäre Hochfeldartefakte → Dispersion manuell vorgeben (`zentren`).
+Limits: ΔH ≳ 0.3 T (cap, polynomial swallows line), very weak signal near ip, AFM samples, dominant stationary high-field artefacts → give dispersion manually (`zentren`).

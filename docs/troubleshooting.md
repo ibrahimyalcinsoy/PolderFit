@@ -1,19 +1,19 @@
-# Fehlerdiagnose
+# Troubleshooting
 
-| Symptom | Ursache | Vorgehen |
+| Symptom | Cause | Action |
 |---|---|---|
-| „Punktzahl … nicht durch Feldanzahl teilbar“ | `_flush`-Datei, letzter Sweep unvollständig | wird automatisch gekürzt; sonst Datei defekt |
-| „Kein Mapping-Profil passt“ | fremdes Layout oder Nicht-FMR (`Read.ZNA`, Winkel-Sweep) | Zuordnungsdialog; Winkel-Sweeps nicht auswertbar |
-| sehr lange Laufzeit | tausende Feldpunkte je Linescan | Jumper (Auswertungsauswahl), Bereich einschränken |
-| Fit gut, Fenster sichtbar falsch | Störfeature/Rauschen | Korridor (`Strg+L`), Rechteck-Nachfit, `_PROMINENZ_MIN` ↑ |
-| Farbplot wird immer schmaler | (behoben) wiederholtes `tight_layout` | *Ansicht → Fensterlayout zurücksetzen*; Layout wird jetzt vor jedem Zeichnen zurückgesetzt |
-| „alpha unphysikalisch“ bei sichtbar guten, breiten Linien | Plausibilitätsgrenze α_max/2 | `Strg+P` α-Plausibilitätsgrenze anheben oder Fit mit `Strg+1` bestätigen |
-| „alpha an Grenze“ bei schmalen Linien (α ≲ α_max/100, z. B. 7·10⁻⁴ bei α_max 0,1) | „an Grenze“ = innerhalb 1 % der Spanne [α_min, α_max] | `Strg+P` α-Obergrenze absenken (bis 0,00001), ggf. Plausibilitätsgrenze mit |
-| Arbeitsstand verloren (Absturz) | – | `Datei → Auto-Sicherung wiederherstellen` |
-| Programm wirkt eingefroren | langer Auto-Fit/Ladevorgang | Statusleiste zeigt Spinner, Phase, Stand, Restzeit; gefittete Punkte erscheinen live im Farbplot; **Abbrechen** (Statusleiste/Aktivitäts-Panel) beendet geordnet, bisherige Fits bleiben |
-| sehr viele problematische Fits | keine Resonanz im Feldbereich (tiefe f); ip mit oop-Modell an Schranke | `problem_statistik()` prüfen – meist sachgerecht |
-| Fit sieht gut aus, „keine Unsicherheiten“ | φ-Nebenminimum, singuläre Jacobi | automatisch: φ-Neustart, Ausnahme bei `rmse_norm ≤ 0.10`; sonst Fenster/Startwerte prüfen |
-| Fenster sucht zu tief | stationäre Artefakte am Feldrand | Stationärabzug/Trasse; sonst Korridor |
-| `.tdms_index` passt nicht | Datei kopiert/umbenannt | automatisch ohne Index gelesen; Index löschen |
+| “point count … not divisible by field count” | `_flush` file, last sweep incomplete | cut automatically; else file broken |
+| “no mapping profile matches” | foreign layout or non-FMR (`Read.ZNA`, angle sweep) | mapping dialog; angle sweeps not supported |
+| very long runtime | thousands of field points per linescan | jumpers (evaluation selection), smaller range |
+| fit good, window visibly wrong | spurious feature/noise | corridor (`Ctrl+L`), rectangle refit, `_PROMINENZ_MIN` ↑ |
+| color plot misplaced | – | *View → Reset window layout* (`Ctrl+Shift+R`) |
+| “alpha unphysical” on visibly good broad lines | plausibility limit α_max/2 | `Ctrl+P` raise limit or `Ctrl+1` confirm |
+| “alpha at bound” on narrow lines (α ≲ α_max/100) | within 1 % of [α_min, α_max] | `Ctrl+P` lower α upper bound (down to 0.00001) |
+| work lost (crash) | – | *File → Restore auto-backup* |
+| program seems frozen | long Auto-Fit/loading | status bar shows phase, progress, remaining time; **Cancel** stops cleanly, fits so far are kept |
+| very many problematic fits | no resonance in field range (low f); ip with oop model at bound | check `problem_statistik()` – usually correct |
+| fit looks good, “no uncertainties” | φ side minimum, singular Jacobian | automatic φ restart, exception for `rmse_norm ≤ 0.10`; else check window/start values |
+| window too low | stationary artefacts at field edge | stationary removal/track; else corridor |
+| `.tdms_index` mismatch | file copied/renamed | read without index automatically; delete index |
 
-Systematisch über viele Dateien: [Robustheits-Harness](test-harness.md) (`diag/`-Plots).
+Many files at once: [Robustness harness](test-harness.md) (`diag/` plots).

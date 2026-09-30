@@ -1,22 +1,22 @@
-# Installation und Start
+# Installation and start
+
+Windows step by step: [INSTALLATION_WINDOWS.md](https://github.com/ibrahimyalcinsoy/PolderFit/blob/main/INSTALLATION_WINDOWS.md)
 
 ```bash
-pip install -e ".[gui]"     # im geklonten Ordner, Python >= 3.11 (venv empfohlen)
+pip install -e ".[gui]"     # in the cloned folder, Python >= 3.11 (venv recommended)
 polderfit                   # GUI
+pip install -e ".[test]" && python -m pytest -q
 ```
-Tests: `pip install -e ".[test]"` und `python -m pytest -q`.
 
-Windows/Linux/macOS: Vollbild `F11` (Esc verlässt es), `Strg+Q` beendet, Fensterlayout zurücksetzen `Strg+Umschalt+R`. Voreinstellungen und Auto-Sicherung liegen im Konfigurationsverzeichnis (Windows `%APPDATA%\PolderFit`, Linux `~/.config/polderfit`; siehe [Einstellungen](ausreisser.md)).
+Keys: `F11` full screen (`Esc` leaves), `Ctrl+Q` quit, `Ctrl+Shift+R` reset window layout. Settings and auto-backup: Windows `%APPDATA%\PolderFit`, Linux `~/.config/polderfit` ([Settings](ausreisser.md)).
 
-Skript ohne GUI:
+Script without GUI:
 
 ```python
 from polderfit.io.tdms_laden import lade_tdms
 from polderfit.fit.batch import fitte_alle
 from polderfit.auswertung.uebersicht import auswertung_kittel_llg
 ds = lade_tdms("Messung.tdms")
-stapel = fitte_alle(ds)                       # AutoWindow + Fit + Nachfenster + Bewertung
+stapel = fitte_alle(ds)                       # AutoWindow + fit + post-window + rating
 info = auswertung_kittel_llg(stapel.ergebnisse_aktiv(), geometrie="ip")
 ```
-
-Name und Version nur in `pyproject.toml`: `[tool.polderfit] name`, `[project] version` → Anzeige `PolderFit V0.1.0` überall.

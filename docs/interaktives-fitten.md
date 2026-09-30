@@ -1,33 +1,33 @@
-# Interaktives Fitten
+# Interactive fitting
 
-Ein Modus zurzeit (Modus-Manager), aktiver Modus blau markiert + Statusleiste, `Esc` bricht ab. Zoom (Mausrad/Kästchen) ist standardmäßig **aus**: *Ansicht → Zoom*; Doppelklick setzt zurück, Tasten `+`/`-`/`0` wirken immer. Alles rückgängig: `Strg+Z` / `Strg+Umschalt+Z` (50 Schritte). **Alle Werkzeuge funktionieren direkt nach dem Laden – ein Auto-Fit ist keine Voraussetzung** (`leerer_stapel`: nicht gefittete Frequenzen bleiben unsichtbar und außerhalb aller Auswertungen).
+One mode at a time (active mode blue + status bar, `Esc` cancels). Zoom (wheel/box) is **off** by default: *View → Zoom*; double-click resets, keys `+`/`-`/`0` always work. Undo/redo: `Ctrl+Z` / `Ctrl+Shift+Z` (50 steps). **All tools work right after loading – no Auto-Fit needed** (`leerer_stapel`: unfitted frequencies stay invisible and outside all evaluations).
 
-| Werkzeug | Aufruf | Wirkung |
+| Tool | Access | Effect |
 |---|---|---|
-| Auto-Fit (alle) | `F5` | Dialog: Jumper (absolut), Bereich, **Resonanzen je Fenster** (1–4; > 1 = Summenfit der Dips im AutoWindow-Fenster) und **Anzahl automatisch (BIC)**; Fit je Frequenz für Mode 1, danach alle Korridore |
-| Korridore | `Strg+L` oder Panel *Korridore*, 2 Klicks entlang der Resonanz | Korridor ± Breite (Spinbox wirkt auf den gewählten Korridor); Anker durch Ziehen der grünen Grenzen im Linescan-Panel oder der Griffe im Farbplot; „Resonanzen im Korridor“ = n Dips (Summenfit, B_res je Dip im Segment; alternativ harte Trennung); „Trennlinie setzen“ = gelbe Linie im Linescan-Panel, wandert relativ zur Korridormitte mit; „Korridor fitten …“ (Frequenzbereich, Modus, Jumper, BIC) |
-| Bereich neu fitten (Rechteck) | `Strg+B` | derselbe Dialog (Bereich editierbar); `B_res` bleibt im Bereich |
-| Grenzen im Linescan ziehen | Fit-Panel (erscheint mit erstem Fit oder Klick in die Karte) | Einzelfrequenz, Fit sofort; Zahl der Resonanzen wählbar |
-| Ausschlusszone | Menü Funktionen → „Ausschlusszone einzeichnen“, Rechteck | Punkte aus allen (Nach-)Fits, bleibt beim Auto-Fit (`F5`) aktiv; schraffiert; Rückgängig mit Strg+Z |
-| Bewertung | `Strg+1/2/3`, `Strg+I`, Panel-Knöpfe | gut bestätigen / problematisch / automatisch / ignorieren ([Bewertung](bewertung.md)) |
+| Auto-Fit (all) | `F5` | dialog: jumper (absolute), range, **resonances per window** (1–4; > 1 = sum fit) and **automatic count (BIC)**; mode 1 per frequency, then all corridors |
+| Corridors | `Ctrl+L` or panel *Corridors*, 2 clicks along the resonance | corridor ± width; anchors by dragging the green limits (linescan panel) or handles (color plot); “Resonances in corridor” = n dips (sum fit, B_res per dip in its segment; or hard split); “Set separator” = yellow line, moves with the corridor centre; “Fit corridor …” (frequency range, mode, jumper, BIC) |
+| Refit region (rectangle) | `Ctrl+B` | same dialog (range editable); `B_res` stays inside the region |
+| Drag limits in linescan | fit panel | single frequency, fit at once; number of resonances selectable |
+| Exclusion zone | *Functions → Draw exclusion zone*, rectangle | points removed from all (post-)fits, kept on Auto-Fit (`F5`); hatched; `Ctrl+Z` |
+| Rating | `Ctrl+1/2/3`, `Ctrl+I`, panel buttons | confirm good / problematic / automatic / ignore ([Rating](bewertung.md)) |
 
-Ein gezielter Nachfit an **einer** Frequenz (Grenzen ziehen, „Neu fitten“, Trennlinie) gilt als **vom Nutzer bestätigt** (grün mit blauem Rand; abschaltbar mit Strg+P); Korridor- und Bereichs-Fits über viele Frequenzen bewerten die Kriterien. Im Linescan-Panel zeigt „M1/M2 …“ die gewählte Mode; Grenzen ziehen setzt bei dieser Frequenz einen Anker des Korridors.
+A targeted refit of **one** frequency (drag limits, “Refit”, separator) counts as **user-confirmed** (green, blue edge; switch off in `Ctrl+P`); corridor and region fits over many frequencies are rated by the criteria. “M1/M2 …” in the linescan panel = selected mode; dragging limits sets a corridor anchor at that frequency.
 
-Während eines Fits: Wartecursor, Statusleiste mit Phase (Fenstersuche → Einzelfits), Stand, verstrichener und geschätzter Restzeit, Banner im Farbplot, Live-Einzeichnen der fertigen Punkte; `Abbrechen` beendet nach dem laufenden Fit, der Rest bleibt „nicht gefittet“ (`fitte_alle(abbruch=…)`).
+While fitting: busy cursor, status bar (phase, progress, elapsed/remaining time), banner, points drawn live; `Cancel` stops after the running fit, the rest stays “not fitted” (`fitte_alle(abbruch=…)`).
 
-Fenstersuche des Bereichs-Fits = wie Auto-Fit (Residuen auf vollen Linescans, Stationärabzug, lokale Trasse), auf das Feldintervall beschränkt. Korridor-Fits suchen kein Fenster: der Korridor ist das Fenster; Startwert aus dem lokalen Dip, sonst vom Nachbarn.
+Region fit window search = Auto-Fit, limited to the field interval. Corridor fits search no window: the corridor is the window; start value from the local dip, else from the neighbour.
 
-| Fehlerbild | Werkzeug |
+| Problem | Tool |
 |---|---|
-| Grenzen zu eng | Rechteck + „Fensterbreite fest“ |
-| mehrere Moden (z. B. nanostrukturiertes CoFe, 2–3 Zweige) | Resonanzen = 2/3 (Panel, Strg+P oder Auto-Fit-Dialog); Bänder nacheinander je Mode → fitten; Kittel/LLG je Mode (`Strg+K` → Resonanz); alle Moden im Export |
-| falsches Signal neben der Mode | Rechteck eng um die Mode oder Korridor |
-| Fit ok gemeldet, physikalisch falsch | `Strg+2` (problematisch) oder Rechteck *überschreiben* + Ausschlusszone |
-| Fit gelb, aber sichtbar richtig („alpha unphysikalisch“ bei breiten Linien) | `Strg+1` (gut bestätigen) oder α-Plausibilitätsgrenze anheben (`Strg+P`) |
-| Einzelner Fit daneben | Grenzen im Linescan-Panel ziehen |
+| limits too narrow | rectangle + “Fixed window width” |
+| several modes (e.g. nanostructured CoFe) | resonances = 2/3 (panel, `Ctrl+P` or Auto-Fit dialog); bands one after another per mode; Kittel/LLG per mode (`Ctrl+K`); all modes exported |
+| wrong signal next to the mode | tight rectangle or corridor |
+| fit rated ok, physically wrong | `Ctrl+2` or rectangle *overwrite* + exclusion zone |
+| fit yellow but visibly right (“alpha unphysical”, broad lines) | `Ctrl+1` or raise α plausibility limit (`Ctrl+P`) |
+| single fit off | drag limits in the linescan panel |
 
 ```python
-st = leerer_stapel(ds)                                   # ohne Auto-Fit
+st = leerer_stapel(ds)                                   # without Auto-Fit
 k = Korridor(mode=2, anker=[Anker(40.5e9, 2.70, 2.80), Anker(43.8e9, 2.80, 2.90)])
 neu, uebersprungen = fitte_korridor(st, k, schritt=1)
 neu, uebersprungen = fitte_bereich(stapel, feld_min=0.55, feld_max=1.30, frequenz_min=8e9, frequenz_max=18e9, modus="ueberschreiben", breite_punkte=25)

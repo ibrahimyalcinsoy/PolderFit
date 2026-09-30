@@ -1,18 +1,18 @@
-# Messdaten (TDMS)
+# Measurement data (TDMS)
 
-| Layout | Gruppen | Struktur |
+| Layout | Groups | Structure |
 |---|---|---|
-| **unsortiert** (roh) | `Read.PNAX`, `Read.Fieldbefore/-after`, opt. `Read.Temperature` | je Feldwert ein voller Frequenz-Sweep → Matrix `(n_feld × n_freq)`; Feld = Mittel aus vor/nach; `_flush`-Dateien werden auf volle Sweeps gekürzt |
-| **sortiert** | `ZVB`, `Field` | schon aufs Resonanzband reduziert; Punktzahl je Frequenz variabel (Gruppierung auf 1 kHz) |
+| **unsorted** (raw) | `Read.PNAX`, `Read.Fieldbefore/-after`, opt. `Read.Temperature` | one full frequency sweep per field value → matrix `(n_field × n_freq)`; field = mean of before/after; `_flush` files are cut to full sweeps |
+| **sorted** | `ZVB`, `Field` | already reduced to the resonance band; points per frequency vary (grouped to 1 kHz) |
 
-Passt kein Profil → `MappingErforderlich` → Zuordnungsdialog ([Kanal-Mapping](kanal-mapping.md)).
+No profile matches → `MappingErforderlich` → mapping dialog ([Channel mapping](kanal-mapping.md)).
 
 ```python
 @dataclass
-class Linescan:            # eine Frequenz, ein Feld-Sweep
+class Linescan:            # one frequency, one field sweep
     frequenz: float        # Hz
-    feld: np.ndarray       # T, aufsteigend
+    feld: np.ndarray       # T, ascending
     re, im: np.ndarray     # S21
     s21 -> re + 1j*im
 ```
-`Messdatensatz` = Liste von `Linescan` (nach Frequenz sortiert) + `meta`; `ds.frequenzen`, `ds.feld_bereich()`, `ds.komplexe_matrix()`.
+`Messdatensatz` = list of `Linescan` (sorted by frequency) + `meta`; `ds.frequenzen`, `ds.feld_bereich()`, `ds.komplexe_matrix()`.

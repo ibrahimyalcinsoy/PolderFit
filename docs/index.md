@@ -1,34 +1,33 @@
-# PolderFit – Breitband-FMR-Auswertung
+# Python tool for bbFMR
 
-**Version 2.2 · Stand 2026-09-29**
+**Version 2.2.108 · Last updated 30.09.2026**
 
-Name und Version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) → Anzeige `PolderFit V<Version>` (`polderfit.PROGRAMMNAME`).
+TDMS (bbFMR) → per frequency `B_res`, `µ0ΔH` (1σ) → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
+Name/version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) → `polderfit.PROGRAMMNAME`.
 
-**Zweck:** TDMS-Messdaten (bbFMR) → je Frequenz Resonanzfeld `B_res` und Linienbreite `µ0ΔH` (mit 1σ) → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
+**Conventions**
 
-**Konventionen**
-
-| Größe | Einheit / Regel |
+| Quantity | Unit / rule |
 |---|---|
-| Felder | immer `µ0H` in **T** |
-| γ | `g·µ_B/ħ` in rad s⁻¹ T⁻¹ (g = 2 → 1,7588·10¹¹) |
-| `µ0ΔH` | FWHM der Absorption χ″ (nicht von \|χ\|: Faktor √3) |
-| Plots | **x = Feld, y = Frequenz** |
-| `*_err` | 1σ aus der Fit-Kovarianz |
+| Fields | always `µ0H` in **T** |
+| γ | `g·µ_B/ħ` in rad s⁻¹ T⁻¹ (g = 2 → 1.7588·10¹¹) |
+| `µ0ΔH` | FWHM of the absorption χ″ (not of \|χ\|: factor √3) |
+| Plots | **x = field, y = frequency** |
+| `*_err` | 1σ from the fit covariance |
 
-**Auswertekette**
+**Pipeline**
 
-| Schritt | Modul |
+| Step | Module |
 |---|---|
-| 1 Laden + Kanal-Mapping | `io/tdms_laden.py`, `io/kanal_mapping.py` |
-| 2 AutoWindow (Fenster je Frequenz) | `fit/autowindows.py` |
-| 3 Beschnitt | `fit/autowindows.py: schneide_band` |
-| 4 Einzelfit (LM) + Nachfenster `B_res ± 2,5·ΔH`; mehrere Dips je Fenster/Korridor: Abschälen → Summenfit mit Segment-Schranken (optional BIC) | `fit/linescan_fit.py`, `fit/batch.py`, `fit/korridor.py` |
-| 5 Bewertung (a)–(h) + Nutzer-Bewertung | `fit/kriterien.py`, `fit/linescan_fit.py` |
+| 1 Load + channel mapping | `io/tdms_laden.py`, `io/kanal_mapping.py` |
+| 2 AutoWindow (window per frequency) | `fit/autowindows.py` |
+| 3 Cropping | `fit/autowindows.py: schneide_band` |
+| 4 Single fit (LM) + post-window `B_res ± 2.5·ΔH`; several dips per window/corridor: peeling → sum fit with segment bounds (optional BIC) | `fit/linescan_fit.py`, `fit/batch.py`, `fit/korridor.py` |
+| 5 Rating (a)–(h) + user rating | `fit/kriterien.py`, `fit/linescan_fit.py` |
 | 6 Kittel/LLG | `physik/kittel_llg.py`, `auswertung/uebersicht.py` |
-| Export, Projekt, Einstellungen, Auto-Sicherung | `persistenz/` |
-| Farben nach DIN EN 60073 | `gui/farben.py` |
+| Export, project, settings, auto-backup | `persistenz/` |
+| Colors per DIN EN 60073 | `gui/farben.py` |
 
 ![Kittel/LLG](abb/abb_kittel_llg.png)
 
-Nachschlagen: [Schnellreferenz](referenz.md). Vergleich mit dem LabVIEW-FTF: `benchmark_ftf/einfacher_vergleich_2026-08-25/VERGLEICH_EINFACH.md` (einfach: PolderFit minus FTF je Frequenz, eigener Ordner) und `benchmark_ftf/BERICHT.md` (ausführlich).
+See also: [Quick reference](referenz.md), [Comparison with LabVIEW FTF](vergleich-ftf.md).

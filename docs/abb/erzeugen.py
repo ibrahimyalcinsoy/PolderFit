@@ -36,6 +36,7 @@ from polderfit.fit.autowindows import (schneide_band, _detrend_residuum,  # noqa
                                         _glatte_lokale_trasse, _PROMINENZ_MIN, auto_fenster_alle)
 from polderfit.fit.linescan_fit import fitte_linescan  # noqa: E402
 from polderfit.fit.batch import fitte_alle  # noqa: E402
+from polderfit.gui.uebersetzung_en import EN  # noqa: E402
 
 plt.rcParams.update({"font.size": 9, "axes.titlesize": 10, "figure.dpi": 100,
                      "savefig.dpi": 200, "axes.grid": True, "grid.alpha": 0.25})
@@ -84,7 +85,7 @@ def abb_chi():
         ax.text(B_res, 0.53, r"FWHM $|\chi|$ = $\sqrt{3}\,\mu_0\Delta H$", ha="center", va="bottom", color=C_G, fontsize=8)
         ax.axvline(B_res, color="k", lw=0.6, ls=":")
         ax.set_title(fr"$f$ = 30 GHz, $\alpha$ = {alpha}, $g$ = 2")
-        ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
+        ax.set_xlabel(r"Field $\mu_0 H$ (T)")
         ax.set_ylim(-1.1, 1.1)
     axs[0].set_ylabel(r"$\chi/\max|\chi|$")
     axs[0].legend(loc="upper right", fontsize=8)
@@ -114,27 +115,27 @@ def abb_linescan_fit(ds):
     fig, axs = plt.subplots(2, 2, figsize=(9, 5.4), sharex=True,
                             gridspec_kw=dict(height_ratios=[3, 1.3]))
     for k, (teil, mess, kurve, bg, name) in enumerate([
-            ("Re", ls2.re, e2.fitkurve.real, bg_re, "Realteil"),
-            ("Im", ls2.im, e2.fitkurve.imag, bg_im, "Imaginärteil")]):
+            ("Re", ls2.re, e2.fitkurve.real, bg_re, "real part"),
+            ("Im", ls2.im, e2.fitkurve.imag, bg_im, "imaginary part")]):
         ax = axs[0, k]
-        ax.plot(B, mess, ".", ms=3, color="k", label="Messung $S_{21}$")
-        ax.plot(B, kurve, "-", color=C_PF, lw=1.5, label="Fit (Modell)")
-        ax.plot(B, bg, "--", color=C_ALT, lw=1, label="Untergrund (Offset + Steigung)")
+        ax.plot(B, mess, ".", ms=3, color="k", label="measurement $S_{21}$")
+        ax.plot(B, kurve, "-", color=C_PF, lw=1.5, label="fit (model)")
+        ax.plot(B, bg, "--", color=C_ALT, lw=1, label="background (offset + slope)")
         ax.axvline(e2.B_res, color=C_R, lw=0.8, ls=":")
         ax.axvspan(e2.B_res - e2.dH / 2, e2.B_res + e2.dH / 2, color=C_R, alpha=0.08)
         ax.set_title(f"{name}, f = {ls.frequenz/1e9:.2f} GHz")
         axr = axs[1, k]
         axr.plot(B, mess - kurve, ".", ms=3, color=C_PF)
         axr.axhline(0, color="k", lw=0.6)
-        axr.set_xlabel(r"Feld $\mu_0 H$ (T)")
-        axr.set_ylabel("Residuum")
+        axr.set_xlabel(r"Field $\mu_0 H$ (T)")
+        axr.set_ylabel("residual")
     axs[0, 0].legend(fontsize=8, loc="lower left")
-    axs[0, 0].set_ylabel("$S_{21}$ (lin. Einheiten)")
+    axs[0, 0].set_ylabel("$S_{21}$ (lin. units)")
     txt = (fr"$B_\mathrm{{res}}$ = {e2.B_res:.5f} ± {e2.B_res_err:.5f} T" "\n"
            fr"$\mu_0\Delta H$ = {e2.dH*1e3:.2f} ± {e2.dH_err*1e3:.2f} mT" "\n"
-           fr"$\alpha$ = {e2.alpha:.4f} ± {e2.alpha_err:.4f} (bei g=2)" "\n"
+           fr"$\alpha$ = {e2.alpha:.4f} ± {e2.alpha_err:.4f} (at g=2)" "\n"
            f"rmse_norm = {e2.rmse_norm:.3f},  " r"$\chi^2_\mathrm{red}$" f" = {e2.chi2_red:.2f}" "\n"
-           f"Fenster = B_res ± 2,5 ΔH ({B.size} Punkte)")
+           f"window = B_res ± 2.5 ΔH ({B.size} points)")
     axs[0, 1].text(0.02, 0.04, txt, transform=axs[0, 1].transAxes, fontsize=7.5, va="bottom",
                    bbox=dict(boxstyle="round", fc="white", ec=C_ALT, alpha=0.9))
     speichere(fig, "abb_linescan_fit.png")
@@ -163,12 +164,12 @@ def abb_fenster(ds):
         ax.plot(ks, np.array(vals) / (dH_ftf * 1e3) - 1, "o-", ms=4, color=col,
                 label=f"{ls.frequenz/1e9:.1f} GHz (FTF: {dH_ftf*1e3:.1f} mT)")
     ax.axhline(0, color="k", lw=0.8)
-    ax.axvspan(2, 3, color=C_G, alpha=0.12, label="Plateau, Nachfenster k = 2,5")
+    ax.axvspan(2, 3, color=C_G, alpha=0.12, label="plateau, post-window k = 2.5")
     ax.axvline(7, color=C_ALT, ls="--", lw=1)
-    ax.text(7.1, 0.02, "altes Auto-Fenster\n≈ ±7 ΔH", fontsize=7.5, color=C_ALT)
-    ax.set_xlabel(r"halbe Fensterbreite $k$ (Fenster = $B_\mathrm{res} \pm k\,\mu_0\Delta H_\mathrm{FTF}$)")
+    ax.text(7.1, 0.02, "old auto window\n≈ ±7 ΔH", fontsize=7.5, color=C_ALT)
+    ax.set_xlabel(r"half window width $k$ (window = $B_\mathrm{res} \pm k\,\mu_0\Delta H_\mathrm{FTF}$)")
     ax.set_ylabel(r"$\mu_0\Delta H(k)\,/\,\mu_0\Delta H_\mathrm{FTF} - 1$")
-    ax.set_title("Linienbreite gegen Fensterbreite (CoFe 290 K)")
+    ax.set_title("Linewidth vs. window width (CoFe 290 K)")
     ax.legend(fontsize=7)
     # rechts: Linescan 43.55 GHz mit Fenstern k=2.5 / k=8, Residuen
     ax = axs[1]
@@ -183,9 +184,9 @@ def abb_fenster(ds):
         ax.plot(lsk.feld, (lsk.re - e.fitkurve.real) * 1e4, ".", ms=2.5, color=col,
                 label=f"k = {k}: ΔH = {e.dH*1e3:.1f} mT")
     ax.axhline(0, color="k", lw=0.6)
-    ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
-    ax.set_ylabel(r"Residuum Re($S_{21}$) ($\times 10^{-4}$)")
-    ax.set_title(f"Residuen bei {ls.frequenz/1e9:.2f} GHz")
+    ax.set_xlabel(r"Field $\mu_0 H$ (T)")
+    ax.set_ylabel(r"residual Re($S_{21}$) ($\times 10^{-4}$)")
+    ax.set_title(f"Residuals at {ls.frequenz/1e9:.2f} GHz")
     ax.legend(fontsize=8)
     speichere(fig, "abb_fenster.png")
 
@@ -216,23 +217,23 @@ def abb_autowindow():
         vmin, vmax = np.nanpercentile(M, p)
         ax.imshow(M, origin="lower", aspect="auto", extent=ext, cmap=cmap, vmin=vmin, vmax=vmax)
         ax.set_title(titel)
-        ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
+        ax.set_xlabel(r"Field $\mu_0 H$ (T)")
         ax.grid(False)
-    show(axs[0], roh_db, r"(a) $|S_{21}|$ je Frequenz normiert (dB)")
-    show(axs[1], R, "(b) nach Polynom-Untergrundabzug", cmap="magma")
-    show(axs[2], Rs, "(c) nach Stationärabzug (Median über f)", cmap="magma")
+    show(axs[0], roh_db, r"(a) $|S_{21}|$ normalized per frequency (dB)")
+    show(axs[1], R, "(b) after polynomial background removal", cmap="magma")
+    show(axs[2], Rs, "(c) after stationary removal (median over f)", cmap="magma")
     ax = axs[3]
-    show(ax, Rs, "(d) Kandidaten, Trasse, Fenster", cmap="Greys")
+    show(ax, Rs, "(d) candidates, track, window", cmap="Greys")
     gut = ks >= _PROMINENZ_MIN
-    ax.plot(kb[~gut], f[~gut], "x", ms=3, color=C_R, label="Kandidat schwach (s < 4)")
-    ax.plot(kb[gut], f[gut], ".", ms=3, color=C_G, label="Kandidat prominent (s ≥ 4)")
+    ax.plot(kb[~gut], f[~gut], "x", ms=3, color=C_R, label="candidate weak (s < 4)")
+    ax.plot(kb[gut], f[gut], ".", ms=3, color=C_G, label="candidate prominent (s ≥ 4)")
     if guide is not None:
-        ax.plot(guide, f, "-", color=C_PF, lw=1.2, label="glatte lokale Trasse")
+        ax.plot(guide, f, "-", color=C_PF, lw=1.2, label="smooth local track")
     lo = np.array([w[0] for w in fenster]); hi = np.array([w[1] for w in fenster])
-    ax.fill_betweenx(f, lo, hi, color=C_FTF, alpha=0.18, lw=0, label="Auto-Fenster (Detektion)")
+    ax.fill_betweenx(f, lo, hi, color=C_FTF, alpha=0.18, lw=0, label="auto window (detection)")
     ax.legend(fontsize=7, loc="lower left", framealpha=0.95)
-    axs[0].set_ylabel("Frequenz (GHz)")
-    fig.suptitle(f"AutoWindow: {UNSORT.name} ({len(linescans)} Linescans, {B.size} Feldpunkte)", fontsize=9)
+    axs[0].set_ylabel("Frequency (GHz)")
+    fig.suptitle(f"AutoWindow: {UNSORT.name} ({len(linescans)} linescans, {B.size} field points)", fontsize=9)
     speichere(fig, "abb_autowindow.png")
     return ds
 
@@ -252,35 +253,35 @@ def abb_kittel_llg(ds):
     fig, axs = plt.subplots(1, 4, figsize=(12.5, 3.8), sharey=True,
                             gridspec_kw=dict(width_ratios=[1.3, 0.8, 1.1, 0.8]))
     ax = axs[0]
-    ax.errorbar(b, f / 1e9, xerr=b_err, fmt="o", ms=3, color=C_PF, label="Einzelfits $B_\\mathrm{res}$")
+    ax.errorbar(b, f / 1e9, xerr=b_err, fmt="o", ms=3, color=C_PF, label="single fits $B_\\mathrm{res}$")
     ax.plot(kittel_ip(ff, kit["mu0Meff"], kit["mu0Hu"], kit["gamma"]), ff / 1e9, "-", color=C_R,
             label=(f"Kittel ip: g = {kit['g_faktor']:.4f}±{kit['g_faktor_err']:.4f}\n"
                    f"µ0Meff = {kit['mu0Meff']:.4f} T, µ0Hu = {kit['mu0Hu']*1e3:.2f} mT"))
-    ax.set_xlabel(r"Resonanzfeld $\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequenz (GHz)")
-    ax.set_title("Kittel-Dispersion (ip)"); ax.legend(fontsize=7, loc="upper left")
+    ax.set_xlabel(r"Resonance field $\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequency (GHz)")
+    ax.set_title("Kittel dispersion (ip)"); ax.legend(fontsize=7, loc="upper left")
     ax = axs[1]
     res = (b - kittel_ip(f, kit["mu0Meff"], kit["mu0Hu"], kit["gamma"])) * 1e3
     ax.errorbar(res, f / 1e9, xerr=b_err * 1e3, fmt="o", ms=3, color=C_PF)
     ax.axvline(0, color="k", lw=0.7)
     ax.set_xlabel(r"$B_\mathrm{res} - $ Kittel (mT)")
-    ax.set_title(f"Residuen, R² = {kit['R2']:.6f}\nStreuung ≫ formale Fehler")
+    ax.set_title(f"Residuals, R² = {kit['R2']:.6f}\nscatter ≫ formal errors")
     ax = axs[2]
-    ax.errorbar(dh * 1e3, f / 1e9, xerr=dh_err * 1e3, fmt="o", ms=3, color=C_PF, label="Einzelfits $\\mu_0\\Delta H$")
+    ax.errorbar(dh * 1e3, f / 1e9, xerr=dh_err * 1e3, fmt="o", ms=3, color=C_PF, label="single fits $\\mu_0\\Delta H$")
     ax.plot(linienbreite(ff, llg["mu0Hinh"], llg["alpha"], kit["gamma"]) * 1e3, ff / 1e9, "-", color=C_R,
             label=(f"LLG: α = ({llg['alpha']*1e3:.3f}±{llg['alpha_err']*1e3:.3f})·10⁻³\n"
                    f"µ0ΔH0 = {llg['mu0Hinh']*1e3:.2f}±{llg['mu0Hinh_err']*1e3:.2f} mT"))
     # 1-sigma-Band der Geraden (Steigung/Achsenabschnitt unkorreliert genaehert)
     band = np.sqrt(llg["mu0Hinh_err"] ** 2 + (2 * (2 * np.pi * ff) * llg["alpha_err"] / kit["gamma"]) ** 2) * 1e3
     mitte = linienbreite(ff, llg["mu0Hinh"], llg["alpha"], kit["gamma"]) * 1e3
-    ax.fill_betweenx(ff / 1e9, mitte - band, mitte + band, color=C_R, alpha=0.15, label="±1σ (Fortpflanzung)")
-    ax.set_xlabel(r"Linienbreite $\mu_0\Delta H$ (mT)"); ax.set_title("LLG-Gerade")
+    ax.fill_betweenx(ff / 1e9, mitte - band, mitte + band, color=C_R, alpha=0.15, label="±1σ (propagation)")
+    ax.set_xlabel(r"Linewidth $\mu_0\Delta H$ (mT)"); ax.set_title("LLG line")
     ax.legend(fontsize=7, loc="upper left")
     ax = axs[3]
     res = (dh - linienbreite(f, llg["mu0Hinh"], llg["alpha"], kit["gamma"])) * 1e3
     ax.errorbar(res, f / 1e9, xerr=dh_err * 1e3, fmt="o", ms=3, color=C_PF)
     ax.axvline(0, color="k", lw=0.7)
-    ax.set_xlabel(r"$\mu_0\Delta H - $ LLG (mT)"); ax.set_title(f"Residuen, R² = {llg['R2']:.4f}")
-    fig.suptitle("CoFe ip 290 K (Benchmark-Datensatz), ungewichteter Fit", fontsize=9)
+    ax.set_xlabel(r"$\mu_0\Delta H - $ LLG (mT)"); ax.set_title(f"Residuals, R² = {llg['R2']:.4f}")
+    fig.suptitle("CoFe ip 290 K (benchmark dataset), unweighted fit", fontsize=9)
     speichere(fig, "abb_kittel_llg.png")
     return stapel
 
@@ -296,41 +297,41 @@ def abb_benchmark():
     ax = axs[0]
     ax.plot(neu.B_ftf, neu.f_GHz, "s", ms=5, mfc="none", color=C_FTF, label="FTF (LabVIEW)")
     ax.plot(neu.B_pf, neu.f_GHz, ".", ms=4, color=C_PF, label="PolderFit")
-    ax.set_xlabel(r"$\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequenz (GHz)"); ax.set_title("Resonanzfeld")
+    ax.set_xlabel(r"$\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequency (GHz)"); ax.set_title("Resonance field")
     ax.legend(fontsize=8)
     ax = axs[1]
     ax.errorbar(alt.dB * 1e3, alt.f_GHz, xerr=np.sqrt(alt.B_pf_err**2 + alt.B_ftf_err**2) * 1e3, fmt="o", ms=2.5,
-                color=C_ALT, alpha=0.7, label="alter Stand (ein Durchgang)")
+                color=C_ALT, alpha=0.7, label="old (single pass)")
     ax.errorbar(neu.dB * 1e3, neu.f_GHz, xerr=np.sqrt(neu.B_pf_err**2 + neu.B_ftf_err**2) * 1e3, fmt="o", ms=3,
-                color=C_G, label="mit Nachfenster 2,5 ΔH")
+                color=C_G, label="with post-window 2.5 ΔH")
     ax.axvline(0, color="k", lw=0.8)
-    ax.set_xlabel(r"$B_\mathrm{res}$(PF) − $B_\mathrm{res}$(FTF) (mT)"); ax.set_title("Differenz Resonanzfeld (±1σ komb.)")
+    ax.set_xlabel(r"$B_\mathrm{res}$(PF) − $B_\mathrm{res}$(FTF) (mT)"); ax.set_title("Resonance field difference (±1σ comb.)")
     ax.legend(fontsize=7, loc="upper left")
     ax = axs[2]
     ax.plot(neu.dH_ftf * 1e3, neu.f_GHz, "s", ms=5, mfc="none", color=C_FTF, label="FTF")
-    ax.plot(alt.dH_pf * 1e3, alt.f_GHz, ".", ms=4, color=C_ALT, label="PF alt")
-    ax.plot(neu.dH_pf * 1e3, neu.f_GHz, ".", ms=4, color=C_PF, label="PF neu")
-    ax.set_xlabel(r"$\mu_0\Delta H$ (mT)"); ax.set_title("Linienbreite (FWHM)"); ax.legend(fontsize=8)
+    ax.plot(alt.dH_pf * 1e3, alt.f_GHz, ".", ms=4, color=C_ALT, label="PF old")
+    ax.plot(neu.dH_pf * 1e3, neu.f_GHz, ".", ms=4, color=C_PF, label="PF new")
+    ax.set_xlabel(r"$\mu_0\Delta H$ (mT)"); ax.set_title("Linewidth (FWHM)"); ax.legend(fontsize=8)
     ax = axs[3]
     ax.errorbar(alt.rel_dH * 100, alt.f_GHz, xerr=np.sqrt(alt.dH_pf_err**2 + alt.dH_ftf_err**2) / alt.dH_ftf * 100,
-                fmt="o", ms=2.5, color=C_ALT, alpha=0.7, label=f"alt: Median {np.median(alt.rel_dH)*100:+.1f} %")
+                fmt="o", ms=2.5, color=C_ALT, alpha=0.7, label=f"old: median {np.median(alt.rel_dH)*100:+.1f} %")
     ax.errorbar(neu.rel_dH * 100, neu.f_GHz, xerr=np.sqrt(neu.dH_pf_err**2 + neu.dH_ftf_err**2) / neu.dH_ftf * 100,
-                fmt="o", ms=3, color=C_G, label=f"neu: Median {np.median(neu.rel_dH)*100:+.1f} %")
+                fmt="o", ms=3, color=C_G, label=f"new: median {np.median(neu.rel_dH)*100:+.1f} %")
     ax.axvline(0, color="k", lw=0.8)
-    ax.set_xlabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)"); ax.set_title("Relative Differenz Linienbreite")
+    ax.set_xlabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)"); ax.set_title("Relative linewidth difference")
     ax.legend(fontsize=7, loc="upper left")
-    fig.suptitle("Benchmark cofe_wm_ip_290K_1: PolderFit gegen FTF je Frequenz", fontsize=9)
+    fig.suptitle("Benchmark cofe_wm_ip_290K_1: PolderFit vs. FTF per frequency", fontsize=9)
     speichere(fig, "abb_benchmark.png")
 
     # z-Score-Histogramme
     fig, axs = plt.subplots(1, 2, figsize=(8, 3))
-    for ax, sp, name, d in ((axs[0], "z_B", r"$z_B$ (Resonanzfeld)", neu), (axs[1], "z_dH", r"$z_{\Delta H}$ (Linienbreite)", neu)):
+    for ax, sp, name, d in ((axs[0], "z_B", r"$z_B$ (resonance field)", neu), (axs[1], "z_dH", r"$z_{\Delta H}$ (linewidth)", neu)):
         za = alt[sp].dropna(); zn = d[sp].dropna()
-        ax.hist(za, bins=np.linspace(-6, 6, 37), color=C_ALT, alpha=0.5, label=f"alt: |z|≤2: {np.mean(np.abs(za)<=2)*100:.0f} %")
-        ax.hist(zn, bins=np.linspace(-6, 6, 37), color=C_G, alpha=0.6, label=f"neu: |z|≤2: {np.mean(np.abs(zn)<=2)*100:.0f} %")
+        ax.hist(za, bins=np.linspace(-6, 6, 37), color=C_ALT, alpha=0.5, label=f"old: |z|≤2: {np.mean(np.abs(za)<=2)*100:.0f} %")
+        ax.hist(zn, bins=np.linspace(-6, 6, 37), color=C_G, alpha=0.6, label=f"new: |z|≤2: {np.mean(np.abs(zn)<=2)*100:.0f} %")
         x = np.linspace(-6, 6, 300)
         ax.plot(x, len(zn) * (12 / 36) * np.exp(-x**2 / 2) / np.sqrt(2 * np.pi), "k-", lw=1, label="N(0,1)")
-        ax.set_xlabel(name); ax.set_ylabel("Anzahl"); ax.legend(fontsize=7)
+        ax.set_xlabel(name); ax.set_ylabel("count"); ax.legend(fontsize=7)
     fig.suptitle("z-Scores CoFe 290 K: (PF − FTF)/√(u²(PF)+u²(FTF))", fontsize=9)
     speichere(fig, "abb_zscore.png")
 
@@ -344,17 +345,17 @@ def abb_ip_entartung():
     M, Hu = 0.13, -0.004
     fig, axs = plt.subplots(1, 2, figsize=(8.5, 3.4), sharey=True, gridspec_kw=dict(width_ratios=[1.3, 1]))
     ax = axs[0]
-    ax.plot(kittel_ip(ff, M, Hu, gam), ff / 1e9, "-", color=C_PF, lw=2.5, label=f"µ0Meff = {M:+.3f} T, µ0Hu = {Hu*1e3:+.1f} mT (physikalisch)")
-    ax.plot(kittel_ip(ff, -M, Hu + M, gam), ff / 1e9, "--", color=C_R, lw=1.5, label=f"µ0Meff = {-M:+.3f} T, µ0Hu = {(Hu+M)*1e3:+.1f} mT (Spiegelast)")
-    ax.set_xlabel(r"$\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequenz (GHz)")
-    ax.set_title("Kittel ip: zwei Parametersätze, eine Kurve"); ax.legend(fontsize=7)
+    ax.plot(kittel_ip(ff, M, Hu, gam), ff / 1e9, "-", color=C_PF, lw=2.5, label=f"µ0Meff = {M:+.3f} T, µ0Hu = {Hu*1e3:+.1f} mT (physical)")
+    ax.plot(kittel_ip(ff, -M, Hu + M, gam), ff / 1e9, "--", color=C_R, lw=1.5, label=f"µ0Meff = {-M:+.3f} T, µ0Hu = {(Hu+M)*1e3:+.1f} mT (mirror branch)")
+    ax.set_xlabel(r"$\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequency (GHz)")
+    ax.set_title("Kittel ip: two parameter sets, one curve"); ax.legend(fontsize=7)
     ax = axs[1]
     d = np.abs(kittel_ip(ff, M, Hu, gam) - kittel_ip(ff, -M, Hu + M, gam))
     ax.semilogx(np.maximum(d, 1e-19), ff / 1e9, ".", ms=3, color="k")
     ax.axvline(1e-16, color=C_ALT, ls="--", lw=0.8)
-    ax.text(1.2e-16, 45, "Maschinengenauigkeit\n(double ≈ 10⁻¹⁶ · 1 T)", fontsize=7, color=C_ALT)
+    ax.text(1.2e-16, 45, "machine precision\n(double ≈ 10⁻¹⁶ · 1 T)", fontsize=7, color=C_ALT)
     ax.set_xlim(1e-19, 1e-12)
-    ax.set_xlabel("|Differenz der Kurven| (T)"); ax.set_title("Beide Parametersätze: identische Kurve")
+    ax.set_xlabel("|difference of curves| (T)"); ax.set_title("Both parameter sets: identical curve")
     speichere(fig, "abb_ip_entartung.png")
 
 
@@ -374,16 +375,16 @@ def abb_yig_hebel():
     ax.plot(d.dH_ftf * 1e3, d.f_GHz, "s", ms=3, mfc="none", color=C_FTF, label="FTF")
     ax.plot(d.dH_pf * 1e3, d.f_GHz, ".", ms=3, color=C_PF, label="PolderFit")
     ax.plot(linienbreite(ff, l_ftf["mu0Hinh"], l_ftf["alpha"], gam) * 1e3, ff / 1e9, "-", color=C_FTF,
-            label=f"LLG FTF-Punkte: α = {l_ftf['alpha']*1e3:.2f}·10⁻³")
+            label=f"LLG FTF points: α = {l_ftf['alpha']*1e3:.2f}·10⁻³")
     ax.plot(linienbreite(ff, l_pf["mu0Hinh"], l_pf["alpha"], gam) * 1e3, ff / 1e9, "-", color=C_PF,
-            label=f"LLG PF-Punkte: α = {l_pf['alpha']*1e3:.2f}·10⁻³")
-    ax.set_xlabel(r"$\mu_0\Delta H$ (mT)"); ax.set_ylabel("Frequenz (GHz)")
-    ax.set_title("YIG 50 K: ΔH(f) fast flach (ΔH₀ ≈ 16,5 mT)"); ax.legend(fontsize=7)
+            label=f"LLG PF points: α = {l_pf['alpha']*1e3:.2f}·10⁻³")
+    ax.set_xlabel(r"$\mu_0\Delta H$ (mT)"); ax.set_ylabel("Frequency (GHz)")
+    ax.set_title("YIG 50 K: ΔH(f) almost flat (ΔH₀ ≈ 16.5 mT)"); ax.legend(fontsize=7)
     ax = axs[1]
     ax.plot(d.rel_dH * 100, d.f_GHz, ".", ms=3, color=C_G)
     ax.axvline(0, color="k", lw=0.8)
     ax.set_xlabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)")
-    ax.set_title("0–3 % in ΔH  ⇒  12 % in α (Steigung ≪ Achsenabschnitt)")
+    ax.set_title("0–3 % in ΔH  ⇒  12 % in α (slope ≪ intercept)")
     speichere(fig, "abb_yig_hebel.png")
 
 
@@ -400,20 +401,20 @@ def abb_gitter():
     row = csv.iloc[int(np.argmin(np.abs(csv.f_GHz - ls.frequenz / 1e9)))]
     fig, axs = plt.subplots(1, 2, figsize=(9, 3.4))
     ax = axs[0]
-    ax.plot(ls.feld, ls.re, "o-", ms=3, lw=0.6, color="k", label="Re $S_{21}$ (Messpunkte)")
+    ax.plot(ls.feld, ls.re, "o-", ms=3, lw=0.6, color="k", label="Re $S_{21}$ (data points)")
     for k, col in ((1.5, C_R), (3, C_G)):
         lsk = schneide_band(ls, row.B_ftf - k * row.dH_ftf, row.B_ftf + k * row.dH_ftf)
         e = fitte_linescan(lsk)
         ax.plot(lsk.feld, e.fitkurve.real, "-", color=col, lw=1.5, label=f"Fit k = {k}: ΔH = {e.dH*1e3:.1f} mT")
-    ax.set_xlabel(r"Feld $\mu_0 H$ (T)"); ax.set_ylabel("Re $S_{21}$")
-    ax.set_title(f"CoFe-Gitter, {ls.frequenz/1e9:.2f} GHz: {ls.feld.size} Punkte, Schritt {np.mean(np.diff(ls.feld))*1e3:.1f} mT")
+    ax.set_xlabel(r"Field $\mu_0 H$ (T)"); ax.set_ylabel("Re $S_{21}$")
+    ax.set_title(f"CoFe grating, {ls.frequenz/1e9:.2f} GHz: {ls.feld.size} points, step {np.mean(np.diff(ls.feld))*1e3:.1f} mT")
     ax.legend(fontsize=7)
     ax = axs[1]
     d = csv[csv.ftf_ok & ~csv.pf_problem]
     ax.plot(d.rel_dH * 100, d.f_GHz, ".", ms=2, color=C_G, alpha=0.6)
     ax.axvline(0, color="k", lw=0.8)
-    ax.set_xlabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)"); ax.set_ylabel("Frequenz (GHz)")
-    ax.set_title(f"Gitter: Median {np.median(d.rel_dH)*100:+.1f} %, breite Streuung (Datenlimit)")
+    ax.set_xlabel(r"$\Delta H$(PF)/$\Delta H$(FTF) − 1 (%)"); ax.set_ylabel("Frequency (GHz)")
+    ax.set_title(f"Grating: median {np.median(d.rel_dH)*100:+.1f} %, wide scatter (data limit)")
     speichere(fig, "abb_gitter.png")
 
 
@@ -425,9 +426,9 @@ def abb_sweeplag(ds):
                         if ls.feld_before is not None and ls.feld_after is not None]) * 1e3
     fig, ax = plt.subplots(figsize=(6, 3.2))
     ax.hist(d, bins=60, color=C_PF, alpha=0.8)
-    ax.axvline(np.median(d), color=C_R, label=f"Median {np.median(d):+.2f} mT")
-    ax.set_xlabel(r"$B_\mathrm{nach} - B_\mathrm{vor}$ je Messpunkt (mT)"); ax.set_ylabel("Anzahl")
-    ax.set_title("Sweep-Lag im Benchmark-Datensatz (CoFe 290 K)"); ax.legend(fontsize=8)
+    ax.axvline(np.median(d), color=C_R, label=f"median {np.median(d):+.2f} mT")
+    ax.set_xlabel(r"$B_\mathrm{after} - B_\mathrm{before}$ per point (mT)"); ax.set_ylabel("count")
+    ax.set_title("Sweep lag in the benchmark dataset (CoFe 290 K)"); ax.legend(fontsize=8)
     speichere(fig, "abb_sweeplag.png")
     return float(np.median(d)), float(np.percentile(np.abs(d), 84))
 
@@ -469,12 +470,12 @@ def abb_kriterien(ds_unsort):
         if np.isfinite(e.B_res):
             ax.axvline(e.B_res, color=C_R, ls=":", lw=0.8)
         gr = e.problem_gruende[:2]
-        titel = "OK" if not e.problematisch else "\n".join(gr) + (" …" if len(e.problem_gruende) > 2 else "")
+        titel = "OK" if not e.problematisch else "\n".join(EN.get(g, g) for g in gr) + (" …" if len(e.problem_gruende) > 2 else "")
         ax.text(0.5, 1.03, f"{e.frequenz/1e9:.2f} GHz: {titel}\nrmse_norm = {e.rmse_norm:.2f}", fontsize=7.5,
                 color=(C_G if not e.problematisch else C_R), transform=ax.transAxes, ha="center", va="bottom")
-        ax.set_xlabel(r"Feld $\mu_0 H$ (T)")
+        ax.set_xlabel(r"Field $\mu_0 H$ (T)")
         ax.tick_params(labelleft=False)
-    fig.suptitle("Bewertung: ein unauffälliger und drei als problematisch gemeldete Fits (Re schwarz/blau, Im grau/orange; Mittelwert abgezogen)", fontsize=8.5)
+    fig.suptitle("Rating: one inconspicuous and three fits flagged problematic (Re black/blue, Im gray/orange; mean subtracted)", fontsize=8.5)
     fig.subplots_adjust(left=0.03, right=0.99, top=0.74, bottom=0.17, wspace=0.08)
     speichere(fig, "abb_kriterien.png", layout=False)
     return stapel
@@ -493,11 +494,11 @@ def abb_kittel_unsort(stapel):
     fig, axs = plt.subplots(1, 2, figsize=(9, 3.6), sharey=True)
     ax = axs[0]
     ax.plot([e.B_res for e in stapel.ergebnisse if e.problematisch], [e.frequenz / 1e9 for e in stapel.ergebnisse if e.problematisch],
-            "x", ms=3, color=C_R, alpha=0.5, label="problematisch (ausgeschlossen)")
+            "x", ms=3, color=C_R, alpha=0.5, label="problematic (excluded)")
     ax.plot([e.B_res for e in stapel.ergebnisse if not e.problematisch and not _drin(e)],
             [e.frequenz / 1e9 for e in stapel.ergebnisse if not e.problematisch and not _drin(e)],
-            ".", ms=3, color=C_ALT, label="gut, aber außerhalb Auswertungsauswahl")
-    ax.plot(b, f / 1e9, ".", ms=3, color=C_PF, label="gut, 10–35 GHz (Auswertungsauswahl)")
+            ".", ms=3, color=C_ALT, label="good, outside evaluation selection")
+    ax.plot(b, f / 1e9, ".", ms=3, color=C_PF, label="good, 10–35 GHz (evaluation selection)")
     try:
         kit = fit_kittel_ip(f, b)
         ff = np.linspace(f.min(), f.max(), 300)
@@ -508,12 +509,12 @@ def abb_kittel_unsort(stapel):
                     label=f"LLG: α = ({llg['alpha']*1e3:.2f}±{llg['alpha_err']*1e3:.2f})·10⁻³, µ0ΔH0 = {llg['mu0Hinh']*1e3:.1f} mT")
     except Exception as exc:
         print("Kittel unsort:", exc)
-    ax.set_xlabel(r"$\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequenz (GHz)"); ax.legend(fontsize=7)
-    ax.set_title("Echte Linescan-Messung: Dispersion")
+    ax.set_xlabel(r"$\mu_0 H_\mathrm{res}$ (T)"); ax.set_ylabel("Frequency (GHz)"); ax.legend(fontsize=7)
+    ax.set_title("Real linescan measurement: dispersion")
     ax = axs[1]
     ax.plot(dh * 1e3, f / 1e9, ".", ms=3, color=C_PF)
-    ax.set_xlabel(r"$\mu_0\Delta H$ (mT)"); ax.set_title("Linienbreite"); ax.legend(fontsize=7)
-    fig.suptitle(f"{UNSORT.name}: {len(erg)} verwendete von {len(stapel.ergebnisse)} Fits (Auswertungsauswahl 10–35 GHz)", fontsize=9)
+    ax.set_xlabel(r"$\mu_0\Delta H$ (mT)"); ax.set_title("Linewidth"); ax.legend(fontsize=7)
+    fig.suptitle(f"{UNSORT.name}: {len(erg)} of {len(stapel.ergebnisse)} fits used (evaluation selection 10–35 GHz)", fontsize=9)
     speichere(fig, "abb_kittel_unsort.png")
 
 
