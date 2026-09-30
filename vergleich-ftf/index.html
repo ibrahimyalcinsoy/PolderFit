@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Comparison with LabVIEW FTF - Python tool for bbFMR</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Comparison with LabVIEW FTF";
+        var mkdocs_page_input_path = "vergleich-ftf.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Python tool for bbFMR
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../referenz/">Quick reference: quantities · formulas · sources</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation and start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Measurement data (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Channel mapping and profiles</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Color plot processing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Evaluation selection (ranges, jumpers)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interactive fitting</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Outliers, projects, settings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Pipeline</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physics and fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Fit rating</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameters and tuning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Troubleshooting</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Comparison with LabVIEW FTF</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustness check (real data)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Python tool for bbFMR</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Comparison with LabVIEW FTF</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="comparison-with-labview-ftf">Comparison with LabVIEW FTF<a class="headerlink" href="#comparison-with-labview-ftf" title="Permanent link">&para;</a></h1>
+<p>CoFeSiB 40 nm on Si (675 µm), oop, 5 K (<code>2025-FEB-14-Linescan-2D-map-oop-rotated-5K_0.1deg</code>). FTF: 44 frequencies (1 GHz grid); PolderFit: 445 (0.1 GHz grid), 433 used, 12 excluded.</p>
+<p><img alt="Kittel" src="../abb/ftf_kittel.png" /></p>
+<p>Both Kittel lines coincide.</p>
+<p><img alt="Deviation per frequency" src="../abb/ftf_abweichung.png" /></p>
+<p>44 common frequencies: <code>B_res</code> median 0.002 % (max 0.025 %); <code>µ0ΔH</code> median 0.8 % narrower, 40/44 within 3 % (largest: 6 GHz −15 %, 49 GHz −10 %).</p>
+<p><img alt="LLG" src="../abb/ftf_llg.png" /></p>
+<p>Periodically increased linewidths (≈ 0.75 GHz = 15 raw frequency steps) appear in both programs → from the data, not the fit.</p>
+<p><img alt="Linescan 45 GHz" src="../abb/ftf_linescan_45ghz.png" /></p>
+<p>Line shape with <code>B_res</code> and <code>µ0ΔH</code> of each program (amplitude and background by linear least squares).</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>FTF (44)</th>
+<th>PolderFit (433)</th>
+<th>PolderFit (same 44)</th>
+<th>Δ 433</th>
+<th>Δ same 44</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>g</td>
+<td>2.0755 ± 0.0016</td>
+<td>2.0756 ± 0.0005</td>
+<td>2.0753 ± 0.0015</td>
+<td>+0.003 %</td>
+<td>−0.009 %</td>
+</tr>
+<tr>
+<td>µ0M_eff (T)</td>
+<td>1.5944 ± 0.0008</td>
+<td>1.5945 ± 0.0003</td>
+<td>1.5944 ± 0.0008</td>
+<td>+0.006 %</td>
+<td>−0.002 %</td>
+</tr>
+<tr>
+<td>α (10⁻³)</td>
+<td>4.37 ± 0.42</td>
+<td>4.50 ± 0.12</td>
+<td>4.21 ± 0.42</td>
+<td>+3.19 %</td>
+<td>−3.50 %</td>
+</tr>
+<tr>
+<td>µ0ΔH_0 (mT)</td>
+<td>3.80 ± 0.89</td>
+<td>3.07 ± 0.24</td>
+<td>3.89 ± 0.87</td>
+<td>−19.34 %</td>
+<td>+2.31 %</td>
+</tr>
+</tbody>
+</table>
+<p>Same points → same results; differences come from the number of linescans.
+More: <code>benchmark_ftf/BERICHT.md</code>, <a href="../test-harness/">robustness check</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../troubleshooting/" class="btn btn-neutral float-left" title="Troubleshooting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../test-harness/" class="btn btn-neutral float-right" title="Robustness check (real data)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – all rights reserved.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../troubleshooting/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../test-harness/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

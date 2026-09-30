@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Physics and fit - Python tool for bbFMR</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Physics and fit";
+        var mkdocs_page_input_path = "physik-und-fit.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Python tool for bbFMR
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../referenz/">Quick reference: quantities · formulas · sources</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation and start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Measurement data (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Channel mapping and profiles</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Color plot processing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Evaluation selection (ranges, jumpers)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interactive fitting</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Outliers, projects, settings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Pipeline</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Physics and fit</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Fit rating</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tuning/">Parameters and tuning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Troubleshooting</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../vergleich-ftf/">Comparison with LabVIEW FTF</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustness check (real data)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Python tool for bbFMR</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Physics and fit</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="physics-and-fit">Physics and fit<a class="headerlink" href="#physics-and-fit" title="Permanent link">&para;</a></h1>
+<p><strong>Susceptibility (oop, notebook form, <code>chi_oop</code>)</strong> with <code>d = µ0H − µ0M_eff</code>, <code>N = γ⁴d⁴ + 2(α²−1)γ²d²ω² + (1+α²)²ω⁴</code>:</p>
+<pre><code>χ'  =  γ²µ0 d (γ²d² + (α²−1)ω²) / N
+χ'' = −αγµ0ω (γ²d² + (1+α²)ω²) / N        resonance: µ0H = µ0M_eff + ω/γ  (internally µ0M_eff = B_res − ω/γ)
+µ0ΔH = 2ωα/γ                                (FWHM of χ'', Müller 2.27)
+</code></pre>
+<p>Polder tensor (Müller eq. 2.20/2.21) → oop form from the notebook, taken over 1:1 (<code>suszeptibilitaet.py</code>):</p>
+<p><img alt="Polder tensor" src="../abb/mueller_polder_tensor.png" />
+<img alt="Notebook output" src="../abb/notebook_chi_oop.png" /></p>
+<p><img alt="chi" src="../abb/abb_chi.png" /></p>
+<p><strong>Single-fit model (<code>s21_modell</code>, 8 parameters, Re/Im simultaneous, unweighted):</strong></p>
+<pre><code>S21(B) = A·e^{iφ}·χ_oop(B; B_res, α, ω, γ) + (o_re + i o_im) + (s_re + i s_im)(B − B_ref)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Bound</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>B_res</code></td>
+<td>inside the window</td>
+</tr>
+<tr>
+<td><code>alpha</code></td>
+<td><code>[1e-5, alpha_max]</code>, default <code>alpha_max = 0.1</code> (GUI up to 2)</td>
+</tr>
+<tr>
+<td><code>phi</code></td>
+<td><code>[−2π, 2π]</code></td>
+</tr>
+<tr>
+<td><code>A</code>, offsets, slopes</td>
+<td>free</td>
+</tr>
+</tbody>
+</table>
+<p>Optimizer: lmfit <code>leastsq</code> (Levenberg–Marquardt/MINPACK), bounds via MINUIT transform, φ restart by π if covariance is missing. Data-driven start values; <code>α_start = γ·FWHM(|χ|)/(2√3·ω)</code>.</p>
+<p><strong>Several modes (corridors, <code>fit/korridor.py</code>, <code>fitte_mode</code>):</strong> each mode has a corridor (anchors at a few frequencies, linear in between) and is fitted per frequency <strong>only on the points inside the corridor</strong>. Start <code>B_res</code> from the local dip, else from the neighbour; post-window ±2.5·ΔH inside the corridor. &lt; 12 points or ΔH &lt; 1.5 field steps → problematic. Kittel/LLG and export per mode.</p>
+<p><img alt="Fit" src="../abb/abb_linescan_fit.png" /></p>
+<p><strong>Kittel / LLG (<code>kittel_llg.py</code>, <code>curve_fit</code>):</strong></p>
+<pre><code>oop: B_res = µ0M_eff + 2πf/γ                                     (2.24)
+ip:  B_res = √[(2πf/γ)² + (µ0M_eff/2)²] − µ0M_eff/2 − µ0H_u       (2.26), bound µ0M_eff ≥ 0, internally g-parametrized
+LLG: µ0ΔH(f) = µ0ΔH_0 + (4π/γ)·α·f                               (2.28), γ taken from Kittel
+</code></pre>
+<p>Default <strong>unweighted</strong> (as FTF); option <code>w = 1/u²</code>. <code>absolute_sigma=False</code>: errors scale with point scatter. <code>u(g) = ħ/µ_B·u(γ)</code>; <code>u(α)/α = √[(u(m)/m)² + (u(γ)/γ)²]</code>.</p>
+<p><img alt="ip degeneracy" src="../abb/abb_ip_entartung.png" /></p>
+<p><strong>Adjustable (<code>Ctrl+P</code>):</strong> g (start), fix γ, geometry oop/ip, window factor 8, R² thresholds 0.9, weighting off, α upper bound 0.1 (down to 0.00001; lower bound then α_max/100), α plausibility limit (0 = α_max/2, down to 0.00001), post-window 2.5, resonances per linescan 1, confirm refits on. Storable as default (<em>File → Settings</em>).</p>
+<p>Sources: Müller 2023 ch. 2; notebook <code>Chi_Fit_Functions_and_Inductances_2020-04-06.nb</code>; Maier-Flaig 2018; protocol 2026-05-08; ABW/GUM.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../autowindow/" class="btn btn-neutral float-left" title="AutoWindow"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../bewertung/" class="btn btn-neutral float-right" title="Fit rating">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – all rights reserved.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../autowindow/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../bewertung/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

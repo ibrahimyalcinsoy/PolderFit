@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Ibrahim Yalcinsoy" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Parameters and tuning - Python tool for bbFMR</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Parameters and tuning";
+        var mkdocs_page_input_path = "tuning.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Python tool for bbFMR
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../referenz/">Quick reference: quantities · formulas · sources</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation and start</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../datenformate/">Measurement data (TDMS)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../kanal-mapping/">Channel mapping and profiles</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../verarbeitung/">Color plot processing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../auswertungsauswahl/">Evaluation selection (ranges, jumpers)</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../interaktives-fitten/">Interactive fitting</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ausreisser/">Outliers, projects, settings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline/">Pipeline</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../autowindow/">AutoWindow</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../physik-und-fit/">Physics and fit</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bewertung/">Fit rating</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Parameters and tuning</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Troubleshooting</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../vergleich-ftf/">Comparison with LabVIEW FTF</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test-harness/">Robustness check (real data)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Python tool for bbFMR</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Parameters and tuning</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="parameters-and-tuning">Parameters and tuning<a class="headerlink" href="#parameters-and-tuning" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th><code>fitte_alle(...)</code></th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gamma</code></td>
+<td>g = 2</td>
+<td>start value/window only; <code>B_res</code>, <code>µ0ΔH</code> independent</td>
+</tr>
+<tr>
+<td><code>breite_faktor</code></td>
+<td>8.0</td>
+<td>detection window = factor × FWHM</td>
+</tr>
+<tr>
+<td><code>alpha_max</code></td>
+<td>0.1</td>
+<td>hard α bound (broad lines: raise)</td>
+</tr>
+<tr>
+<td><code>nachfenster_faktor</code></td>
+<td>2.5</td>
+<td>2nd pass <code>B_res ± k·ΔH</code>; 0 = off</td>
+</tr>
+<tr>
+<td><code>alpha_plausibel</code></td>
+<td>None (= α_max/2)</td>
+<td>“alpha unphysical” limit</td>
+</tr>
+<tr>
+<td><code>nachfit_bestaetigen</code></td>
+<td>True</td>
+<td>manual refits count as good</td>
+</tr>
+<tr>
+<td><code>zentren</code></td>
+<td>None</td>
+<td>given window centres (script API)</td>
+</tr>
+<tr>
+<td><code>alpha_erwartet</code></td>
+<td>0.01</td>
+<td>window width for a given track (script API)</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Constant (<code>autowindows.py</code>)</th>
+<th>Default</th>
+<th>Adjust</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_HALB_MAX</code></td>
+<td>0.4 T</td>
+<td>narrow lines ↓, broad ↑</td>
+</tr>
+<tr>
+<td><code>_PROMINENZ_MIN</code></td>
+<td>4.0</td>
+<td>noisy ↑, weak ↓</td>
+</tr>
+<tr>
+<td><code>fenster_punkte</code> (track)</td>
+<td>31</td>
+<td>larger = smoother/slower</td>
+</tr>
+</tbody>
+</table>
+<p>Rating thresholds: <code>RMSE_NORM_SCHWELLE</code> 0.35, <code>ALPHA_PLAUSIBEL_MAX</code> 0.05, <code>B_RES_REL_UNSICHERHEIT_MAX</code> 0.02 (<a href="../bewertung/">Rating</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Sample type</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>narrow (YIG)</td>
+<td><code>_HALB_MAX</code> ↓; “alpha at bound” (lower) expected</td>
+</tr>
+<tr>
+<td>weak/noisy (near ip)</td>
+<td><code>_PROMINENZ_MIN</code> ↑ or corridor around the mode</td>
+</tr>
+<tr>
+<td>grid/periodic background</td>
+<td>stationary removal (unsorted); else corridor/region</td>
+</tr>
+<tr>
+<td>broad (FeCr₂S₄, α ≈ 0.2–0.8)</td>
+<td><code>alpha_max</code> ↑, <code>alpha_plausibel</code> ↑ + manual windows</td>
+</tr>
+<tr>
+<td>close modes (double dip, avoided crossing)</td>
+<td>one corridor with “Resonances in corridor” = n (sum fit, B_res per dip in segment; or hard split), separators, optional BIC; separate modes: one corridor each</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../bewertung/" class="btn btn-neutral float-left" title="Fit rating"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../troubleshooting/" class="btn btn-neutral float-right" title="Troubleshooting">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>© 2026 Ibrahim Yalcinsoy – all rights reserved.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../bewertung/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../troubleshooting/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
