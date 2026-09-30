@@ -1,6 +1,6 @@
 # Python tool for bbFMR
 
-**Version 2.2.108 · Last updated 30.09.2026**
+**Version 2.2.109 · Last updated 30.09.2026**
 
 TDMS (bbFMR) → per frequency `B_res`, `µ0ΔH` (1σ) → Kittel/LLG → `g`, `µ0M_eff`, `µ0H_u`, `α`, `µ0ΔH_0`.
 Name/version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) → `polderfit.PROGRAMMNAME`.
@@ -9,7 +9,7 @@ Name/version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) �
 
 | Quantity | Unit / rule |
 |---|---|
-| Fields | always `µ0H` in **T** |
+| Fields | `µ0H` in T |
 | γ | `g·µ_B/ħ` in rad s⁻¹ T⁻¹ (g = 2 → 1.7588·10¹¹) |
 | `µ0ΔH` | FWHM of the absorption χ″ (not of \|χ\|: factor √3) |
 | Plots | **x = field, y = frequency** |
@@ -30,4 +30,4 @@ Name/version: `pyproject.toml` (`[tool.polderfit] name`, `[project] version`) �
 
 ![Kittel/LLG](abb/abb_kittel_llg.png)
 
-See also: [Quick reference](referenz.md), [Comparison with LabVIEW FTF](vergleich-ftf.md).
+[Quick reference](referenz.md) · [Comparison with LabVIEW FTF](vergleich-ftf.md).

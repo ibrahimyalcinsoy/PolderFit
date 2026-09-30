@@ -12,4 +12,4 @@ Most critical step: wrong window ⇒ wrong values without optimizer error. Princ
 
 ![AutoWindow](abb/abb_autowindow.png)
 
-Limits: ΔH ≳ 0.3 T (cap, polynomial swallows line), very weak signal near ip, AFM samples, dominant stationary high-field artefacts → give dispersion manually (`zentren`).
+Limits: ΔH ≳ 0.3 T (cap, polynomial swallows line), weak signal near ip, AFM samples, dominant stationary high-field artefacts → give dispersion manually (`zentren`).

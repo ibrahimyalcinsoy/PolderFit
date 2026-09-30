@@ -3,7 +3,7 @@
 | Layout | Groups | Structure |
 |---|---|---|
 | **unsorted** (raw) | `Read.PNAX`, `Read.Fieldbefore/-after`, opt. `Read.Temperature` | one full frequency sweep per field value → matrix `(n_field × n_freq)`; field = mean of before/after; `_flush` files are cut to full sweeps |
-| **sorted** | `ZVB`, `Field` | already reduced to the resonance band; points per frequency vary (grouped to 1 kHz) |
+| **sorted** | `ZVB`, `Field` | reduced to the resonance band; points per frequency vary (grouped to 1 kHz) |
 
 No profile matches → `MappingErforderlich` → mapping dialog ([Channel mapping](kanal-mapping.md)).
 

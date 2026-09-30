@@ -1,6 +1,6 @@
 # Color plot processing (display only)
 
-Ported from *pybbfmr*, based on Maier-Flaig et al., RSI 89, 076101 (2018). **No effect on fits** – the linescan fit always uses raw S21.
+Ported from *pybbfmr*, based on Maier-Flaig et al., RSI 89, 076101 (2018). **No effect on fits** – linescan fit uses raw S21.
 
 | Step | Formula / effect | Parameters |
 |---|---|---|
@@ -10,7 +10,7 @@ Ported from *pybbfmr*, based on Maier-Flaig et al., RSI 89, 076101 (2018). **No 
 
 Default after loading: derivative divide, Δn = 4, color scale 2–98 % percentiles. Edges → NaN (pybbfmr: 0).
 
-Panel *Processing*: **one** operation active (“All off” = raw data); color scales Viridis, Gray, Cividis, Magma, Red-Blue (also *View → Color scale*). Export: *Color plot as image* (PNG/PDF/SVG with overlays), *Color plot matrix as CSV*. Chain and color scale are stored in [settings](ausreisser.md) and the project file.
+Panel *Processing*: **one** operation active (“All off” = raw data); color scales Viridis, Gray, Cividis, Magma, Red-Blue (*View → Color scale*). Export: *Color plot as image* (PNG/PDF/SVG with overlays), *Color plot matrix as CSV*. Chain and color scale are stored in [settings](ausreisser.md) and the project file.
 
 ```python
 feld, freq, Z = ds.komplexe_matrix()

@@ -1,6 +1,6 @@
 # Python tool for bbFMR
 
-**Version 2.2.108 · Last updated 30.09.2026**
+**Version 2.2.109 · Last updated 30.09.2026**
 [Documentation](https://ibrahimyalcinsoy.github.io/PolderFit/) · [Installation (Windows)](INSTALLATION_WINDOWS.md)
 
 > [!CAUTION]
@@ -10,4 +10,4 @@
 > git fetch origin && git reset --hard origin/main && .venv\Scripts\activate && pip install -q -e ".[gui]" && polderfit
 > ```
 
-Start only: `.venv\Scripts\activate && polderfit`
+Start: `.venv\Scripts\activate && polderfit`

@@ -1,6 +1,6 @@
 # Robustness check (real data)
 
-`python tests/autowindow_runner.py [--no-plots] [--rerun-failed-only]` – data in `testdata/`, 90 s per file, several processes. Check re-implemented independently of AutoWindow (self-test: deliberately wrong windows are detected); ground truth = band of the sorted counterparts.
+`python tests/autowindow_runner.py [--no-plots] [--rerun-failed-only]` – data in `testdata/`, 90 s per file, several processes. Check re-implemented independently of AutoWindow (self-test: wrong windows are detected); ground truth = band of the sorted counterparts.
 
 | Status | Meaning |
 |---|---|

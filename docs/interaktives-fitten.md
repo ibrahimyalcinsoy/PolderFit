@@ -1,13 +1,13 @@
 # Interactive fitting
 
-One mode at a time (active mode blue + status bar, `Esc` cancels). Zoom (wheel/box) is **off** by default: *View → Zoom*; double-click resets, keys `+`/`-`/`0` always work. Undo/redo: `Ctrl+Z` / `Ctrl+Shift+Z` (50 steps). **All tools work right after loading – no Auto-Fit needed** (`leerer_stapel`: unfitted frequencies stay invisible and outside all evaluations).
+One mode at a time (active mode blue + status bar, `Esc` cancels). Zoom (wheel/box) is **off** by default: *View → Zoom*; double-click resets, keys `+`/`-`/`0` always work. Undo/redo: `Ctrl+Z` / `Ctrl+Shift+Z` (50 steps). **All tools work without Auto-Fit** (`leerer_stapel`: unfitted frequencies stay invisible and outside all evaluations).
 
 | Tool | Access | Effect |
 |---|---|---|
 | Auto-Fit (all) | `F5` | dialog: jumper (absolute), range, **resonances per window** (1–4; > 1 = sum fit) and **automatic count (BIC)**; mode 1 per frequency, then all corridors |
 | Corridors | `Ctrl+L` or panel *Corridors*, 2 clicks along the resonance | corridor ± width; anchors by dragging the green limits (linescan panel) or handles (color plot); “Resonances in corridor” = n dips (sum fit, B_res per dip in its segment; or hard split); “Set separator” = yellow line, moves with the corridor centre; “Fit corridor …” (frequency range, mode, jumper, BIC) |
 | Refit region (rectangle) | `Ctrl+B` | same dialog (range editable); `B_res` stays inside the region |
-| Drag limits in linescan | fit panel | single frequency, fit at once; number of resonances selectable |
+| Drag limits in linescan | fit panel | single frequency, immediate fit; number of resonances selectable |
 | Exclusion zone | *Functions → Draw exclusion zone*, rectangle | points removed from all (post-)fits, kept on Auto-Fit (`F5`); hatched; `Ctrl+Z` |
 | Rating | `Ctrl+1/2/3`, `Ctrl+I`, panel buttons | confirm good / problematic / automatic / ignore ([Rating](bewertung.md)) |
 

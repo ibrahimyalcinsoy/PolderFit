@@ -24,5 +24,5 @@ Rating thresholds: `RMSE_NORM_SCHWELLE` 0.35, `ALPHA_PLAUSIBEL_MAX` 0.05, `B_RES
 | narrow (YIG) | `_HALB_MAX` ↓; “alpha at bound” (lower) expected |
 | weak/noisy (near ip) | `_PROMINENZ_MIN` ↑ or corridor around the mode |
 | grid/periodic background | stationary removal (unsorted); else corridor/region |
-| very broad (FeCr₂S₄, α ≈ 0.2–0.8) | `alpha_max` ↑, `alpha_plausibel` ↑ + manual windows |
+| broad (FeCr₂S₄, α ≈ 0.2–0.8) | `alpha_max` ↑, `alpha_plausibel` ↑ + manual windows |
 | close modes (double dip, avoided crossing) | one corridor with “Resonances in corridor” = n (sum fit, B_res per dip in segment; or hard split), separators, optional BIC; separate modes: one corridor each |
